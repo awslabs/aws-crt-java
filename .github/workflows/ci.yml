@@ -209,6 +209,8 @@ jobs:
           python3 codebuild/macos_compatibility_check.py
 
   android:
+      # ubuntu-20.04 comes with Android tooling, see:
+      # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     name: Android
     runs-on: ubuntu-20.04 # latest
     permissions:
@@ -227,21 +229,20 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'gradle'
-      - name: Build ${{ env.PACKAGE_NAME }}
       # Build and publish locally for the test app to find the SNAPSHOT version
+      - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:build
           ./gradlew :android:crt:publishToMavenLocal
       - name: Run CRT Tests Locally
         run: |
           ./gradlew test
-      - name: Setup Android Test Files
       # Setup files required by test app for Device Farm testing
+      - name: Setup Android Test Files
         run: |
           cd src/test/android/testapp/src/main/assets
           python3 -m pip install boto3
           python3 ./android_file_creation.py
-
       - name: Build Test App
         run: |
           cd src/test/android/testapp

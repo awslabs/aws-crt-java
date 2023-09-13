@@ -28,7 +28,7 @@ public abstract class CrtPlatform {
     public String getArchIdentifier() {
         return System.getProperty("os.arch");
     }
-
+    
     // Called before every JUnit test
     public void testSetup(Object context) {}
 

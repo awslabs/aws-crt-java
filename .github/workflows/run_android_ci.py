@@ -37,11 +37,11 @@ def main():
         sys.exit(-1)
     print("Boto3 client established")
 
-    # Upload the build apk file to Device Farm
+    # Upload the crt library shell app to Device Farm
     upload_file_name = 'CI-' + run_id + '-' + run_attempt + '.apk'
     print('Upload file name: ' + upload_file_name)
 
-    # Setup upload to Device Farm project
+    # Prepare upload to Device Farm project
     create_upload_response = client.create_upload(
         projectArn=project_arn,
         name=upload_file_name,
@@ -50,7 +50,7 @@ def main():
     device_farm_upload_arn = create_upload_response['upload']['arn']
     device_farm_upload_url = create_upload_response['upload']['url']
 
-    # Upload project apk
+    # Upload crt library shell app apk
     with open(build_file_location, 'rb') as f:
         data = f.read()
     r = requests.put(device_farm_upload_url, data=data)
@@ -65,6 +65,9 @@ def main():
 
     # Upload the instrumentation test package to Device Farm
     upload_test_file_name = 'CI-' + run_id + '-' + run_attempt + 'tests.apk'
+    print('Upload file name: ' + upload_test_file_name)
+
+    # Prepare upload to Device Farm project
     create_upload_response = client.create_upload(
         projectArn=project_arn,
         name=upload_test_file_name,
@@ -73,11 +76,11 @@ def main():
     device_farm_instrumentation_upload_arn = create_upload_response['upload']['arn']
     device_farm_instrumentation_upload_url = create_upload_response['upload']['url']
 
+    # Upload instrumentation test package
     with open(test_file_location, 'rb') as f:
         data_instrumentation = f.read()
     r_instrumentation = requests.put(device_farm_instrumentation_upload_url, data=data_instrumentation)
     print('File upload status code: ' + str(r_instrumentation.status_code) + ' reason: ' + r_instrumentation.reason)
-
     device_farm_upload_status = client.get_upload(arn=device_farm_instrumentation_upload_arn)
     while device_farm_upload_status['upload']['status'] != 'SUCCEEDED':
         if device_farm_upload_status['upload']['status'] == 'FAILED':
@@ -90,7 +93,7 @@ def main():
     upload_spec_file_name = 'CI-' + run_id + '-' + run_attempt + 'test-spec.yml'
     print('Upload file name: ' + upload_spec_file_name)
 
-    # Setup upload to Device Farm project
+    # Prepare upload to Device Farm project
     create_upload_response = client.create_upload(
         projectArn=project_arn,
         name=upload_spec_file_name,
@@ -113,7 +116,6 @@ def main():
         device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
 
     print('scheduling run')
-
     schedule_run_response = client.schedule_run(
         projectArn=project_arn,
         appArn=device_farm_upload_arn,

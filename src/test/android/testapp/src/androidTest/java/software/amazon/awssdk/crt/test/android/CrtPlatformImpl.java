@@ -42,6 +42,12 @@
         return new PackageInfo.Version("0.0.0-UNITTEST");
     }
 
+    private void SetPropertyFromProperty(String propertyName, String propertyToCopy){
+        if (System.getProperty(propertyToCopy) != null) {
+            System.setProperty(propertyName, System.getProperty(propertyToCopy));
+        }
+    }
+
     // Attempts to set a System property to the contents of a file in the assets folder
     private void SetPropertyFromFile(String propertyName, String fileName){
         AssetManager assets = InstrumentationRegistry.getInstrumentation().getTargetContext().getResources().getAssets();
@@ -107,29 +113,29 @@
         SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.txt");
         SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.txt");
 
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_HOST", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_HOST"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_CERT"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_KEY"));
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_HOST","AWS_TEST_MQTT5_IOT_CORE_HOST");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT", "AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY", "AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
         System.setProperty("AWS_TEST_MQTT311_IOT_CORE_REGION", "us-east-1");
         System.setProperty("AWS_TEST_MQTT311_COGNITO_ENDPOINT", "cognito-identity.us-east-1.amazonaws.com");
-        System.setProperty("AWS_TEST_MQTT311_COGNITO_IDENTITY", System.getProperty("AWS_TEST_MQTT5_COGNITO_IDENTITY"));
+        SetPropertyFromProperty("AWS_TEST_MQTT311_COGNITO_IDENTITY", "AWS_TEST_MQTT5_COGNITO_IDENTITY");
         SetPropertyToFileLocation("AWS_TEST_MQTT311_IOT_CORE_ECC_CERT", "AWS_TEST_MQTT311_IOT_CORE_ECC_CERT.txt");
         SetPropertyToFileLocation("AWS_TEST_MQTT311_IOT_CORE_ECC_KEY", "AWS_TEST_MQTT311_IOT_CORE_ECC_KEY.txt");
         SetPropertyToFileLocation("AWS_TEST_MQTT311_ROOT_CA", "AWS_TEST_MQTT311_ROOT_CA.txt");
-        System.setProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT", System.getProperty("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT"));
-        System.setProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY", System.getProperty("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY"));
+        SetPropertyFromProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY");
 
         // THESE ARE SET USING aws sts assume-role with a role-arn and role-session and must be cycled.
-        System.setProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY", System.getProperty("AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY"));
-        System.setProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", System.getProperty("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY"));
-        System.setProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN", System.getProperty("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN"));
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
 
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_HOST", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_HOST"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_X509_CERT", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_X509_CERT"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_X509_KEY", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_X509_KEY"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS"));
-        System.setProperty("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME", System.getProperty("AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME"));
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_HOST", "AWS_TEST_MQTT5_IOT_CORE_HOST");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_CERT", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_KEY", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT", "AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS", "AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME", "AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME");
     }
 
     public void testTearDown(Object context) {

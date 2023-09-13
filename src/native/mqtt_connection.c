@@ -87,13 +87,6 @@ static void s_mqtt_jni_connection_release(struct mqtt_jni_connection *connection
 
 /* The destroy function is called on Java MqttClientConnection resource release. */
 static void s_mqtt_jni_connection_destory(struct mqtt_jni_connection *connection) {
-    /**
-     * Disable the onClosed callback, so it is not invoked on the last disconnect for clean-up.
-     * (We do not invoke any callbacks on the last disconnect during clean-up/shutdown.
-     * Calling the callback on the final disconnect will cause a segfault!)
-     */
-    aws_mqtt_client_connection_set_connection_closed_handler(connection->client_connection, NULL, NULL);
-
     /* For mqtt311 client, we have to call aws_mqtt_client_connection_disconnect before releasing the underlying c
      * connection.*/
     if (aws_mqtt_client_connection_disconnect(

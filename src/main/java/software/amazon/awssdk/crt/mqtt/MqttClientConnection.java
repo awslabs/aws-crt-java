@@ -56,7 +56,7 @@ public class MqttClientConnection extends CrtResource {
      * Static help function to create a MqttConnectionConfig from a
      * Mqtt5ClientOptions
      */
-    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) throws Exception{
+    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) {
         MqttConnectionConfig options = new MqttConnectionConfig();
         options.setEndpoint(mqtt5options.getHostName());
         options.setPort(mqtt5options.getPort() != null ? Math.toIntExact(mqtt5options.getPort()) : 0);

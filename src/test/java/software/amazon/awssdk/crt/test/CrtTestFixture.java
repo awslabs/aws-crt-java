@@ -205,8 +205,9 @@ public class CrtTestFixture {
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_PASSWORD");
     }
 
+    /* The function will be run once before any of the test methods in the class */
     @BeforeClass
-    public static void setupEnv() {
+    public static void setupOnce() {
         // We only want to see the CRT logs if the test fails.
         // Surefire has a redirectTestOutputToFile option, but that doesn't
         // capture what the CRT logger writes to stdout or stderr.
@@ -220,6 +221,7 @@ public class CrtTestFixture {
         SetupTestProperties();
     }
 
+    /* The setup function will be run before every test */
     @Before
     public void setup() {
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");

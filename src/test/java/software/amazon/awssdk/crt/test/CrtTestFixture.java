@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.After;
 import org.junit.Assume;
 
@@ -33,18 +34,16 @@ public class CrtTestFixture {
         return context;
     }
 
-    private void SetPropertyFromEnv(String name){
+    private static void SetPropertyFromEnv(String name) {
         String propertyValue = System.getenv(name);
-        if (propertyValue != null){
+        if (propertyValue != null) {
             System.setProperty(name, propertyValue);
         }
     }
 
-    // Setup System properties from environment variables set by builder for use by unit tests.
-    private void SetupTestProperties(){
-        // Indicate that the system properties have been setup
-        System.setProperty("are.test.properties.setup", "true");
-
+    // Setup System properties from environment variables set by builder for use by
+    // unit tests.
+    private static void SetupTestProperties() {
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
@@ -54,7 +53,7 @@ public class CrtTestFixture {
         SetPropertyFromEnv("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
         SetPropertyFromEnv("AWS_TEST_MQTT311_COGNITO_IDENTITY");
 
-        //Proxy
+        // Proxy
         SetPropertyFromEnv("AWS_TEST_HTTP_PROXY_HOST");
         SetPropertyFromEnv("AWS_TEST_HTTP_PROXY_PORT");
         SetPropertyFromEnv("AWS_TEST_HTTPS_PROXY_HOST");
@@ -197,7 +196,8 @@ public class CrtTestFixture {
         SetPropertyFromEnv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
         SetPropertyFromEnv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE");
 
-        // MQTT5 Custom Key Ops (so we don't have to make a new file just for a single test)
+        // MQTT5 Custom Key Ops (so we don't have to make a new file just for a single
+        // test)
         SetPropertyFromEnv("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT");
         SetPropertyFromEnv("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY");
 
@@ -205,8 +205,9 @@ public class CrtTestFixture {
         SetPropertyFromEnv("AWS_TEST_BASIC_AUTH_PASSWORD");
     }
 
-    @Before
-    public void setup() {
+    /* The function will be run once before any of the test methods in the class */
+    @BeforeClass
+    public static void setupOnce() {
         // We only want to see the CRT logs if the test fails.
         // Surefire has a redirectTestOutputToFile option, but that doesn't
         // capture what the CRT logger writes to stdout or stderr.
@@ -217,20 +218,21 @@ public class CrtTestFixture {
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
+        SetupTestProperties();
+    }
+
+    /* The setup function will be run before every test */
+    @Before
+    public void setup() {
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
-        // TODO this CrtTestContext should be removed as we are using System Properties for tests now.
+        // TODO this CrtTestContext should be removed as we are using System Properties
+        // for tests now.
         context = new CrtTestContext();
-        // System properties for tests only need to be setup once
-        if (System.getProperty("are.test.properties.setup") != "true"){
-            CrtPlatform platform = CRT.getPlatformImpl();
-            if (platform != null) {
-                platform.testSetup(context);
-            } else {
-                SetupTestProperties();
-            }
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            platform.testSetup(context);
         }
-
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
     }
 

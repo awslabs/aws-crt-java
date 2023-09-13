@@ -1,19 +1,8 @@
-import sys
 import os
 import boto3
 from botocore.exceptions import ClientError
 
 cwd = os.getcwd()
-
-def writeEnvToFile(envName):
-    asset_string = os.getenv(envName)
-    if asset_string is not None:
-        asset_file = open(cwd + "/" + envName + ".txt", "w")
-        asset_file.write(asset_string)
-        asset_file.close()
-        print(envName + ".txt file created.")
-    else:
-        print(envName + " Env Variable not found.")
 
 def getSecretAndSaveToFile(client, secretName, fileName):
     try:
@@ -42,7 +31,7 @@ def getSecretAndSaveToFile(client, secretName, fileName):
             print("SecretString not found in response")
 
 def main():
-    print("Setting up Android Assets")
+    print("Setting up Android test assets")
 
     session = boto3.session.Session()
 
@@ -56,17 +45,9 @@ def main():
 
     print("Boto3 client created")
 
-
     getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_HOST")
     getSecretAndSaveToFile(client, "aws-c-auth-testing/cognito-identity", "AWS_TEST_MQTT5_COGNITO_IDENTITY")
     getSecretAndSaveToFile(client, "ci/mqtt5/us/x509/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
-
-    # Files that can be pulled directly from environment setup by builder
-    # writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_HOST")
-    # writeEnvToFile("AWS_TEST_MQTT5_COGNITO_IDENTITY")
-    # writeEnvToFile("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT")
-
-    # Files that need to be created from a secret. These are typically files that are file locations and not the contents
     getSecretAndSaveToFile(client, "ci/mqtt5/us/Mqtt5Prod/cert", "AWS_TEST_MQTT5_IOT_CORE_RSA_CERT")
     getSecretAndSaveToFile(client, "ci/mqtt5/us/Mqtt5Prod/key", "AWS_TEST_MQTT5_IOT_CORE_RSA_KEY")
     getSecretAndSaveToFile(client, "unit-test/certificate", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT")
@@ -75,17 +56,15 @@ def main():
     getSecretAndSaveToFile(client, "ecc-test/privatekey", "AWS_TEST_MQTT311_IOT_CORE_ECC_KEY")
     getSecretAndSaveToFile(client, "unit-test/rootca", "AWS_TEST_MQTT311_ROOT_CA")
 
-    # getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_CA")
-    # getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY")
-    # getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT")
+    getSecretAndSaveToFile(client, "X509IntegrationTestRootCA", "AWS_TEST_MQTT5_IOT_CORE_X509_CA")
+    getSecretAndSaveToFile(client, "X509IntegrationTestPrivateKey", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY")
+    getSecretAndSaveToFile(client, "X509IntegrationTestCertificate", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT")
+
     # AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY
     # AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY
     # AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN
 
-
-
-
-    print("Complete")
+    print("Android test asset creation complete")
 
 
 if __name__ == "__main__":

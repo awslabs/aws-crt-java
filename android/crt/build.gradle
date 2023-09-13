@@ -127,9 +127,6 @@ build.dependsOn preBuild
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
-
-    implementation 'commons-cli:commons-cli:1.5.0' // For Elasticurl CommandLine related classes
-
     androidTestImplementation 'org.mockito:mockito-core:3.11.2'
     androidTestImplementation 'androidx.appcompat:appcompat:1.3.1'
     androidTestImplementation 'junit:junit:4.13.2'

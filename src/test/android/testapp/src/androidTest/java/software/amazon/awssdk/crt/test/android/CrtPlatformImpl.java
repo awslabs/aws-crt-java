@@ -84,7 +84,7 @@
         // Any new system properties that are required by CI Device Farm tests must be added to android_file_creation.py
         // as well as configured here.
 
-        //Indicate system properties are set for future tests
+        // Indicate system properties are already set for future tests
         System.setProperty("are.test.properties.setup", "true");
 
         System.setProperty("AWS_TEST_IS_CI", "True");

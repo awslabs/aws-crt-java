@@ -102,6 +102,11 @@ def main():
     device_farm_test_spec_upload_arn = create_upload_response['upload']['arn']
     device_farm_test_spec_upload_url = create_upload_response['upload']['url']
 
+    # Default Instrumentation tests run on Device Farm result in detailed individual test breakdowns but comes
+    # at the cost of the test suite running for up to two hours before completing. There is limited control for turning
+    # off unnecessary features which generates an immense amount of traffic resulting in hitting Device Farm rate limits
+    # A bare-bones test spec is used with instrumentation testing which will report a singular fail if any one test fails but
+    # the resulting Test spec output file contains information on each unit test, whether they passed, failed, or were skipped.
     # Upload test spec yml
     with open(test_spec_file_location, 'rb') as f:
         data = f.read()
@@ -150,6 +155,9 @@ def main():
     if get_run_response['run']['result'] != 'PASSED':
         print('run has failed with result ' + get_run_response['run']['result'])
         is_success = False
+
+    # If Clean up is not executed due to the job being cancelled in CI, the uploaded files will not be deleted
+    # from the Device Farm project and must be deleted manually.
 
     # Clean up
     print('Deleting ' + upload_file_name + ' from Device Farm project')

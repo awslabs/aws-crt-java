@@ -2,6 +2,11 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
+# This file is used for running unit tests on android devices in AWS Device Farm.
+# Variables and files for testing in Github CI are set to environment variables which are not accessible on
+# Android devices. They must be packaged into the app itself. This is done by converting the necessary
+# files and variables into txt files and storing them as assets prior to building the test app.
+
 cwd = os.getcwd()
 
 def saveStringToFile(fileData, fileName):
@@ -30,18 +35,14 @@ def getSecretAndSaveToFile(client, secretName, fileName):
     else:
         if 'SecretString' in secret_value_response:
             saveStringToFile(secret_value_response['SecretString'], fileName)
-            # secret_file = open(cwd + "/" + fileName + ".txt", "w")
-            # secret_file.write(secret_value_response['SecretString'])
-            # secret_file.close()
-            # print(fileName + ".txt file created")
         else:
             print("SecretString not found in response")
 
 def main():
     print("Setting up Android test assets")
 
+    # Most testing varibales and files are pulled from Secrets Manager
     session = boto3.session.Session()
-
     try:
         client = session.client(
             service_name='secretsmanager',
@@ -49,7 +50,6 @@ def main():
         )
     except Exception:
         print("Error - could not make Boto3 secrets manager client.")
-
     print("Boto3 client created")
 
     getSecretAndSaveToFile(client, "unit-test/endpoint", "AWS_TEST_MQTT5_IOT_CORE_HOST")
@@ -62,11 +62,12 @@ def main():
     getSecretAndSaveToFile(client, "ecc-test/certificate", "AWS_TEST_MQTT311_IOT_CORE_ECC_CERT")
     getSecretAndSaveToFile(client, "ecc-test/privatekey", "AWS_TEST_MQTT311_IOT_CORE_ECC_KEY")
     getSecretAndSaveToFile(client, "unit-test/rootca", "AWS_TEST_MQTT311_ROOT_CA")
-
     getSecretAndSaveToFile(client, "X509IntegrationTestRootCA", "AWS_TEST_MQTT5_IOT_CORE_X509_CA")
     getSecretAndSaveToFile(client, "X509IntegrationTestPrivateKey", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY")
     getSecretAndSaveToFile(client, "X509IntegrationTestCertificate", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT")
 
+
+    # Some testing variables and files are generated using sts and assuming a role
     try:
         client_sts = boto3.client('sts')
     except Exception:

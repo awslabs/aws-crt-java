@@ -25,7 +25,7 @@ public final class PackageInfo {
 
         public Version(String v) {
             version = v != null ? v : "UNKNOWN";
-
+            
             int dashIdx = version.indexOf('-');
             if (dashIdx != -1) {
                 tag = version.substring(dashIdx + 1);
@@ -82,5 +82,5 @@ public final class PackageInfo {
         }
         version = new Version(pkgVersion);
     }
-
+    
 }

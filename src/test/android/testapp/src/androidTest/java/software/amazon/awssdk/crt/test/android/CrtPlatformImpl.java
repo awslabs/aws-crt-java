@@ -63,7 +63,8 @@
         }
     }
 
-    // Attempts to create a cached file from a file in the assets folder and set a System property pointing to the created file
+    // Attempts to create a cached file from a file in the assets folder and sets a System property pointing to the created file
+    // CRT cannot directly access files in the assets folder of an Android app as they are compressed
     private void SetPropertyToFileLocation(String propertyName, String fileName){
         Context testContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Resources testRes = InstrumentationRegistry.getInstrumentation().getTargetContext().getResources();
@@ -77,7 +78,6 @@
                 assetStream.read(data);
                 cachedRes.write(data);
                 System.setProperty(propertyName, cachedName);
-                // assetStream.transferTo(cachedRes);
             } catch (IOException ex) {
                 System.out.println("Android TEST: CrtPlatformImpl.SetPropertyToFileLocation(" + propertyName + ", " + fileName + ") IOException: " + ex.toString());
             }
@@ -89,6 +89,7 @@
 
         //Indicate system properties are set for future tests
         System.setProperty("are.test.properties.setup", "true");
+
         System.setProperty("AWS_TEST_IS_CI", "True");
 
         SetPropertyFromFile("AWS_TEST_MQTT5_IOT_CORE_HOST", "AWS_TEST_MQTT5_IOT_CORE_HOST.txt");
@@ -106,11 +107,6 @@
         SetPropertyToFileLocation("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT.txt");
         SetPropertyToFileLocation("AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY.txt");
 
-        // THESE ARE SET USING aws sts assume-role with a role-arn and role-session and must be cycled.
-        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY.txt");
-        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.txt");
-        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.txt");
-
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_HOST","AWS_TEST_MQTT5_IOT_CORE_HOST");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT", "AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY", "AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
@@ -122,18 +118,20 @@
         SetPropertyToFileLocation("AWS_TEST_MQTT311_ROOT_CA", "AWS_TEST_MQTT311_ROOT_CA.txt");
         SetPropertyFromProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_CERT", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_CERT");
         SetPropertyFromProperty("AWS_TEST_MQTT311_CUSTOM_KEY_OPS_KEY", "AWS_TEST_MQTT5_CUSTOM_KEY_OPS_KEY");
-
-        // THESE ARE SET USING aws sts assume-role with a role-arn and role-session and must be cycled.
-        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
-        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
-        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
-
-        SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_HOST", "AWS_TEST_MQTT5_IOT_CORE_HOST");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_CERT", "AWS_TEST_MQTT5_IOT_CORE_X509_CERT");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_KEY", "AWS_TEST_MQTT5_IOT_CORE_X509_KEY");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT", "AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS", "AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS");
         SetPropertyFromProperty("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME", "AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME");
+
+        // THESE ARE SET USING aws sts assume-role with a role-arn and role-session and must be cycled.
+        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY.txt");
+        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.txt");
+        SetPropertyFromFile("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.txt");
+
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
+        SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
     }
 
     public void testTearDown(Object context) {

@@ -47,7 +47,7 @@
         if (System.getProperty(propertyToCopy) != null) {
             System.setProperty(propertyName, System.getProperty(propertyToCopy));
         } else {
-            System.out.println("Android TEST: CrtPlatformImpl.SetPropertyFromProperty() Property:" + propertyToCopy + " is null")
+            System.out.println("Android TEST: CrtPlatformImpl.SetPropertyFromProperty() Property:" + propertyToCopy + " is null");
         }
     }
 

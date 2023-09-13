@@ -47,7 +47,6 @@ android {
         androidTest {
             setRoot '../..'
             java.srcDir '../../java'
-            // java.srcDir '../../../main/java'
             java.srcDir 'src/androidTest/java'
             assets.srcDir 'src/androidTest/assets'
         }

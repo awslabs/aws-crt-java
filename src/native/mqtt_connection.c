@@ -267,8 +267,6 @@ static void s_on_connection_success(
     }
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
-
-    s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_failure(
@@ -295,8 +293,6 @@ static void s_on_connection_failure(
     }
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
-
-    s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_resumed(
@@ -612,8 +608,6 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         goto cleanup;
     }
 
-    s_mqtt_jni_connection_acquire(connection);
-
     struct aws_socket_options default_socket_options;
     AWS_ZERO_STRUCT(default_socket_options);
     default_socket_options.type = AWS_SOCKET_STREAM;
@@ -652,7 +646,6 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
 
     int result = aws_mqtt_client_connection_connect(connection->client_connection, &connect_options);
     if (result != AWS_OP_SUCCESS) {
-        s_mqtt_jni_connection_release(connection);
         s_mqtt_jni_async_callback_destroy(connect_callback, env);
         aws_jni_throw_runtime_exception(
             env, "MqttClientConnection.mqtt_connect: aws_mqtt_client_connection_connect failed");

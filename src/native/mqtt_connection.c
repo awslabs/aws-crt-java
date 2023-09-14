@@ -198,6 +198,7 @@ static void s_on_connection_complete(
 
     aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
+    s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_interrupted_internal(

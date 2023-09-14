@@ -268,7 +268,6 @@ static void s_on_connection_success(
     }
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
-
 }
 
 static void s_on_connection_failure(
@@ -295,7 +294,6 @@ static void s_on_connection_failure(
     }
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
-
 }
 
 static void s_on_connection_resumed(

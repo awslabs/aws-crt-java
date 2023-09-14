@@ -79,9 +79,13 @@
             }
     }
 
-    public void testSetup(Object context) {
+    public void setupOnce(){
         // Any new system properties that are required by CI Device Farm tests must be added to android_file_creation.py
         // as well as configured here.
+
+        if(System.getProperty("are.test.properties.setup") != null){
+            return;
+        }
 
         // Indicate system properties are already set for future tests
         System.setProperty("are.test.properties.setup", "true");
@@ -128,6 +132,10 @@
         SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
         SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SECRET_ACCESS_KEY", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
         SetPropertyFromProperty("AWS_TEST_MQTT311_ROLE_CREDENTIAL_SESSION_TOKEN", "AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
+    }
+
+    public void testSetup(Object context) {
+
     }
 
     public void testTearDown(Object context) {

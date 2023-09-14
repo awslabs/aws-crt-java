@@ -29,9 +29,12 @@ public abstract class CrtPlatform {
         return System.getProperty("os.arch");
     }
 
+    // Called one and only one time during setup for testing
+    public void setupOnce() {}
+
     // Called before every JUnit test
     public void testSetup(Object context) {}
-    
+
     // Called after every JUnit test
     public void testTearDown(Object context) {}
 }

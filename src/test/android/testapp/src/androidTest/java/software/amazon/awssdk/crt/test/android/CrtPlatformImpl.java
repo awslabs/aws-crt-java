@@ -20,7 +20,6 @@
  import java.io.FileOutputStream;
  import java.io.BufferedWriter;
 
- import software.amazon.awssdk.crt.test.CrtTestContext;
  import software.amazon.awssdk.crt.utils.PackageInfo;
 
  // Overrides just for testing

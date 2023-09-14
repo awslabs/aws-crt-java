@@ -197,6 +197,7 @@ static void s_on_connection_complete(
     s_mqtt_jni_async_callback_destroy(connect_callback, env);
 
     aws_jni_release_thread_env(jvm, env);
+//    s_mqtt_jni_connection_release(connection);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -268,7 +269,7 @@ static void s_on_connection_success(
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    s_mqtt_jni_connection_release(connection);
+//    s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_failure(
@@ -296,7 +297,7 @@ static void s_on_connection_failure(
     aws_jni_release_thread_env(connection->jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    s_mqtt_jni_connection_release(connection);
+ //   s_mqtt_jni_connection_release(connection);
 }
 
 static void s_on_connection_resumed(

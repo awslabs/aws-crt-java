@@ -199,6 +199,24 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
+    private HttpClientConnectionManager buildEnvProxiedConnectionManager(ProxyTestType testType) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+             SocketOptions sockOpts = new SocketOptions();
+             TlsContext tlsContext = createHttpClientTlsContext()) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            options.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(getUriForTest(testType))
+                    .withMaxConnections(1);
+
+            return HttpClientConnectionManager.create(options);
+        }
+    }
+
     private void doHttpConnectionManagerProxyTest(HttpClientConnectionManager manager) {
         HttpRequest request = new HttpRequest("GET", "/");
 
@@ -255,6 +273,16 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.None)) {
+            doHttpConnectionManagerProxyTest(manager);
+        }
+    }
+
+    @Test
+    public void testConnectionManager_EnvLegacyHttpProxy() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
             doHttpConnectionManagerProxyTest(manager);
         }
     }

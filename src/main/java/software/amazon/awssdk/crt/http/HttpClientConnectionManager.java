@@ -93,6 +93,16 @@ public class HttpClientConnectionManager extends CrtResource {
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }
 
+        int environmentVariableProxyConnectionType = 0;
+        TlsConnectionOptions environmentVariableProxyTlsConnectionOptions = null;
+        int environmentVariableType = 0;
+        HttpProxyEnvironmentVariableSetting environmentVariableSetting = options.getHttpProxyEnvironmentVariableSetting();
+        if (environmentVariableSetting != null) {
+            environmentVariableProxyConnectionType = environmentVariableSetting.getConnectionType().getValue();
+            environmentVariableProxyTlsConnectionOptions = environmentVariableSetting.getTlsConnectionOptions();
+            environmentVariableType = environmentVariableSetting.getEnvironmentVariableType().getValue();
+        }
+
         HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
         long monitoringThroughputThresholdInBytesPerSecond = 0;
         int monitoringFailureIntervalInSeconds = 0;
@@ -117,6 +127,11 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                                             proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                                            environmentVariableProxyConnectionType,
+                                            environmentVariableProxyTlsConnectionOptions != null
+                                                    ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
+                                                    : 0,
+                                            environmentVariableType,
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
@@ -245,6 +260,9 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int proxyAuthorizationType,
                                                         byte[] proxyAuthorizationUsername,
                                                         byte[] proxyAuthorizationPassword,
+                                                        int environmentVariableProxyConnectionType,
+                                                        long environmentVariableProxyTlsConnectionOptions,
+                                                        int environmentVariableSetting,
                                                         boolean isManualWindowManagement,
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,

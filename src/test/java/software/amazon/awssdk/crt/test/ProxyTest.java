@@ -14,13 +14,7 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
+import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -205,13 +199,15 @@ public class ProxyTest extends CrtTestFixture  {
              ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
              SocketOptions sockOpts = new SocketOptions();
              TlsContext tlsContext = createHttpClientTlsContext()) {
-
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
+            httpProxyEnvironmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.ENABLED);
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
             options.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
                     .withTlsContext(tlsContext)
                     .withUri(getUriForTest(testType))
-                    .withMaxConnections(1);
+                    .withMaxConnections(1)
+                    .withProxyEnvironmentVariableSetting(httpProxyEnvironmentVariableSetting);
 
             return HttpClientConnectionManager.create(options);
         }
@@ -281,7 +277,7 @@ public class ProxyTest extends CrtTestFixture  {
     public void testConnectionManager_EnvLegacyHttpProxy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
-
+        System.setProperty("https_proxy", "https://"+"invalid_host"+":"+HTTPS_PROXY_PORT);
         try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
             doHttpConnectionManagerProxyTest(manager);
         }

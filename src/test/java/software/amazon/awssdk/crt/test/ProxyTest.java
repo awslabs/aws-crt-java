@@ -5,7 +5,6 @@
 
 package software.amazon.awssdk.crt.test;
 
-import com.github.stefanbirkner.systemlambda.SystemLambda;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -15,7 +14,13 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider;
-import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
+import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
+import software.amazon.awssdk.crt.http.HttpHeader;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpStream;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -27,10 +32,8 @@ import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -196,26 +199,6 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
-    private HttpClientConnectionManager buildEnvProxiedConnectionManager(ProxyTestType testType) {
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-             HostResolver resolver = new HostResolver(eventLoopGroup);
-             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-             SocketOptions sockOpts = new SocketOptions();
-             TlsContext tlsContext = createHttpClientTlsContext()) {
-            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting = new HttpProxyEnvironmentVariableSetting();
-            httpProxyEnvironmentVariableSetting.setEnvironmentVariableType(HttpProxyEnvironmentVariableSetting.HttpProxyEnvironmentVariableType.ENABLED);
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
-            options.withClientBootstrap(bootstrap)
-                    .withSocketOptions(sockOpts)
-                    .withTlsContext(tlsContext)
-                    .withUri(getUriForTest(testType))
-                    .withMaxConnections(1)
-                    .withProxyEnvironmentVariableSetting(httpProxyEnvironmentVariableSetting);
-
-            return HttpClientConnectionManager.create(options);
-        }
-    }
-
     private void doHttpConnectionManagerProxyTest(HttpClientConnectionManager manager) {
         HttpRequest request = new HttpRequest("GET", "/");
 
@@ -274,26 +257,6 @@ public class ProxyTest extends CrtTestFixture  {
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.LEGACY_HTTP, ProxyAuthType.None)) {
             doHttpConnectionManagerProxyTest(manager);
         }
-    }
-
-//    @SuppressWarnings({ "unchecked" })
-//    public static void updateEnv(String name, String val) throws ReflectiveOperationException {
-//        Map<String, String> env = System.getenv();
-//        Field field = env.getClass().getDeclaredField("m");
-//        field.setAccessible(true);
-//        ((Map<String, String>) field.get(env)).put(name, val);
-//    }
-    @Test
-    public void testConnectionManager_EnvLegacyHttpProxy() throws Exception {
-        skipIfNetworkUnavailable();
-        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
-        SystemLambda.withEnvironmentVariable("https_proxy", "https://"+"invalid_host2"+":"+HTTPS_PROXY_PORT)
-                .and("second", "second value")
-                .execute(() -> {
-                    try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
-                        doHttpConnectionManagerProxyTest(manager);
-                    }
-                });
     }
 
     @Test

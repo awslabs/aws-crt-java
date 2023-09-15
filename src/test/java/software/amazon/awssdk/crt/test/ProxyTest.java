@@ -286,7 +286,7 @@ public class ProxyTest extends CrtTestFixture  {
     public void testConnectionManager_EnvLegacyHttpProxy() throws ReflectiveOperationException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
-        updateEnv("https_proxy", "https://"+"invalid_host"+":"+HTTPS_PROXY_PORT);
+        updateEnv("https_proxy", "https://"+"invalid_host2"+":"+HTTPS_PROXY_PORT);
         try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
             doHttpConnectionManagerProxyTest(manager);
         }

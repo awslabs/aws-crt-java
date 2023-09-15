@@ -207,6 +207,8 @@ public class HttpClientConnectionManagerOptions {
      * By Default read proxy configuration from environment is disabled for backward compatibility.
      * Only works when proxyOptions is not set. If both are set, configuration from
      * proxy_options is used.
+     * @param httpProxyEnvironmentVariableSetting  for this connection manager
+     * @return this
      */
     public HttpClientConnectionManagerOptions withProxyEnvironmentVariableSetting(
             HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {

@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import com.github.stefanbirkner.systemlambda.SystemLambda;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -275,21 +276,24 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
-    @SuppressWarnings({ "unchecked" })
-    public static void updateEnv(String name, String val) throws ReflectiveOperationException {
-        Map<String, String> env = System.getenv();
-        Field field = env.getClass().getDeclaredField("m");
-        field.setAccessible(true);
-        ((Map<String, String>) field.get(env)).put(name, val);
-    }
+//    @SuppressWarnings({ "unchecked" })
+//    public static void updateEnv(String name, String val) throws ReflectiveOperationException {
+//        Map<String, String> env = System.getenv();
+//        Field field = env.getClass().getDeclaredField("m");
+//        field.setAccessible(true);
+//        ((Map<String, String>) field.get(env)).put(name, val);
+//    }
     @Test
-    public void testConnectionManager_EnvLegacyHttpProxy() throws ReflectiveOperationException {
+    public void testConnectionManager_EnvLegacyHttpProxy() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
-        updateEnv("https_proxy", "https://"+"invalid_host2"+":"+HTTPS_PROXY_PORT);
-        try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
-            doHttpConnectionManagerProxyTest(manager);
-        }
+        SystemLambda.withEnvironmentVariable("https_proxy", "https://"+"invalid_host2"+":"+HTTPS_PROXY_PORT)
+                .and("second", "second value")
+                .execute(() -> {
+                    try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
+                        doHttpConnectionManagerProxyTest(manager);
+                    }
+                });
     }
 
     @Test

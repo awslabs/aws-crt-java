@@ -237,7 +237,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     manager_options.proxy_ev_settings = &proxy_ev_settings;
 
-
     binding->manager = aws_http_connection_manager_new(allocator, &manager_options);
     if (binding->manager == NULL) {
         aws_jni_throw_runtime_exception(

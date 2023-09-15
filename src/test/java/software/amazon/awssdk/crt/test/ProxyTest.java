@@ -26,8 +26,10 @@ import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -273,11 +275,18 @@ public class ProxyTest extends CrtTestFixture  {
         }
     }
 
+    @SuppressWarnings({ "unchecked" })
+    public static void updateEnv(String name, String val) throws ReflectiveOperationException {
+        Map<String, String> env = System.getenv();
+        Field field = env.getClass().getDeclaredField("m");
+        field.setAccessible(true);
+        ((Map<String, String>) field.get(env)).put(name, val);
+    }
     @Test
-    public void testConnectionManager_EnvLegacyHttpProxy() {
+    public void testConnectionManager_EnvLegacyHttpProxy() throws ReflectiveOperationException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
-        System.setProperty("https_proxy", "https://"+"invalid_host"+":"+HTTPS_PROXY_PORT);
+        updateEnv("https_proxy", "https://"+"invalid_host"+":"+HTTPS_PROXY_PORT);
         try (HttpClientConnectionManager manager = buildEnvProxiedConnectionManager(ProxyTestType.LEGACY_HTTP)) {
             doHttpConnectionManagerProxyTest(manager);
         }

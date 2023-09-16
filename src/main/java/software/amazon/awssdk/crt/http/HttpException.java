@@ -6,13 +6,14 @@
 package software.amazon.awssdk.crt.http;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtErrorInfo;
 
 /**
  * This exception will be thrown by any exceptional cases encountered within the
  * JNI bindings to the AWS Common Runtime
  */
 public class HttpException extends RuntimeException {
-    private int errorCode;
+    private final int errorCode;
 
     /**
      * Constructs a new HttpException
@@ -24,11 +25,25 @@ public class HttpException extends RuntimeException {
     }
 
     /**
-     * Returns the error code captured when the exception occurred. This can be fed to {@link CRT.awsErrorString} to
+     * Returns the error code captured when the exception occurred. This can be fed to {@link CRT.awsErrorName()} to
      * get a user-friendly error string
      * @return The error code associated with this exception
      */
-    int getErrorCode() {
+    public int getErrorCode() {
         return errorCode;
+    }
+
+    /**
+     * Returns more detailed error info if it has been modeled.
+     */
+    public CrtErrorInfo getErrorInfo() {
+        return CrtErrorInfo.fromErrorCode(errorCode);
+    }
+
+    /**
+     * Returns true if this exception is retryable.
+     */
+    public boolean isRetryable() {
+        return HttpClientConnection.isErrorRetryable(this);
     }
 }

@@ -15,7 +15,7 @@ import static software.amazon.awssdk.crt.CRT.awsErrorString;
  */
 public enum CrtErrorInfo {
     Success(0),
-    TLSNegotiationFailure(1049),
+    TLSNegotiationFailure(1029),
     /**
      * We didn't know what it was, and need a way to know that.
      */

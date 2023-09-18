@@ -24,7 +24,7 @@ public class HttpException extends RuntimeException {
     }
 
     /**
-     * Returns the error code captured when the exception occurred. This can be fed to {@link CRT.awsErrorString} to
+     * Returns the error code captured when the exception occurred. This can be fed to CRT.awsErrorString() to
      * get a user-friendly error string
      * @return The error code associated with this exception
      */

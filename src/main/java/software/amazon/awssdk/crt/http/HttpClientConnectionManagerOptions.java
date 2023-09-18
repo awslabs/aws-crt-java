@@ -203,10 +203,12 @@ public class HttpClientConnectionManagerOptions {
 
     /**
      * Optional.
-     * Sets the configuration for fetching proxy configuration from environment.
-     * By Default read proxy configuration from environment is disabled for backward compatibility.
-     * Only works when proxyOptions is not set. If both are set, configuration from
-     * proxy_options is used.
+     * Sets how proxy is fetched from the environment.
+     * Reading proxy configuration from environment is disabled if this is NULL for backward compatibility.
+     * Only works when proxyOptions is not set. The proxy settings follow the following precedence
+     * 1. Configured Proxy Setting
+     * 2. Environment (if enabled)
+     * 3. No proxy
      * @param httpProxyEnvironmentVariableSetting  for this connection manager
      * @return this
      */

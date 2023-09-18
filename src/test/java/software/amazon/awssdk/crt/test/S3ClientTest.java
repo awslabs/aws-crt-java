@@ -1263,7 +1263,7 @@ public class S3ClientTest extends CrtTestFixture {
         // resolution
         final int vipsNeeded = (int) Math.ceil(expectedGbps / 0.5 / 10);
         final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup",
-                new Integer((int) Math.ceil(vipsNeeded / 5)).toString()));
+                Integer.toString((int) Math.ceil(vipsNeeded / 5))));
         System.out.println(String.format("REGION=%s, WARMUP=%s", region, sampleDelay));
 
         // Ignore stats during warm up time, they skew results
@@ -1402,7 +1402,7 @@ public class S3ClientTest extends CrtTestFixture {
         // resolution
         final int vipsNeeded = (int) Math.ceil(expectedGbps / 0.5 / 10);
         final int sampleDelay = Integer.parseInt(System.getProperty("aws.crt.s3.benchmark.warmup",
-                new Integer((int) Math.ceil(vipsNeeded / 5)).toString()));
+                Integer.toString((int) Math.ceil(vipsNeeded / 5))));
         System.out.println(String.format("REGION=%s, WARMUP=%s", region, sampleDelay));
 
         // Ignore stats during warm up time, they skew results

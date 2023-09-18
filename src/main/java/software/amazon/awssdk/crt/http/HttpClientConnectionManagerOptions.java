@@ -28,6 +28,7 @@ public class HttpClientConnectionManagerOptions {
     private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
@@ -199,6 +200,30 @@ public class HttpClientConnectionManagerOptions {
      * @return the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+    /**
+     * Optional.
+     * Sets how proxy is fetched from the environment.
+     * Reading proxy configuration from environment is disabled if this is NULL for backward compatibility.
+     * Only works when proxyOptions is not set. The proxy settings follow the following precedence
+     * 1. Configured Proxy Setting
+     * 2. Environment (if enabled)
+     * 3. No proxy
+     * @param httpProxyEnvironmentVariableSetting  for this connection manager
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
+        return this;
+    }
+
+    /**
+     * @return the proxy environment variable setting
+     */
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
+    }
 
     /**
      * @return true if manual window management is used, false otherwise

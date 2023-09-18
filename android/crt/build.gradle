@@ -209,6 +209,7 @@ afterEvaluate {
                 version = '1.0.0-SNAPSHOT'
             }
         }
+
         repositories {
             maven {
                 def snapshotRepo = "https://aws.oss.sonatype.org/content/repositories/snapshots"

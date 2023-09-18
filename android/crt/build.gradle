@@ -185,6 +185,7 @@ afterEvaluate {
                             url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
+
                     developers {
                         developer {
                             id.set("aws-sdk-common-runtime")
@@ -192,6 +193,7 @@ afterEvaluate {
                             email.set("aws-sdk-common-runtime@amazon.com")
                         }
                     }
+
                     scm {
                         connection.set("scm:git:git://github.com/awslabs/aws-crt-java.git")
                         developerConnection.set("scm:git:ssh://github.com/awslabs/aws-crt-java.git")

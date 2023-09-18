@@ -58,7 +58,8 @@ public class HttpProxyEnvironmentVariableSetting {
     }
 
     /**
-     * Sets the proxy connection type
+     * (Optional)
+     * Sets the proxy connection type. Defaults to HttpProxyConnectionType.Legacy
      * @param connectionType what kind of connection to establish
      */
     public void setConnectionType(HttpProxyConnectionType connectionType) {
@@ -79,11 +80,17 @@ public class HttpProxyEnvironmentVariableSetting {
         return environmentVariableType;
     }
 
+    /**
+     * (Optional)
+     * Enable/Disable reading from environment variable for Proxy config. Defaults to Enabled
+     * @param environmentVariableType enable or disable env proxy
+     */
     public void setEnvironmentVariableType(HttpProxyEnvironmentVariableType environmentVariableType) {
         this.environmentVariableType = environmentVariableType;
     }
 
     /**
+     * (Optional)
      * Sets the tls connection options for the proxy connection
      *
      * @param tlsConnectionOptions tls connection options for the proxy connection

@@ -133,6 +133,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStress() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
         URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
@@ -179,6 +180,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStressWithBody() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
         URI uri = new URI(String.format("https://localhost:%d/uploadTest", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
@@ -249,6 +251,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsUploadStress() throws Exception {
+        skipIfAndroid();
         /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
         skipIfLocalhostUnavailable();
 
@@ -303,6 +306,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsDownloadStress() throws Exception {
+        skipIfAndroid();
         /* Test that download a 2.5GB data from local server */
         skipIfLocalhostUnavailable();
         URI uri = new URI(String.format("https://localhost:%d/downloadTest", LOCAL_HTTPS_PORT));

@@ -93,6 +93,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3ClientCreateDestroy() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
@@ -104,6 +105,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3ClientCreateDestroyWithCredentialsProvider() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);
@@ -121,6 +123,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3ClientCreateDestroyWithoutSigningConfig() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);
                 HostResolver hostResolver = new HostResolver(elg);
@@ -136,6 +139,7 @@ public class S3ClientTest extends CrtTestFixture {
     /* Test that a client can be created successfully with retry options. */
     @Test
     public void testS3ClientCreateDestroyRetryOptions() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
@@ -156,6 +160,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyRetryOptionsUnspecifiedELG() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1)) {
@@ -175,6 +180,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyTcpKeepAliveOptions() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
@@ -196,6 +202,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyMonitoringOptions() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         try (EventLoopGroup elg = new EventLoopGroup(0, 1); EventLoopGroup retry_elg = new EventLoopGroup(0, 1)) {
@@ -215,6 +222,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyHttpProxyOptions() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);
                 EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
@@ -240,6 +248,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3ClientCreateDestroyHttpProxyEnvironmentVariableSetting() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         try (EventLoopGroup elg = new EventLoopGroup(0, 1);
                 EventLoopGroup retry_elg = new EventLoopGroup(0, 1);
@@ -259,6 +268,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3Get() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -306,6 +316,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3GetWithEndpoint() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -360,6 +371,7 @@ public class S3ClientTest extends CrtTestFixture {
      */
     @Test
     public void testS3GetWithBackpressure() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -450,6 +462,7 @@ public class S3ClientTest extends CrtTestFixture {
     // the onResponseBody callback
     @Test
     public void testS3GetWithBackpressureIncrementViaOnResponseBody() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -499,6 +512,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3OverrideRequestCredentials() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -550,6 +564,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3GetWithSignConfigShouldSignHeader() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -694,6 +709,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3Put() throws IOException {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         testS3PutHelper(false, false, null);
@@ -702,6 +718,7 @@ public class S3ClientTest extends CrtTestFixture {
     // Test that we can upload by passing a filepath instead of an HTTP body stream
     @Test
     public void testS3PutFilePath() throws IOException {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         testS3PutHelper(true, false, null);
@@ -710,6 +727,7 @@ public class S3ClientTest extends CrtTestFixture {
     // Test that we can upload without provide the content length
     @Test
     public void testS3PutUnknownContentLength() throws IOException {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         testS3PutHelper(false, true, null);
@@ -718,6 +736,7 @@ public class S3ClientTest extends CrtTestFixture {
     // Test that we can upload to a path with special characters
     @Test
     public void testS3PutSpecialCharPath() throws IOException {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt");
@@ -726,6 +745,7 @@ public class S3ClientTest extends CrtTestFixture {
     // Test that passing a nonexistent file path will cause an error
     @Test
     public void testS3PutNonexistentFilePath() throws IOException {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -788,6 +808,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3PutPauseResume() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -895,6 +916,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3PutTrailerChecksums() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -1015,6 +1037,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void testS3GetChecksums() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -1079,6 +1102,7 @@ public class S3ClientTest extends CrtTestFixture {
     // side. reenable once its fixed in crt.
     // @Test
     public void testS3Copy() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
@@ -1238,6 +1262,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void benchmarkS3Get() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));
@@ -1381,6 +1406,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     @Test
     public void benchmarkS3Put() {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         Assume.assumeNotNull(System.getProperty("aws.crt.s3.benchmark"));

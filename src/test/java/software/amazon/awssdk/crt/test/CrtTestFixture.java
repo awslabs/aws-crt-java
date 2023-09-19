@@ -218,7 +218,12 @@ public class CrtTestFixture {
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
             Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
         }
-        SetupTestProperties();
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            platform.setupOnce();
+        }else {
+            SetupTestProperties();
+        }
     }
 
     /* The setup function will be run before every test */
@@ -229,11 +234,6 @@ public class CrtTestFixture {
         // TODO this CrtTestContext should be removed as we are using System Properties
         // for tests now.
         context = new CrtTestContext();
-        CrtPlatform platform = CRT.getPlatformImpl();
-        if (platform != null) {
-            platform.testSetup(context);
-        }
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup end");
     }
 
     @After
@@ -247,6 +247,7 @@ public class CrtTestFixture {
         context = null;
 
         CrtResource.waitForNoResources();
+
         if (CRT.getOSIdentifier() != "android") {
             try {
                 Runtime.getRuntime().gc();
@@ -299,5 +300,12 @@ public class CrtTestFixture {
 
     protected void skipIfLocalhostUnavailable() {
         Assume.assumeTrue(System.getProperty("aws.crt.localhost") != null);
+    }
+
+    protected void skipIfAndroid() {
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            Assume.assumeFalse(platform.getOSIdentifier().contains("android"));
+        }
     }
 }

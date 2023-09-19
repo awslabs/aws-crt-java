@@ -182,6 +182,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
     @Test
     public void testSanitizer() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
@@ -193,18 +194,21 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
     @Test
     public void testSerialRequests() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 
     @Test
     public void testStreamManagerMetrics() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         int maxStreams = 3;

@@ -99,6 +99,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testHttpConnection() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         // S3
         testConnectionWithAllCiphers(new URI("https://aws-crt-test-stuff.s3.amazonaws.com"), true, null);
@@ -120,6 +121,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testStaticDefaults() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
@@ -141,6 +143,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
 
     @Test
     public void testRetryableErrorCheck() {
+        skipIfAndroid();
         // AWS_ERROR_HTTP_HEADER_NOT_FOUND should not be retryable
         HttpException exception = new HttpException(0x0801);
         assertFalse(HttpClientConnection.isErrorRetryable(exception));

@@ -181,6 +181,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testSerialRequests() throws Exception {
+        skipIfAndroid();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 
@@ -189,6 +190,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
      */
     @Test
     public void testConnectionCounters() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         URI uri = new URI(endpoint);
@@ -271,11 +273,13 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        skipIfAndroid();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }
 
     @Test
     public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         HttpClientConnection firstConnection = null;
         CompletableFuture<HttpClientConnection> firstAcquisition;
@@ -294,6 +298,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testCancelAcquire() throws Exception {
+        skipIfAndroid();
         // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
         skipIfNetworkUnavailable();
 

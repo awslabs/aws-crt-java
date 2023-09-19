@@ -3086,6 +3086,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     /* MQTT5 ConnWS_Cred_UC2 - default credentials connect */
     @Test
     public void ConnWS_Cred_UC2() {
+        skipIfAndroid(); // Credential Provider support not yet added for Android
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION);
         CredentialsProvider provider = null;

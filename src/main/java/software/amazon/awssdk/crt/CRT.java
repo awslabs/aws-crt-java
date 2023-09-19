@@ -87,7 +87,6 @@ public final class CRT {
      * @return a string describing the detected platform the CRT is executing on
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
-
         CrtPlatform platform = getPlatformImpl();
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
@@ -101,6 +100,8 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
+        } else if (name.contains("android")){
+            return "android";
         }
 
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
@@ -122,7 +123,6 @@ public final class CRT {
 
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
-
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
@@ -395,8 +395,11 @@ public final class CRT {
     private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
-                // Search for test impl first, fall back to crt
+                // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+                // Search for android test impl specifically because getOSIdentifier will return "linux" on android
+                "software.amazon.awssdk.crt.test.android.CrtPlatformImpl",
+                // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {
             try {

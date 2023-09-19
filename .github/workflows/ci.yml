@@ -250,9 +250,9 @@ jobs:
           python3 ./.github/workflows/run_android_ci.py \
           --run_id ${{ github.run_id }} \
           --run_attempt ${{ github.run_attempt }} \
-          --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
-
+          --project_arn "arn:aws:devicefarm:us-west-2:123124136734:project:b61670a0-dd98-4375-90e4-05ee1a98db0b" \
+          --device_pool_arn "arn:aws:devicefarm:us-west-2:123124136734:devicepool:b61670a0-dd98-4375-90e4-05ee1a98db0b/aae8c581-8204-44a4-9935-5060ba738c9e"
+  # gonna change here
   # check that docs can still build
   check-docs:
     runs-on: ubuntu-22.04 # latest

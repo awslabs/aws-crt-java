@@ -203,6 +203,12 @@ afterEvaluate {
                 version = android.defaultConfig.versionName
             }
 
+            debug(MavenPublication) {
+                from components.release
+
+                groupId = 'software.amazon.awssdk.crt'
+                artifactId = 'aws-crt-android'
+            }
         }
 
         repositories {

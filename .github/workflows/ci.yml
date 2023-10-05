@@ -232,7 +232,7 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:build
-          ./gradlew :android:crt:publishToMavenLocal
+          ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
       # Setup files required by test app for Device Farm testing
       - name: Setup Android Test Files
         run: |

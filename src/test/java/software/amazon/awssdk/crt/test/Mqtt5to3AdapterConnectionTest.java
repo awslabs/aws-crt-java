@@ -777,6 +777,61 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
         }
     }
 
+    @Test
+    public void TestNullPubAck() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5to3Adapter_Binding_Java_" + testUUID;
+        String clientId = "test/MQTT5TO3Adapter_ClientId" + testUUID;
+        String testPayload = "PUBLISH ME!";
+        boolean isPubAckFailed = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+            builder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+            ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
+            connectBuilder.withClientId(clientId);
+            builder.withConnectOptions(connectBuilder.build());
+
+            try(Mqtt5Client client = new Mqtt5Client(builder.build());){
+                MqttClientConnection connection = new MqttClientConnection(client, null);
+
+                // Do an offline publish. The client would never get PUBACK.
+                MqttMessage message = new MqttMessage(testTopic, testPayload.getBytes(), QualityOfService.AT_LEAST_ONCE,
+                        false);
+                CompletableFuture<Integer> published = connection.publish(message);
+
+                // Close connection should fire the incomplete PUBACK
+                connection.close();
+                published.get();
+
+            }catch (Exception e )
+            {
+                // We expect to catch the exception as the PubAck should fail on connection.close().
+                isPubAckFailed = true;
+            }
+            assertTrue("The PUBACK should fail on connection close", isPubAckFailed);
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
     /****************************************************************
      * MQTT311 LIFECYCLE CALLBACK TEST CASE
      ****************************************************************/

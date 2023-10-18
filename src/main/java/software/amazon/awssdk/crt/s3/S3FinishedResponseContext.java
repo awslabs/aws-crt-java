@@ -11,7 +11,7 @@ public class S3FinishedResponseContext {
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
-    private Exception orignalException;
+    private Exception exceptionFromJava;
     /*
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
@@ -25,7 +25,7 @@ public class S3FinishedResponseContext {
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
-        this.orignalException = exception;
+        this.exceptionFromJava = exception;
     }
 
     public int getErrorCode () {
@@ -58,8 +58,8 @@ public class S3FinishedResponseContext {
         return this.didValidateChecksum;
     }
 
-    public Exception getOrignalException() {
-        return orignalException;
+    public Exception getExceptionFromJava() {
+        return exceptionFromJava;
     }
 
 }

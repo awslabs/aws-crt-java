@@ -292,7 +292,7 @@ public class S3ClientTest extends CrtTestFixture {
                             "Meta request finished with error code " + context.getErrorCode());
                     if (context.getErrorCode() != 0) {
                         onFinishedFuture.completeExceptionally(
-                                context.getOrignalException());
+                                context.getExceptionFromJava());
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));

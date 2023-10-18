@@ -47,8 +47,13 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
+
     /**
-     * Helper function to create a runtime exception from S3 response and a cause. The cause can be a Java exception thrown in a callback.
+     * Helper function to create a runtime exception from S3 response and a cause.
+     * @param errorCode The CRT error code
+     * @param responseStatus statusCode of the HTTP response
+     * @param errorPayload  body of the error response
+     * @param cause cause of the exception such as a Java exception in a callback
      */
     public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload, Throwable cause) {
         super(errorCode, cause);

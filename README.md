@@ -6,7 +6,24 @@ Java Bindings for the AWS Common Runtime
 
 This library is licensed under the Apache 2.0 License.
 
-## Building
+*__Jump To:__*
+
+* [Platform Specific Building](#platform)
+    * [Linux/Unix](#linuxunix)
+    * [OSX](#osx)
+    * [Windows](#windows)
+    * [Android](./android/ANDROID.md)
+* [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
+* [Installing](#installing)
+* [Platform-Specific JARs](#platform-specific-jars)
+* [System Properties](#system-properties)
+* [TLS Behavior](#tls-behavior)
+* [Testing](#testing)
+* [IDEs](#ides)
+* [Debugging](#debugging)
+
+
+## Platform
 
 ### Linux/Unix
 Requirements:
@@ -28,6 +45,8 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `brew install maven cmake` (if you have homebrew installed, otherwise install these manually)
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
@@ -40,6 +59,8 @@ Requirements:
 * CMake 3.1
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `choco install maven` (if you have chocolatey installed), otherwise install maven and the JDK manually
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`

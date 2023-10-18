@@ -61,7 +61,8 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env);
 
 /*******************************************************************************
  * Checks whether or not an exception is pending on the stack.
- * If the exception is pending, deletes existing global reference of `out`, sets `out` to the new exception and clears it.
+ * If the exception is pending, deletes existing global reference of `out`, sets `out` to the new exception and clears
+ * it.
  *
  * @param env A pointer to the JNI environment, used to interact with the JVM.
  * @param out A pointer to a jthrowable object. If an exception is pending, the function

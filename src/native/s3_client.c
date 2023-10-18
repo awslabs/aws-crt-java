@@ -483,7 +483,8 @@ static void s_on_s3_meta_request_finish_callback(
         }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
         /* Only propagate java_exception if crt error code is callback failure */
-        jthrowable java_exception = meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception: NULL;
+        jthrowable java_exception =
+            meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception : NULL;
 
         (*env)->CallVoidMethod(
             env,

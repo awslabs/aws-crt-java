@@ -355,11 +355,7 @@ static int s_on_s3_meta_request_body_callback(
             range_start,
             range_end);
 
-        callback_data->java_exception = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
-        if (aws_jni_check_and_clear_exception(env)) {
-           // callback_data->java_exception = (*env)->ExceptionOccurred(env);
-           // aws_jni_check_and_clear_exception(env);
-           // callback_data->java_exception = (jthrowable)(*env)->NewGlobalRef(env, callback_data->java_exception);
+        if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",

@@ -59,6 +59,8 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
  ******************************************************************************/
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
 
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out);
+
 /*******************************************************************************
  * Set a size_t based on a jlong.
  * If conversion fails, a java IllegalArgumentException is thrown like

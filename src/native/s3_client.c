@@ -358,7 +358,7 @@ static int s_on_s3_meta_request_body_callback(
         if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
-                "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",
+                "id=%p: Received exception from S3MetaRequest.onResponseBody callback",
                 (void *)meta_request);
             aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;

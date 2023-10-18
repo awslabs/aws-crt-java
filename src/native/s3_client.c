@@ -432,6 +432,7 @@ static int s_on_s3_meta_request_headers_callback(
             s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders,
             response_status,
             java_headers_buffer);
+
         if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,

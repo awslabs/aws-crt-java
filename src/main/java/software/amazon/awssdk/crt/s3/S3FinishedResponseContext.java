@@ -19,6 +19,7 @@ public class S3FinishedResponseContext {
      * errorPayload body of the error response. Can be null if the request completed successfully
      * checksumAlgorithm, the algorithm used to validate the Body, None if not validated
      * didValidateChecksum which is true if the response was validated.
+     * exception CrtS3RuntimeException if any error occurred. May contain the cause of the exception such as a Java exception in a callback.
      */
     S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause) {
         this.errorCode = errorCode;

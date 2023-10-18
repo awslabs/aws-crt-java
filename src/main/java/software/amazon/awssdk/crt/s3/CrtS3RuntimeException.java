@@ -29,14 +29,6 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         this.awsErrorMessage = GetElementFromPayload(errorPayload, messageBeginBlock, messageEndBlock);
     }
 
-    public CrtS3RuntimeException(S3FinishedResponseContext context) {
-        super(context.getErrorCode());
-        String errorString = new String(context.getErrorPayload(), java.nio.charset.StandardCharsets.UTF_8);
-        this.statusCode = context.getResponseStatus();
-        this.errorPayload = errorString;
-        this.awsErrorCode = GetElementFromPayload(this.errorPayload, codeBeginBlock, codeEndBlock);
-        this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
-    }
 
     public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload) {
         super(errorCode);

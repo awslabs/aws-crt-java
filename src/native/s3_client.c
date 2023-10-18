@@ -482,6 +482,9 @@ static void s_on_s3_meta_request_finish_callback(
             error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
         }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
+        /* Only propagate java_exception if crt error code is callback failure */
+        jthrowable java_exception = meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception: NULL;
+
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -491,7 +494,7 @@ static void s_on_s3_meta_request_finish_callback(
             jni_payload,
             meta_request_result->validation_algorithm,
             meta_request_result->did_validate,
-            callback_data->java_exception);
+            java_exception);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(

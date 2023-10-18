@@ -33,10 +33,6 @@ public class S3FinishedResponseContext {
         }
     }
 
-    /*
-     * Returns the CRT Error Code
-     * @deprecated Use getCrtS3RuntimeException instead
-     */
     public int getErrorCode() {
         return this.errorCode;
     }

@@ -11,6 +11,7 @@ public class S3FinishedResponseContext {
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
+    private Exception orignalException;
     /*
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
@@ -18,12 +19,13 @@ public class S3FinishedResponseContext {
      * checksumAlgorithm, the algorithm used to validate the Body, None if not validated
      * didValidateChecksum which is true if the response was validated.
      */
-    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum) {
+    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Exception exception) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
+        this.orignalException = exception;
     }
 
     public int getErrorCode () {
@@ -55,4 +57,9 @@ public class S3FinishedResponseContext {
     public boolean isChecksumValidated () {
         return this.didValidateChecksum;
     }
+
+    public Exception getOrignalException() {
+        return orignalException;
+    }
+
 }

@@ -11,7 +11,8 @@ public class S3FinishedResponseContext {
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
-    private Exception exception;
+    private CrtS3RuntimeException exception;
+
     /*
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
@@ -25,14 +26,18 @@ public class S3FinishedResponseContext {
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
-        if(cause != null) {
+        if (cause != null) {
             this.exception = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload, cause);
-        } else if(errorCode != 0){
+        } else if (errorCode != 0) {
             this.exception = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
         }
     }
 
-    public int getErrorCode () {
+    /*
+     * Returns the CRT Error Code
+     * @deprecated Use getCrtS3RuntimeException instead
+     */
+    public int getErrorCode() {
         return this.errorCode;
     }
 
@@ -40,14 +45,14 @@ public class S3FinishedResponseContext {
      * If the request didn't receive a response due to a connection
      * failure or some other issue the response status will be 0.
      */
-    public int getResponseStatus () {
+    public int getResponseStatus() {
         return this.responseStatus;
     }
 
     /*
      * In the case of a failed http response get the payload of the response.
      */
-    public byte[] getErrorPayload () {
+    public byte[] getErrorPayload() {
         return this.errorPayload;
     }
 
@@ -55,14 +60,15 @@ public class S3FinishedResponseContext {
      * if no checksum is found, or the request finished with an error the Algorithm will be None,
      * otherwise the algorithm will correspond to the one attached to the object when uploaded.
      */
-    public ChecksumAlgorithm getChecksumAlgorithm () {
+    public ChecksumAlgorithm getChecksumAlgorithm() {
         return this.checksumAlgorithm;
     }
-    public boolean isChecksumValidated () {
+
+    public boolean isChecksumValidated() {
         return this.didValidateChecksum;
     }
 
-    public Throwable getException() {
+    public CrtS3RuntimeException getException() {
         return exception;
     }
 

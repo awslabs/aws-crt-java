@@ -317,7 +317,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
-        RuntimeException expectedException = new RuntimeException("Exception In Java Callback");
+        RuntimeException expectedException = new RuntimeException("Exception From a Java Function");
         boolean foundExpectedException = false;
 
         try (S3Client client = createS3Client(clientOptions)) {

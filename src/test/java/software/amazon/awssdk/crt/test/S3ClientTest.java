@@ -281,8 +281,7 @@ public class S3ClientTest extends CrtTestFixture {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
-                    throw new Error("Waqar's Exception");
-                    //return 0;
+                    return 0;
                 }
 
                 @Override

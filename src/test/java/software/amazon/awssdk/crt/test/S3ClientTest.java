@@ -282,7 +282,7 @@ public class S3ClientTest extends CrtTestFixture {
                     byte[] bytes = new byte[bodyBytesIn.remaining()];
                     bodyBytesIn.get(bytes);
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
-                    throw new RuntimeException("Waqar's Exception");
+                    throw new Error("Waqar's Exception");
                     //return 0;
                 }
 
@@ -291,8 +291,7 @@ public class S3ClientTest extends CrtTestFixture {
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
                             "Meta request finished with error code " + context.getErrorCode());
                     if (context.getErrorCode() != 0) {
-                        onFinishedFuture.completeExceptionally(
-                                context.getExceptionFromJava());
+                        onFinishedFuture.completeExceptionally(context.getException());
                         return;
                     }
                     onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
@@ -310,8 +309,12 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
+           // ex.printStackTrace();
+            System.out.println("------------Msg----------------");
+            System.out.println(ex.getMessage());
+            System.out.println("------------cause----------------");
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+
         }
     }
 

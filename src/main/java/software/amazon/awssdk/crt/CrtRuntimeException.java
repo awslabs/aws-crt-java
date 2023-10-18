@@ -64,8 +64,9 @@ public class CrtRuntimeException extends RuntimeException {
     }
 
     /**
-     * Constructor for Crt exceptions due to native errors with a cause. The cause can be a Java exception thrown in a callback.
+     * Constructor for Crt exceptions due to native errors with a cause.
      * @param errorCode native error code detailing the reason for the exception
+     * @param cause cause of the exception such as a Java exception in a callback
      */
     public CrtRuntimeException(int errorCode, Throwable cause) {
         super(CRT.awsErrorString(errorCode), cause);

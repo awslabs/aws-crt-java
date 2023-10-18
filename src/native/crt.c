@@ -290,7 +290,9 @@ bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out) {
    bool exception_pending = (*env)->ExceptionCheck(env);
    if (exception_pending) {
        (*env)->DeleteGlobalRef(env, *out);
-       *out = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
+       if (out != NULL) {
+        *out = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
+       }
        (*env)->ExceptionClear(env);
    }
    return exception_pending;

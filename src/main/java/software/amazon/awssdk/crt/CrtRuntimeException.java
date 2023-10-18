@@ -63,6 +63,10 @@ public class CrtRuntimeException extends RuntimeException {
         this.errorName = CRT.awsErrorName(errorCode);
     }
 
+    /**
+     * Constructor for Crt exceptions due to native errors with a cause. The cause can be a Java exception thrown in a callback.
+     * @param errorCode native error code detailing the reason for the exception
+     */
     public CrtRuntimeException(int errorCode, Throwable cause) {
         super(CRT.awsErrorString(errorCode), cause);
         this.errorCode = errorCode;

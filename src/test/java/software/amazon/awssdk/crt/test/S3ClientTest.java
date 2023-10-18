@@ -271,7 +271,6 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        Log.initLoggingToStdout(Log.LogLevel.Error);
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -309,13 +308,61 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
-           // ex.printStackTrace();
-            System.out.println("------------Msg----------------");
-            System.out.println(ex.getMessage());
-            System.out.println("------------cause----------------");
-            ex.printStackTrace();
-
+            Assert.fail(ex.getMessage());
         }
+    }
+
+    @Test
+    public void testS3CallbackExceptionIsProperlyPropagated() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        RuntimeException expectedException = new RuntimeException("Exception In Java Callback");
+        boolean foundExpectedException = false;
+
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    throw expectedException;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(context.getException());
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            while (cause != null) {
+                if (cause == expectedException) {
+                    foundExpectedException = true;
+                    break;
+                }
+                cause = cause.getCause();
+            }
+        }
+        Assert.assertTrue("Expected exception not found in the cause chain", foundExpectedException);
     }
 
     @Test

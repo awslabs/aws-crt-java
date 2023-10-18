@@ -38,8 +38,8 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
-    public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload, Throwable cause) {
-        super(errorCode, cause);
+    public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload) {
+        super(errorCode);
         String errorString = new String(errorPayload, java.nio.charset.StandardCharsets.UTF_8);
         this.statusCode = responseStatus;
         this.errorPayload = errorString;
@@ -47,8 +47,11 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         this.awsErrorMessage = GetElementFromPayload(this.errorPayload, messageBeginBlock, messageEndBlock);
     }
 
-    public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload) {
-        super(errorCode);
+    /**
+     * Helper function to create a runtime exception from S3 response and a cause. The cause can be a Java exception thrown in a callback.
+     */
+    public CrtS3RuntimeException(int errorCode, int responseStatus, byte[] errorPayload, Throwable cause) {
+        super(errorCode, cause);
         String errorString = new String(errorPayload, java.nio.charset.StandardCharsets.UTF_8);
         this.statusCode = responseStatus;
         this.errorPayload = errorString;

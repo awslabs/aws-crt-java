@@ -54,7 +54,6 @@ git clone --branch v0.27.6 --recurse-submodules https://github.com/awslabs/aws-c
 ## Consuming AWS CRT Android
 
 ### Consuming from Maven
-(#consuming-from-locally-installed)
 Consuming this CRT via Maven is the preferred method of consuming it and using it within your application. To consume
 AWS CRT Android in your application, add the following to your `build.gradle` repositories and dependencies:
 

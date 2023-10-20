@@ -67,7 +67,7 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env);
  * @param env A pointer to the JNI environment, used to interact with the JVM.
  * @param out A pointer to a jthrowable object. If an exception is pending, the function
  *            deletes any existing global reference pointed to by 'out', and sets 'out'
- *            to point to the new exception.
+ *            to point to the new exception. Must not be NULL.
  *
  * @return true if an exception was pending and has been cleared; false otherwise.
  *

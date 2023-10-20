@@ -18,43 +18,26 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.CognitoCredentialsProvider.CognitoCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider.StaticCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider.X509CredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
-import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.io.TlsContextPkcs11Options;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.mqtt5.*;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientOfflineQueueBehavior;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientSessionBehavior;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ExtendedValidationAndFlowControlOptions;
-import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.PublishEvents;
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectPacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectReasonCode;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket.PublishPacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.SubscribePacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingType;
-import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents;
 import software.amazon.awssdk.crt.mqtt.OnConnectionSuccessReturn;
@@ -64,14 +47,7 @@ import software.amazon.awssdk.crt.mqtt.OnConnectionClosedReturn;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import org.junit.Test;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
@@ -805,7 +781,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             connectBuilder.withClientId(clientId);
             builder.withConnectOptions(connectBuilder.build());
 
-            try(Mqtt5Client client = new Mqtt5Client(builder.build());){
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
                 MqttClientConnection connection = new MqttClientConnection(client, null);
 
                 // Do an offline publish. The client would never get PUBACK.
@@ -815,12 +791,13 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
 
                 // Close connection should fire the incomplete PUBACK
                 connection.close();
-                published.get();
-
-            }catch (Exception e )
-            {
-                // We expect to catch the exception as the PubAck should fail on connection.close().
-                isPubAckFailed = true;
+                try {
+                    published.get();
+                } catch (Exception e) {
+                    // We expect to catch the exception as the PubAck should fail on
+                    // connection.close().
+                    isPubAckFailed = true;
+                }
             }
             assertTrue("The PUBACK should fail on connection close", isPubAckFailed);
 

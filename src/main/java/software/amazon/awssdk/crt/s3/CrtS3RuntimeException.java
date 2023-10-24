@@ -101,6 +101,15 @@ public class CrtS3RuntimeException extends CrtRuntimeException {
         return statusCode;
 
     }
+
+    /**
+     * Returns the error payload without any parsing from S3 response. Can be empty if there was no error body.
+     * @return error payload
+     */
+    public String getErrorPayload() {
+        return errorPayload;
+    }
+
     @Override
     public String toString() {
         return String.format("%s: response status code(%d). aws error code(%s), aws error message(%s)", super.toString(), statusCode, awsErrorCode, awsErrorMessage);

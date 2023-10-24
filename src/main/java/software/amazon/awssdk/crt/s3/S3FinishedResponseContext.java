@@ -11,7 +11,7 @@ public class S3FinishedResponseContext {
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
-    private CrtS3RuntimeException exception;
+    private final Throwable cause;
 
     /*
      * errorCode The CRT error code
@@ -19,7 +19,7 @@ public class S3FinishedResponseContext {
      * errorPayload body of the error response. Can be null if the request completed successfully
      * checksumAlgorithm, the algorithm used to validate the Body, None if not validated
      * didValidateChecksum which is true if the response was validated.
-     * exception CrtS3RuntimeException if any error occurred. May contain the cause of the exception such as a Java exception in a callback.
+     * cause of the error such as a Java exception in a callback. Maybe NULL if there was no exception in a callback.
      */
     S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause) {
         this.errorCode = errorCode;
@@ -27,11 +27,7 @@ public class S3FinishedResponseContext {
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
-        if (cause != null) {
-            this.exception = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload, cause);
-        } else if (errorCode != 0) {
-            this.exception = new CrtS3RuntimeException(errorCode, responseStatus, errorPayload);
-        }
+        this.cause = cause;
     }
 
     public int getErrorCode() {
@@ -65,8 +61,12 @@ public class S3FinishedResponseContext {
         return this.didValidateChecksum;
     }
 
-    public CrtS3RuntimeException getException() {
-        return exception;
+    /**
+     * Cause of the error, such as a Java exception from a callback. May be NULL if there was no exception in a callback.
+     * @return throwable
+     */
+    public Throwable getCause() {
+        return cause;
     }
 
 }

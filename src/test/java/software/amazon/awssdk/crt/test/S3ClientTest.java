@@ -364,7 +364,7 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.assertSame(ex.getCause(), expectedException);
             foundExpectedException = true;
         }
-        Assert.assertTrue("Expected exception not found in the cause chain", foundExpectedException);
+        Assert.assertTrue("Expected exception not found in the cause", foundExpectedException);
     }
 
     @Test

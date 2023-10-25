@@ -17,6 +17,7 @@ import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -327,7 +328,6 @@ public class S3ClientTest extends CrtTestFixture {
         Assume.assumeTrue(hasAwsCredentials());
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         RuntimeException expectedException = new RuntimeException("Exception From a Java Function");
-        boolean foundExpectedException = false;
 
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -358,13 +358,10 @@ public class S3ClientTest extends CrtTestFixture {
                     .withResponseHandler(responseHandler);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                ExecutionException ex = assertThrows(ExecutionException.class, () -> onFinishedFuture.get());
+                Assert.assertSame(expectedException, ex.getCause());
             }
-        } catch (InterruptedException |  ExecutionException ex) {
-            Assert.assertSame(ex.getCause(), expectedException);
-            foundExpectedException = true;
         }
-        Assert.assertTrue("Expected exception not found in the cause", foundExpectedException);
     }
 
     @Test
@@ -813,7 +810,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withResponseHandler(responseHandler);
 
             // makeMetaRequest() should fail
-            Throwable thrown = Assert.assertThrows(Throwable.class,
+            Throwable thrown = assertThrows(Throwable.class,
                     () -> client.makeMetaRequest(metaRequestOptions));
 
             // exception should indicate the file doesn't exist
@@ -901,7 +898,7 @@ public class S3ClientTest extends CrtTestFixture {
                 resumeToken = metaRequest.pause();
                 Assert.assertNotNull(resumeToken);
 
-                Throwable thrown = Assert.assertThrows(Throwable.class,
+                Throwable thrown = assertThrows(Throwable.class,
                         () -> onFinishedFuture.get());
 
                 Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtRuntimeException) thrown.getCause()).errorName);

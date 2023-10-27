@@ -399,6 +399,7 @@ public final class CRT {
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
                 // Search for android test impl specifically because getOSIdentifier will return "linux" on android
                 "software.amazon.awssdk.crt.test.android.CrtPlatformImpl",
+                "software.amazon.awssdk.crt.android.CrtPlatformImpl",
                 // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {

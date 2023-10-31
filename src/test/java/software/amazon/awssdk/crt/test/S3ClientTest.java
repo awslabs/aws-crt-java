@@ -97,7 +97,7 @@ public class S3ClientTest extends CrtTestFixture {
         return new RuntimeException(String.format("error code:(%d) response status code(%d), error payload(%s)",
                 context.getErrorCode(),
                 context.getResponseStatus(),
-                context.getErrorPayload() != null ? new String(context.getErrorPayload(), java.nio.charset.StandardCharsets.UTF_8) : "null",
+                new String(context.getErrorPayload(), java.nio.charset.StandardCharsets.UTF_8),
                 context.getCause()));
     }
 

@@ -46,7 +46,7 @@ public class S3FinishedResponseContext {
      * In the case of a failed http response get the payload of the response.
      */
     public byte[] getErrorPayload() {
-        return this.errorPayload;
+        return errorPayload.length > 0 ? errorPayload : null;
     }
 
     /*

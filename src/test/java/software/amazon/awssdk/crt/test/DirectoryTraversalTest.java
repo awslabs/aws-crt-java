@@ -228,6 +228,7 @@ public class DirectoryTraversalTest extends CrtTestFixture {
         DirectoryTraversal.traverse("-", false, null);
     }
 
+    @Test
     public void testTraverseDirectoryCallbackThrowingException() throws Exception {
 
         final String exceptionMessage = "THROWN BY TEST CALLBACK";

@@ -108,6 +108,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpDelete() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testRequest("DELETE", HOST, "/delete", EMPTY_BODY, false, 200);
         testRequest("DELETE", HOST, "/get", EMPTY_BODY, false, 404);
@@ -117,6 +118,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpGet() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testRequest("GET", HOST, "/delete", EMPTY_BODY, false, 404);
         testRequest("GET", HOST, "/get", EMPTY_BODY, false, 200);
@@ -126,6 +128,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpPost() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testRequest("POST", HOST, "/delete", EMPTY_BODY, false, 404);
         testRequest("POST", HOST, "/get", EMPTY_BODY, false, 404);
@@ -135,6 +138,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpPut() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testRequest("PUT", HOST, "/delete", EMPTY_BODY, false, 404);
         testRequest("PUT", HOST, "/get", EMPTY_BODY, false, 404);
@@ -144,6 +148,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpResponseStatusCodes() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testRequest("GET", HOST, "/status/200", EMPTY_BODY, false, 200);
         testRequest("GET", HOST, "/status/300", EMPTY_BODY, false, 300);
@@ -153,6 +158,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpDownload() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com",
                 "/http_test_doc.txt", EMPTY_BODY, false, 200);
@@ -176,6 +182,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     }
 
     private void testHttpUpload(boolean chunked) throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", HOST, "/put", bodyToSend, chunked, 200);
@@ -226,18 +233,21 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpUpload() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttpUpload(false);
     }
 
     @Test
     public void testHttpUploadChunked() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttpUpload(true);
     }
 
     @Test
     public void testHttpRequestUnActivated() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
 
         URI uri = new URI(HOST);
@@ -291,6 +301,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testMarshallJniUtf8Path() throws Exception {
+        skipIfAndroid();
         HttpRequest request = new HttpRequest("GET", "/?ሴ=bar");
         request.marshalForJni();
     }

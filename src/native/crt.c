@@ -286,6 +286,16 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     return exception_pending;
 }
 
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->DeleteGlobalRef(env, *out);
+        *out = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
+}
+
 int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix) {
     if (java_long < 0) {
         aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
@@ -585,7 +595,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_register_log_subject_info_list(&s_crt_log_subject_list);
 
     s_jvm_table_add_jvm_for_env(env);
-    cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
         atexit(s_jni_atexit_strict);

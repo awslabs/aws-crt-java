@@ -60,6 +60,21 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
 
 /*******************************************************************************
+ * Checks whether or not an exception is pending on the stack.
+ * If the exception is pending, deletes existing global reference of `out`, sets `out` to the new exception and clears
+ * it.
+ *
+ * @param env A pointer to the JNI environment, used to interact with the JVM.
+ * @param out A pointer to a jthrowable object. If an exception is pending, the function
+ *            deletes any existing global reference pointed to by 'out', and sets 'out'
+ *            to point to the new exception. Must not be NULL.
+ *
+ * @return true if an exception was pending and has been cleared; false otherwise.
+ *
+ ******************************************************************************/
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out);
+
+/*******************************************************************************
  * Set a size_t based on a jlong.
  * If conversion fails, a java IllegalArgumentException is thrown like
  * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.

@@ -483,6 +483,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     jlong jni_server_bootstrap,
     jobject jni_server_listener_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_server_bootstrap *server_bootstrap = (struct aws_server_bootstrap *)jni_server_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_context = (struct aws_tls_ctx *)jni_tls_ctx;
@@ -590,6 +592,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_getBound
     jlong jni_server_listener) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_listener *listener =
         (struct aws_event_stream_rpc_server_listener *)jni_server_listener;
     if (!listener) {
@@ -607,6 +611,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_release(
     jlong jni_server_listener) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_listener *listener =
         (struct aws_event_stream_rpc_server_listener *)jni_server_listener;
     if (!listener) {
@@ -623,6 +629,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_acquir
     jlong jni_server_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
     if (connection == NULL) {
@@ -639,6 +647,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_releas
     jlong jni_server_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
     if (connection == NULL) {
@@ -656,6 +666,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_closeC
     jint error_code) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
     if (connection == NULL) {
@@ -672,6 +684,8 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_is
     jlong jni_server_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
 
@@ -730,6 +744,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnection_sendPr
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_connection *connection =
         (struct aws_event_stream_rpc_server_connection *)jni_server_connection;
 
@@ -792,6 +808,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     jlong jni_server_continuation) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_continuation_token *continuation =
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
     aws_event_stream_rpc_server_continuation_acquire(continuation);
@@ -804,6 +822,8 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     jlong jni_server_continuation) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_continuation_token *continuation =
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
     aws_event_stream_rpc_server_continuation_release(continuation);
@@ -816,6 +836,8 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionCon
     jlong jni_server_continuation) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_continuation_token *continuation =
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
 
@@ -837,6 +859,8 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerConnectionContinu
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_event_stream_rpc_server_continuation_token *continuation =
         (struct aws_event_stream_rpc_server_continuation_token *)jni_server_continuation;
 

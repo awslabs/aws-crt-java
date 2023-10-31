@@ -10,7 +10,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.Http2Request;
@@ -113,7 +112,8 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Get() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
         testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
@@ -122,6 +122,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Post() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 404);
@@ -131,6 +132,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Put() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 404);
@@ -140,6 +142,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2ResponseStatusCodes() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
@@ -149,6 +152,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Download() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
@@ -162,6 +166,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2ResetStream() throws Exception {
+        skipIfAndroid();
         /*
          * Test that the binding works not the actual functionality. C part has the test
          * for functionality

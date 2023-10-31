@@ -18,7 +18,7 @@
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
 #include <http_proxy_options.h>
-#include <http_proxy_options_enviornment_variable.h>
+#include <http_proxy_options_environment_variable.h>
 #include <jni.h>
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -46,6 +46,7 @@ struct s3_client_make_meta_request_callback_data {
     jobject java_s3_meta_request_response_handler_native_adapter;
     struct aws_input_stream *input_stream;
     struct aws_signing_config_data signing_config_data;
+    jthrowable java_exception;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -105,6 +106,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
@@ -269,6 +271,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientDestroy(JNIEnv *env, jclass jni_class, jlong jni_s3_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
     if (!client) {
         aws_jni_throw_runtime_exception(env, "S3Client.s3_client_clean_up: Invalid/null client");
@@ -351,10 +355,10 @@ static int s_on_s3_meta_request_body_callback(
             range_start,
             range_end);
 
-        if (aws_jni_check_and_clear_exception(env)) {
+        if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
-                "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",
+                "id=%p: Received exception from S3MetaRequest.onResponseBody callback",
                 (void *)meta_request);
             aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;
@@ -429,7 +433,7 @@ static int s_on_s3_meta_request_headers_callback(
             response_status,
             java_headers_buffer);
 
-        if (aws_jni_check_and_clear_exception(env)) {
+        if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Exception thrown from S3MetaRequest.onResponseHeaders callback",
@@ -478,6 +482,10 @@ static void s_on_s3_meta_request_finish_callback(
             error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
         }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
+        /* Only propagate java_exception if crt error code is callback failure */
+        jthrowable java_exception =
+            meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception : NULL;
+
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -486,7 +494,8 @@ static void s_on_s3_meta_request_finish_callback(
             meta_request_result->response_status,
             jni_payload,
             meta_request_result->validation_algorithm,
-            meta_request_result->did_validate);
+            meta_request_result->did_validate,
+            java_exception);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -568,6 +577,7 @@ static void s_s3_meta_request_callback_cleanup(
     if (callback_data) {
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
+        (*env)->DeleteGlobalRef(env, callback_data->java_exception);
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
     }
@@ -641,6 +651,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_endpoint,
     jobject java_resume_token_jobject) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
@@ -800,6 +811,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jclass jni_class,
     jlong jni_s3_meta_request) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -816,8 +828,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jclass jni_class,
     jlong jni_s3_meta_request) {
 
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -833,7 +845,9 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
     JNIEnv *env,
     jclass jni_class,
     jlong jni_s3_meta_request) {
+
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {
@@ -903,6 +917,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     jlong increment) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
     if (!meta_request) {

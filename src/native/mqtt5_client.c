@@ -1091,6 +1091,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jclass jni_class,
     jlong jni_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
@@ -1117,6 +1118,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jlong jni_client,
     jobject jni_disconnect_packet) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
@@ -1166,6 +1168,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_publish_packet,
     jobject jni_publish_future) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_packet_publish_view_java_jni *java_publish_packet = NULL;
@@ -1247,6 +1250,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_subscribe_packet,
     jobject jni_subscribe_future) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_client_subscribe_return_data *return_data = NULL;
@@ -1327,6 +1331,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jobject jni_unsubscribe_packet,
     jobject jni_unsubscribe_future) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_client_unsubscribe_return_data *return_data = NULL;
@@ -1409,6 +1414,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt
     jclass jni_class,
     jlong jni_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
     if (!java_client) {
@@ -1575,6 +1581,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jlong jni_user_data) {
     (void)jni_class;
     (void)jni_connection;
+    aws_cache_jni_ids(env);
 
     struct mqtt5_jni_ws_handshake *ws_handshake = (void *)jni_user_data;
     int error_code = AWS_ERROR_SUCCESS;
@@ -1620,6 +1627,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     jobject jni_bootstrap,
     jobject jni_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_mqtt5_packet_connect_view_java_jni *connect_options = NULL;
@@ -2062,6 +2070,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     jclass jni_class,
     jlong jni_mqtt_client) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_mqtt_client;
     if (!java_client) {

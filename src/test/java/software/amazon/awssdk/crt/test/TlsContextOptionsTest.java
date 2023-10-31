@@ -7,11 +7,8 @@ import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.is;
-import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.TlsCipherPreference;
@@ -95,10 +92,11 @@ public class TlsContextOptionsTest extends CrtTestFixture {
             + "54irVW5mNUDcA8s9+DloeTlUlJIr8J/RADC9rpqHLaZzcdvpIMhVsw==\n"
             + "-----END RSA PRIVATE KEY-----";
 
-    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT");
-    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY");
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_CERT = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_RSA_KEY = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_RSA_KEY");
 
     // Skip test if system property, or the file it describes, cannot be found
+    // TODO This seems unused. Can be removed?
     private String getPathStringFromEnvironmentVariable(String environmentVariable) {
         try {
             String pathStr = System.getenv(environmentVariable);

@@ -29,6 +29,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testSetupAndTearDown() throws ExecutionException, InterruptedException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -55,6 +56,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testSetupWith0PortAndTearDown() throws ExecutionException, InterruptedException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -83,6 +85,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testBindErrorPropagates() throws ExecutionException, InterruptedException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -125,6 +128,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testConnectionHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -192,6 +196,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testConnectionProtocolMessageHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
@@ -304,6 +309,7 @@ public class ServerListenerTest extends CrtTestFixture {
 
     @Test
     public void testContinuationMessageHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
+        skipIfAndroid();
         SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;

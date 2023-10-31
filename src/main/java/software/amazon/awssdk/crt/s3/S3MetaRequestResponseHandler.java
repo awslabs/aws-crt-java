@@ -58,8 +58,11 @@ public interface S3MetaRequestResponseHandler {
 
     /**
      * Invoked to report progress of the meta request execution.
-     * Currently, the progress callback is invoked only for the CopyObject and PutObject meta request type.
-     * TODO: support this callback for all types of meta requests
+     * The meaning of "progress" depends on the {@link S3MetaRequestOptions.MetaRequestType}.
+     * For PUT_OBJECT, it refers to bytes uploaded.
+     * For COPY_OBJECT, it refers to bytes copied.
+     * For GET_OBJECT, it refers to bytes downloaded.
+     * For anything else, it refers to response body bytes received.
      * @param progress information about the progress of the meta request execution
      */
     default void onProgress(final S3MetaRequestProgress progress) {

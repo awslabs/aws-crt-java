@@ -6,7 +6,24 @@ Java Bindings for the AWS Common Runtime
 
 This library is licensed under the Apache 2.0 License.
 
-## Building
+*__Jump To:__*
+
+* [Platform Specific Building](#platform)
+    * [Linux/Unix](#linuxunix)
+    * [OSX](#osx)
+    * [Windows](#windows)
+    * [Android](./android/ANDROID.md)
+* [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
+* [Installing](#installing)
+* [Platform-Specific JARs](#platform-specific-jars)
+* [System Properties](#system-properties)
+* [TLS Behavior](#tls-behavior)
+* [Testing](#testing)
+* [IDEs](#ides)
+* [Debugging](#debugging)
+
+
+## Platform
 
 ### Linux/Unix
 Requirements:
@@ -28,6 +45,8 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `brew install maven cmake` (if you have homebrew installed, otherwise install these manually)
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
@@ -40,6 +59,8 @@ Requirements:
 * CMake 3.1
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `choco install maven` (if you have chocolatey installed), otherwise install maven and the JDK manually
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
@@ -100,7 +121,7 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 The [os-maven-plugin](https://github.com/trustin/os-maven-plugin) can automatically detect your platform's classifier at build time.
 
 **NOTES**: The auto-detected `linux-arm_32` platform classifier is not supported, you must specify `linux-armv6` or `linux-armv7`.
-Additionally, musl vs glibc detection is not supported either.  If you are deploying to a musl-based system and wish to use 
+Additionally, musl vs glibc detection is not supported either.  If you are deploying to a musl-based system and wish to use
 a classifier-based jar, you must specify the classifier name yourself.
 
 ``` xml
@@ -125,7 +146,32 @@ a classifier-based jar, you must specify the classifier name yourself.
   <dependencies>
 ```
 
-## Mac-Only TLS Behavior
+## System Properties
+
+- To enable logging, set `aws.crt.log.destination` or `aws.crt.log.level`:
+    - `aws.crt.log.level` - Log level. May be: "None", "Fatal", "Error", "Warn" (default), "Info", "Debug", "Trace".
+    - `aws.crt.log.destination` - Log destination. May be: "Stderr" (default), "Stdout", "File", "None".
+    - `aws.crt.log.filename` - File to use when `aws.crt.log.destination` is "File".
+- `aws.crt.libc` - (Linux only) Set to "musl" or "glibc" if CRT cannot properly detect which to use.
+- `aws.crt.lib.dir` - Set directory where CRT may extract its native library (by default, `java.io.tmpdir` is used)
+- `aws.crt.memory.tracing` - May be: "0" (default, no tracing), "1" (track bytes), "2" (more detail).
+    Allows the CRT.nativeMemory() and CRT.dumpNativeMemory() functions to report native memory usage.
+
+## TLS Behavior
+
+The CRT uses native libraries for TLS, rather than Java's typical
+Secure Socket Extension (JSSE), KeyStore, and TrustStore.
+On [Windows](https://learn.microsoft.com/en-us/windows/win32/security) and
+[Apple](https://developer.apple.com/documentation/security) devices,
+the built-in OS libraries are used.
+On Linux/Unix/etc [s2n-tls](https://github.com/aws/s2n-tls) is used.
+
+If you need to add certificates to the trust store, add them to your OS trust store.
+The CRT does not use the Java TrustStore. For more customization options, see
+[TlsContextOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsContextOptions.html) and
+[TlsConnectionOptions](https://awslabs.github.io/aws-crt-java/software/amazon/awssdk/crt/io/TlsConnectionOptions.html).
+
+### Mac-Only TLS Behavior
 
 Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
 
@@ -134,24 +180,26 @@ static: certificate has an existing certificate-key pair that was previously imp
 ```
 
 ## Testing
-Many tests require custom arguments. These tests will be quietly skipped if their arguments are not set.
-Arguments can be passed like so:
+Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
+
+Environment variables can be set like so:
 ```
-mvn test -Dcertificate=path/to/cert -Dprivatekey=path/to/key ...
+export ENV_VARIABLE_NAME="<variable value>"
 ```
 Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
-Full list of test arguments:
-- `endpoint`: AWS IoT service endpoint hostname
-- `certificate`: Path to the IoT thing certificate
-- `privatekey`: Path to the IoT thing private key
-- `privatekey_p8`: Path to the IoT thing private key in PKCS#8 format
-- `ecc_certificate`: Path to the IoT thing with EC-based certificate
-- `ecc_privatekey`: Path to the IoT thing with ECC private key (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
-- `rootca`: Path to the root certificate
-- `proxyhost`: Hostname of proxy
-- `proxyport`: Port of proxy
+Partial list of environment variables:
+- `AWS_TEST_MQTT311_IOT_CORE_HOST`: AWS IoT service endpoint hostname for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_CERT`: Path to the IoT thing certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_KEY`: Path to the IoT thing private key for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_CERT`: Path to the IoT thing with EC-based certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_KEY`: Path to the IoT thing with ECC private key for MQTT3 (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
+- `AWS_TEST_MQTT311_ROOT_CA`: Path to the root certificate
+- `AWS_TEST_HTTP_PROXY_HOST`: Hostname of proxy
+- `AWS_TEST_HTTP_PROXY_PORT`: Port of proxy
 - `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+
+Other Environment Variables that can be set can be found in the `SetupTestProperties()` function in [CrtTestFixture.java](https://github.com/awslabs/aws-crt-java/blob/main/src/test/java/software/amazon/awssdk/crt/test/CrtTestFixture.java)
 
 These can be set persistently via Maven settings (usually in `~/.m2/settings.xml`):
 ```xml

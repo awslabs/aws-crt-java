@@ -54,23 +54,23 @@ public class ProxyTest extends CrtTestFixture  {
         Basic
     }
 
-    private static String HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
-    private static String HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
-    private static String HTTPS_PROXY_HOST = System.getenv("AWS_TEST_HTTPS_PROXY_HOST");
-    private static String HTTPS_PROXY_PORT = System.getenv("AWS_TEST_HTTPS_PROXY_PORT");
-    private static String HTTP_PROXY_BASIC_HOST = System.getenv("AWS_TEST_HTTP_PROXY_BASIC_HOST");
-    private static String HTTP_PROXY_BASIC_PORT = System.getenv("AWS_TEST_HTTP_PROXY_BASIC_PORT");
+    private static String HTTP_PROXY_HOST = System.getProperty("AWS_TEST_HTTP_PROXY_HOST");
+    private static String HTTP_PROXY_PORT = System.getProperty("AWS_TEST_HTTP_PROXY_PORT");
+    private static String HTTPS_PROXY_HOST = System.getProperty("AWS_TEST_HTTPS_PROXY_HOST");
+    private static String HTTPS_PROXY_PORT = System.getProperty("AWS_TEST_HTTPS_PROXY_PORT");
+    private static String HTTP_PROXY_BASIC_HOST = System.getProperty("AWS_TEST_HTTP_PROXY_BASIC_HOST");
+    private static String HTTP_PROXY_BASIC_PORT = System.getProperty("AWS_TEST_HTTP_PROXY_BASIC_PORT");
 
-    private static String HTTP_PROXY_BASIC_AUTH_USERNAME = System.getenv("AWS_TEST_BASIC_AUTH_USERNAME");
-    private static String HTTP_PROXY_BASIC_AUTH_PASSWORD = System.getenv("AWS_TEST_BASIC_AUTH_PASSWORD");
+    private static String HTTP_PROXY_BASIC_AUTH_USERNAME = System.getProperty("AWS_TEST_BASIC_AUTH_USERNAME");
+    private static String HTTP_PROXY_BASIC_AUTH_PASSWORD = System.getProperty("AWS_TEST_BASIC_AUTH_PASSWORD");
 
-    static final String AWS_TEST_MQTT311_ROOTCA = System.getenv("AWS_TEST_MQTT311_ROOT_CA");
-    static final String AWS_TEST_MQTT311_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT311_IOT_CORE_HOST");
-    static final String AWS_TEST_MQTT311_IOT_CORE_X509_CERT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_CERT");
-    static final String AWS_TEST_MQTT311_IOT_CORE_X509_KEY = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_KEY");
-    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT");
-    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS");
-    static final String AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME = System.getenv("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME");
+    static final String AWS_TEST_MQTT311_ROOTCA = System.getProperty("AWS_TEST_MQTT311_ROOT_CA");
+    static final String AWS_TEST_MQTT311_IOT_CORE_HOST = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_HOST");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_CERT = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_X509_CERT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_KEY = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_X509_KEY");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ENDPOINT");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_X509_ROLE_ALIAS");
+    static final String AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME = System.getProperty("AWS_TEST_MQTT311_IOT_CORE_X509_THING_NAME");
 
     private static String PROXY_TEST_CLIENTID = "ProxyTest-";
     private static final short MQTT_DIRECT_PORT = 8883;

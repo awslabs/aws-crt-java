@@ -300,8 +300,16 @@ public final class CRT {
             }
 
             // open a stream to read the shared lib contents from this JAR
+            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
+            // Check whether there is a platform specific resource path to use
             CrtPlatform platform = getPlatformImpl();
-            String libResourcePath = platform != null ? platform.getResourcePath(getCRuntime(os), libraryName) : "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
+            if (platform != null){
+                String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
+                if (platformLibResourcePath != ""){
+                    libResourcePath = platformLibResourcePath;
+                }
+            }
+
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);

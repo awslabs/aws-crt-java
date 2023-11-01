@@ -4,6 +4,10 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,6 +60,9 @@ public final class CRT {
             public void run()
             {
                 CRT.onJvmShutdown();
+                ClientBootstrap.closeStaticDefault();
+                EventLoopGroup.closeStaticDefault();
+                HostResolver.closeStaticDefault();
             }
         });
 

@@ -312,7 +312,7 @@ public final class CRT {
             CrtPlatform platform = getPlatformImpl();
             if (platform != null){
                 String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
-                if (platformLibResourcePath != ""){
+                if (platformLibResourcePath != null){
                     libResourcePath = platformLibResourcePath;
                 }
             }

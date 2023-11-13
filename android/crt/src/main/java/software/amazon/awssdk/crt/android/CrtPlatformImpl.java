@@ -33,8 +33,6 @@ public class CrtPlatformImpl extends CrtPlatform {
         // be retrieved using Build class instead of a system property.
         String arch = Build.CPU_ABI;
 
-        System.out.println("Build.CPU_ABI: " + arch);
-
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             arch = "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {

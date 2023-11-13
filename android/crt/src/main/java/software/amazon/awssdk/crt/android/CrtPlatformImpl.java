@@ -29,8 +29,9 @@ public class CrtPlatformImpl extends CrtPlatform {
     }
 
     public String getResourcePath(String cRuntime, String libraryName) {
-        // Internal folder structure of Android aar libraries are different from jar libraries
-        String arch = Build.CPU_ABI; //normalize(System.getProperty("ro.product.cpu.abi"));
+        // Internal folder structure of Android aar libraries are different from jar libraries and arch must
+        // be retrieved using Build class instead of a system property.
+        String arch = Build.CPU_ABI;
 
         System.out.println("Build.CPU_ABI: " + arch);
 

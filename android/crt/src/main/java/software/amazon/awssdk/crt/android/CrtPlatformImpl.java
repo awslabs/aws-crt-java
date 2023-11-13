@@ -45,6 +45,8 @@ public class CrtPlatformImpl extends CrtPlatform {
             arch =  "arm64-v8a";
         } else if (arch.equals("armv7l")) {
             arch =  "armeabi-v7a";
+        } else if (arch.equals("armv8l")){
+            arch = "armeabi-v8a";
         } else {
             throw new RuntimeException("AWS CRT: architecture not supported on Android: " + arch);
         }

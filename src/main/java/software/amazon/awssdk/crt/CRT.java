@@ -37,13 +37,18 @@ public final class CRT {
         // Scan for and invoke any platform specific initialization
         s_platform = findPlatformImpl();
         jvmInit();
-        try {
-            // If the lib is already present/loaded or is in java.library.path, just use it
-            System.loadLibrary(CRT_LIB_NAME);
-        } catch (UnsatisfiedLinkError e) {
-            // otherwise, load from the jar this class is in
-            loadLibraryFromJar();
-        }
+        // try {
+        //     // If the lib is already present/loaded or is in java.library.path, just use it
+        //     System.loadLibrary(CRT_LIB_NAME);
+        // } catch (UnsatisfiedLinkError e) {
+        //     // otherwise, load from the jar this class is in
+        //     loadLibraryFromJar();
+        // }
+
+        // DEBUG
+        System.out.println("loadLibraryFromJar()");
+        loadLibraryFromJar();
+        // DEBUG
 
         // Initialize the CRT
         int memoryTracingLevel = 0;
@@ -316,6 +321,8 @@ public final class CRT {
                     libResourcePath = platformLibResourcePath;
                 }
             }
+
+            System.out.println("Loading: " + libResourcePath);
 
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {

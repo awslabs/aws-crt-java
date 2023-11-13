@@ -45,7 +45,6 @@ public final class CRT {
             loadLibraryFromJar();
         }
 
-
         // Initialize the CRT
         int memoryTracingLevel = 0;
         try {

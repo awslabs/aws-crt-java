@@ -29,7 +29,7 @@ public class CrtPlatformImpl extends CrtPlatform {
 
     public String getResourcePath(String cRuntime, String libraryName) {
         // Internal folder structure of Android aar libraries are different from jar libraries
-        String arch = normalize(System.getProperty("os.arch"));
+        String arch = normalize(System.getProperty("ro.product.cpu.abi"));
 
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             arch = "x86_64";
@@ -45,7 +45,7 @@ public class CrtPlatformImpl extends CrtPlatform {
             arch =  "arm64-v8a";
         } else if (arch.equals("armv7l")) {
             arch =  "armeabi-v7a";
-        } else if (arch.equals("armv8l")){
+        } else if (arch.equals("armv8a")){
             arch = "armeabi-v8a";
         } else {
             throw new RuntimeException("AWS CRT: architecture not supported on Android: " + arch);

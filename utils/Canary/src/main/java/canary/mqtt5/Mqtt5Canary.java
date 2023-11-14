@@ -263,7 +263,7 @@ public class Mqtt5Canary {
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed...");
+            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed with errorCode : " + onConnectionFailureReturn.getErrorCode());
             clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
             clientsData.get(clientIdx).subscribedToTopics = false;
         }

@@ -651,6 +651,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID ack_timeout_seconds_field_id;
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
+    jfieldID topic_aliasing_options_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
 
@@ -703,6 +704,33 @@ struct java_aws_mqtt5_client_jitter_mode_properties {
     jmethodID client_get_value_id;
 };
 extern struct java_aws_mqtt5_client_jitter_mode_properties mqtt5_client_jitter_mode_properties;
+
+/* mqtt5.Mqtt5ClientOptions.OutboundTopicAliasBehaviorType */
+struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties {
+    jclass mqtt5_outbound_topic_alias_behavior_type_class;
+    jmethodID get_value_method_id;
+};
+extern struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties
+    mqtt5_outbound_topic_alias_behavior_type_properties;
+
+/* mqtt5.Mqtt5ClientOptions.InboundTopicAliasBehaviorType */
+struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties {
+    jclass mqtt5_inbound_topic_alias_behavior_type_class;
+    jmethodID get_value_method_id;
+};
+extern struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties
+    mqtt5_inbound_topic_alias_behavior_type_properties;
+
+/* mqtt5.Mqtt5ClientOptions.TopicAliasingOptions */
+struct java_aws_mqtt5_topic_aliasing_options_properties {
+    jclass mqtt5_topic_aliasing_options_class;
+
+    jfieldID outbound_behavior_field_id;
+    jfieldID outbound_cache_max_size_field_id;
+    jfieldID inbound_behavior_field_id;
+    jfieldID inbound_cache_max_size_field_id;
+};
+extern struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
 
 /* mqtt5.packets.SubscribePacket */
 struct java_aws_mqtt5_subscribe_packet_properties {

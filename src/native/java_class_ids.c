@@ -1567,6 +1567,48 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         "lifecycleEvents",
         "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$LifecycleEvents;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.lifecycle_events_field_id);
+    mqtt5_client_options_properties.topic_aliasing_options_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "topicAliasingOptions",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$TopicAliasingOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
+}
+
+struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
+static void s_cache_topic_aliasing_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$TopicAliasingOptions");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class);
+
+    mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "outboundBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$OutboundTopicAliasBehaviorType;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id);
+
+    mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "outboundCacheMaxSize",
+        "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id);
+
+    mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "inboundBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$InboundTopicAliasBehaviorType;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id);
+
+    mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "inboundCacheMaxSize",
+        "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id);
 }
 
 struct java_aws_mqtt5_client_properties mqtt5_client_properties;
@@ -1683,6 +1725,43 @@ static void s_cache_mqtt5_client_jitter_mode(JNIEnv *env) {
     mqtt5_client_jitter_mode_properties.client_get_value_id =
         (*env)->GetMethodID(env, mqtt5_client_jitter_mode_properties.mqtt5_client_jitter_mode_class, "getValue", "()I");
     AWS_FATAL_ASSERT(mqtt5_client_jitter_mode_properties.client_get_value_id);
+}
+
+struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties mqtt5_outbound_topic_alias_behavior_type_properties;
+
+static void s_cache_mqtt5_outbound_topic_alias_behavior_type(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$OutboundTopicAliasBehaviorType");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class =
+        (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(
+        mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class);
+    // Functions
+    mqtt5_outbound_topic_alias_behavior_type_properties.get_value_method_id = (*env)->GetMethodID(
+        env,
+        mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_outbound_topic_alias_behavior_type_properties.get_value_method_id);
+}
+
+struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties mqtt5_inbound_topic_alias_behavior_type_properties;
+
+static void s_cache_mqtt5_inbound_topic_alias_behavior_type(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$InboundTopicAliasBehaviorType");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class =
+        (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class);
+    // Functions
+    mqtt5_inbound_topic_alias_behavior_type_properties.get_value_method_id = (*env)->GetMethodID(
+        env,
+        mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_inbound_topic_alias_behavior_type_properties.get_value_method_id);
 }
 
 struct java_aws_mqtt5_subscribe_packet_properties mqtt5_subscribe_packet_properties;
@@ -2239,6 +2318,9 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
+    s_cache_mqtt5_outbound_topic_alias_behavior_type(env);
+    s_cache_mqtt5_inbound_topic_alias_behavior_type(env);
+    s_cache_topic_aliasing_options(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

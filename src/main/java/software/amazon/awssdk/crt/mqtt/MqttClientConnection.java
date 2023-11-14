@@ -30,6 +30,8 @@ import java.util.function.Consumer;
  */
 public class MqttClientConnection extends CrtResource {
 
+    private static final int MAX_PORT = 65535;
+
     private MqttConnectionConfig config;
 
     private AsyncCallback connectAck;
@@ -95,7 +97,7 @@ public class MqttClientConnection extends CrtResource {
         if (config.getEndpoint() == null) {
             throw new MqttException("endpoint must not be null");
         }
-        if (config.getPort() <= 0 || config.getPort() > 65535) {
+        if (config.getPort() <= 0 || config.getPort() > MAX_PORT) {
             throw new MqttException("port must be a positive integer between 1 and 65535");
         }
 
@@ -136,7 +138,7 @@ public class MqttClientConnection extends CrtResource {
             if (config.getEndpoint() == null) {
                 throw new MqttException("endpoint must not be null");
             }
-            if (config.getPort() <= 0 || config.getPort() > 65535) {
+            if (config.getPort() <= 0 || config.getPort() > MAX_PORT) {
                 throw new MqttException("port must be a positive integer between 1 and 65535");
             }
 
@@ -310,9 +312,9 @@ public class MqttClientConnection extends CrtResource {
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
 
-        short port = (short) config.getPort();
-        if (port > Short.MAX_VALUE || port <= 0) {
-            throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
+        int port = config.getPort();
+        if (port > MAX_PORT || port <= 0) {
+            throw new MqttException("Port must be betweeen 0 and 65535");
         }
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         connectAck = AsyncCallback.wrapFuture(future, null);
@@ -487,7 +489,7 @@ public class MqttClientConnection extends CrtResource {
 
     private static native void mqttClientConnectionDestroy(long connection);
 
-    private static native void mqttClientConnectionConnect(long connection, String endpoint, short port,
+    private static native void mqttClientConnectionConnect(long connection, String endpoint, int port,
             long socketOptions, long tlsContext, String clientId, boolean cleanSession, int keepAliveMs,
             short pingTimeoutMs, int protocolOperationTimeoutMs) throws CrtRuntimeException;
 

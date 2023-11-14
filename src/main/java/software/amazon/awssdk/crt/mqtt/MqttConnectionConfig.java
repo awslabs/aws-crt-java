@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
 /**
  * Encapsulates all per-mqtt-connection configuration
@@ -23,6 +24,7 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /* mqtt */
     private MqttClient mqttClient;
+    private Mqtt5Client mqtt5Client;
     private String clientId;
     private String username;
     private String password;
@@ -315,6 +317,25 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * Configures the mqtt5 client to use for a connection
+     *
+     * @param mqtt5Client the mqtt client to use
+     */
+    public void setMqtt5Client(Mqtt5Client mqtt5Client) {
+        swapReferenceTo(this.mqtt5Client, mqtt5Client);
+        this.mqtt5Client = mqtt5Client;
+    }
+
+    /**
+     * Queries the mqtt5 client to use for a connection
+     *
+     * @return the mqtt5 client to use
+     */
+    public Mqtt5Client getMqtt5Client() {
+        return mqtt5Client;
+    }
+
+    /**
      * Sets the login credentials for a connection.
      *
      * @param user Login username
@@ -529,6 +550,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setSocketOptions(getSocketOptions());
 
             clone.setMqttClient(getMqttClient());
+            clone.setMqtt5Client(getMqtt5Client());
             clone.setClientId(getClientId());
             clone.setUsername(getUsername());
             clone.setPassword(getPassword());

@@ -6,6 +6,7 @@
 #include "java_class_ids.h"
 
 #include <aws/common/assert.h>
+#include <aws/common/thread.h>
 
 struct java_http_request_body_stream_properties http_request_body_stream_properties;
 
@@ -172,9 +173,18 @@ static void s_cache_mqtt_connection(JNIEnv *env) {
     mqtt_connection_properties.on_connection_resumed = (*env)->GetMethodID(env, cls, "onConnectionResumed", "(Z)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_resumed);
 
+    mqtt_connection_properties.on_connection_closed = (*env)->GetMethodID(env, cls, "onConnectionClosed", "()V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_closed);
+
     mqtt_connection_properties.on_websocket_handshake =
         (*env)->GetMethodID(env, cls, "onWebsocketHandshake", "(Lsoftware/amazon/awssdk/crt/http/HttpRequest;J)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_websocket_handshake);
+
+    mqtt_connection_properties.on_connection_success = (*env)->GetMethodID(env, cls, "onConnectionSuccess", "(Z)V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_success);
+
+    mqtt_connection_properties.on_connection_failure = (*env)->GetMethodID(env, cls, "onConnectionFailure", "(I)V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_failure);
 }
 
 struct java_message_handler_properties message_handler_properties;
@@ -197,6 +207,32 @@ static void s_cache_mqtt_exception(JNIEnv *env) {
     mqtt_exception_properties.jni_constructor =
         (*env)->GetMethodID(env, mqtt_exception_properties.jni_mqtt_exception, "<init>", "(I)V");
     AWS_FATAL_ASSERT(mqtt_exception_properties.jni_constructor);
+}
+
+struct java_mqtt_connection_operation_statistics_properties mqtt_connection_operation_statistics_properties;
+
+static void s_cache_mqtt_client_connection_operation_statistics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt/MqttClientConnectionOperationStatistics");
+    AWS_FATAL_ASSERT(cls);
+    mqtt_connection_operation_statistics_properties.statistics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.statistics_class);
+    // Functions
+    mqtt_connection_operation_statistics_properties.statistics_constructor_id =
+        (*env)->GetMethodID(env, mqtt_connection_operation_statistics_properties.statistics_class, "<init>", "()V");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.statistics_constructor_id);
+    // Field IDs
+    mqtt_connection_operation_statistics_properties.incomplete_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "incompleteOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.incomplete_operation_count_field_id);
+    mqtt_connection_operation_statistics_properties.incomplete_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "incompleteOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.incomplete_operation_size_field_id);
+    mqtt_connection_operation_statistics_properties.unacked_operation_count_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "unackedOperationCount", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.unacked_operation_count_field_id);
+    mqtt_connection_operation_statistics_properties.unacked_operation_size_field_id = (*env)->GetFieldID(
+        env, mqtt_connection_operation_statistics_properties.statistics_class, "unackedOperationSize", "J");
+    AWS_FATAL_ASSERT(mqtt_connection_operation_statistics_properties.unacked_operation_size_field_id);
 }
 
 struct java_byte_buffer_properties byte_buffer_properties;
@@ -657,7 +693,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
-        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZ)V");
+        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZLjava/lang/Throwable;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
@@ -879,6 +915,27 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
     s3_meta_request_progress_properties.bytes_transferred_field_id =
         (*env)->GetFieldID(env, cls, "bytesTransferred", "J");
     s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
+}
+struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;
+
+static void s_cache_s3_tcp_keep_alive_options(JNIEnv *env) {
+    (void)env;
+
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3TcpKeepAliveOptions");
+    AWS_FATAL_ASSERT(cls);
+    s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_class = (*env)->NewGlobalRef(env, cls);
+
+    s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_constructor_method_id =
+        (*env)->GetMethodID(env, s3_tcp_keep_alive_options_properties.s3_tcp_keep_alive_options_class, "<init>", "()V");
+
+    s3_tcp_keep_alive_options_properties.keep_alive_interval_sec_field_id =
+        (*env)->GetFieldID(env, cls, "keepAliveIntervalSec", "S");
+
+    s3_tcp_keep_alive_options_properties.keep_alive_timeout_sec_field_id =
+        (*env)->GetFieldID(env, cls, "keepAliveTimeoutSec", "S");
+
+    s3_tcp_keep_alive_options_properties.keep_alive_max_failed_probes_field_id =
+        (*env)->GetFieldID(env, cls, "keepAliveMaxFailedProbes", "S");
 }
 
 struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
@@ -2081,7 +2138,9 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
 }
 
-void cache_java_class_ids(JNIEnv *env) {
+static void s_cache_java_class_ids(void *user_data) {
+    JNIEnv *env = user_data;
+
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
@@ -2091,6 +2150,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_mqtt_connection(env);
     s_cache_message_handler(env);
     s_cache_mqtt_exception(env);
+    s_cache_mqtt_client_connection_operation_statistics(env);
     s_cache_byte_buffer(env);
     s_cache_credentials_provider(env);
     s_cache_credentials(env);
@@ -2131,6 +2191,7 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_standard_retry_options(env);
     s_cache_directory_traversal_handler(env);
     s_cache_directory_entry(env);
+    s_cache_s3_tcp_keep_alive_options(env);
     s_cache_s3_meta_request_progress(env);
     s_cache_s3_meta_request_resume_token(env);
     s_cache_mqtt5_connack_packet(env);
@@ -2175,4 +2236,10 @@ void cache_java_class_ids(JNIEnv *env) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
+}
+
+static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;
+
+void aws_cache_jni_ids(JNIEnv *env) {
+    aws_thread_call_once(&s_cache_once_init, s_cache_java_class_ids, (void *)env);
 }

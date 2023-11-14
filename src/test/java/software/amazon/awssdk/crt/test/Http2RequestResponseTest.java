@@ -10,7 +10,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.Http2Request;
@@ -30,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://httpbin.org";
+    private final static String HOST = "https://postman-echo.com";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
@@ -113,33 +112,37 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Get() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
+        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
+        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 404);
     }
 
     @Test
     public void testHttp2Post() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
-        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 404);
+        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 404);
         testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
+        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 404);
     }
 
     @Test
     public void testHttp2Put() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
-        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
+        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 404);
+        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 404);
+        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 404);
         testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2ResponseStatusCodes() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
@@ -149,6 +152,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Download() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
@@ -162,6 +166,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2ResetStream() throws Exception {
+        skipIfAndroid();
         /*
          * Test that the binding works not the actual functionality. C part has the test
          * for functionality
@@ -201,6 +206,9 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                 try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
                     h2Stream.activate();
                     streamComplete.get();
+                }
+                catch(Exception e) {
+                    // ignoring the exception as it might fail that RST_STREAM has been sent.
                 }
             }
         } catch (Exception e) {

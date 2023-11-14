@@ -7,7 +7,7 @@ on:
       - 'docs'
 
 env:
-  BUILDER_VERSION: v0.9.21
+  BUILDER_VERSION: v0.9.46
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -17,10 +17,11 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
   AWS_REGION: us-east-1
+  AWS_DEVICE_FARM_REGION: us-west-2 # Device Farm only available in us-west-2 region
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         image:
@@ -42,7 +43,7 @@ jobs:
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         compiler:
@@ -69,7 +70,7 @@ jobs:
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         arch: [armv6, armv7, arm64]
@@ -80,8 +81,48 @@ jobs:
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
-  raspberry:
+  linux-musl:
+    runs-on: ubuntu-22.04 # latest
+    strategy:
+      matrix:
+        image:
+          - alpine-3.16-x64
+          - alpine-3.16-arm64
+          - openwrt-x64-openjdk8
+    steps:
+      - name: Install qemu/docker
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+
+  # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
+  #
+  # At build time we can properly figure out that we're targeting armv7.
+  # At run time we have to force armv7 (via environment variable) in order to achieve proper resource path
+  # resolution.
+  linux-musl-armv7:
     runs-on: ubuntu-20.04 # latest
+    steps:
+      - name: Install qemu/docker
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          export AWS_CRT_ARCH=armv7
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-alpine-3.16-armv7 build -p ${{ env.PACKAGE_NAME }}
+
+  raspberry:
+    runs-on: ubuntu-22.04 # latest
     strategy:
       fail-fast: false
       matrix:
@@ -127,7 +168,7 @@ jobs:
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   osx:  # With integration tests
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -140,7 +181,7 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   osx-arm64:
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -154,7 +195,7 @@ jobs:
           python3 codebuild/macos_compatibility_check.py armv8
 
   osx-x64:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -168,21 +209,50 @@ jobs:
           python3 codebuild/macos_compatibility_check.py
 
   android:
+      # ubuntu-20.04 comes with Android tooling, see:
+      # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     name: Android
-    # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     runs-on: ubuntu-20.04 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
-          submodules: true
+            submodules: true
+      # Setup JDK 11
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'gradle'
+      # Build and publish locally for the test app to find the SNAPSHOT version
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:build
+          ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
+      # Setup files required by test app for Device Farm testing
+      - name: Setup Android Test Files
+        run: |
+          cd src/test/android/testapp/src/main/assets
+          python3 -m pip install boto3
+          python3 ./android_file_creation.py
+      - name: Build Test App
+        run: |
+          cd src/test/android/testapp
+          ../../../../gradlew assembledebug
+          ../../../../gradlew assembleAndroidTest
+      - name: Device Farm Tests
+        run: |
+          echo "Running Device Farm Python Script"
+          python3 ./.github/workflows/run_android_ci.py \
+          --run_id ${{ github.run_id }} \
+          --run_attempt ${{ github.run_attempt }} \
+          --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -192,7 +262,7 @@ jobs:
           ./make-docs.sh
 
   check-submodules:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
@@ -206,7 +276,7 @@ jobs:
 
 
   localhost-test-linux:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -224,7 +294,7 @@ jobs:
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-test-mac:
-    runs-on: macos-11 # latest
+    runs-on: macos-13 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3

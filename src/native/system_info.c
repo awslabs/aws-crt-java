@@ -12,16 +12,16 @@
 
 JNIEXPORT
 jint JNICALL Java_software_amazon_awssdk_crt_SystemInfo_processorCount(JNIEnv *env, jclass cls) {
-    (void)env;
     (void)cls;
+    aws_cache_jni_ids(env);
 
     return (jint)aws_system_info_processor_count();
 }
 
 JNIEXPORT
 jshort JNICALL Java_software_amazon_awssdk_crt_SystemInfo_cpuGroupCount(JNIEnv *env, jclass cls) {
-    (void)env;
     (void)cls;
+    aws_cache_jni_ids(env);
 
     return aws_get_cpu_group_count();
 }
@@ -30,6 +30,7 @@ JNIEXPORT
 jobjectArray JNICALL
     Java_software_amazon_awssdk_crt_SystemInfo_cpuInfoForGroup(JNIEnv *env, jclass cls, jshort groupIdx) {
     (void)cls;
+    aws_cache_jni_ids(env);
 
     size_t cpu_count = aws_get_cpu_count_for_group(groupIdx);
 

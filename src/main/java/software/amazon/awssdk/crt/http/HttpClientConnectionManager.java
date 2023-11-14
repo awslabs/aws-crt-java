@@ -28,7 +28,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private static final int DEFAULT_HTTPS_PORT = 443;
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
 
-    private final int windowSize;
+    private final long windowSize;
     private final URI uri;
     private final int port;
     private final int maxConnections;
@@ -55,7 +55,7 @@ public class HttpClientConnectionManager extends CrtResource {
         TlsContext tlsContext = options.getTlsContext();
         TlsConnectionOptions tlsConnectionOptions = options.getTlsConnectionOptions();
 
-        int windowSize = options.getWindowSize();
+        long windowSize = options.getWindowSize();
         int maxConnections = options.getMaxConnections();
         int port = options.getPort();
         if (port == -1) {
@@ -93,6 +93,16 @@ public class HttpClientConnectionManager extends CrtResource {
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }
 
+        int environmentVariableProxyConnectionType = 0;
+        TlsConnectionOptions environmentVariableProxyTlsConnectionOptions = null;
+        int environmentVariableType = 0;
+        HttpProxyEnvironmentVariableSetting environmentVariableSetting = options.getHttpProxyEnvironmentVariableSetting();
+        if (environmentVariableSetting != null) {
+            environmentVariableProxyConnectionType = environmentVariableSetting.getConnectionType().getValue();
+            environmentVariableProxyTlsConnectionOptions = environmentVariableSetting.getTlsConnectionOptions();
+            environmentVariableType = environmentVariableSetting.getEnvironmentVariableType().getValue();
+        }
+
         HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
         long monitoringThroughputThresholdInBytesPerSecond = 0;
         int monitoringFailureIntervalInSeconds = 0;
@@ -117,6 +127,11 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                                             proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                                            environmentVariableProxyConnectionType,
+                                            environmentVariableProxyTlsConnectionOptions != null
+                                                    ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
+                                                    : 0,
+                                            environmentVariableType,
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
@@ -214,7 +229,7 @@ public class HttpClientConnectionManager extends CrtResource {
     /**
      * @return size of the per-connection streaming read window for response handling
      */
-    public int getWindowSize() {
+    public long getWindowSize() {
         return windowSize;
     }
 
@@ -234,7 +249,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long socketOptions,
                                                         long tlsContext,
                                                         long tlsConnectionOptions,
-                                                        int windowSize,
+                                                        long windowSize,
                                                         byte[] endpoint,
                                                         int port,
                                                         int maxConns,
@@ -245,6 +260,9 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int proxyAuthorizationType,
                                                         byte[] proxyAuthorizationUsername,
                                                         byte[] proxyAuthorizationPassword,
+                                                        int environmentVariableProxyConnectionType,
+                                                        long environmentVariableProxyTlsConnectionOptions,
+                                                        int environmentVariableSetting,
                                                         boolean isManualWindowManagement,
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,

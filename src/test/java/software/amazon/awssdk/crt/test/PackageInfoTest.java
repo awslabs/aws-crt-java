@@ -11,7 +11,7 @@ import software.amazon.awssdk.crt.utils.PackageInfo;
 
 public class PackageInfoTest extends CrtTestFixture  {
     public PackageInfoTest() {}
-    
+
     @Test
     public void testPackageInfo() {
         PackageInfo pkgInfo = new PackageInfo();

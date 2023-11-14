@@ -9,6 +9,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 
+#include <http_proxy_options.h>
 #include <jni.h>
 #include <string.h>
 
@@ -116,6 +117,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jint jni_connection_ping_timeout_ms) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
@@ -352,6 +354,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     jobject jni_http_response_callback_handler,
     jobject java_async_callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
     struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
 
@@ -414,6 +418,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     jclass jni_class,
     jlong jni_stream_manager) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
     struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;
@@ -432,6 +437,7 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManage
     jclass jni_class,
     jlong jni_stream_manager) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http2_stream_manager_binding *sm_binding = (struct aws_http2_stream_manager_binding *)jni_stream_manager;
     struct aws_http2_stream_manager *stream_manager = sm_binding->stream_manager;

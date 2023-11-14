@@ -44,6 +44,9 @@ import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
+    private static final int LOCAL_HTTPS_PORT = 3443;
+    private static final int LOCAL_HTTP_PORT = 3280;
+
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
@@ -130,8 +133,9 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStress() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/echo");
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
 
@@ -176,8 +180,9 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStressWithBody() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/uploadTest");
+        URI uri = new URI(String.format("https://localhost:%d/uploadTest", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
             if (CRT.getOSIdentifier() == "linux") {
@@ -246,10 +251,11 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsUploadStress() throws Exception {
+        skipIfAndroid();
         /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI("https://localhost:8443/uploadTest");
+        URI uri = new URI(String.format("https://localhost:%d/uploadTest", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
             if (CRT.getOSIdentifier() == "linux") {
@@ -300,9 +306,10 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsDownloadStress() throws Exception {
+        skipIfAndroid();
         /* Test that download a 2.5GB data from local server */
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/downloadTest");
+        URI uri = new URI(String.format("https://localhost:%d/downloadTest", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
 

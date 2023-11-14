@@ -73,7 +73,10 @@ struct java_mqtt_connection_properties {
     jmethodID on_connection_complete;
     jmethodID on_connection_interrupted;
     jmethodID on_connection_resumed;
+    jmethodID on_connection_closed;
     jmethodID on_websocket_handshake;
+    jmethodID on_connection_success;
+    jmethodID on_connection_failure;
 };
 extern struct java_mqtt_connection_properties mqtt_connection_properties;
 
@@ -82,6 +85,17 @@ struct java_message_handler_properties {
     jmethodID deliver;
 };
 extern struct java_message_handler_properties message_handler_properties;
+
+/* MqttClientConnection.MqttClientOperationStatistics */
+struct java_mqtt_connection_operation_statistics_properties {
+    jclass statistics_class;
+    jmethodID statistics_constructor_id;
+    jfieldID incomplete_operation_count_field_id;
+    jfieldID incomplete_operation_size_field_id;
+    jfieldID unacked_operation_count_field_id;
+    jfieldID unacked_operation_size_field_id;
+};
+extern struct java_mqtt_connection_operation_statistics_properties mqtt_connection_operation_statistics_properties;
 
 /* MqttException */
 struct java_mqtt_exception_properties {
@@ -410,6 +424,16 @@ struct java_aws_s3_meta_request_progress {
     jfieldID content_length_field_id;
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
+
+/* S3TcpKeepAliveOptions */
+struct java_aws_s3_tcp_keep_alive_options_properties {
+    jclass s3_tcp_keep_alive_options_class;
+    jmethodID s3_tcp_keep_alive_options_constructor_method_id;
+    jfieldID keep_alive_interval_sec_field_id;
+    jfieldID keep_alive_timeout_sec_field_id;
+    jfieldID keep_alive_max_failed_probes_field_id;
+};
+extern struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;
 
 /* ResumeToken */
 struct java_aws_s3_meta_request_resume_token {
@@ -874,6 +898,14 @@ struct java_boxed_array_list_properties {
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 
-void cache_java_class_ids(JNIEnv *env);
+/**
+ * All functions bound to JNI MUST call this before doing anything else.
+ * This caches all JNI IDs the first time it is called. Any further calls are no-op; it is thread-safe.
+ * The reason we do this lazily, rather than simply calling it once from awsCrtInit(),
+ * is to avoid deadlock when multiple threads init the CRT simultaneously.
+ *
+ * See: https://github.com/awslabs/aws-crt-java/pull/670
+ */
+void aws_cache_jni_ids(JNIEnv *env);
 
 #endif /* AWS_JNI_CRT_JAVA_CLASS_IDS_H */

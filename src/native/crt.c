@@ -42,7 +42,7 @@ static struct aws_allocator *s_init_allocator(void) {
 }
 
 static struct aws_allocator *s_allocator = NULL;
-struct aws_allocator *aws_jni_get_allocator() {
+struct aws_allocator *aws_jni_get_allocator(void) {
     if (AWS_UNLIKELY(s_allocator == NULL)) {
         s_allocator = s_init_allocator();
     }
@@ -72,11 +72,32 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+
+        struct aws_string *thread_name = NULL;
+        if (aws_thread_current_name(aws_jni_get_allocator(), &thread_name)) {
+            /* Retrieving thread name can fail for multitude of reasons and is
+            not fatal. Ignore the error and continue. */
+            AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "Failed to retrieve name for the thread.");
+        }
+
+        struct JavaVMAttachArgs attach_args = {
+            .version = JNI_VERSION_1_6,
+            .name = NULL,
+            .group = NULL,
+        };
+
+        if (thread_name != NULL) {
+            attach_args.name = (char *)aws_string_c_str(thread_name);
+        }
+
 #ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
 #else
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
 #endif
+
+        aws_string_destroy(thread_name);
+
         /* Ran out of memory, don't log in this case */
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
@@ -265,6 +286,16 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
     return exception_pending;
 }
 
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->DeleteGlobalRef(env, *out);
+        *out = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
+}
+
 int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix) {
     if (java_long < 0) {
         aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
@@ -434,6 +465,9 @@ static struct aws_error_info s_crt_errors[] = {
     AWS_DEFINE_ERROR_INFO_CRT(
         AWS_ERROR_JAVA_CRT_JVM_DESTROYED,
         "Attempt to use a JVM that has already been destroyed"),
+    AWS_DEFINE_ERROR_INFO_CRT(
+        AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
+        "OutOfMemoryError has been raised from JVM."),
 };
 /* clang-format on */
 
@@ -561,7 +595,6 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_register_log_subject_info_list(&s_crt_log_subject_list);
 
     s_jvm_table_add_jvm_for_env(env);
-    cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
         atexit(s_jni_atexit_strict);

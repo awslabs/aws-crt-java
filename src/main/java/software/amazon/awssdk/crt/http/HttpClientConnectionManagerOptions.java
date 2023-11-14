@@ -15,19 +15,20 @@ import software.amazon.awssdk.crt.io.TlsContext;
  */
 public class HttpClientConnectionManagerOptions {
     public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
-    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
+    public static final long DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
 
     private ClientBootstrap clientBootstrap;
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
     private TlsConnectionOptions tlsConnectionOptions;
-    private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
+    private long windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
     private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
@@ -113,7 +114,7 @@ public class HttpClientConnectionManagerOptions {
      * @return this
      * @see #withManualWindowManagement
      */
-    public HttpClientConnectionManagerOptions withWindowSize(int windowSize) {
+    public HttpClientConnectionManagerOptions withWindowSize(long windowSize) {
         this.windowSize = windowSize;
         return this;
     }
@@ -121,7 +122,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return The starting size of each HTTP stream's flow-control window.
      */
-    public int getWindowSize() { return windowSize; }
+    public long getWindowSize() { return windowSize; }
 
     /**
      * @deprecated Sets the IO buffer size to use for connections in the connection pool
@@ -199,6 +200,30 @@ public class HttpClientConnectionManagerOptions {
      * @return the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+    /**
+     * Optional.
+     * Sets how proxy is fetched from the environment.
+     * Reading proxy configuration from environment is disabled if this is NULL for backward compatibility.
+     * Only works when proxyOptions is not set. The proxy settings follow the following precedence
+     * 1. Configured Proxy Setting
+     * 2. Environment (if enabled)
+     * 3. No proxy
+     * @param httpProxyEnvironmentVariableSetting  for this connection manager
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
+        return this;
+    }
+
+    /**
+     * @return the proxy environment variable setting
+     */
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
+    }
 
     /**
      * @return true if manual window management is used, false otherwise

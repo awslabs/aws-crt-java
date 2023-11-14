@@ -62,10 +62,17 @@ tasks.processResources {
     dependsOn(":native:cmakeBuild")
 }
 
+// withSourcesJar uses output of task :native:cmakeBuild so explicitly declaring dependency:
+tasks.named("sourcesJar") {
+    dependsOn(":native:cmakeBuild")
+}
+
 tasks.test {
     useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
+        showExceptions = true
+        showCauses = true
     }
     for (prop in listOf("certificate", "privatekey", "endpoint", "rootca", "privatekey_p8")) {
         if (project.hasProperty(prop)) {
@@ -73,7 +80,7 @@ tasks.test {
         }
     }
     //uncomment the next line to attach the debugger to the JNI layer.
-    //systemProperty("aws.crt.debugwait", "1")
+    // systemProperty("aws.crt.debugwait", "1")
 }
 
 tasks.compileTestJava {

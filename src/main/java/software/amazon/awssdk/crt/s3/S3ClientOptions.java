@@ -5,10 +5,14 @@
 
 package software.amazon.awssdk.crt.s3;
 
+import software.amazon.awssdk.crt.http.HttpMonitoringOptions;
+import software.amazon.awssdk.crt.http.HttpProxyEnvironmentVariableSetting;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 public class S3ClientOptions {
 
@@ -17,7 +21,9 @@ public class S3ClientOptions {
     private ClientBootstrap clientBootstrap;
     private TlsContext tlsContext;
     private CredentialsProvider credentialsProvider;
+    private AwsSigningConfig signingConfig;
     private long partSize;
+    private long multipartUploadThreshold;
     private double throughputTargetGbps;
     private boolean readBackpressureEnabled;
     private long initialReadWindowSize;
@@ -34,6 +40,36 @@ public class S3ClientOptions {
      */
     private Boolean computeContentMd5;
     private StandardRetryOptions standardRetryOptions;
+
+    /**
+     * Optional.
+     * Proxy configuration for http connection.
+     */
+    private HttpProxyOptions proxyOptions;
+
+    /**
+     * Optional.
+     * Configuration for fetching proxy configuration from environment.
+     * By Default read proxy configuration from environment is enabled.
+     * Only works when proxyOptions is not set. If both are set, configuration from
+     * proxy_options is used.
+     */
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
+
+    /**
+     * Optional.
+     * If set to 0, default value is used.
+     */
+    private int connectTimeoutMs;
+
+    /**
+     * Optional.
+     * Set keepalive to periodically transmit messages for detecting a disconnected
+     * peer.
+     */
+    private S3TcpKeepAliveOptions tcpKeepAliveOptions;
+
+    private HttpMonitoringOptions monitoringOptions;
 
     public S3ClientOptions() {
         this.computeContentMd5 = false;
@@ -57,6 +93,14 @@ public class S3ClientOptions {
         return clientBootstrap;
     }
 
+    /**
+     * @deprecated Please use {@link #withSigningConfig(AwsSigningConfig)} instead.
+     * The credentials provider will be used to create the signing Config when the client was created.
+     * Client will use `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` to create the signing config.
+     *
+     * @param credentialsProvider provide credentials for signing.
+     * @return this
+     */
     public S3ClientOptions withCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
         return this;
@@ -66,6 +110,24 @@ public class S3ClientOptions {
         return credentialsProvider;
     }
 
+    /**
+     * The configuration related to signing used by S3 client.
+     * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
+     * If no signing config provided, the client will skip signing.
+     * In case of public object, or the http message already has a presigned URL, signing can be skipped.
+     *
+     * @param signingConfig configuration related to signing via an AWS signing process.
+     * @return this
+     */
+    public S3ClientOptions withSigningConfig(AwsSigningConfig signingConfig) {
+        this.signingConfig = signingConfig;
+        return this;
+    }
+
+    public AwsSigningConfig getSigningConfig() {
+        return signingConfig;
+    }
+
     public S3ClientOptions withPartSize(long partSize) {
         this.partSize = partSize;
         return this;
@@ -73,6 +135,15 @@ public class S3ClientOptions {
 
     public long getPartSize() {
         return partSize;
+    }
+
+    public S3ClientOptions withMultipartUploadThreshold(long multipartUploadThreshold) {
+        this.multipartUploadThreshold = multipartUploadThreshold;
+        return this;
+    }
+
+    public long getMultiPartUploadThreshold() {
+        return multipartUploadThreshold;
     }
 
     public S3ClientOptions withThroughputTargetGbps(double throughputTargetGbps) {
@@ -132,6 +203,11 @@ public class S3ClientOptions {
         return this.initialReadWindowSize;
     }
 
+    /*
+     * @deprecated does not have any effect. Use endpoint option or add Host
+     * header to meta request in order to specify endpoint.
+     */
+    @Deprecated
     public S3ClientOptions withEndpoint(String endpoint) {
         this.endpoint = endpoint;
         return this;
@@ -175,5 +251,60 @@ public class S3ClientOptions {
 
     public StandardRetryOptions getStandardRetryOptions() {
         return this.standardRetryOptions;
+    }
+
+    public S3ClientOptions withProxyOptions(HttpProxyOptions proxyOptions) {
+        this.proxyOptions = proxyOptions;
+        return this;
+    }
+
+    public HttpProxyOptions getProxyOptions() {
+        return proxyOptions;
+    }
+
+    public S3ClientOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
+        return this;
+    }
+
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
+    }
+
+    public S3ClientOptions withConnectTimeoutMs(int connectTimeoutMs) {
+        this.connectTimeoutMs = connectTimeoutMs;
+        return this;
+    }
+
+    public int getConnectTimeoutMs() {
+        return connectTimeoutMs;
+    }
+
+    public S3ClientOptions withS3TcpKeepAliveOptions(S3TcpKeepAliveOptions tcpKeepAliveOptions) {
+        this.tcpKeepAliveOptions = tcpKeepAliveOptions;
+        return this;
+    }
+
+    public S3TcpKeepAliveOptions getTcpKeepAliveOptions() {
+        return tcpKeepAliveOptions;
+    }
+
+    /**
+     * Options for detecting bad HTTP connections.
+     * If the transfer throughput falls below the specified thresholds
+     * for long enough, the operation is retried on a new connection.
+     * If left unset, default values are used.
+     *
+     * @param monitoringOptions monitoring options
+     * @return this
+     */
+    public S3ClientOptions withHttpMonitoringOptions(HttpMonitoringOptions monitoringOptions) {
+        this.monitoringOptions = monitoringOptions;
+        return this;
+    }
+
+    public HttpMonitoringOptions getMonitoringOptions() {
+        return monitoringOptions;
     }
 }

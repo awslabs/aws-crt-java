@@ -78,6 +78,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     jobject elg_jobject,
     jint num_threads) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct event_loop_group_cleanup_callback_data *callback_data =
@@ -123,6 +125,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     jint cpu_group,
     jint num_threads) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct event_loop_group_cleanup_callback_data *callback_data =
@@ -166,6 +170,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     jclass jni_elg,
     jlong elg_addr) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
     if (!elg) {
         aws_jni_throw_runtime_exception(

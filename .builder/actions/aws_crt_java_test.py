@@ -1,49 +1,62 @@
-
 import Builder
 import sys
 import os
-import tempfile
+import os.path
+
 
 class AWSCrtJavaTest(Builder.Action):
 
-    def _write_secret_to_temp_file(self, env, secret_name):
-        secret_value = env.shell.get_secret(secret_name)
+    def _run_java_tests(self, *extra_args):
+        if os.path.exists('log.txt'):
+            os.remove('log.txt')
 
-        temp_file = tempfile.NamedTemporaryFile()
-        temp_file.write(str.encode(secret_value))
-        temp_file.flush()
+        profiles = 'continuous-integration'
 
-        return temp_file
+        cmd_args = [
+            "mvn", "-B",
+            "-P", profiles,
+            "-DredirectTestOutputToFile=true",
+            "-DreuseForks=false",
+            "-Daws.crt.memory.tracing=2",
+            "-Daws.crt.debugnative=true",
+            "-Daws.crt.aws_trace_log_per_test",
+            "-Daws.crt.ci=true",
+        ]
+        cmd_args.extend(extra_args)
+        cmd_args.append("test")
 
-    def run(self, env):
+        result = self.env.shell.exec(*cmd_args, check=False)
+        if result.returncode:
+            if os.path.exists('log.txt'):
+                print("--- CRT logs from failing test ---")
+                with open('log.txt', 'r') as log:
+                    print(log.read())
+                print("----------------------------------")
+            sys.exit(f"Tests failed")
+
+    def start_maven_tests(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
-        actions = []
 
-        endpoint = env.shell.get_secret("unit-test/endpoint")
+        self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        with self._write_secret_to_temp_file(env, "unit-test/rootca") as root_ca_file, self._write_secret_to_temp_file(env, "unit-test/certificate") as cert_file, \
-        self._write_secret_to_temp_file(env, "unit-test/privatekey") as key_file, self._write_secret_to_temp_file(env, "ecc-test/certificate") as ecc_cert_file, \
-        self._write_secret_to_temp_file(env, "ecc-test/privatekey") as ecc_key_file:
-
-            test_command = "mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false " \
-                "-DrerunFailingTestsCount=5 -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Daws.crt.ci=true " \
-                "-Dendpoint={} -Dcertificate={} -Dprivatekey={} -Drootca={} -Decc_certificate={} -Decc_privatekey={}".format(endpoint, \
-                cert_file.name, key_file.name, root_ca_file.name, ecc_cert_file.name, ecc_key_file.name)
-
-            all_test_result = os.system(test_command)
-
+        # run the ShutdownTest by itself
         env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        shutdown_test_result = os.system("mvn -P continuous-integration -B test -DredirectTestOutputToFile=true -DreuseForks=false \
-            -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true -Dtest=ShutdownTest")
+        self._run_java_tests("-Dtest=ShutdownTest")
 
-        if shutdown_test_result or all_test_result:
-            # Failed
-            actions.append("exit 1")
-        os.system("cat log.txt")
+        # run the InitTest by itself.  This creates an environment where the test itself is the one that
+        # causes the CRT to be loaded and initialized.
+        self._run_java_tests("-Dtest=InitTest")
+
+        # run the elasticurl integration tests
         python = sys.executable
-        actions.append(
-            [python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                python, 'integration-testing/java_elasticurl_runner.py'])
+        env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
+                       python, 'integration-testing/java_elasticurl_runner.py', check=True)
 
-        return Builder.Script(actions, name='aws-crt-java-test')
+    def run(self, env):
+        self.env = env
+
+        return Builder.Script([
+            Builder.SetupCrossCICrtEnvironment(),
+            self.start_maven_tests  # Then run the Maven stuff
+        ])

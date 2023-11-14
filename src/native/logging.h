@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <jni.h>
+
 /*******************************************************************************
  * aws_jni_cleanup_logging - cleans up the native logger; invoked on atexit
  ******************************************************************************/

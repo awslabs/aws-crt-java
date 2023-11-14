@@ -11,7 +11,7 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B install -DskipTests -Punix-x86 -Dcrt.classifier=linux-x86_32
+      - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B package -DskipTests -Punix-x86 -Dcrt.classifier=linux-x86_32
   post_build:
     commands:
       # get the shared libs from the native build

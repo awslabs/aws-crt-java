@@ -25,6 +25,7 @@ enum aws_java_crt_log_subject {
 
 enum aws_java_crt_error {
     AWS_ERROR_JAVA_CRT_JVM_DESTROYED = AWS_ERROR_ENUM_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+    AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
 
     AWS_ERROR_JAVA_CRT_END_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 };
@@ -57,6 +58,21 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
  * the pending exception was cleared.
  ******************************************************************************/
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
+
+/*******************************************************************************
+ * Checks whether or not an exception is pending on the stack.
+ * If the exception is pending, deletes existing global reference of `out`, sets `out` to the new exception and clears
+ * it.
+ *
+ * @param env A pointer to the JNI environment, used to interact with the JVM.
+ * @param out A pointer to a jthrowable object. If an exception is pending, the function
+ *            deletes any existing global reference pointed to by 'out', and sets 'out'
+ *            to point to the new exception. Must not be NULL.
+ *
+ * @return true if an exception was pending and has been cleared; false otherwise.
+ *
+ ******************************************************************************/
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out);
 
 /*******************************************************************************
  * Set a size_t based on a jlong.

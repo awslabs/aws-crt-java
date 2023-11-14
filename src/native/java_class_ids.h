@@ -463,6 +463,7 @@ struct java_aws_mqtt5_connack_packet_properties {
     jfieldID connack_retain_available_field_id;
     jfieldID connack_maximum_packet_size_field_id;
     jfieldID connack_assigned_client_identifier_field_id;
+    jfieldID connack_topic_alias_maximum_field_id;
     jfieldID connack_reason_string_field_id;
     jfieldID connack_wildcard_subscriptions_available_field_id;
     jfieldID connack_subscription_identifiers_available_field_id;

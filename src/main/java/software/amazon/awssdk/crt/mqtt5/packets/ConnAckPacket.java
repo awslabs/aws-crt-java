@@ -27,6 +27,7 @@ public class ConnAckPacket {
     private Boolean retainAvailable;
     private Long maximumPacketSize;
     private String assignedClientIdentifier;
+    private Integer topicAliasMaximum;
     private String reasonString;
 
     private List<UserProperty> userProperties;
@@ -130,6 +131,17 @@ public class ConnAckPacket {
      */
     public String getAssignedClientIdentifier() {
         return this.assignedClientIdentifier;
+    }
+
+    /**
+     * Returns the maximum topic alias value that the server will accept from the client.
+     *
+     * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901088">MQTT5 Topic Alias Maximum</a>
+     *
+     * @return maximum allowed topic alias value
+     */
+    public Integer getTopicAliasMaximum() {
+        return this.topicAliasMaximum;
     }
 
     /**

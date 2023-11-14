@@ -339,6 +339,15 @@ jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
             true) != AWS_OP_SUCCESS) {
         return NULL;
     }
+    if (s_set_jni_uint16_t_field_in_packet(
+            env,
+            native_connack_data->topic_alias_maximum,
+            connack_data,
+            mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id,
+            "topic alias maximum",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    };
     if (s_set_jni_string_field_in_packet(
             env,
             native_connack_data->reason_string,

@@ -1010,6 +1010,9 @@ static void s_cache_mqtt5_connack_packet(JNIEnv *env) {
     mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id = (*env)->GetFieldID(
         env, mqtt5_connack_packet_properties.connack_packet_class, "assignedClientIdentifier", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id);
+    mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "topicAliasMaximum", "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id);
     mqtt5_connack_packet_properties.connack_reason_string_field_id = (*env)->GetFieldID(
         env, mqtt5_connack_packet_properties.connack_packet_class, "reasonString", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_reason_string_field_id);

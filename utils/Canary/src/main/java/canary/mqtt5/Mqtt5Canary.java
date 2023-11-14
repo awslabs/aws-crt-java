@@ -416,7 +416,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Started client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -444,7 +443,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Stopped client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -477,7 +475,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = true;
         PrintLog("[OP] Subscribed client ID " + clientIdx);
@@ -511,7 +508,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
         PrintLog("[OP] Unsubscribed client ID " + clientIdx);
@@ -541,7 +537,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -587,7 +582,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         clientsData.get(clientIdx).isWaitingForOperation = false;

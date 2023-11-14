@@ -197,15 +197,15 @@ public class Mqtt5Canary {
 
     static void PrintLog(String message) {
         return;
-        if (configLogStdout == true) {
-            System.out.println("[CANARY] " + message);
-        }
-        if (configFilePrinter != null) {
-            configFilePrinter.println(message);
-        }
-        if (configLogAWS == true) {
-            Log.log(configLogAWSLevel, LogSubject.MqttClient, "[CANARY] " + message);
-        }
+        // if (configLogStdout == true) {
+        //     System.out.println("[CANARY] " + message);
+        // }
+        // if (configFilePrinter != null) {
+        //     configFilePrinter.println(message);
+        // }
+        // if (configLogAWS == true) {
+        //     Log.log(configLogAWSLevel, LogSubject.MqttClient, "[CANARY] " + message);
+        // }
     }
 
     static void exitWithError(int errorCode) {

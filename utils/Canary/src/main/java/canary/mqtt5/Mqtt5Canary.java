@@ -196,6 +196,7 @@ public class Mqtt5Canary {
     }
 
     static void PrintLog(String message) {
+        return;
         if (configLogStdout == true) {
             System.out.println("[CANARY] " + message);
         }
@@ -293,8 +294,7 @@ public class Mqtt5Canary {
             PublishPacket publishPacket = publishReturn.getPublishPacket();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
-                    "  Topic: " + publishPacket.getTopic() + "\n" +
-                    "  Payload: " + new String(publishPacket.getPayload()));
+                    "  Topic: " + publishPacket.getTopic() + "\n");
         }
     }
 
@@ -568,7 +568,7 @@ public class Mqtt5Canary {
         int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
         byte[] payload_bytes = new byte[payload_size];
         for (int i = 0; i < payload_size; i++) {
-            payload_bytes[i] = random.nextInt(128);
+            payload_bytes[i] = (byte)random.nextInt(128);
         }
         publishPacketBuilder.withPayload(payload_bytes);
         publishPacketBuilder.withTopic(topic);

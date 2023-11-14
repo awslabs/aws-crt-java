@@ -574,7 +574,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jclass jni_class,
     jlong jni_connection,
     jstring jni_endpoint,
-    jshort jni_port,
+    jint jni_port,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jstring jni_client_id,
@@ -594,7 +594,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     struct aws_byte_cursor client_id;
     AWS_ZERO_STRUCT(client_id);
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
-    uint16_t port = jni_port;
+    uint16_t port = (uint16_t)jni_port;
     if (!port) {
         aws_jni_throw_runtime_exception(
             env,

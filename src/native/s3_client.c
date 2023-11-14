@@ -46,6 +46,7 @@ struct s3_client_make_meta_request_callback_data {
     jobject java_s3_meta_request_response_handler_native_adapter;
     struct aws_input_stream *input_stream;
     struct aws_signing_config_data signing_config_data;
+    jthrowable java_exception;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -354,10 +355,10 @@ static int s_on_s3_meta_request_body_callback(
             range_start,
             range_end);
 
-        if (aws_jni_check_and_clear_exception(env)) {
+        if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
-                "id=%p: Ignored Exception from S3MetaRequest.onResponseBody callback",
+                "id=%p: Received exception from S3MetaRequest.onResponseBody callback",
                 (void *)meta_request);
             aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
             goto cleanup;
@@ -432,7 +433,7 @@ static int s_on_s3_meta_request_headers_callback(
             response_status,
             java_headers_buffer);
 
-        if (aws_jni_check_and_clear_exception(env)) {
+        if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
                 AWS_LS_S3_META_REQUEST,
                 "id=%p: Exception thrown from S3MetaRequest.onResponseHeaders callback",
@@ -481,6 +482,10 @@ static void s_on_s3_meta_request_finish_callback(
             error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
         }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
+        /* Only propagate java_exception if crt error code is callback failure */
+        jthrowable java_exception =
+            meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception : NULL;
+
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -489,7 +494,8 @@ static void s_on_s3_meta_request_finish_callback(
             meta_request_result->response_status,
             jni_payload,
             meta_request_result->validation_algorithm,
-            meta_request_result->did_validate);
+            meta_request_result->did_validate,
+            java_exception);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -571,6 +577,7 @@ static void s_s3_meta_request_callback_cleanup(
     if (callback_data) {
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
+        (*env)->DeleteGlobalRef(env, callback_data->java_exception);
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
     }

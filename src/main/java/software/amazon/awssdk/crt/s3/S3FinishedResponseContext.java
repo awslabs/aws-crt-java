@@ -11,22 +11,26 @@ public class S3FinishedResponseContext {
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
+    private final Throwable cause;
+
     /*
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
      * errorPayload body of the error response. Can be null if the request completed successfully
      * checksumAlgorithm, the algorithm used to validate the Body, None if not validated
      * didValidateChecksum which is true if the response was validated.
+     * cause of the error such as a Java exception in a callback. Maybe NULL if there was no exception in a callback.
      */
-    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum) {
+    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
+        this.cause = cause;
     }
 
-    public int getErrorCode () {
+    public int getErrorCode() {
         return this.errorCode;
     }
 
@@ -34,14 +38,14 @@ public class S3FinishedResponseContext {
      * If the request didn't receive a response due to a connection
      * failure or some other issue the response status will be 0.
      */
-    public int getResponseStatus () {
+    public int getResponseStatus() {
         return this.responseStatus;
     }
 
     /*
      * In the case of a failed http response get the payload of the response.
      */
-    public byte[] getErrorPayload () {
+    public byte[] getErrorPayload() {
         return this.errorPayload;
     }
 
@@ -49,10 +53,20 @@ public class S3FinishedResponseContext {
      * if no checksum is found, or the request finished with an error the Algorithm will be None,
      * otherwise the algorithm will correspond to the one attached to the object when uploaded.
      */
-    public ChecksumAlgorithm getChecksumAlgorithm () {
+    public ChecksumAlgorithm getChecksumAlgorithm() {
         return this.checksumAlgorithm;
     }
-    public boolean isChecksumValidated () {
+
+    public boolean isChecksumValidated() {
         return this.didValidateChecksum;
     }
+
+    /**
+     * Cause of the error, such as a Java exception from a callback. May be NULL if there was no exception in a callback.
+     * @return throwable
+     */
+    public Throwable getCause() {
+        return cause;
+    }
+
 }

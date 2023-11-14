@@ -29,6 +29,11 @@ public abstract class CrtPlatform {
         return System.getProperty("os.arch");
     }
 
+    // Get the library resource path to load the JNI library
+    public String getResourcePath(String cRuntime, String libraryName) throws RuntimeException {
+        return null;
+    }
+
     // Called one and only one time during setup for testing
     public void setupOnce() {}
 

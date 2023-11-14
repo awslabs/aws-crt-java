@@ -4,6 +4,10 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,6 +60,9 @@ public final class CRT {
             public void run()
             {
                 CRT.onJvmShutdown();
+                ClientBootstrap.closeStaticDefault();
+                EventLoopGroup.closeStaticDefault();
+                HostResolver.closeStaticDefault();
             }
         });
 
@@ -301,6 +308,15 @@ public final class CRT {
 
             // open a stream to read the shared lib contents from this JAR
             String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
+            // Check whether there is a platform specific resource path to use
+            CrtPlatform platform = getPlatformImpl();
+            if (platform != null){
+                String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
+                if (platformLibResourcePath != null){
+                    libResourcePath = platformLibResourcePath;
+                }
+            }
+
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
@@ -399,6 +415,7 @@ public final class CRT {
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
                 // Search for android test impl specifically because getOSIdentifier will return "linux" on android
                 "software.amazon.awssdk.crt.test.android.CrtPlatformImpl",
+                "software.amazon.awssdk.crt.android.CrtPlatformImpl",
                 // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {

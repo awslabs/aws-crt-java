@@ -213,9 +213,6 @@ jobs:
       # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     name: Android
     runs-on: ubuntu-20.04 # latest
-    permissions:
-      # These permissions needed to interact with GitHub's OIDC Token endpoint
-      id-token: write # This is required for requesting the JWT
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2

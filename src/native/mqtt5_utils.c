@@ -523,6 +523,16 @@ jobject s_aws_mqtt5_client_create_jni_negotiated_settings_from_native(
     (*env)->SetIntField(
         env,
         negotiated_settings_data,
+        mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id,
+        (jint)native_negotiated_settings_data->topic_alias_maximum_to_server);
+    (*env)->SetIntField(
+        env,
+        negotiated_settings_data,
+        mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id,
+        (jint)native_negotiated_settings_data->topic_alias_maximum_to_client);
+    (*env)->SetIntField(
+        env,
+        negotiated_settings_data,
         mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id,
         (jint)native_negotiated_settings_data->server_keep_alive);
     (*env)->SetBooleanField(

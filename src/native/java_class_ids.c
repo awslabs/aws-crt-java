@@ -1360,6 +1360,14 @@ static void s_cache_mqtt5_negotiated_settings(JNIEnv *env) {
         (*env)->GetFieldID(
             env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "maximumPacketSizeToServer", "J");
     AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_maximum_packet_size_to_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "topicAliasMaximumToServer", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "topicAliasMaximumToClient", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id);
     mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id =
         (*env)->GetFieldID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "serverKeepAlive", "I");
     AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id);

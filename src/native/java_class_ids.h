@@ -590,6 +590,8 @@ struct java_aws_mqtt5_negotiated_settings_properties {
     jfieldID negotiated_settings_session_expiry_interval_field_id;
     jfieldID negotiated_settings_receive_maximum_from_server_field_id;
     jfieldID negotiated_settings_maximum_packet_size_to_server_field_id;
+    jfieldID negotiated_settings_topic_alias_maximum_to_server_field_id;
+    jfieldID negotiated_settings_topic_alias_maximum_to_client_field_id;
     jfieldID negotiated_settings_server_keep_alive_field_id;
     jfieldID negotiated_settings_retain_available_field_id;
     jfieldID negotiated_settings_wildcard_subscriptions_available_field_id;

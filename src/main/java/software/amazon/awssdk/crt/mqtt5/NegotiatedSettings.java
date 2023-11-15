@@ -22,6 +22,8 @@ public class NegotiatedSettings {
     private long sessionExpiryInterval;
     private int receiveMaximumFromServer;
     private long maximumPacketSizeToServer;
+    private int topicAliasMaximumToServer;
+    private int topicAliasMaximumToClient;
     private int serverKeepAlive;
     private boolean retainAvailable;
     private boolean wildcardSubscriptionsAvailable;
@@ -57,6 +59,21 @@ public class NegotiatedSettings {
     public long getMaximumPacketSizeToServer() {
         return this.maximumPacketSizeToServer;
     }
+
+    /**
+     * @return returns the maximum allowed topic alias value on publishes sent from client to server
+     */
+    public int getTopicAliasMaximumToServer() {
+        return this.topicAliasMaximumToServer;
+    }
+
+    /**
+     * @return returns the maximum allowed topic alias value on publishes sent from server to client
+     */
+    public int getTopicAliasMaximumToClient() {
+        return this.topicAliasMaximumToClient;
+    }
+
 
     /**
      * Returns the maximum amount of time in seconds between client packets. The client should use PINGREQs to ensure this

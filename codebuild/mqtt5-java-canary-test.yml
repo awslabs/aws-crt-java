@@ -36,7 +36,7 @@ phases:
       - export ENDPOINT=$(aws secretsmanager get-secret-value --secret-id ${CANARY_SERVER_ARN} --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       # Run the Canary
       - cd ./utils/Canary
-      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 8883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\" -Daws.crt.debugnative=true -Daws.crt.log.destination=Stdout -Daws.crt.log.level=${CANARY_LOG_LEVEL}" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --codebuild_log_path $CODEBUILD_LOG_PATH --ticket_item "${CODEBUILD_TICKET_ITEM}"
+      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\" -Daws.crt.debugnative=true -Daws.crt.log.destination=Stdout -Daws.crt.log.level=${CANARY_LOG_LEVEL}" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --codebuild_log_path $CODEBUILD_LOG_PATH --ticket_item "${CODEBUILD_TICKET_ITEM}"
   post_build:
     commands:
       - echo Build completed on `date`

@@ -562,6 +562,7 @@ struct java_aws_mqtt5_publish_packet_properties {
     jfieldID publish_topic_field_id;
     jfieldID publish_payload_format_field_id;
     jfieldID publish_message_expiry_interval_seconds_field_id;
+    jfieldID publish_topic_alias_field_id;
     jfieldID publish_response_topic_field_id;
     jfieldID publish_correlation_data_field_id;
     jfieldID publish_content_type_field_id;

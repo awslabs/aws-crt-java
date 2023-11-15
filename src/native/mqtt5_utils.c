@@ -623,6 +623,16 @@ jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
         return NULL;
     }
 
+    if (s_set_jni_uint16_t_field_in_packet(
+            env,
+            publish->topic_alias,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_topic_alias_field_id,
+            "topic alias",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
     if (s_set_jni_string_field_in_packet(
             env,
             publish->response_topic,

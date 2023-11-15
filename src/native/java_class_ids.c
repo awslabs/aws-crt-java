@@ -1288,6 +1288,9 @@ static void s_cache_mqtt5_publish_packet(JNIEnv *env) {
     mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id = (*env)->GetFieldID(
         env, mqtt5_publish_packet_properties.publish_packet_class, "messageExpiryIntervalSeconds", "Ljava/lang/Long;");
     AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id);
+    mqtt5_publish_packet_properties.publish_topic_alias_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "topicAlias", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_topic_alias_field_id);
     mqtt5_publish_packet_properties.publish_response_topic_field_id = (*env)->GetFieldID(
         env, mqtt5_publish_packet_properties.publish_packet_class, "responseTopic", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_response_topic_field_id);
@@ -1571,13 +1574,13 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         env,
         mqtt5_client_options_properties.client_options_class,
         "topicAliasingOptions",
-        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$TopicAliasingOptions;");
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
 }
 
 struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
 static void s_cache_topic_aliasing_options(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$TopicAliasingOptions");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions");
     AWS_FATAL_ASSERT(cls);
     mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class);
@@ -1586,7 +1589,7 @@ static void s_cache_topic_aliasing_options(JNIEnv *env) {
         env,
         mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
         "outboundBehavior",
-        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$OutboundTopicAliasBehaviorType;");
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$OutboundTopicAliasBehaviorType;");
     AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id);
 
     mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id = (*env)->GetFieldID(
@@ -1600,7 +1603,7 @@ static void s_cache_topic_aliasing_options(JNIEnv *env) {
         env,
         mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
         "inboundBehavior",
-        "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$InboundTopicAliasBehaviorType;");
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$InboundTopicAliasBehaviorType;");
     AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id);
 
     mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id = (*env)->GetFieldID(
@@ -1731,7 +1734,7 @@ struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties mqtt5_outbou
 
 static void s_cache_mqtt5_outbound_topic_alias_behavior_type(JNIEnv *env) {
     jclass cls =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$OutboundTopicAliasBehaviorType");
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$OutboundTopicAliasBehaviorType");
     AWS_FATAL_ASSERT(cls);
     mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class =
         (*env)->NewGlobalRef(env, cls);
@@ -1750,7 +1753,7 @@ struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties mqtt5_inbound
 
 static void s_cache_mqtt5_inbound_topic_alias_behavior_type(JNIEnv *env) {
     jclass cls =
-        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$InboundTopicAliasBehaviorType");
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$InboundTopicAliasBehaviorType");
     AWS_FATAL_ASSERT(cls);
     mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class =
         (*env)->NewGlobalRef(env, cls);

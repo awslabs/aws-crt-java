@@ -1631,6 +1631,20 @@ static int s_initialize_topic_aliasing_options(
             (enum aws_mqtt5_client_outbound_topic_alias_behavior_type)enum_value;
     }
 
+    jobject jni_outbound_cache_max_size = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id);
+    if (jni_outbound_cache_max_size != NULL) {
+        jint int_value =
+            (*env)->CallIntMethod(env, jni_outbound_cache_max_size, boxed_integer_properties.integer_get_value_id);
+
+        if (int_value < 0 || int_value > UINT16_MAX) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Invalid outbound cache size value: %d", int_value);
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        topic_aliasing_options->outbound_alias_cache_max_size = (uint16_t)int_value;
+    }
+
     jobject jni_inbound_behavior = (*env)->GetObjectField(
         env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id);
     if (jni_inbound_behavior != NULL) {
@@ -1643,6 +1657,20 @@ static int s_initialize_topic_aliasing_options(
 
         topic_aliasing_options->inbound_topic_alias_behavior =
             (enum aws_mqtt5_client_inbound_topic_alias_behavior_type)enum_value;
+    }
+
+    jobject jni_inbound_cache_max_size = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id);
+    if (jni_inbound_cache_max_size != NULL) {
+        jint int_value =
+            (*env)->CallIntMethod(env, jni_inbound_cache_max_size, boxed_integer_properties.integer_get_value_id);
+
+        if (int_value < 0 || int_value > UINT16_MAX) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Invalid inbound cache size value: %d", int_value);
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        topic_aliasing_options->inbound_alias_cache_size = (uint16_t)int_value;
     }
 
     return AWS_OP_SUCCESS;

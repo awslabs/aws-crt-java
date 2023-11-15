@@ -18,43 +18,26 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-
 import software.amazon.awssdk.crt.*;
-import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
-import software.amazon.awssdk.crt.auth.credentials.CognitoCredentialsProvider.CognitoCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider.StaticCredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider.X509CredentialsProviderBuilder;
-import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
-import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.Pkcs11Lib;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.io.TlsContextPkcs11Options;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.mqtt5.*;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientOfflineQueueBehavior;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientSessionBehavior;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ExtendedValidationAndFlowControlOptions;
-import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.LifecycleEvents;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.PublishEvents;
 import software.amazon.awssdk.crt.mqtt5.packets.*;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuilder;
 import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectPacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket.DisconnectReasonCode;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket.PublishPacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.SubscribePacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePacketBuilder;
-import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingType;
-import software.amazon.awssdk.crt.mqtt.MqttClient;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnectionEvents;
 import software.amazon.awssdk.crt.mqtt.OnConnectionSuccessReturn;
@@ -64,14 +47,7 @@ import software.amazon.awssdk.crt.mqtt.OnConnectionClosedReturn;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import org.junit.Test;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
@@ -772,6 +748,62 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 tlsContext.close();
             }
 
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void TestNullPubAck() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5to3Adapter_Binding_Java_" + testUUID;
+        String clientId = "test/MQTT5TO3Adapter_ClientId" + testUUID;
+        String testPayload = "PUBLISH ME!";
+        boolean isPubAckFailed = false;
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+            builder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+            ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
+            connectBuilder.withClientId(clientId);
+            builder.withConnectOptions(connectBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());) {
+                MqttClientConnection connection = new MqttClientConnection(client, null);
+
+                // Do an offline publish. The client would never get PUBACK.
+                MqttMessage message = new MqttMessage(testTopic, testPayload.getBytes(), QualityOfService.AT_LEAST_ONCE,
+                        false);
+                CompletableFuture<Integer> published = connection.publish(message);
+
+                // Close connection should fire the incomplete PUBACK
+                connection.close();
+                try {
+                    published.get();
+                } catch (Exception e) {
+                    // We expect to catch the exception as the PubAck should fail on
+                    // connection.close().
+                    isPubAckFailed = true;
+                }
+            }
+            assertTrue("The PUBACK should fail on connection close", isPubAckFailed);
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

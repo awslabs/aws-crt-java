@@ -32,6 +32,10 @@ public class TopicAliasingOptions {
      * manipulate the topic alias id in outbound publishes will be ignored.
      *
      * By default, outbound topic aliasing is disabled.
+     *
+     * @param behavior outbound topic alias behavior to use
+     *
+     * @return the topic aliasing options object
      */
     public TopicAliasingOptions withOutboundBehavior(OutboundTopicAliasBehaviorType behavior) {
         this.outboundBehavior = behavior;
@@ -46,6 +50,10 @@ public class TopicAliasingOptions {
      * The final size of the cache is determined by the minimum of this setting and the value of the
      * topic_alias_maximum property of the received CONNACK.  If the received CONNACK does not have an explicit
      * positive value for that field, outbound topic aliasing is disabled for the duration of that connection.
+     *
+     * @param size maximum size to use for the outbound alias cache
+     *
+     * @return the topic aliasing options object
      */
     public TopicAliasingOptions withOutboundCacheMaxSize(int size) {
         this.outboundCacheMaxSize = size;
@@ -57,6 +65,10 @@ public class TopicAliasingOptions {
      * inbound topic aliasing is enabled, it is up to the server to choose whether or not to use it.
      *
      * If left undefined, then inbound topic aliasing is disabled.
+     *
+     * @param behavior inbound topic alias behavior to use
+     *
+     * @return the topic aliasing options object
      */
     public TopicAliasingOptions withInboundBehavior(InboundTopicAliasBehaviorType behavior) {
         this.inboundBehavior = behavior;
@@ -70,6 +82,10 @@ public class TopicAliasingOptions {
      *
      * Behaviorally, this value overrides anything present in the topic_alias_maximum field of
      * the CONNECT packet options.
+     *
+     * @param size maximum size to use for the inbound alias cache
+     *
+     * @return the topic aliasing options object
      */
     public TopicAliasingOptions withInboundCacheMaxSize(int size) {
         this.inboundCacheMaxSize = size;

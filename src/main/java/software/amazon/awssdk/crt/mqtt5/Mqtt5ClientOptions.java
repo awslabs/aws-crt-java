@@ -48,6 +48,7 @@ public class Mqtt5ClientOptions {
     private LifecycleEvents lifecycleEvents;
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
+    private TopicAliasingOptions topicAliasingOptions;
 
     /**
      * Returns the host name of the MQTT server to connect to.
@@ -258,6 +259,15 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns the topic aliasing options to be used by the client
+     *
+     * @return the topic aliasing options to be used by the client
+     */
+    public TopicAliasingOptions getTopicAliasingOptions() {
+        return this.topicAliasingOptions;
+    }
+
+    /**
      * Creates a Mqtt5ClientOptionsBuilder instance
      * @param builder The builder to get the Mqtt5ClientOptions values from
      */
@@ -282,6 +292,7 @@ public class Mqtt5ClientOptions {
         this.lifecycleEvents = builder.lifecycleEvents;
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
+        this.topicAliasingOptions = builder.topicAliasingOptions;
     }
 
     /*******************************************************************************
@@ -579,6 +590,7 @@ public class Mqtt5ClientOptions {
         private LifecycleEvents lifecycleEvents;
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
+        private TopicAliasingOptions topicAliasingOptions;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -832,6 +844,17 @@ public class Mqtt5ClientOptions {
          */
         public Mqtt5ClientOptionsBuilder withPublishEvents(PublishEvents publishEvents) {
             this.publishEvents = publishEvents;
+            return this;
+        }
+
+        /**
+         * Sets the topic aliasing options for clients constructed from this builder
+         *
+         * @param options topic aliasing options that the client should use
+         * @return The Mqtt5ClientOptionsBuilder object
+         */
+        public Mqtt5ClientOptionsBuilder withTopicAliasingOptions(TopicAliasingOptions options) {
+            this.topicAliasingOptions = options;
             return this;
         }
 

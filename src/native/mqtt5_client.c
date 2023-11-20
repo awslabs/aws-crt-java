@@ -1612,6 +1612,70 @@ done:
     s_ws_handshake_destroy(ws_handshake);
 }
 
+static int s_initialize_topic_aliasing_options(
+    JNIEnv *env,
+    struct aws_mqtt5_client_topic_alias_options *topic_aliasing_options,
+    jobject jni_topic_aliasing_options) {
+
+    jobject jni_outbound_behavior = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id);
+    if (jni_outbound_behavior != NULL) {
+        jint enum_value = (*env)->CallIntMethod(
+            env, jni_outbound_behavior, mqtt5_outbound_topic_alias_behavior_type_properties.get_value_method_id);
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error getting native value from OutboundTopicAliasBehaviorType");
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+
+        topic_aliasing_options->outbound_topic_alias_behavior =
+            (enum aws_mqtt5_client_outbound_topic_alias_behavior_type)enum_value;
+    }
+
+    jobject jni_outbound_cache_max_size = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id);
+    if (jni_outbound_cache_max_size != NULL) {
+        jint int_value =
+            (*env)->CallIntMethod(env, jni_outbound_cache_max_size, boxed_integer_properties.integer_get_value_id);
+
+        if (int_value < 0 || int_value > UINT16_MAX) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Invalid outbound cache size value: %d", int_value);
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        topic_aliasing_options->outbound_alias_cache_max_size = (uint16_t)int_value;
+    }
+
+    jobject jni_inbound_behavior = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id);
+    if (jni_inbound_behavior != NULL) {
+        jint enum_value = (*env)->CallIntMethod(
+            env, jni_inbound_behavior, mqtt5_inbound_topic_alias_behavior_type_properties.get_value_method_id);
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Error getting native value from InboundTopicAliasBehaviorType");
+            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        }
+
+        topic_aliasing_options->inbound_topic_alias_behavior =
+            (enum aws_mqtt5_client_inbound_topic_alias_behavior_type)enum_value;
+    }
+
+    jobject jni_inbound_cache_max_size = (*env)->GetObjectField(
+        env, jni_topic_aliasing_options, mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id);
+    if (jni_inbound_cache_max_size != NULL) {
+        jint int_value =
+            (*env)->CallIntMethod(env, jni_inbound_cache_max_size, boxed_integer_properties.integer_get_value_id);
+
+        if (int_value < 0 || int_value > UINT16_MAX) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "Invalid inbound cache size value: %d", int_value);
+            return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        }
+
+        topic_aliasing_options->inbound_alias_cache_size = (uint16_t)int_value;
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 /*******************************************************************************
  * JNI FUNCTIONS
  ******************************************************************************/
@@ -2030,6 +2094,18 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     }
     if (jni_lifecycle_events != NULL) {
         java_client->jni_lifecycle_events = (*env)->NewGlobalRef(env, jni_lifecycle_events);
+    }
+
+    struct aws_mqtt5_client_topic_alias_options topic_aliasing_options;
+    AWS_ZERO_STRUCT(topic_aliasing_options);
+    jobject jni_topic_aliasing_options =
+        (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.topic_aliasing_options_field_id);
+
+    if (jni_topic_aliasing_options != NULL) {
+        if (s_initialize_topic_aliasing_options(env, &topic_aliasing_options, jni_topic_aliasing_options) ==
+            AWS_OP_SUCCESS) {
+            client_options.topic_aliasing_options = &topic_aliasing_options;
+        }
     }
 
     client_options.client_termination_handler = &s_aws_mqtt5_client_java_termination;

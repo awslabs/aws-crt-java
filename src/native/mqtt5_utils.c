@@ -339,6 +339,15 @@ jobject s_aws_mqtt5_client_create_jni_connack_packet_from_native(
             true) != AWS_OP_SUCCESS) {
         return NULL;
     }
+    if (s_set_jni_uint16_t_field_in_packet(
+            env,
+            native_connack_data->topic_alias_maximum,
+            connack_data,
+            mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id,
+            "topic alias maximum",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    };
     if (s_set_jni_string_field_in_packet(
             env,
             native_connack_data->reason_string,
@@ -514,6 +523,16 @@ jobject s_aws_mqtt5_client_create_jni_negotiated_settings_from_native(
     (*env)->SetIntField(
         env,
         negotiated_settings_data,
+        mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id,
+        (jint)native_negotiated_settings_data->topic_alias_maximum_to_server);
+    (*env)->SetIntField(
+        env,
+        negotiated_settings_data,
+        mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id,
+        (jint)native_negotiated_settings_data->topic_alias_maximum_to_client);
+    (*env)->SetIntField(
+        env,
+        negotiated_settings_data,
         mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id,
         (jint)native_negotiated_settings_data->server_keep_alive);
     (*env)->SetBooleanField(
@@ -610,6 +629,16 @@ jobject s_aws_mqtt5_client_create_jni_publish_packet_from_native(
             publish_packet_data,
             mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id,
             "message expiry interval seconds",
+            true) != AWS_OP_SUCCESS) {
+        return NULL;
+    }
+
+    if (s_set_jni_uint16_t_field_in_packet(
+            env,
+            publish->topic_alias,
+            publish_packet_data,
+            mqtt5_publish_packet_properties.publish_topic_alias_field_id,
+            "topic alias",
             true) != AWS_OP_SUCCESS) {
         return NULL;
     }

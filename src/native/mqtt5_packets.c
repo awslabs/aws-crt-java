@@ -1215,6 +1215,21 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
         java_packet->packet.message_expiry_interval_seconds = &java_packet->message_expiry_interval_seconds;
     }
 
+    if (aws_get_uint16_from_jobject(
+            env,
+            java_publish_packet,
+            mqtt5_publish_packet_properties.publish_topic_alias_field_id,
+            s_publish_packet_string,
+            "topic alias",
+            &java_packet->topic_alias,
+            true,
+            &was_value_set) == AWS_OP_ERR) {
+        goto on_error;
+    }
+    if (was_value_set) {
+        java_packet->packet.topic_alias = &java_packet->topic_alias;
+    }
+
     if (aws_get_string_from_jobject(
             env,
             java_publish_packet,

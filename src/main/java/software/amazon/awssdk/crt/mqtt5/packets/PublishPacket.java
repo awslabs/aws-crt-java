@@ -23,6 +23,7 @@ public class PublishPacket {
     private String topic;
     private PayloadFormatIndicator payloadFormat;
     private Long messageExpiryIntervalSeconds;
+    private Long topicAlias;
     private String responseTopic;
     private byte[] correlationData;
     private List<Long> subscriptionIdentifiers;
@@ -108,6 +109,20 @@ public class PublishPacket {
     }
 
     /**
+     * Sent publishes - topic alias to use, if possible, when encoding this packet.  Only used if the
+     * client's outbound topic aliasing mode is set to Manual.
+     *
+     * Received publishes - topic alias used by the server when transmitting the publish to the client.
+     *
+     * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901113">MQTT5 Topic Alias</a>
+     *
+     * @return The topic alias associated with this PublishPacket.
+     */
+    public Long getTopicAlias() {
+        return this.topicAlias;
+    }
+
+    /**
      * Returns a opaque topic string intended to assist with request/response implementations.  Not internally meaningful to
      * MQTT5 or this client.
      *
@@ -177,6 +192,7 @@ public class PublishPacket {
         this.topic = builder.topic;
         this.payloadFormat = builder.payloadFormat;
         this.messageExpiryIntervalSeconds = builder.messageExpiryIntervalSeconds;
+        this.topicAlias = builder.topicAlias;
         this.responseTopic = builder.responseTopic;
         this.correlationData = builder.correlationData;
         this.contentType = builder.contentType;
@@ -270,6 +286,7 @@ public class PublishPacket {
         private String topic;
         private PayloadFormatIndicator payloadFormat;
         private Long messageExpiryIntervalSeconds;
+        private Long topicAlias;
         private String responseTopic;
         private byte[] correlationData;
         private String contentType;
@@ -356,6 +373,21 @@ public class PublishPacket {
          */
         public PublishPacketBuilder withMessageExpiryIntervalSeconds(Long messageExpiryIntervalSeconds) {
             this.messageExpiryIntervalSeconds = messageExpiryIntervalSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the topic alias to use when sending this publish.  Will only be used if the outbound topic aliasing
+         * behavior has been set to Manual.
+         *
+         * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901113">MQTT5 Topic Alias</a>
+         *
+         * @param topicAlias alias value to use.  Must be greater than 0 and less than 65536.
+         *
+         * @return The PublishPacketBuilder after setting the topic alias.
+         */
+        public PublishPacketBuilder withTopicAlias(long topicAlias) {
+            this.topicAlias = topicAlias;
             return this;
         }
 

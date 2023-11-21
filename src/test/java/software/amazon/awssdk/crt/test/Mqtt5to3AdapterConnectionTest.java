@@ -754,6 +754,79 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
     }
 
     @Test
+    public void TestAnauthorizedSub() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "$this/topic/is/unsubscribable";
+        String clientId = "test/MQTT5TO3Adapter_ClientId" + testUUID;
+        String testPayload = "PUBLISH ME!";
+
+        Consumer<MqttMessage> messageHandler = (message) -> {
+            byte[] payload = message.getPayload();
+            try {
+                assertEquals(testTopic, message.getTopic());
+                String contents = new String(payload, "UTF-8");
+                assertEquals("Message is intact", testPayload, contents);
+            } catch (Exception ex) {
+                fail("Unable to decode payload: " + ex.getMessage());
+            }
+        };
+
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+            builder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+            ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
+            connectBuilder.withClientId(clientId);
+            builder.withConnectOptions(connectBuilder.build());
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build());
+                    MqttClientConnection connection = new MqttClientConnection(client, null);) {
+                connection.onMessage(messageHandler);
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                CompletableFuture<MqttMessage> receivedFuture = new CompletableFuture<>();
+                Consumer<MqttMessage> subscriberMessageHandler = (message) -> {
+                    receivedFuture.complete(message);
+                };
+
+                CompletableFuture<Integer> subscribed = connection.subscribe(testTopic, QualityOfService.AT_LEAST_ONCE,
+                        subscriberMessageHandler);
+                subscribed.thenApply(unused -> subsAcked++);
+                boolean subFailed = false;
+                try {
+                    int packetId = subscribed.get();
+                } catch (Exception ex) {
+                    subFailed = true;
+                }
+
+                assertTrue("The SUBSCRIBE should fail", subFailed);
+
+                client.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
     public void TestNullPubAck() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,

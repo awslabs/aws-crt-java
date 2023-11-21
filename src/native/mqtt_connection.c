@@ -830,7 +830,6 @@ static void s_on_ack(
         return;
     }
 
-    // TODO add is_qos_successful(qos)
     if (error_code || !s_is_qos_successful(qos)) {
         s_deliver_suback_failure(callback, qos, error_code, env);
     } else {

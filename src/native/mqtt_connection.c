@@ -802,6 +802,10 @@ static void s_deliver_suback_failure(
     }
 }
 
+static bool s_is_qos_successful(enum aws_mqtt_qos qos) {
+    return qos < 128;
+}
+
 static void s_on_ack(
     struct aws_mqtt_client_connection *connection,
     uint16_t packet_id,
@@ -827,7 +831,7 @@ static void s_on_ack(
     }
 
     // TODO add is_qos_successful(qos)
-    if (error_code || qos >= 128) {
+    if (error_code || !s_is_qos_successful(qos)) {
         s_deliver_suback_failure(callback, qos, error_code, env);
     } else {
         s_deliver_suback_success(callback, qos, env);

@@ -759,6 +759,49 @@ static void s_on_op_complete(
     /********** JNI ENV RELEASE **********/
 }
 
+static void s_deliver_suback_success(struct mqtt_jni_async_callback *callback, enum aws_mqtt_qos qos, JNIEnv *env) {
+    (void)qos;
+
+    AWS_FATAL_ASSERT(callback);
+    AWS_FATAL_ASSERT(callback->connection);
+
+    if (callback->async_callback) {
+        (*env)->CallVoidMethod(env, callback->async_callback, async_callback_properties.on_success);
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    }
+}
+
+static void s_deliver_suback_failure(
+    struct mqtt_jni_async_callback *callback,
+    enum aws_mqtt_qos qos,
+    int error_code,
+    JNIEnv *env) {
+
+    AWS_FATAL_ASSERT(callback);
+    AWS_FATAL_ASSERT(callback->connection);
+    AWS_FATAL_ASSERT(env);
+
+    if (callback->async_callback) {
+        jobject jni_reason;
+        if (error_code != 0) {
+            jni_reason = s_new_mqtt_exception(env, error_code);
+        } else {
+            char buf[100];
+            snprintf(buf, sizeof(buf), "Subscribe failed with reason code %d", (int)qos);
+            jstring exception = (*env)->NewStringUTF(env, buf);
+            jni_reason = (*env)->NewObject(
+                env,
+                mqtt_exception_properties.jni_mqtt_exception,
+                mqtt_exception_properties.jni_str_constructor,
+                exception);
+            (*env)->DeleteLocalRef(env, exception);
+        }
+        (*env)->CallVoidMethod(env, callback->async_callback, async_callback_properties.on_failure, jni_reason);
+        (*env)->DeleteLocalRef(env, jni_reason);
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    }
+}
+
 static void s_on_ack(
     struct aws_mqtt_client_connection *connection,
     uint16_t packet_id,
@@ -767,8 +810,33 @@ static void s_on_ack(
     int error_code,
     void *user_data) {
     (void)topic;
-    (void)qos;
-    s_on_op_complete(connection, packet_id, error_code, user_data);
+
+    AWS_FATAL_ASSERT(connection);
+    (void)packet_id;
+
+    struct mqtt_jni_async_callback *callback = user_data;
+    if (!callback) {
+        return;
+    }
+
+    /********** JNI ENV ACQUIRE **********/
+    JavaVM *jvm = callback->connection->jvm;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    if (env == NULL) {
+        return;
+    }
+
+    // TODO add is_qos_successful(qos)
+    if (error_code || qos >= 128) {
+        s_deliver_suback_failure(callback, qos, error_code, env);
+    } else {
+        s_deliver_suback_success(callback, qos, env);
+    }
+
+    s_mqtt_jni_async_callback_destroy(callback, env);
+
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
 }
 
 static void s_cleanup_handler(void *user_data) {

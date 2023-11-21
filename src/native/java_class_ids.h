@@ -101,7 +101,6 @@ extern struct java_mqtt_connection_operation_statistics_properties mqtt_connecti
 struct java_mqtt_exception_properties {
     jclass jni_mqtt_exception;
     jmethodID jni_constructor;
-    jmethodID jni_str_constructor;
 };
 extern struct java_mqtt_exception_properties mqtt_exception_properties;
 

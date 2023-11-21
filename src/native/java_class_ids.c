@@ -207,10 +207,6 @@ static void s_cache_mqtt_exception(JNIEnv *env) {
     mqtt_exception_properties.jni_constructor =
         (*env)->GetMethodID(env, mqtt_exception_properties.jni_mqtt_exception, "<init>", "(I)V");
     AWS_FATAL_ASSERT(mqtt_exception_properties.jni_constructor);
-
-    mqtt_exception_properties.jni_str_constructor =
-        (*env)->GetMethodID(env, mqtt_exception_properties.jni_mqtt_exception, "<init>", "(Ljava/lang/String;)V");
-    AWS_FATAL_ASSERT(mqtt_exception_properties.jni_constructor);
 }
 
 struct java_mqtt_connection_operation_statistics_properties mqtt_connection_operation_statistics_properties;

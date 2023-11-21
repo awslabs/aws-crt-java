@@ -809,6 +809,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 try {
                     int packetId = subscribed.get();
                 } catch (Exception ex) {
+                    System.out.println("Subscribe failed: " + ex);
                     subFailed = true;
                 }
 

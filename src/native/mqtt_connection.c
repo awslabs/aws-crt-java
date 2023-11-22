@@ -759,6 +759,10 @@ static void s_on_op_complete(
     /********** JNI ENV RELEASE **********/
 }
 
+static bool s_is_qos_successful(enum aws_mqtt_qos qos) {
+    return qos < 128;
+}
+
 static void s_on_ack(
     struct aws_mqtt_client_connection *connection,
     uint16_t packet_id,
@@ -767,7 +771,14 @@ static void s_on_ack(
     int error_code,
     void *user_data) {
     (void)topic;
-    (void)qos;
+
+    // Handle a case when the server processed SUBSCRIBE request successfully, but rejected a subscription for some
+    // reason, i.e. error_code is 0 and qos is 0x80.
+    // This mostly applies to mqtt5to3adapter, as MQTT3 client will be disconnected on unsuccessful subscribe.
+    if (error_code == 0 && !s_is_qos_successful(qos)) {
+        error_code = AWS_ERROR_MQTT_CONNECTION_SUBSCRIBE_FAILURE;
+    }
+
     s_on_op_complete(connection, packet_id, error_code, user_data);
 }
 

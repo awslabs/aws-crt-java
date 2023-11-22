@@ -120,6 +120,12 @@ public class S3Client extends CrtResource {
 
     public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
+        if(isNull()) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                    "S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
+            return null;
+        }
+
         if (options.getHttpRequest() == null) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");

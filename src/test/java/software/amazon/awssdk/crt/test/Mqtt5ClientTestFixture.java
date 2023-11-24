@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.mqtt5.packets.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -148,6 +149,7 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
         int currentPublishCount = 0;
         int desiredPublishCount = 0;
         List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
+        HashMap<Mqtt5Client, Integer> clientsReceived = new HashMap<Mqtt5Client, Integer>();
 
         @Override
         public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
@@ -162,7 +164,8 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
             publishPacketsReceived.add(result.getPublishPacket());
+
+            clientsReceived.merge(client, 1, Integer::sum);
         }
     }
-
 }

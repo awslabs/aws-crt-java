@@ -167,7 +167,7 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
 
             if (publishPacketsReceived.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
-                afterCompletionFuture.completeExceptionally(new Throwable("Too many publish packets received"));
+                afterCompletionFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
             publishPacketsReceived.add(result.getPublishPacket());
 

@@ -2154,7 +2154,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             publisherBuilder.withLifecycleEvents(publisherLCEvents);
             publisherBuilder.withTlsContext(tlsContext);
 
-            PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Shared(messageCount);
+            PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
+            publishEvents.desiredPublishCount = messageCount;
 
             // SubscriberOne builder
             Mqtt5ClientOptionsBuilder subscriberOneBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);

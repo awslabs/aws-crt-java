@@ -47,7 +47,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */

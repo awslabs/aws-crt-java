@@ -45,9 +45,9 @@ import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingTy
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
@@ -2180,10 +2180,6 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(sharedTopicfilter, QOS.AT_LEAST_ONCE);
 
-            // UnsubscribePacketBuilder
-            UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-            unsubscribePacketBuilder.withSubscription(sharedTopicfilter);
-
             try (
                 Mqtt5Client publisherClient = new Mqtt5Client(publisherBuilder.build());
                 Mqtt5Client subscriberOneClient = new Mqtt5Client(subscriberOneBuilder.build());
@@ -2206,6 +2202,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait a little longer just to ensure that no packets beyond expectations are arrived.
+                try {
+                    publishEvents.afterCompletionFuture.get(1, TimeUnit.SECONDS);
+                } catch (TimeoutException ex) {
+                    // Timeout means that no extra packets arrived, which is good.
+                }
 
                 // Check that both clients received packets.
                 // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough

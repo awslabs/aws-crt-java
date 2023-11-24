@@ -145,7 +145,12 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
     }
 
     static final class PublishEvents_Futured_Counted implements PublishEvents {
+        // The "main" future which is intended to be used for waiting for all publishes.
         CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
+        // Additional future which helps with ensuring that no publishes beyond expected were received. Getting timeout
+        // on waiting for this future means success.
+        CompletableFuture<Void> afterCompletionFuture = new CompletableFuture<>();
+
         int currentPublishCount = 0;
         int desiredPublishCount = 0;
         List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
@@ -157,11 +162,12 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
             if (currentPublishCount == desiredPublishCount) {
                 publishReceivedFuture.complete(null);
             } else if (currentPublishCount > desiredPublishCount) {
-                publishReceivedFuture.completeExceptionally(new Throwable("Too many publish packets received"));
+                afterCompletionFuture.completeExceptionally(new Throwable("Too many publish packets received"));
             }
 
             if (publishPacketsReceived.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
+                afterCompletionFuture.completeExceptionally(new Throwable("Too many publish packets received"));
             }
             publishPacketsReceived.add(result.getPublishPacket());
 

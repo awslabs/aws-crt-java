@@ -2204,11 +2204,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Wait a little longer just to ensure that no packets beyond expectations are arrived.
-                try {
-                    publishEvents.afterCompletionFuture.get(1, TimeUnit.SECONDS);
-                } catch (TimeoutException ex) {
-                    // Timeout means that no extra packets arrived, which is good.
-                }
+                publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Check that both clients received packets.
                 // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough

@@ -27,7 +27,10 @@ public class AwsSigningConfig extends CrtResource {
         SIGV4(0),
 
         /** AWS Sigv4a signing, based on ECDSA signatures */
-        SIGV4_ASYMMETRIC(1);
+        SIGV4_ASYMMETRIC(1),
+
+        /** AWS Sigv4 S3 Express signing */
+        SIGV4_S3EXPRESS(2);
 
         /**
          * Constructs a Java enum value from the associated native enum value
@@ -61,6 +64,7 @@ public class AwsSigningConfig extends CrtResource {
             Map<Integer, AwsSigningAlgorithm> enumMapping = new HashMap<Integer, AwsSigningAlgorithm>();
             enumMapping.put(SIGV4.getNativeValue(), SIGV4);
             enumMapping.put(SIGV4_ASYMMETRIC.getNativeValue(), SIGV4_ASYMMETRIC);
+            enumMapping.put(SIGV4_S3EXPRESS.getNativeValue(), SIGV4_S3EXPRESS);
 
             return enumMapping;
         }

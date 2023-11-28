@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include "aws_signing.h"
+#include "credentials.h"
 #include "crt.h"
 #include "http_request_utils.h"
 #include "java_class_ids.h"
@@ -17,6 +18,7 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3_client.h>
+#include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
 #include <http_proxy_options_environment_variable.h>
 #include <jni.h>
@@ -38,6 +40,7 @@ struct s3_client_callback_data {
     JavaVM *jvm;
     jobject java_s3_client;
     struct aws_signing_config_data signing_config_data;
+    jobject java_s3express_provider_factory;
 };
 
 struct s3_client_make_meta_request_callback_data {
@@ -75,6 +78,234 @@ int aws_s3_tcp_keep_alive_options_from_java(
     return AWS_OP_SUCCESS;
 }
 
+struct s3_client_s3express_provider_java_impl {
+    JavaVM *jvm;
+    jobject java_s3express_provider;
+};
+
+struct s3_client_s3express_provider_callback_data {
+    void *log_id;
+    aws_on_get_credentials_callback_fn *get_cred_callback;
+    void *get_cred_user_data;
+};
+
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_s3_S3ExpressCredentialsProvider_s3expressCredentialsProviderGetCredentialsCompleted(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong nativeHandler,
+        jobject java_credentials) {
+
+    (void)jni_class;
+    struct s3_client_s3express_provider_callback_data *callback_data = (void *)nativeHandler;
+    struct aws_credentials *native_credentials = NULL;
+    int error_code = AWS_ERROR_SUCCESS;
+
+    if (!java_credentials || aws_jni_check_and_clear_exception(env)) {
+        /* TODO: a separate error code?? */
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: Failed to get S3Express credentials from Java",
+            (void *)callback_data->log_id);
+        error_code = AWS_ERROR_HTTP_CALLBACK_FAILURE;
+        goto done;
+    }
+
+    native_credentials = aws_credentials_new_from_java_credentials(env, java_credentials);
+    if (!native_credentials) {
+        aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: Failed to create native credentials from Java",
+            (void *)callback_data->log_id);
+        goto done;
+    }
+    struct aws_byte_cursor session_token = aws_credentials_get_session_token(native_credentials);
+
+    if (session_token.len == 0) {
+        aws_jni_throw_runtime_exception(env, "S3ExpressCredentialsProvider - sessionToken must be non-null");
+        error_code = AWS_ERROR_HTTP_CALLBACK_FAILURE;
+        aws_credentials_release(native_credentials);
+        native_credentials = NULL;
+        goto done;
+    }
+
+done:
+    callback_data->get_cred_callback(native_credentials, error_code, callback_data->get_cred_user_data);
+    aws_credentials_release(native_credentials);
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static int s_s3express_get_creds_java(
+    struct aws_s3express_credentials_provider *provider,
+    const struct aws_credentials *original_credentials,
+    const struct aws_credentials_properties_s3express *s3express_properties,
+    aws_on_get_credentials_callback_fn callback,
+    void *user_data) {
+
+    struct s3_client_s3express_provider_java_impl *impl = provider->impl;
+    int result = AWS_OP_ERR;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    if (!env) {
+        /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
+        return AWS_OP_SUCCESS;
+    }
+
+    jobject properties_object = (*env)->NewObject(
+        env,
+        s3express_credentials_properties_properties.s3express_credentials_properties_class,
+        s3express_credentials_properties_properties.constructor_method_id);
+    if ((*env)->ExceptionCheck(env) || properties_object == NULL) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "S3ExpressCredentialsProvider.getS3ExpressCredentials: Failed to create S3ExpressCredentialsProperties "
+            "object.");
+        goto done;
+    }
+    jobject original_credentials_object = aws_java_credentials_from_native_new(env, original_credentials);
+    if ((*env)->ExceptionCheck(env) || original_credentials_object == NULL) {
+        aws_jni_throw_runtime_exception(
+            env, "S3ExpressCredentialsProvider.getS3ExpressCredentials: Failed to create Credentials object.");
+        goto done;
+    }
+
+    jstring jni_host = aws_jni_string_from_cursor(env, &s3express_properties->host);
+    jstring jni_region = aws_jni_string_from_cursor(env, &s3express_properties->region);
+    (*env)->SetObjectField(env, properties_object, s3express_credentials_properties_properties.host_field_id, jni_host);
+    (*env)->SetObjectField(
+        env, properties_object, s3express_credentials_properties_properties.region_field_id, jni_region);
+    (*env)->DeleteLocalRef(env, jni_host);
+    (*env)->DeleteLocalRef(env, jni_region);
+
+    struct s3_client_s3express_provider_callback_data *callback_data =
+        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct s3_client_s3express_provider_callback_data));
+
+    callback_data->get_cred_callback = callback;
+    callback_data->get_cred_user_data = user_data;
+    callback_data->log_id = impl->java_s3express_provider;
+
+    /* Invoke the java call */
+    (*env)->CallVoidMethod(
+        env,
+        impl->java_s3express_provider,
+        s3express_credentials_provider_properties.getS3ExpressCredentials,
+        properties_object,
+        original_credentials_object,
+        (jlong)callback_data);
+
+    (*env)->DeleteLocalRef(env, properties_object);
+    (*env)->DeleteLocalRef(env, original_credentials_object);
+
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* Check if any exception raised */
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: S3ExpressCredentialsProvider.getS3ExpressCredentials failed",
+            (void *)impl->java_s3express_provider);
+        aws_mem_release(aws_jni_get_allocator(), callback_data);
+        goto done;
+    }
+    result = AWS_OP_SUCCESS;
+done:
+    aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
+    return result;
+}
+
+static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *provider) {
+    struct s3_client_s3express_provider_java_impl *impl = provider->impl;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    if (!env) {
+        /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
+        return;
+    }
+    /* Invoke the java call */
+    (*env)->CallVoidMethod(
+        env, impl->java_s3express_provider, s3express_credentials_provider_properties.destroyProvider);
+
+    aws_jni_release_thread_env(impl->jvm, env);
+    /********** JNI ENV RELEASE **********/
+    /* Once the java call returns, the java resource should be cleaned up already. We can finish up the shutdown
+     * process. Clean up the native part. */
+    aws_simple_completion_callback *callback = provider->shutdown_complete_callback;
+    void *user_data = provider->shutdown_user_data;
+    aws_mem_release(provider->allocator, provider);
+    callback(user_data);
+}
+
+static struct aws_s3express_credentials_provider_vtable s_java_s3express_vtable = {
+    .get_credentials = s_s3express_get_creds_java,
+    .destroy = s_s3express_destroy_java,
+};
+
+struct aws_s3express_credentials_provider *s_s3express_provider_jni_factory(
+    struct aws_allocator *allocator,
+    struct aws_s3_client *client,
+    aws_simple_completion_callback shutdown_complete_callback,
+    void *shutdown_user_data,
+    void *factory_user_data) {
+
+    (void)client;
+    struct s3_client_callback_data *client_data = factory_user_data;
+
+    struct aws_s3express_credentials_provider *provider = NULL;
+    struct s3_client_s3express_provider_java_impl *impl = NULL;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(client_data->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return NULL;
+    }
+
+    aws_mem_acquire_many(
+        allocator,
+        2,
+        &provider,
+        sizeof(struct aws_s3express_credentials_provider),
+        &impl,
+        sizeof(struct s3_client_s3express_provider_java_impl));
+    /* Call into the java factory to create the java impl */
+    AWS_FATAL_ASSERT(client_data->java_s3express_provider_factory != NULL);
+    jobject java_s3express_provider = (*env)->CallObjectMethod(
+        env,
+        client_data->java_s3express_provider_factory,
+        s3express_credentials_provider_factory_properties.createS3ExpressCredentialsProvider,
+        client_data->java_s3_client);
+
+    if (aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: Failed to create Java S3Express Provider",
+            (void *)client_data->java_s3express_provider_factory);
+        aws_mem_release(allocator, provider);
+        provider = NULL;
+        goto done;
+    }
+    impl->java_s3express_provider = (*env)->NewGlobalRef(env, java_s3express_provider);
+
+    jint jvmresult = (*env)->GetJavaVM(env, &impl->jvm);
+    (void)jvmresult;
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    aws_s3express_credentials_provider_init_base(provider, allocator, &s_java_s3express_vtable, impl);
+    provider->shutdown_complete_callback = shutdown_complete_callback;
+    provider->shutdown_user_data = shutdown_user_data;
+
+    /* We are done using the factory, when succeed, clean it up. TODO: we don't have to clean it up here */
+    (*env)->DeleteGlobalRef(env, client_data->java_s3express_provider_factory);
+    client_data->java_s3express_provider_factory = NULL;
+
+done:
+    aws_jni_release_thread_env(client_data->jvm, env);
+    /********** JNI ENV RELEASE **********/
+    return provider;
+}
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     JNIEnv *env,
     jclass jni_class,
@@ -104,7 +335,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     int connect_timeout_ms,
     jobject jni_s3_tcp_keep_alive_options,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
-    jint jni_monitoring_failure_interval_in_seconds) {
+    jint jni_monitoring_failure_interval_in_seconds,
+    jboolean enable_s3express,
+    jobject java_s3express_provider_factory) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -161,6 +394,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_callback_data));
 
     struct aws_signing_config_aws signing_config;
+    struct aws_credentials *anonymous_credentials = NULL;
     AWS_ZERO_STRUCT(signing_config);
     if (java_signing_config != NULL) {
         if (aws_build_signing_config(env, java_signing_config, &callback_data->signing_config_data, &signing_config)) {
@@ -168,6 +402,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
             aws_mem_release(allocator, callback_data);
             return (jlong)NULL;
         }
+    } else {
+        anonymous_credentials = aws_credentials_new_anonymous(allocator);
+        signing_config.credentials = anonymous_credentials;
+    }
+
+    if (java_s3express_provider_factory != NULL && enable_s3express) {
+        /* Create a JNI factory */
+        callback_data->java_s3express_provider_factory = (*env)->NewGlobalRef(env, java_s3express_provider_factory);
     }
 
     AWS_FATAL_ASSERT(callback_data);
@@ -191,7 +433,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .region = region,
         .client_bootstrap = client_bootstrap,
         .tls_connection_options = tls_options,
-        .signing_config = java_signing_config == NULL ? NULL : &signing_config,
+        .signing_config = &signing_config,
         .part_size = part_size,
         .multipart_upload_threshold = multipart_upload_threshold,
         .throughput_target_gbps = throughput_target_gbps,
@@ -203,6 +445,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .compute_content_md5 = compute_content_md5 ? AWS_MR_CONTENT_MD5_ENABLED : AWS_MR_CONTENT_MD5_DISABLED,
         .connect_timeout_ms = connect_timeout_ms,
         .tcp_keep_alive_options = s3_tcp_keep_alive_options,
+        .enable_s3express = enable_s3express,
+        .s3express_provider_override_factory =
+            java_s3express_provider_factory ? s_s3express_provider_jni_factory : NULL,
+        .factory_user_data = callback_data,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;
@@ -255,6 +501,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(allocator, callback_data);
     }
+    aws_credentials_release(anonymous_credentials);
 
     aws_retry_strategy_release(retry_strategy);
 
@@ -305,7 +552,13 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     }
 
     // We're done with this callback data, free it.
+    if (callback->java_s3express_provider_factory) {
+        /* Clean up factory data if still exist */
+        (*env)->DeleteGlobalRef(env, callback->java_s3express_provider_factory);
+        callback->java_s3express_provider_factory = NULL;
+    }
     (*env)->DeleteGlobalRef(env, callback->java_s3_client);
+
     aws_signing_config_data_clean_up(&callback->signing_config_data, env);
 
     aws_jni_release_thread_env(callback->jvm, env);
@@ -754,7 +1007,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
     /* We are done using the list, it can be safely cleaned up now. */
     aws_array_list_clean_up(&response_checksum_list);
-
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");

@@ -42,8 +42,16 @@ public class NegotiatedSettings {
     /**
      * @return Returns the amount of time in seconds the server will retain the MQTT session after a disconnect.
      */
-    public long getSessionExpiryInterval() {
+    public long getSessionExpiryIntervalSeconds() {
         return this.sessionExpiryInterval;
+    }
+
+    /**
+     * @return Returns the amount of time in seconds the server will retain the MQTT session after a disconnect.
+     * @deprecated prefer getSessionExpiryIntervalSeconds instead
+     */
+    public long getSessionExpiryInterval() {
+        return this.getSessionExpiryIntervalSeconds();
     }
 
     /**
@@ -74,7 +82,6 @@ public class NegotiatedSettings {
         return this.topicAliasMaximumToClient;
     }
 
-
     /**
      * Returns the maximum amount of time in seconds between client packets. The client should use PINGREQs to ensure this
      * limit is not breached.  The server will disconnect the client for inactivity if no MQTT packet is received
@@ -82,8 +89,21 @@ public class NegotiatedSettings {
      *
      * @return The maximum amount of time in seconds between client packets.
      */
-    public int getServerKeepAlive() {
+    public int getServerKeepAliveSeconds() {
         return this.serverKeepAlive;
+    }
+
+    /**
+     * Returns the maximum amount of time in seconds between client packets. The client should use PINGREQs to ensure this
+     * limit is not breached.  The server will disconnect the client for inactivity if no MQTT packet is received
+     * in a time interval equal to 1.5 x this value.
+     *
+     * @deprecated prefer getServerKeepAliveSeconds
+     *
+     * @return The maximum amount of time in seconds between client packets.
+     */
+    public int getServerKeepAlive() {
+        return this.getServerKeepAliveSeconds();
     }
 
     /**

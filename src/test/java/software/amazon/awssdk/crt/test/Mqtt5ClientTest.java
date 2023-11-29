@@ -1723,7 +1723,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // TODO: Add support for this in the future
                 // assertEquals(
                 //     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                //     events.connectSuccessSettings.getSessionExpiryInterval(),
+                //     events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                 //     600000L);
 
                 client.stop(new DisconnectPacketBuilder().build());
@@ -1771,11 +1771,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     "test/MQTT5_Binding_Java_" + testUUID);
                 assertEquals(
                     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                    events.connectSuccessSettings.getSessionExpiryInterval(),
+                    events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                     0L);
                 assertEquals(
                     "Negotiated Settings keep alive result does not match sent keep alive",
-                    events.connectSuccessSettings.getServerKeepAlive(),
+                    events.connectSuccessSettings.getServerKeepAliveSeconds(),
                     360);
                 assertEquals(
                         "Negotiated Settings rejoined session does not match expected value",
@@ -1827,11 +1827,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         "test/MQTT5_Binding_Java_" + testUUID);
                 assertEquals(
                         "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                        events.connectSuccessSettings.getSessionExpiryInterval(),
+                        events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                         3600L);
                 assertEquals(
                         "Negotiated Settings keep alive result does not match sent keep alive",
-                        events.connectSuccessSettings.getServerKeepAlive(),
+                        events.connectSuccessSettings.getServerKeepAliveSeconds(),
                         360);
                 assertEquals(
                         "Negotiated Settings rejoined session does not match expected value",

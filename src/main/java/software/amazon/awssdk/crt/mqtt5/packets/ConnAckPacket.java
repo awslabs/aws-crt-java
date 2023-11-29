@@ -70,8 +70,22 @@ public class ConnAckPacket {
      *
      * @return A time interval, in seconds, that the server will persist this connection's MQTT session state for.
      */
-    public Long getSessionExpiryInterval() {
+    public Long getSessionExpiryIntervalSeconds() {
         return this.sessionExpiryIntervalSeconds;
+    }
+
+    /**
+     * Returns a time interval, in seconds, that the server will persist this connection's MQTT session state
+     * for.  If present, this value overrides any session expiry specified in the preceding ConnectPacket.
+     *
+     * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901082">MQTT5 Session Expiry Interval</a>
+     *
+     * @deprecated prefer getSessionExpiryIntervalSeconds
+     *
+     * @return A time interval, in seconds, that the server will persist this connection's MQTT session state for.
+     */
+    public Long getSessionExpiryInterval() {
+        return this.getSessionExpiryIntervalSeconds();
     }
 
     /**
@@ -210,8 +224,22 @@ public class ConnAckPacket {
      *
      * @return Server-requested override of the keep alive interval, in seconds
      */
-    public Integer getServerKeepAlive() {
+    public Integer getServerKeepAliveSeconds() {
         return this.serverKeepAlive;
+    }
+
+    /**
+     * Returns server-requested override of the keep alive interval, in seconds.  If null, the keep alive value sent
+     * by the client should be used.
+     *
+     * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901094">MQTT5 Server Keep Alive</a>
+     *
+     * @deprecated prefer getServerKeepAliveSeconds
+     *
+     * @return Server-requested override of the keep alive interval, in seconds
+     */
+    public Integer getServerKeepAlive() {
+        return this.getServerKeepAliveSeconds();
     }
 
     /**

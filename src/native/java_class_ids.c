@@ -308,6 +308,10 @@ static void s_cache_credentials(JNIEnv *env) {
     credentials_properties.session_token_field_id =
         (*env)->GetFieldID(env, credentials_properties.credentials_class, "sessionToken", "[B");
     AWS_FATAL_ASSERT(credentials_properties.session_token_field_id);
+
+    credentials_properties.expiration_field_id =
+        (*env)->GetFieldID(env, credentials_properties.credentials_class, "expirationTimePointSecs", "J");
+    AWS_FATAL_ASSERT(credentials_properties.expiration_field_id);
 }
 
 struct java_credentials_handler_properties credentials_handler_properties;
@@ -2231,9 +2235,59 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
 }
 
+struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;
+
+static void s_cache_s3express_credentials_provider_factory_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProviderFactory");
+    AWS_FATAL_ASSERT(cls);
+
+    s3express_credentials_provider_factory_properties.createS3ExpressCredentialsProvider = (*env)->GetMethodID(
+        env,
+        cls,
+        "createS3ExpressCredentialsProvider",
+        "(Lsoftware/amazon/awssdk/crt/s3/S3Client;)Lsoftware/amazon/awssdk/crt/s3/S3ExpressCredentialsProvider;");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_factory_properties.createS3ExpressCredentialsProvider);
+}
+
+struct java_s3express_credentials_properties_properties s3express_credentials_properties_properties;
+
+static void s_cache_s3express_credentials_properties_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProperties");
+    AWS_FATAL_ASSERT(cls);
+    s3express_credentials_properties_properties.s3express_credentials_properties_class = (*env)->NewGlobalRef(env, cls);
+
+    s3express_credentials_properties_properties.constructor_method_id = (*env)->GetMethodID(
+        env, s3express_credentials_properties_properties.s3express_credentials_properties_class, "<init>", "()V");
+
+    s3express_credentials_properties_properties.host_field_id =
+        (*env)->GetFieldID(env, cls, "hostValue", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3express_credentials_properties_properties.host_field_id);
+
+    s3express_credentials_properties_properties.region_field_id =
+        (*env)->GetFieldID(env, cls, "region", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3express_credentials_properties_properties.region_field_id);
+}
+
+struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
+
+static void s_cache_s3express_credentials_provider_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProvider");
+    AWS_FATAL_ASSERT(cls);
+
+    s3express_credentials_provider_properties.getS3ExpressCredentials = (*env)->GetMethodID(
+        env,
+        cls,
+        "getS3ExpressCredentials",
+        "(Lsoftware/amazon/awssdk/crt/s3/S3ExpressCredentialsProperties;Lsoftware/amazon/awssdk/crt/auth/credentials/"
+        "Credentials;J)V");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_properties.getS3ExpressCredentials);
+
+    s3express_credentials_provider_properties.destroyProvider = (*env)->GetMethodID(env, cls, "destroyProvider", "()V");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_properties.destroyProvider);
+}
+
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
-
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
@@ -2329,6 +2383,9 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
+    s_cache_s3express_credentials_provider_factory_properties(env);
+    s_cache_s3express_credentials_properties_properties(env);
+    s_cache_s3express_credentials_provider_properties(env);
     s_cache_mqtt5_outbound_topic_alias_behavior_type(env);
     s_cache_mqtt5_inbound_topic_alias_behavior_type(env);
     s_cache_topic_aliasing_options(env);

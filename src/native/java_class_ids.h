@@ -131,6 +131,7 @@ struct java_credentials_properties {
     jfieldID access_key_id_field_id;
     jfieldID secret_access_key_field_id;
     jfieldID session_token_field_id;
+    jfieldID expiration_field_id;
 };
 extern struct java_credentials_properties credentials_properties;
 
@@ -929,6 +930,28 @@ struct java_boxed_array_list_properties {
     jmethodID list_constructor_id;
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
+
+/* S3ExpressCredentialsProviderFactory */
+struct java_s3express_credentials_provider_factory_properties {
+    jmethodID createS3ExpressCredentialsProvider;
+};
+extern struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;
+
+/* S3ExpressCredentialsProperties */
+struct java_s3express_credentials_properties_properties {
+    jclass s3express_credentials_properties_class;
+    jmethodID constructor_method_id;
+    jfieldID host_field_id;
+    jfieldID region_field_id;
+};
+extern struct java_s3express_credentials_properties_properties s3express_credentials_properties_properties;
+
+/* S3ExpressCredentialsProvider */
+struct java_s3express_credentials_provider_properties {
+    jmethodID getS3ExpressCredentials;
+    jmethodID destroyProvider;
+};
+extern struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

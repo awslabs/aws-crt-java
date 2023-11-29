@@ -157,12 +157,13 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testDelegate() {
+        final long expireTime = 123456;
         DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
             @Override
             public Credentials getCredentials() {
                 return new Credentials(ACCESS_KEY_ID.getBytes(), SECRET_ACCESS_KEY.getBytes(),
-                        SESSION_TOKEN.getBytes());
+                        SESSION_TOKEN.getBytes(), expireTime);
             }
         };
         builder.withHandler(credentialsHandler);
@@ -172,6 +173,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
             assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
             assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+            assertEquals(expireTime, credentials.getExpirationTimePointSecs());
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

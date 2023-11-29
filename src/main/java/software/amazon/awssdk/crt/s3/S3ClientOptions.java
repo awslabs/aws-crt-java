@@ -13,6 +13,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.StandardRetryOptions;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
+import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
 
 public class S3ClientOptions {
 
@@ -28,6 +29,8 @@ public class S3ClientOptions {
     private boolean readBackpressureEnabled;
     private long initialReadWindowSize;
     private int maxConnections;
+    private boolean enableS3Express;
+    private S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory;
     /**
      * For multi-part upload, content-md5 will be calculated if the
      * computeContentMd5 is set to true.
@@ -113,8 +116,18 @@ public class S3ClientOptions {
     /**
      * The configuration related to signing used by S3 client.
      * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
-     * If no signing config provided, the client will skip signing.
      * In case of public object, or the http message already has a presigned URL, signing can be skipped.
+     *
+     * If not set, a default config will be used with anonymous credentials and skip signing the request.
+     * If set:
+     *  - Credentials provider is required. Other configs are all optional, and will be default to what
+     *      needs to sign the request for S3, only overrides when Non-zero/Not-empty is set.
+     *  - S3 Client will derive the right config for signing process based on this.
+     *
+     * Notes:
+     * - For SIGV4_S3EXPRESS, S3 client will use the credentials in the config to derive the S3 Express
+     *      credentials that are used in the signing process.
+     * - Client may make modifications to signing config before passing it on to signer.
      *
      * @param signingConfig configuration related to signing via an AWS signing process.
      * @return this
@@ -306,5 +319,31 @@ public class S3ClientOptions {
 
     public HttpMonitoringOptions getMonitoringOptions() {
         return monitoringOptions;
+    }
+
+    /**
+     * To enable S3 Express support for client
+     * The typical usage for a S3 Express request is to set this to true and let the request to be signed with
+     * {@link AwsSigningAlgorithm#SIGV4_S3EXPRESS}, either from the client level signingConfig or override from request.
+     *
+     * @param enableS3Express To enable S3 Express support for client
+     * @return this
+     */
+    public S3ClientOptions withEnableS3Express(boolean enableS3Express) {
+        this.enableS3Express = enableS3Express;
+        return this;
+    }
+
+    public boolean getEnableS3Express() {
+        return enableS3Express;
+    }
+
+    public S3ClientOptions withS3ExpressCredentialsProviderFactory(S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory) {
+        this.s3expressCredentialsProviderFactory = s3expressCredentialsProviderFactory;
+        return this;
+    }
+
+    public S3ExpressCredentialsProviderFactory getS3ExpressCredentialsProviderFactory() {
+        return s3expressCredentialsProviderFactory;
     }
 }

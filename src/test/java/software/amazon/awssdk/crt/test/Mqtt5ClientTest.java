@@ -2131,6 +2131,98 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
+    /* Shared subscriptions test */
+    @Test
+    public void Op_SharedSubscription() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+        String sharedTopicfilter = "$share/crttest/test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+
+            // Publisher builder
+            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured publisherLCEvents = new LifecycleEvents_Futured();
+            publisherBuilder.withLifecycleEvents(publisherLCEvents);
+            publisherBuilder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
+            publishEvents.desiredPublishCount = messageCount;
+
+            // SubscriberOne builder
+            Mqtt5ClientOptionsBuilder subscriberOneBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured subscriberOneLCEvents = new LifecycleEvents_Futured();
+            subscriberOneBuilder.withLifecycleEvents(subscriberOneLCEvents);
+            subscriberOneBuilder.withTlsContext(tlsContext);
+            subscriberOneBuilder.withPublishEvents(publishEvents);
+
+            // SubscriberTwo builder
+            Mqtt5ClientOptionsBuilder subscriberTwoBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured subscriberTwoLCEvents = new LifecycleEvents_Futured();
+            subscriberTwoBuilder.withLifecycleEvents(subscriberTwoLCEvents);
+            subscriberTwoBuilder.withTlsContext(tlsContext);
+            subscriberTwoBuilder.withPublishEvents(publishEvents);
+
+            // PublishPacketBuilder
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+            // SubscribePacketBuilder
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(sharedTopicfilter, QOS.AT_LEAST_ONCE);
+
+            try (
+                Mqtt5Client publisherClient = new Mqtt5Client(publisherBuilder.build());
+                Mqtt5Client subscriberOneClient = new Mqtt5Client(subscriberOneBuilder.build());
+                Mqtt5Client subscriberTwoClient = new Mqtt5Client(subscriberTwoBuilder.build())
+            ) {
+                publisherClient.start();
+                subscriberOneClient.start();
+                subscriberTwoClient.start();
+
+                publisherLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberOneLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberTwoLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                for (int i = 0; i < messageCount; ++i) {
+                    publishPacketBuilder.withPayload(String.valueOf(i).getBytes());
+                    publisherClient.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                }
+
+                publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait a little longer just to ensure that no packets beyond expectations are arrived.
+                publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Check that both clients received packets.
+                // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough
+                // to ensure that AWS IoT Core sent different packets to different subscribers.
+                assertTrue(publishEvents.clientsReceived.size() == 2);
+
+                subscriberOneClient.stop(new DisconnectPacketBuilder().build());
+                subscriberTwoClient.stop(new DisconnectPacketBuilder().build());
+                publisherClient.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
     /**
      * ============================================================
      * Error Operation Tests

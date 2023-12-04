@@ -131,6 +131,7 @@ struct java_credentials_properties {
     jfieldID access_key_id_field_id;
     jfieldID secret_access_key_field_id;
     jfieldID session_token_field_id;
+    jfieldID expiration_field_id;
 };
 extern struct java_credentials_properties credentials_properties;
 
@@ -463,6 +464,7 @@ struct java_aws_mqtt5_connack_packet_properties {
     jfieldID connack_retain_available_field_id;
     jfieldID connack_maximum_packet_size_field_id;
     jfieldID connack_assigned_client_identifier_field_id;
+    jfieldID connack_topic_alias_maximum_field_id;
     jfieldID connack_reason_string_field_id;
     jfieldID connack_wildcard_subscriptions_available_field_id;
     jfieldID connack_subscription_identifiers_available_field_id;
@@ -561,6 +563,7 @@ struct java_aws_mqtt5_publish_packet_properties {
     jfieldID publish_topic_field_id;
     jfieldID publish_payload_format_field_id;
     jfieldID publish_message_expiry_interval_seconds_field_id;
+    jfieldID publish_topic_alias_field_id;
     jfieldID publish_response_topic_field_id;
     jfieldID publish_correlation_data_field_id;
     jfieldID publish_content_type_field_id;
@@ -588,6 +591,8 @@ struct java_aws_mqtt5_negotiated_settings_properties {
     jfieldID negotiated_settings_session_expiry_interval_field_id;
     jfieldID negotiated_settings_receive_maximum_from_server_field_id;
     jfieldID negotiated_settings_maximum_packet_size_to_server_field_id;
+    jfieldID negotiated_settings_topic_alias_maximum_to_server_field_id;
+    jfieldID negotiated_settings_topic_alias_maximum_to_client_field_id;
     jfieldID negotiated_settings_server_keep_alive_field_id;
     jfieldID negotiated_settings_retain_available_field_id;
     jfieldID negotiated_settings_wildcard_subscriptions_available_field_id;
@@ -650,6 +655,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID ack_timeout_seconds_field_id;
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
+    jfieldID topic_aliasing_options_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
 
@@ -702,6 +708,33 @@ struct java_aws_mqtt5_client_jitter_mode_properties {
     jmethodID client_get_value_id;
 };
 extern struct java_aws_mqtt5_client_jitter_mode_properties mqtt5_client_jitter_mode_properties;
+
+/* mqtt5.Mqtt5ClientOptions.OutboundTopicAliasBehaviorType */
+struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties {
+    jclass mqtt5_outbound_topic_alias_behavior_type_class;
+    jmethodID get_value_method_id;
+};
+extern struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties
+    mqtt5_outbound_topic_alias_behavior_type_properties;
+
+/* mqtt5.Mqtt5ClientOptions.InboundTopicAliasBehaviorType */
+struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties {
+    jclass mqtt5_inbound_topic_alias_behavior_type_class;
+    jmethodID get_value_method_id;
+};
+extern struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties
+    mqtt5_inbound_topic_alias_behavior_type_properties;
+
+/* mqtt5.Mqtt5ClientOptions.TopicAliasingOptions */
+struct java_aws_mqtt5_topic_aliasing_options_properties {
+    jclass mqtt5_topic_aliasing_options_class;
+
+    jfieldID outbound_behavior_field_id;
+    jfieldID outbound_cache_max_size_field_id;
+    jfieldID inbound_behavior_field_id;
+    jfieldID inbound_cache_max_size_field_id;
+};
+extern struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
 
 /* mqtt5.packets.SubscribePacket */
 struct java_aws_mqtt5_subscribe_packet_properties {
@@ -897,6 +930,28 @@ struct java_boxed_array_list_properties {
     jmethodID list_constructor_id;
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
+
+/* S3ExpressCredentialsProviderFactory */
+struct java_s3express_credentials_provider_factory_properties {
+    jmethodID createS3ExpressCredentialsProvider;
+};
+extern struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;
+
+/* S3ExpressCredentialsProperties */
+struct java_s3express_credentials_properties_properties {
+    jclass s3express_credentials_properties_class;
+    jmethodID constructor_method_id;
+    jfieldID host_field_id;
+    jfieldID region_field_id;
+};
+extern struct java_s3express_credentials_properties_properties s3express_credentials_properties_properties;
+
+/* S3ExpressCredentialsProvider */
+struct java_s3express_credentials_provider_properties {
+    jmethodID getS3ExpressCredentials;
+    jmethodID destroyProvider;
+};
+extern struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

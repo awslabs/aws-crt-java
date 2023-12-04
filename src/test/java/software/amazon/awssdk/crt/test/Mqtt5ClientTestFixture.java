@@ -11,9 +11,12 @@ import software.amazon.awssdk.crt.mqtt5.packets.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 import java.util.concurrent.CompletableFuture;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5ClientTestFixture extends CrtTestFixture {
@@ -144,25 +147,38 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
     }
 
     static final class PublishEvents_Futured_Counted implements PublishEvents {
+        static final ScheduledExecutorService TIMEOUT_SCHEDULER = Executors.newScheduledThreadPool(0);
+
+        // The "main" future which is intended to be used for waiting for all publishes.
         CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
+        // Additional future which helps with ensuring that no publishes beyond expected were received.
+        CompletableFuture<Void> afterCompletionFuture = new CompletableFuture<>();
+
         int currentPublishCount = 0;
         int desiredPublishCount = 0;
+        int afterCompletionWaitSec = 1;
         List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
+        HashMap<Mqtt5Client, Integer> clientsReceived = new HashMap<Mqtt5Client, Integer>();
 
         @Override
         public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
             currentPublishCount += 1;
             if (currentPublishCount == desiredPublishCount) {
                 publishReceivedFuture.complete(null);
+                // An optional wait to ensure that no packets beyond expectations are arrived.
+                TIMEOUT_SCHEDULER.schedule(
+                        () -> afterCompletionFuture.complete(null), afterCompletionWaitSec, TimeUnit.SECONDS);
             } else if (currentPublishCount > desiredPublishCount) {
-                publishReceivedFuture.completeExceptionally(new Throwable("Too many publish packets received"));
+                afterCompletionFuture.completeExceptionally(new Throwable("Too many publish packets received"));
             }
 
             if (publishPacketsReceived.contains(result)) {
                 publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
+                afterCompletionFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
             }
             publishPacketsReceived.add(result.getPublishPacket());
+
+            clientsReceived.merge(client, 1, Integer::sum);
         }
     }
-
 }

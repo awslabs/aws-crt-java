@@ -159,16 +159,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
         goto on_error;
     }
     if (jni_proxy_port) {
-        int32_t jni_proxy_port_check = (int32_t)jni_proxy_port;
-        if (jni_proxy_port_check < 0) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options port is less than 0");
-            goto on_error;
-        } else if (jni_proxy_port_check > UINT16_MAX) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_CLIENT, "HTTP Proxy Options port is more than UINT16_MAX");
-            goto on_error;
-        } else {
-            http_options->options.port = (uint16_t)jni_proxy_port;
-        }
+        http_options->options.port = (uint32_t)jni_proxy_port;
     }
 
     jobject jni_proxy_tls_context = (*env)->CallObjectMethod(
@@ -1743,8 +1734,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         goto clean_up;
     }
 
-    uint16_t port = 0;
-    if (aws_get_uint16_from_jobject(
+    uint32_t port = 0;
+    if (aws_get_uint32_from_jobject(
             env,
             jni_options,
             mqtt5_client_options_properties.options_port_field_id,

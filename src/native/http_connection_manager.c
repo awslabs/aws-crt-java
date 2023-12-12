@@ -141,11 +141,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
 
-    if (jni_port <= 0 || 65535 < jni_port) {
-        aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
-        goto cleanup;
-    }
-
     size_t window_size;
     if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
         goto cleanup;
@@ -156,7 +151,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-    uint16_t port = (uint16_t)jni_port;
+    uint32_t port = (uint32_t)jni_port;
 
     bool new_tls_conn_opts = (jni_tls_ctx != 0 && !tls_connection_options);
 
@@ -216,7 +211,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         jni_proxy_connection_type,
         &proxy_tls_conn_options,
         jni_proxy_host,
-        (uint16_t)jni_proxy_port,
+        jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
         jni_proxy_authorization_type,

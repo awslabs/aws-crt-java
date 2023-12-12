@@ -226,7 +226,7 @@ public class CustomKeyOps {
             // Set all the settings
             tlsOptions.overrideDefaultTrustStoreFromPath(null, caFilePath);
             config.setEndpoint(endpoint);
-            config.setPort((short)port);
+            config.setPort(port);
             config.setClientId(clientId);
             config.setCleanSession(true);
             config.setProtocolOperationTimeoutMs(60000);

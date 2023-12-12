@@ -135,7 +135,7 @@ public class ClientConnection extends CrtResource {
      * @param connectionHandler handler to process connection messages and state changes.
      * @return The future will be completed once the connection either succeeds or fails.
      */
-    public static CompletableFuture<Void> connect(final String hostName, short port, final SocketOptions socketOptions,
+    public static CompletableFuture<Void> connect(final String hostName, int port, final SocketOptions socketOptions,
                                            final ClientTlsContext tlsContext, final ClientBootstrap bootstrap,
                                            final ClientConnectionHandler connectionHandler) {
         long tlsContextHandle = tlsContext != null ? tlsContext.getNativeHandle() : 0;
@@ -196,7 +196,7 @@ public class ClientConnection extends CrtResource {
         return true;
     }
 
-    private static native int clientConnect(byte[] hostName, short port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);
+    private static native int clientConnect(byte[] hostName, int port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);
     private static native boolean isClientConnectionOpen(long connection);
     private static native void closeClientConnection(long connection, int errorCode);
     private static native void acquireClientConnection(long connection);

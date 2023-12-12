@@ -32,7 +32,7 @@ public class ServerListener extends CrtResource {
      * @param serverBootstrap bootstrap object for handling connections.
      * @param handler functor interface for handling incoming connections and connection closures.
      */
-    public ServerListener(final String hostName, short port, final SocketOptions socketOptions,
+    public ServerListener(final String hostName, int port, final SocketOptions socketOptions,
                           final ServerTlsContext tlsContext, final ServerBootstrap serverBootstrap,
                           final ServerListenerHandler handler) {
 
@@ -87,7 +87,7 @@ public class ServerListener extends CrtResource {
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     private static native long serverListenerNew(ServerListener serverListener, byte[] hostName,
-                                                 short port, long socketOptionsHandle,
+                                                 int port, long socketOptionsHandle,
                                                  long tlsContextHandle, long bootstrapHandle,
                                                  ServerListenerHandler handler);
     private static native int getBoundPort(long serverListener);

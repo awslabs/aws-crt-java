@@ -24,6 +24,7 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
     if (java_credentials == NULL) {
         return NULL;
     }
+    struct aws_credentials *credentials = NULL;
 
     jbyteArray access_key_id =
         (*env)->GetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id);
@@ -36,7 +37,8 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
         (*env)->GetLongField(env, java_credentials, credentials_properties.expiration_field_id);
 
     if (access_key_id == NULL && secret_access_key == NULL) {
-        return aws_credentials_new_anonymous(aws_jni_get_allocator());
+        credentials = aws_credentials_new_anonymous(aws_jni_get_allocator());
+        goto done;
     }
 
     if (access_key_id == NULL || secret_access_key == NULL) {
@@ -45,10 +47,8 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
             env,
             "Aws_credentials_new_from_java_credentials: Both access_key_id and secret_access_key must be either null "
             "or non-null.");
-        return NULL;
+        goto done;
     }
-
-    struct aws_credentials *credentials = NULL;
 
     struct aws_byte_cursor access_key_id_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, access_key_id);
     struct aws_byte_cursor secret_access_key_cursor =
@@ -73,10 +73,16 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
         aws_jni_byte_cursor_from_jbyteArray_release(env, session_token, session_token_cursor);
     }
 
-    (*env)->DeleteLocalRef(env, access_key_id);
-    (*env)->DeleteLocalRef(env, secret_access_key);
-    (*env)->DeleteLocalRef(env, session_token);
-
+done:
+    if (access_key_id) {
+        (*env)->DeleteLocalRef(env, access_key_id);
+    }
+    if (secret_access_key) {
+        (*env)->DeleteLocalRef(env, secret_access_key);
+    }
+    if (session_token) {
+        (*env)->DeleteLocalRef(env, session_token);
+    }
     return credentials;
 }
 

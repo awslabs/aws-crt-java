@@ -74,6 +74,7 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
     }
 
 done:
+    /* When local references are created by a thread from C, the JVM does not clean them up promptly. */
     if (access_key_id) {
         (*env)->DeleteLocalRef(env, access_key_id);
     }

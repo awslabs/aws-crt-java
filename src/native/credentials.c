@@ -73,6 +73,10 @@ struct aws_credentials *aws_credentials_new_from_java_credentials(JNIEnv *env, j
         aws_jni_byte_cursor_from_jbyteArray_release(env, session_token, session_token_cursor);
     }
 
+   (*env)->DeleteLocalRef(env, access_key_id);
+   (*env)->DeleteLocalRef(env, secret_access_key);
+   (*env)->DeleteLocalRef(env, session_token);
+
     return credentials;
 }
 

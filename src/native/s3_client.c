@@ -152,8 +152,10 @@ static int s_s3express_get_creds_java(
         /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
         return AWS_OP_SUCCESS;
     }
+    jobject properties_object = NULL;
+    jobject original_credentials_object = NULL;
 
-    jobject properties_object = (*env)->NewObject(
+    properties_object = (*env)->NewObject(
         env,
         s3express_credentials_properties_properties.s3express_credentials_properties_class,
         s3express_credentials_properties_properties.constructor_method_id);
@@ -164,7 +166,7 @@ static int s_s3express_get_creds_java(
             "object.");
         goto done;
     }
-    jobject original_credentials_object = aws_java_credentials_from_native_new(env, original_credentials);
+    original_credentials_object = aws_java_credentials_from_native_new(env, original_credentials);
     if ((*env)->ExceptionCheck(env) || original_credentials_object == NULL) {
         aws_jni_throw_runtime_exception(
             env, "S3ExpressCredentialsProvider.getS3ExpressCredentials: Failed to create Credentials object.");
@@ -195,9 +197,6 @@ static int s_s3express_get_creds_java(
         original_credentials_object,
         (jlong)callback_data);
 
-    (*env)->DeleteLocalRef(env, properties_object);
-    (*env)->DeleteLocalRef(env, original_credentials_object);
-
     if (aws_jni_check_and_clear_exception(env)) {
         /* Check if any exception raised */
         AWS_LOGF_ERROR(
@@ -209,6 +208,12 @@ static int s_s3express_get_creds_java(
     }
     result = AWS_OP_SUCCESS;
 done:
+    if (properties_object) {
+        (*env)->DeleteLocalRef(env, properties_object);
+    }
+    if (original_credentials_object) {
+        (*env)->DeleteLocalRef(env, original_credentials_object);
+    }
     aws_jni_release_thread_env(impl->jvm, env);
     /********** JNI ENV RELEASE **********/
     return result;
@@ -226,6 +231,8 @@ static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *
     /* Invoke the java call */
     (*env)->CallVoidMethod(
         env, impl->java_s3express_provider, s3express_credentials_provider_properties.destroyProvider);
+
+    (*env)->DeleteGlobalRef(env, impl->java_s3express_provider);
 
     aws_jni_release_thread_env(impl->jvm, env);
     /********** JNI ENV RELEASE **********/

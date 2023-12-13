@@ -359,7 +359,8 @@ public class S3ClientTest extends CrtTestFixture {
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler);
-        Assert.assertNull(client.makeMetaRequest(metaRequestOptions));
+
+        assertThrows(IllegalStateException.class, () -> client.makeMetaRequest(metaRequestOptions));
     }
 
     @Test

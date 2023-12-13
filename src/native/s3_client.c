@@ -197,7 +197,6 @@ static int s_s3express_get_creds_java(
         original_credentials_object,
         (jlong)callback_data);
 
-
     if (aws_jni_check_and_clear_exception(env)) {
         /* Check if any exception raised */
         AWS_LOGF_ERROR(
@@ -209,10 +208,10 @@ static int s_s3express_get_creds_java(
     }
     result = AWS_OP_SUCCESS;
 done:
-    if(properties_object){
+    if (properties_object) {
         (*env)->DeleteLocalRef(env, properties_object);
     }
-    if(original_credentials_object) {
+    if (original_credentials_object) {
         (*env)->DeleteLocalRef(env, original_credentials_object);
     }
     aws_jni_release_thread_env(impl->jvm, env);

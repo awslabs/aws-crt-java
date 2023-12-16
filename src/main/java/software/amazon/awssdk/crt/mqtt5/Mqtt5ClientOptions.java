@@ -21,10 +21,6 @@ import java.util.function.Consumer;
 
 /**
  * Configuration for the creation of Mqtt5Clients
- *
- * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
- * preview window is especially valuable in shaping the final product.  During the preview period we may make
- * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
  */
 public class Mqtt5ClientOptions {
 
@@ -563,10 +559,6 @@ public class Mqtt5ClientOptions {
     /**
      * All of the options for a Mqtt5Client. This includes the settings to make a connection, as well as the
      * event callbacks, publish callbacks, and more.
-     *
-     * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
-     * preview window is especially valuable in shaping the final product.  During the preview period we may make
-     * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
      */
     static final public class Mqtt5ClientOptionsBuilder {
 

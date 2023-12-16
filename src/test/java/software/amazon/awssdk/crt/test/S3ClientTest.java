@@ -334,6 +334,36 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
+    public void testS3GetAfterClientIsClose() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        S3Client client = createS3Client(clientOptions);
+        client.close();
+        S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+            @Override
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                return 0;
+            }
+
+            @Override
+            public void onFinished(S3FinishedResponseContext context) {
+            }
+        };
+
+        HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+        HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+
+        S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                .withResponseHandler(responseHandler);
+
+        assertThrows(IllegalStateException.class, () -> client.makeMetaRequest(metaRequestOptions));
+    }
+
+    @Test
     public void testS3CallbackExceptionIsProperlyPropagated() {
         skipIfAndroid();
         skipIfNetworkUnavailable();

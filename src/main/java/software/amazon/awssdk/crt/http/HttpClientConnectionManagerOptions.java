@@ -156,7 +156,9 @@ public class HttpClientConnectionManagerOptions {
     public URI getUri() { return uri; }
 
     /**
-     * Sets the port to connect to for connections in the connection pool
+     * Sets the port to connect to for connections in the connection pool.
+     * For 32bit values exceeding Integer.MAX_VALUE use two's complement
+     * (i.e. -1 == 0xFFFFFFFF).
      * @param port The port to connect to
      * @return this
      */
@@ -168,6 +170,8 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return the port to connect to for connections in the connection pool.
      *         Returns -1 if none has been explicitly set.
+     *         Note that two's complement is used for 32bit values exceeding
+     *         Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getPort() { return port; }
 

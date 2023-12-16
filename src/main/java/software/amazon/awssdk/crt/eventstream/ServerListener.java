@@ -27,6 +27,7 @@ public class ServerListener extends CrtResource {
      * @param hostName name of the host to listen on. Can be a dns name, ip address, or unix
      *                 domain socket (or named pipe on windows) name.
      * @param port port to listen on. Ignored for local domain sockets.
+     *             For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param socketOptions socket options to apply to the listening socket.
      * @param tlsContext optional tls context to apply to the connection if you want to use TLS.
      * @param serverBootstrap bootstrap object for handling connections.
@@ -67,6 +68,8 @@ public class ServerListener extends CrtResource {
 
     /**
      * @return the port which the listener socket is bound to.
+     * Note that two's complement is used for 32bit values exceeding
+     * Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getBoundPort() {
         return boundPort;

@@ -115,7 +115,8 @@ public class HttpProxyOptions {
     public String getHost() { return host; }
 
     /**
-     * Sets the proxy port to connect through
+     * Sets the proxy port to connect through.
+     * For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param port proxy port to connect through
      */
     public void setPort(int port) {
@@ -123,7 +124,9 @@ public class HttpProxyOptions {
     }
 
     /**
-     * @return the proxy port to connect through
+     * @return the proxy port to connect through.
+     *         Note that two's complement is used for 32bit values exceeding
+     *         Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getPort() { return port; }
 

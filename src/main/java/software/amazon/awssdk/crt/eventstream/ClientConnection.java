@@ -129,6 +129,7 @@ public class ClientConnection extends CrtResource {
      * @param hostName hostname to connect to, this can be an IPv4 address, IPv6 address, a local socket address, or a
      *                 dns name.
      * @param port port to connect to hostName with. For local socket address, this value is ignored.
+     *             For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param socketOptions socketOptions to use.
      * @param tlsContext (optional) tls context to use for using SSL/TLS in the connection.
      * @param bootstrap clientBootstrap object to run the connection on.

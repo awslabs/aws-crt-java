@@ -4,6 +4,8 @@
  */
 package software.amazon.awssdk.crt.s3;
 
+import software.amazon.awssdk.crt.http.HttpHeader;
+
 public class S3FinishedResponseContext {
     private final int errorCode;
     private final int responseStatus;
@@ -12,6 +14,7 @@ public class S3FinishedResponseContext {
     private final boolean didValidateChecksum;
 
     private final Throwable cause;
+    private final HttpHeader[] errorHeaders;
 
     /*
      * errorCode The CRT error code
@@ -21,13 +24,14 @@ public class S3FinishedResponseContext {
      * didValidateChecksum which is true if the response was validated.
      * cause of the error such as a Java exception in a callback. Maybe NULL if there was no exception in a callback.
      */
-    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause) {
+    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause, final HttpHeader[] errorHeaders) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
         this.cause = cause;
+        this.errorHeaders = errorHeaders;
     }
 
     public int getErrorCode() {
@@ -63,10 +67,19 @@ public class S3FinishedResponseContext {
 
     /**
      * Cause of the error, such as a Java exception from a callback. May be NULL if there was no exception in a callback.
+     *
      * @return throwable
      */
     public Throwable getCause() {
         return cause;
     }
 
+    /**
+     * In the case of a failed HTTP response, get the headers of the response. May be NULL.
+     *
+     * @return array of headers
+     */
+    public HttpHeader[] getErrorHeaders() {
+        return errorHeaders;
+    }
 }

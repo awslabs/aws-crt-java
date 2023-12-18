@@ -657,6 +657,7 @@ static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers,
     }
 
     if (aws_marshal_http_headers_to_dynamic_buffer(out_headers_buf, headers)) {
+        aws_byte_buf_clean_up(out_headers_buf);
         return AWS_OP_ERR;
     }
 

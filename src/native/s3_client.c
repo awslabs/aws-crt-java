@@ -640,6 +640,30 @@ cleanup:
     return return_value;
 }
 
+static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers, struct aws_byte_buf *out_headers_buf){
+    /* calculate initial header capacity */
+    size_t headers_initial_capacity = 0;
+    for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, header_index, &header);
+        /* aws_marshal_http_headers_to_dynamic_buffer() impl drives this calculation */
+        headers_initial_capacity += header.name.len + header.value.len + 8;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+
+    AWS_ZERO_STRUCT(*out_headers_buf);
+    if (aws_byte_buf_init(out_headers_buf, allocator, headers_initial_capacity)) {
+        return AWS_OP_ERR;
+    }
+
+    if(aws_marshal_http_headers_struct_to_dynamic_buffer(out_headers_buf, headers)) {
+        return AWS_OP_ERR;
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 static int s_on_s3_meta_request_headers_callback(
     struct aws_s3_meta_request *meta_request,
     const struct aws_http_headers *headers,
@@ -657,27 +681,11 @@ static int s_on_s3_meta_request_headers_callback(
     }
 
     jobject java_headers_buffer = NULL;
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-    /* calculate initial header capacity */
-    size_t headers_initial_capacity = 0;
-    for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
-        struct aws_http_header header;
-        aws_http_headers_get_index(headers, header_index, &header);
-        /* aws_marshal_http_headers_to_dynamic_buffer() impl drives this calculation */
-        headers_initial_capacity += header.name.len + header.value.len + 8;
-    }
-
     struct aws_byte_buf headers_buf;
-    AWS_ZERO_STRUCT(headers_buf);
-    if (aws_byte_buf_init(&headers_buf, allocator, headers_initial_capacity)) {
-        goto cleanup; /* safe since we zeroed */
+    if(s_marshal_http_headers_to_buf(headers, &headers_buf)) {
+        goto cleanup;
     }
 
-    for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
-        struct aws_http_header header;
-        aws_http_headers_get_index(headers, header_index, &header);
-        aws_marshal_http_headers_to_dynamic_buffer(&headers_buf, &header, 1);
-    }
     java_headers_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
     if (java_headers_buffer == NULL) {
         aws_jni_check_and_clear_exception(env);

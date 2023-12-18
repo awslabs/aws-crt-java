@@ -907,10 +907,6 @@ public class S3ClientTest extends CrtTestFixture {
         try (S3Client client = createS3Client(clientOptions)) {
             // response handler does nothing, it just needs to exist for this test
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
-                @Override
-                public void onFinished(S3FinishedResponseContext context) {
-                    System.out.println("waahm7");
-                }
             };
 
             HttpHeader[] headers = {

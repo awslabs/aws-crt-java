@@ -646,7 +646,7 @@ static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers,
     for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
         struct aws_http_header header;
         aws_http_headers_get_index(headers, header_index, &header);
-        /* aws_marshal_http_headers_to_dynamic_buffer() impl drives this calculation */
+        /* aws_marshal_http_headers_array_to_dynamic_buffer() impl drives this calculation */
         headers_initial_capacity += header.name.len + header.value.len + 8;
     }
 
@@ -656,7 +656,7 @@ static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers,
         return AWS_OP_ERR;
     }
 
-    if (aws_marshal_http_headers_struct_to_dynamic_buffer(out_headers_buf, headers)) {
+    if (aws_marshal_http_headers_to_dynamic_buffer(out_headers_buf, headers)) {
         return AWS_OP_ERR;
     }
 

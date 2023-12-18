@@ -230,7 +230,7 @@ static inline int s_marshal_http_header_to_buffer(
     return AWS_OP_SUCCESS;
 }
 
-int aws_marshal_http_headers_to_dynamic_buffer(
+int aws_marshal_http_headers_array_to_dynamic_buffer(
     struct aws_byte_buf *buf,
     const struct aws_http_header *header_array,
     size_t num_headers) {
@@ -243,9 +243,7 @@ int aws_marshal_http_headers_to_dynamic_buffer(
     return AWS_OP_SUCCESS;
 }
 
-int aws_marshal_http_headers_struct_to_dynamic_buffer(
-    struct aws_byte_buf *buf,
-    const struct aws_http_headers *headers) {
+int aws_marshal_http_headers_to_dynamic_buffer(struct aws_byte_buf *buf, const struct aws_http_headers *headers) {
     for (size_t i = 0; i < aws_http_headers_count(headers); ++i) {
         struct aws_http_header header;
         aws_http_headers_get_index(headers, i, &header);

@@ -141,7 +141,7 @@ int aws_java_http_stream_on_incoming_headers_fn(
 
     binding->response_status = resp_status;
 
-    if (aws_marshal_http_headers_to_dynamic_buffer(&binding->headers_buf, header_array, num_headers)) {
+    if (aws_marshal_http_headers_array_to_dynamic_buffer(&binding->headers_buf, header_array, num_headers)) {
         AWS_LOGF_ERROR(
             AWS_LS_HTTP_STREAM, "id=%p: Failed to allocate buffer space for incoming headers", (void *)stream);
         return AWS_OP_ERR;

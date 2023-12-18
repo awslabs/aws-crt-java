@@ -76,6 +76,7 @@ public class S3FinishedResponseContext {
 
     /**
      * In the case of a failed HTTP response, get the headers of the response. May be NULL.
+     * @return array of headers
      */
     public HttpHeader[] getErrorHeaders() {
         return errorHeaders;

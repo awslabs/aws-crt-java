@@ -334,6 +334,53 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
+    public void testS3GetErrorHeadersAreReported() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    byte[] bytes = new byte[bodyBytesIn.remaining()];
+                    bodyBytesIn.get(bytes);
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    try {
+                        assertNotNull(context.getErrorHeaders());
+                        assertTrue(context.getErrorCode() > 0);
+                        onFinishedFuture.complete(0); // Assertions passed
+                    } catch (AssertionError e) {
+                        onFinishedFuture.complete(-1); // Assertions failed
+                    }
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", "/key_does_not_exist.txt", headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    @Test
     public void testS3GetAfterClientIsClose() {
         skipIfAndroid();
         skipIfNetworkUnavailable();
@@ -860,6 +907,10 @@ public class S3ClientTest extends CrtTestFixture {
         try (S3Client client = createS3Client(clientOptions)) {
             // response handler does nothing, it just needs to exist for this test
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    System.out.println("waahm7");
+                }
             };
 
             HttpHeader[] headers = {

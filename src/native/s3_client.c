@@ -640,7 +640,7 @@ cleanup:
     return return_value;
 }
 
-static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers, struct aws_byte_buf *out_headers_buf){
+static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers, struct aws_byte_buf *out_headers_buf) {
     /* calculate initial header capacity */
     size_t headers_initial_capacity = 0;
     for (size_t header_index = 0; header_index < aws_http_headers_count(headers); ++header_index) {
@@ -652,12 +652,11 @@ static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers,
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
-    AWS_ZERO_STRUCT(*out_headers_buf);
     if (aws_byte_buf_init(out_headers_buf, allocator, headers_initial_capacity)) {
         return AWS_OP_ERR;
     }
 
-    if(aws_marshal_http_headers_struct_to_dynamic_buffer(out_headers_buf, headers)) {
+    if (aws_marshal_http_headers_struct_to_dynamic_buffer(out_headers_buf, headers)) {
         return AWS_OP_ERR;
     }
 
@@ -682,7 +681,9 @@ static int s_on_s3_meta_request_headers_callback(
 
     jobject java_headers_buffer = NULL;
     struct aws_byte_buf headers_buf;
-    if(s_marshal_http_headers_to_buf(headers, &headers_buf)) {
+    AWS_ZERO_STRUCT(headers_buf);
+
+    if (s_marshal_http_headers_to_buf(headers, &headers_buf)) {
         goto cleanup;
     }
 
@@ -754,6 +755,31 @@ static void s_on_s3_meta_request_finish_callback(
         jthrowable java_exception =
             meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception : NULL;
 
+        jobject java_error_headers_buffer = NULL;
+        struct aws_byte_buf headers_buf;
+        AWS_ZERO_STRUCT(headers_buf);
+        if (meta_request_result->error_response_headers) {
+            /* Ignore any errors and just report the original error without headers */
+            if (s_marshal_http_headers_to_buf(meta_request_result->error_response_headers, &headers_buf) ==
+                AWS_OP_SUCCESS) {
+                java_error_headers_buffer =
+                    aws_jni_direct_byte_buffer_from_raw_ptr(env, headers_buf.buffer, headers_buf.len);
+                if (java_error_headers_buffer == NULL) {
+                    AWS_LOGF_ERROR(
+                        AWS_LS_S3_META_REQUEST,
+                        "id=%p: Ignored Exception from "
+                        "S3MetaRequest.onFinished.aws_jni_direct_byte_buffer_from_raw_ptr",
+                        (void *)meta_request);
+                    aws_jni_check_and_clear_exception(env);
+                }
+            } else {
+                AWS_LOGF_ERROR(
+                    AWS_LS_S3_META_REQUEST,
+                    "id=%p: Ignored Exception from S3MetaRequest.onFinished.s_marshal_http_headers_to_buf",
+                    (void *)meta_request);
+            }
+        }
+
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -763,7 +789,8 @@ static void s_on_s3_meta_request_finish_callback(
             jni_payload,
             meta_request_result->validation_algorithm,
             meta_request_result->did_validate,
-            java_exception);
+            java_exception,
+            java_error_headers_buffer);
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -773,6 +800,11 @@ static void s_on_s3_meta_request_finish_callback(
         }
         if (jni_payload) {
             (*env)->DeleteLocalRef(env, jni_payload);
+        }
+
+        aws_byte_buf_clean_up(&headers_buf);
+        if (java_error_headers_buffer) {
+            (*env)->DeleteLocalRef(env, java_error_headers_buffer);
         }
     }
 

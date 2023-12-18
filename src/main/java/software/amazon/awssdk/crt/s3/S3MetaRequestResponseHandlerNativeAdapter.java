@@ -20,7 +20,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {
-        HttpHeader[] errorHeaders = headersBlob == null ? null :  HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
+        HttpHeader[] errorHeaders = headersBlob == null ? null : HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
         S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum, cause, errorHeaders);
         this.responseHandler.onFinished(context);
     }

@@ -15,6 +15,7 @@ public class S3FinishedResponseContext {
 
     private final Throwable cause;
     private final HttpHeader[] errorHeaders;
+
     /*
      * errorCode The CRT error code
      * responseStatus statusCode of the HTTP response
@@ -66,6 +67,7 @@ public class S3FinishedResponseContext {
 
     /**
      * Cause of the error, such as a Java exception from a callback. May be NULL if there was no exception in a callback.
+     *
      * @return throwable
      */
     public Throwable getCause() {

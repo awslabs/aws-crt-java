@@ -33,9 +33,7 @@ int aws_marshal_http_headers_to_dynamic_buffer(
     const struct aws_http_header *header_array,
     size_t num_headers);
 
-int aws_marshal_http_headers_struct_to_dynamic_buffer(
-    struct aws_byte_buf *buf,
-    const struct aws_http_headers *headers);
+int aws_marshal_http_headers_struct_to_dynamic_buffer(struct aws_byte_buf *buf, const struct aws_http_headers *headers);
 
 /* if this fails a java exception has been set. */
 int aws_apply_java_http_request_changes_to_native_request(

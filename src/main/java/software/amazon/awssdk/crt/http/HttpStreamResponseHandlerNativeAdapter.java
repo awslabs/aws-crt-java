@@ -58,4 +58,12 @@ class HttpStreamResponseHandlerNativeAdapter {
             responseHandler.onResponseComplete((HttpStream) stream, errorCode);
         }
     }
+
+    void onMetrics(HttpStreamBase stream, HttpStreamMetrics metrics) {
+        if (this.responseBaseHandler != null) {
+            responseBaseHandler.onMetrics(stream, metrics);
+        } else {
+            responseHandler.onMetrics((HttpStream) stream, metrics);
+        }
+    }
 }

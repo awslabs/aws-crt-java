@@ -311,6 +311,51 @@ void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
     /********** JNI ENV RELEASE **********/
 }
 
+void aws_java_http_stream_on_stream_metrics_fn(
+    struct aws_http_stream *stream,
+    const struct aws_http_stream_metrics *metrics,
+    void *user_data) {
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
+    /* Convert metrics to Java HttpStreamMetrics obj */
+    jobject jni_metrics = (*env)->NewObject(
+        env,
+        http_stream_metrics_properties.http_stream_metrics_class,
+        http_stream_metrics_properties.constructor_id,
+        (jlong)metrics->send_start_timestamp_ns,
+        (jlong)metrics->send_end_timestamp_ns,
+        (jlong)metrics->sending_duration_ns,
+        (jlong)metrics->receive_start_timestamp_ns,
+        (jlong)metrics->receive_end_timestamp_ns,
+        (jlong)metrics->receiving_duration_ns,
+
+        /* Stream IDs are 31-bit unsigned integers, which fits into Java's regular (signed) 32-bit int */
+        (jint)metrics->stream_id
+    );
+
+    (*env)->CallVoidMethod(
+        env,
+        binding->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onMetrics,
+        binding->java_http_stream_base,
+        jni_metrics);
+
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* Close the Connection if the Java Callback throws an Exception */
+        aws_http_connection_close(aws_http_stream_get_connection(stream));
+    }
+
+    aws_jni_release_thread_env(binding->jvm, env);
+    /********** JNI ENV RELEASE **********/
+}
+
 jobjectArray aws_java_http_headers_from_native(JNIEnv *env, struct aws_http_headers *headers) {
     (void)headers;
     jobjectArray ret;
@@ -383,6 +428,7 @@ static jobject s_make_request_general(
         .on_response_body = aws_java_http_stream_on_incoming_body_fn,
         .on_complete = aws_java_http_stream_on_stream_complete_fn,
         .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
+        .on_metrics = aws_java_http_stream_on_stream_metrics_fn,
         .user_data = stream_binding,
     };
 

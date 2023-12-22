@@ -1205,7 +1205,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     struct aws_mqtt5_publish_completion_options completion_options = {
         .completion_callback = &s_aws_mqtt5_client_java_publish_completion,
-        .completion_user_data = (void *)return_data,
+        .completion_user_data = return_data,
     };
 
     java_publish_packet = aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
@@ -1288,7 +1288,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     struct aws_mqtt5_subscribe_completion_options completion_options = {
         .completion_callback = &s_aws_mqtt5_client_java_subscribe_completion,
-        .completion_user_data = (void *)return_data,
+        .completion_user_data = return_data,
     };
 
     java_subscribe_packet = aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
@@ -1370,7 +1370,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 
     struct aws_mqtt5_unsubscribe_completion_options completion_options = {
         .completion_callback = &s_aws_mqtt5_client_java_unsubscribe_completion,
-        .completion_user_data = (void *)return_data,
+        .completion_user_data = return_data,
     };
 
     java_unsubscribe_packet =

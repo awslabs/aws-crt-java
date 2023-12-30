@@ -1194,9 +1194,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_data->java_client = java_client;
     return_data->jni_publish_future = (*env)->NewGlobalRef(env, jni_publish_future);
 
-    struct aws_mqtt5_publish_completion_options completion_options;
-    completion_options.completion_callback = &s_aws_mqtt5_client_java_publish_completion;
-    completion_options.completion_user_data = (void *)return_data;
+    struct aws_mqtt5_publish_completion_options completion_options = {
+        .completion_callback = &s_aws_mqtt5_client_java_publish_completion,
+        .completion_user_data = return_data,
+    };
 
     java_publish_packet = aws_mqtt5_packet_publish_view_create_from_java(env, allocator, jni_publish_packet);
     if (!java_publish_packet) {
@@ -1276,9 +1277,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_data->java_client = java_client;
     return_data->jni_subscribe_future = (*env)->NewGlobalRef(env, jni_subscribe_future);
 
-    struct aws_mqtt5_subscribe_completion_options completion_options;
-    completion_options.completion_callback = &s_aws_mqtt5_client_java_subscribe_completion;
-    completion_options.completion_user_data = (void *)return_data;
+    struct aws_mqtt5_subscribe_completion_options completion_options = {
+        .completion_callback = &s_aws_mqtt5_client_java_subscribe_completion,
+        .completion_user_data = return_data,
+    };
 
     java_subscribe_packet = aws_mqtt5_packet_subscribe_view_create_from_java(env, allocator, jni_subscribe_packet);
     if (java_subscribe_packet == NULL) {
@@ -1357,9 +1359,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     return_data->java_client = java_client;
     return_data->jni_unsubscribe_future = (*env)->NewGlobalRef(env, jni_unsubscribe_future);
 
-    struct aws_mqtt5_unsubscribe_completion_options completion_options;
-    completion_options.completion_callback = &s_aws_mqtt5_client_java_unsubscribe_completion;
-    completion_options.completion_user_data = (void *)return_data;
+    struct aws_mqtt5_unsubscribe_completion_options completion_options = {
+        .completion_callback = &s_aws_mqtt5_client_java_unsubscribe_completion,
+        .completion_user_data = return_data,
+    };
 
     java_unsubscribe_packet =
         aws_mqtt5_packet_unsubscribe_view_create_from_java(env, allocator, jni_unsubscribe_packet);

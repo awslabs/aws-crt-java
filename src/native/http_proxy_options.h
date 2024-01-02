@@ -18,7 +18,7 @@ void aws_http_proxy_options_jni_init(
     jint proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
     jbyteArray proxy_host,
-    uint16_t proxy_port,
+    jint proxy_port,
     jbyteArray proxy_authorization_username,
     jbyteArray proxy_authorization_password,
     int proxy_authorization_type,

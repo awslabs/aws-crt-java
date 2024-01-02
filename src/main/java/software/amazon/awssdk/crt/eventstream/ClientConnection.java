@@ -129,13 +129,14 @@ public class ClientConnection extends CrtResource {
      * @param hostName hostname to connect to, this can be an IPv4 address, IPv6 address, a local socket address, or a
      *                 dns name.
      * @param port port to connect to hostName with. For local socket address, this value is ignored.
+     *             For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param socketOptions socketOptions to use.
      * @param tlsContext (optional) tls context to use for using SSL/TLS in the connection.
      * @param bootstrap clientBootstrap object to run the connection on.
      * @param connectionHandler handler to process connection messages and state changes.
      * @return The future will be completed once the connection either succeeds or fails.
      */
-    public static CompletableFuture<Void> connect(final String hostName, short port, final SocketOptions socketOptions,
+    public static CompletableFuture<Void> connect(final String hostName, int port, final SocketOptions socketOptions,
                                            final ClientTlsContext tlsContext, final ClientBootstrap bootstrap,
                                            final ClientConnectionHandler connectionHandler) {
         long tlsContextHandle = tlsContext != null ? tlsContext.getNativeHandle() : 0;
@@ -196,7 +197,7 @@ public class ClientConnection extends CrtResource {
         return true;
     }
 
-    private static native int clientConnect(byte[] hostName, short port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);
+    private static native int clientConnect(byte[] hostName, int port, long socketOptions, long tlsContext, long bootstrap, ClientConnectionHandler connectionHandler);
     private static native boolean isClientConnectionOpen(long connection);
     private static native void closeClientConnection(long connection, int errorCode);
     private static native void acquireClientConnection(long connection);

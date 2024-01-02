@@ -594,12 +594,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     struct aws_byte_cursor client_id;
     AWS_ZERO_STRUCT(client_id);
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jstring_acquire(env, jni_endpoint);
-    uint16_t port = (uint16_t)jni_port;
+    uint32_t port = (uint32_t)jni_port;
     if (!port) {
         aws_jni_throw_runtime_exception(
             env,
-            "MqttClientConnection.mqtt_new: Endpoint should be in the format hostname:port and port must be between 1 "
-            "and 65535");
+            "MqttClientConnection.mqtt_new: Endpoint should be in the format hostname:port and port must not be 0");
         goto cleanup;
     }
 
@@ -1327,7 +1326,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     proxy_options.connection_type = (enum aws_http_proxy_connection_type)jni_proxy_connection_type;
 
     proxy_options.host = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_host);
-    proxy_options.port = (uint16_t)jni_proxy_port;
+    proxy_options.port = (uint32_t)jni_proxy_port;
 
     proxy_options.auth_type = (enum aws_http_proxy_authentication_type)jni_proxy_authorization_type;
 

@@ -347,9 +347,15 @@ void aws_java_http_stream_on_stream_metrics_fn(
         binding->java_http_stream_base,
         jni_metrics);
 
+    /* Delete local reference to metrics object */
+    (*env)->DeleteLocalRef(env, jni_metrics);
+
     if (aws_jni_check_and_clear_exception(env)) {
         /* Close the Connection if the Java Callback throws an Exception */
         aws_http_connection_close(aws_http_stream_get_connection(stream));
+
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onMetrics", (void *)stream);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
     aws_jni_release_thread_env(binding->jvm, env);

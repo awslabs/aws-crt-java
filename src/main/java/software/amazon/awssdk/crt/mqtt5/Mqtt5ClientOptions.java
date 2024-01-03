@@ -502,20 +502,20 @@ public class Mqtt5ClientOptions {
          */
         DEFAULT(0),
 
-        /*
+        /**
          * Re-queues QoS 1+ publishes on disconnect; un-acked publishes go to the front while unprocessed publishes stay
          * in place.  All other operations (QoS 0 publishes, subscribe, unsubscribe) are failed.
          */
         FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT(1),
 
-        /*
+        /**
          * QoS 0 publishes that are not complete at the time of disconnection are failed.  Un-acked QoS 1+ publishes are
          * re-queued at the head of the line for immediate retransmission on a session resumption.  All other operations
          * are requeued in original order behind any retransmissions.
          */
         FAIL_QOS0_PUBLISH_ON_DISCONNECT(2),
 
-        /*
+        /**
          * All operations that are not complete at the time of disconnection are failed, except operations that
          * the MQTT5 spec requires to be retransmitted (un-acked QoS1+ publishes).
          */

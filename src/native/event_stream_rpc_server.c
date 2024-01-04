@@ -477,7 +477,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
     jclass jni_class,
     jobject jni_server_listener,
     jbyteArray jni_host_name,
-    jshort port,
+    jint port,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jlong jni_server_bootstrap,
@@ -552,7 +552,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_serverL
         .on_destroy_callback = s_server_listener_shutdown_complete,
         .bootstrap = server_bootstrap,
         .tls_options = conn_options_ptr,
-        .port = port,
+        .port = (uint32_t)port,
         .host_name = c_str_host_name,
         .user_data = callback_data,
         .on_new_connection = s_on_new_connection_fn,
@@ -598,7 +598,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ServerListener_getBound
         (struct aws_event_stream_rpc_server_listener *)jni_server_listener;
     if (!listener) {
         aws_jni_throw_runtime_exception(env, "ServerListener.getBoundPort: Invalid serverListener");
-        return (jshort)-1;
+        return -1;
     }
 
     return (jint)aws_event_stream_rpc_server_listener_get_bound_port(listener);

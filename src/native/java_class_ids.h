@@ -236,6 +236,7 @@ struct java_http_stream_response_handler_native_adapter_properties {
     jmethodID onResponseHeadersDone;
     jmethodID onResponseBody;
     jmethodID onResponseComplete;
+    jmethodID onMetrics;
 };
 extern struct java_http_stream_response_handler_native_adapter_properties http_stream_response_handler_properties;
 
@@ -244,6 +245,13 @@ struct java_http_stream_write_chunk_completion_properties {
     jmethodID callback;
 };
 extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
+
+/* HtppStreamMetrics */
+struct java_http_stream_metrics_properties {
+    jclass http_stream_metrics_class;
+    jmethodID constructor_id;
+};
+extern struct java_http_stream_metrics_properties http_stream_metrics_properties;
 
 /* EventStreamServerListener */
 struct java_event_stream_server_listener_properties {

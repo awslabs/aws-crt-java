@@ -7,18 +7,15 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.Http2ClientConnection;
-import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBase;
-import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStreamBase;
 import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.http.Http2Stream;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamMetrics;
+import software.amazon.awssdk.crt.http.HttpVersion;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -31,6 +28,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class HttpRequestResponseFixture extends HttpClientTestFixture {
 
@@ -94,6 +92,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         boolean actuallyConnected = false;
 
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        final AtomicReference<HttpStreamMetrics> metricsRef = new AtomicReference<>(null);
 
         final TestHttpResponse response = new TestHttpResponse();
 
@@ -127,6 +126,11 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     }
 
                     @Override
+                    public void onMetrics(HttpStreamBase stream, HttpStreamMetrics metrics) {
+                        Assert.assertTrue(metricsRef.compareAndSet(null, metrics));
+                    }
+
+                    @Override
                     public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
@@ -149,6 +153,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         }
 
         Assert.assertTrue(actuallyConnected);
+        Assert.assertNotNull(metricsRef.get());
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
 

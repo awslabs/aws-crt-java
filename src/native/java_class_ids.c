@@ -522,6 +522,13 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     http_stream_response_handler_properties.onResponseComplete =
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
+
+    http_stream_response_handler_properties.onMetrics = (*env)->GetMethodID(
+        env,
+        cls,
+        "onMetrics",
+        "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Lsoftware/amazon/awssdk/crt/http/HttpStreamMetrics;)V");
+    AWS_FATAL_ASSERT(http_stream_response_handler_properties.onMetrics);
 }
 
 struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
@@ -533,6 +540,17 @@ static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
 
     http_stream_write_chunk_completion_properties.callback = (*env)->GetMethodID(env, cls, "onChunkCompleted", "(I)V");
     AWS_FATAL_ASSERT(http_stream_write_chunk_completion_properties.callback);
+}
+
+struct java_http_stream_metrics_properties http_stream_metrics_properties;
+
+static void s_cache_http_stream_metrics_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamMetrics");
+    AWS_FATAL_ASSERT(cls);
+    http_stream_metrics_properties.http_stream_metrics_class = (*env)->NewGlobalRef(env, cls);
+
+    http_stream_metrics_properties.constructor_id = (*env)->GetMethodID(env, cls, "<init>", "(JJJJJJI)V");
+    AWS_FATAL_ASSERT(http_stream_metrics_properties.constructor_id);
 }
 
 struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
@@ -2316,6 +2334,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_http2_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
+    s_cache_http_stream_metrics_properties(env);
     s_cache_event_stream_server_listener_properties(env);
     s_cache_event_stream_server_listener_handler_properties(env);
     s_cache_event_stream_server_connection_handler_properties(env);

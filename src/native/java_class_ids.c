@@ -523,8 +523,11 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
 
-    http_stream_response_handler_properties.onMetrics =
-        (*env)->GetMethodID(env, cls, "onMetrics", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Lsoftware/amazon/awssdk/crt/http/HttpStreamMetrics;)V");
+    http_stream_response_handler_properties.onMetrics = (*env)->GetMethodID(
+        env,
+        cls,
+        "onMetrics",
+        "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Lsoftware/amazon/awssdk/crt/http/HttpStreamMetrics;)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onMetrics);
 }
 

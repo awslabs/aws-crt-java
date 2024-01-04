@@ -51,19 +51,19 @@ class HttpStreamResponseHandlerNativeAdapter {
         }
     }
 
-    void onResponseComplete(HttpStreamBase stream, int errorCode) {
-        if (this.responseBaseHandler != null) {
-            responseBaseHandler.onResponseComplete(stream, errorCode);
-        } else {
-            responseHandler.onResponseComplete((HttpStream) stream, errorCode);
-        }
-    }
-
     void onMetrics(HttpStreamBase stream, HttpStreamMetrics metrics) {
         if (this.responseBaseHandler != null) {
             responseBaseHandler.onMetrics(stream, metrics);
         } else {
             responseHandler.onMetrics((HttpStream) stream, metrics);
+        }
+    }
+
+    void onResponseComplete(HttpStreamBase stream, int errorCode) {
+        if (this.responseBaseHandler != null) {
+            responseBaseHandler.onResponseComplete(stream, errorCode);
+        } else {
+            responseHandler.onResponseComplete((HttpStream) stream, errorCode);
         }
     }
 }

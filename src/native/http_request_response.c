@@ -337,8 +337,7 @@ void aws_java_http_stream_on_stream_metrics_fn(
         (jlong)metrics->receiving_duration_ns,
 
         /* Stream IDs are 31-bit unsigned integers, which fits into Java's regular (signed) 32-bit int */
-        (jint)metrics->stream_id
-    );
+        (jint)metrics->stream_id);
 
     (*env)->CallVoidMethod(
         env,

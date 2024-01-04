@@ -63,4 +63,17 @@ public class HttpStreamMetrics {
     public int getStreamId() {
         return streamId;
     }
+
+    @Override
+    public String toString() {
+        return "HttpStreamMetrics{" +
+                "sendStartTimestampNs=" + sendStartTimestampNs +
+                ", sendEndTimestampNs=" + sendEndTimestampNs +
+                ", sendingDurationNs=" + sendingDurationNs +
+                ", receiveStartTimestampNs=" + receiveStartTimestampNs +
+                ", receiveEndTimestampNs=" + receiveEndTimestampNs +
+                ", receivingDurationNs=" + receivingDurationNs +
+                ", streamId=" + streamId +
+                '}';
+    }
 }

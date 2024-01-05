@@ -15,7 +15,7 @@ public interface S3MetaRequestResponseHandler {
     /**
      * Invoked to provide response headers received during the execution of the meta request.
      * Note: the statusCode in this callback is not the final statusCode. It is possible that the statusCode in `onResponseHeaders`
-     * is 200, and then something goes wrong, leading to a different statusCode in the final `onFinished` callback.
+     * is 200, and then the request fail leading to a different statusCode in the final `onFinished` callback.
      *
      * @param statusCode statusCode of the HTTP response
      * @param headers the headers received

@@ -60,8 +60,7 @@ if (BUILD_DEPS)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
         set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
-        set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
-        set(DISABLE_GO ON CACHE BOOL "Disable codegen")
+        set(FIPS ON CACHE BOOL "FIPS compliance")
 
         # temporarily disable certain warnings as errors for the aws-lc build
         set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")

@@ -10,7 +10,8 @@
         "aws-crt-java-test"
     ],
     "+imports": [
-        "JDK8"
+        "JDK8",
+        "golang"
     ],
     "build_dir": "target/cmake-build",
     "build_env": {

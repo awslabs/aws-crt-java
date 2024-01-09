@@ -23,6 +23,7 @@
 #include <aws/http/connection_manager.h>
 #include <aws/http/http.h>
 #include <aws/http/proxy.h>
+#include <http_proxy_options_environment_variable.h>
 
 #include "http_connection_manager.h"
 
@@ -107,6 +108,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
+    jint jni_environment_variable_proxy_connection_type,
+    jlong jni_environment_variable_proxy_tls_connection_options,
+    jint jni_environment_variable_type,
     jboolean jni_manual_window_management,
     jlong jni_max_connection_idle_in_milliseconds,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
@@ -137,11 +141,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
 
-    if (jni_port <= 0 || 65535 < jni_port) {
-        aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
-        goto cleanup;
-    }
-
     size_t window_size;
     if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
         goto cleanup;
@@ -152,7 +151,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-    uint16_t port = (uint16_t)jni_port;
+    uint32_t port = (uint32_t)jni_port;
 
     bool new_tls_conn_opts = (jni_tls_ctx != 0 && !tls_connection_options);
 
@@ -212,7 +211,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         jni_proxy_connection_type,
         &proxy_tls_conn_options,
         jni_proxy_host,
-        (uint16_t)jni_proxy_port,
+        jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
         jni_proxy_authorization_type,
@@ -221,6 +220,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     if (jni_proxy_host != NULL) {
         manager_options.proxy_options = &proxy_options;
     }
+
+    struct proxy_env_var_settings proxy_ev_settings;
+    AWS_ZERO_STRUCT(proxy_ev_settings);
+
+    aws_http_proxy_environment_variable_setting_jni_init(
+        &proxy_ev_settings,
+        jni_environment_variable_proxy_connection_type,
+        jni_environment_variable_type,
+        (struct aws_tls_connection_options *)jni_environment_variable_proxy_tls_connection_options);
+
+    manager_options.proxy_ev_settings = &proxy_ev_settings;
 
     binding->manager = aws_http_connection_manager_new(allocator, &manager_options);
     if (binding->manager == NULL) {

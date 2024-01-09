@@ -6,7 +6,24 @@ Java Bindings for the AWS Common Runtime
 
 This library is licensed under the Apache 2.0 License.
 
-## Building
+*__Jump To:__*
+
+* [Platform Specific Building](#platform)
+    * [Linux/Unix](#linuxunix)
+    * [OSX](#osx)
+    * [Windows](#windows)
+    * [Android](./android/ANDROID.md)
+* [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
+* [Installing](#installing)
+* [Platform-Specific JARs](#platform-specific-jars)
+* [System Properties](#system-properties)
+* [TLS Behavior](#tls-behavior)
+* [Testing](#testing)
+* [IDEs](#ides)
+* [Debugging](#debugging)
+
+
+## Platform
 
 ### Linux/Unix
 Requirements:
@@ -28,6 +45,8 @@ Requirements:
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `brew install maven cmake` (if you have homebrew installed, otherwise install these manually)
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
@@ -40,6 +59,8 @@ Requirements:
 * CMake 3.1
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
+
+Building:
 1) `choco install maven` (if you have chocolatey installed), otherwise install maven and the JDK manually
 2) `git clone https://github.com/awslabs/aws-crt-java.git`
 3) `cd aws-crt-java`
@@ -159,24 +180,26 @@ static: certificate has an existing certificate-key pair that was previously imp
 ```
 
 ## Testing
-Many tests require custom arguments. These tests will be quietly skipped if their arguments are not set.
-Arguments can be passed like so:
+Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
+
+Environment variables can be set like so:
 ```
-mvn test -Dcertificate=path/to/cert -Dprivatekey=path/to/key ...
+export ENV_VARIABLE_NAME="<variable value>"
 ```
 Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
-Full list of test arguments:
-- `endpoint`: AWS IoT service endpoint hostname
-- `certificate`: Path to the IoT thing certificate
-- `privatekey`: Path to the IoT thing private key
-- `privatekey_p8`: Path to the IoT thing private key in PKCS#8 format
-- `ecc_certificate`: Path to the IoT thing with EC-based certificate
-- `ecc_privatekey`: Path to the IoT thing with ECC private key (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
-- `rootca`: Path to the root certificate
-- `proxyhost`: Hostname of proxy
-- `proxyport`: Port of proxy
+Partial list of environment variables:
+- `AWS_TEST_MQTT311_IOT_CORE_HOST`: AWS IoT service endpoint hostname for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_CERT`: Path to the IoT thing certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_RSA_KEY`: Path to the IoT thing private key for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_CERT`: Path to the IoT thing with EC-based certificate for MQTT3
+- `AWS_TEST_MQTT311_IOT_CORE_ECC_KEY`: Path to the IoT thing with ECC private key for MQTT3 (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
+- `AWS_TEST_MQTT311_ROOT_CA`: Path to the root certificate
+- `AWS_TEST_HTTP_PROXY_HOST`: Hostname of proxy
+- `AWS_TEST_HTTP_PROXY_PORT`: Port of proxy
 - `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+
+Other Environment Variables that can be set can be found in the `SetupTestProperties()` function in [CrtTestFixture.java](https://github.com/awslabs/aws-crt-java/blob/main/src/test/java/software/amazon/awssdk/crt/test/CrtTestFixture.java)
 
 These can be set persistently via Maven settings (usually in `~/.m2/settings.xml`):
 ```xml

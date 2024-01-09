@@ -17,6 +17,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
   AWS_REGION: us-east-1
+  AWS_DEVICE_FARM_REGION: us-west-2 # Device Farm only available in us-west-2 region
 
 jobs:
   linux-compat:
@@ -79,7 +80,7 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
-          
+
   linux-musl:
     runs-on: ubuntu-22.04 # latest
     strategy:
@@ -208,18 +209,46 @@ jobs:
           python3 codebuild/macos_compatibility_check.py
 
   android:
+      # ubuntu-20.04 comes with Android tooling, see:
+      # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     name: Android
-    # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
     runs-on: ubuntu-20.04 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
-          submodules: true
+            submodules: true
+      # Setup JDK 11
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'gradle'
+      # Build and publish locally for the test app to find the SNAPSHOT version
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           ./gradlew :android:crt:build
-          ./gradlew test
+          ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
+      # Setup files required by test app for Device Farm testing
+      - name: Setup Android Test Files
+        run: |
+          cd src/test/android/testapp/src/main/assets
+          python3 -m pip install boto3
+          python3 ./android_file_creation.py
+      - name: Build Test App
+        run: |
+          cd src/test/android/testapp
+          ../../../../gradlew assembledebug
+          ../../../../gradlew assembleAndroidTest
+      - name: Device Farm Tests
+        run: |
+          echo "Running Device Farm Python Script"
+          python3 ./.github/workflows/run_android_ci.py \
+          --run_id ${{ github.run_id }} \
+          --run_attempt ${{ github.run_attempt }} \
+          --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
 
   # check that docs can still build
   check-docs:

@@ -179,6 +179,12 @@ static void s_cache_mqtt_connection(JNIEnv *env) {
     mqtt_connection_properties.on_websocket_handshake =
         (*env)->GetMethodID(env, cls, "onWebsocketHandshake", "(Lsoftware/amazon/awssdk/crt/http/HttpRequest;J)V");
     AWS_FATAL_ASSERT(mqtt_connection_properties.on_websocket_handshake);
+
+    mqtt_connection_properties.on_connection_success = (*env)->GetMethodID(env, cls, "onConnectionSuccess", "(Z)V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_success);
+
+    mqtt_connection_properties.on_connection_failure = (*env)->GetMethodID(env, cls, "onConnectionFailure", "(I)V");
+    AWS_FATAL_ASSERT(mqtt_connection_properties.on_connection_failure);
 }
 
 struct java_message_handler_properties message_handler_properties;
@@ -302,6 +308,10 @@ static void s_cache_credentials(JNIEnv *env) {
     credentials_properties.session_token_field_id =
         (*env)->GetFieldID(env, credentials_properties.credentials_class, "sessionToken", "[B");
     AWS_FATAL_ASSERT(credentials_properties.session_token_field_id);
+
+    credentials_properties.expiration_field_id =
+        (*env)->GetFieldID(env, credentials_properties.credentials_class, "expirationTimePointSecs", "J");
+    AWS_FATAL_ASSERT(credentials_properties.expiration_field_id);
 }
 
 struct java_credentials_handler_properties credentials_handler_properties;
@@ -512,6 +522,13 @@ static void s_cache_http_stream_response_handler_native_adapter(JNIEnv *env) {
     http_stream_response_handler_properties.onResponseComplete =
         (*env)->GetMethodID(env, cls, "onResponseComplete", "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;I)V");
     AWS_FATAL_ASSERT(http_stream_response_handler_properties.onResponseComplete);
+
+    http_stream_response_handler_properties.onMetrics = (*env)->GetMethodID(
+        env,
+        cls,
+        "onMetrics",
+        "(Lsoftware/amazon/awssdk/crt/http/HttpStreamBase;Lsoftware/amazon/awssdk/crt/http/HttpStreamMetrics;)V");
+    AWS_FATAL_ASSERT(http_stream_response_handler_properties.onMetrics);
 }
 
 struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
@@ -523,6 +540,17 @@ static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
 
     http_stream_write_chunk_completion_properties.callback = (*env)->GetMethodID(env, cls, "onChunkCompleted", "(I)V");
     AWS_FATAL_ASSERT(http_stream_write_chunk_completion_properties.callback);
+}
+
+struct java_http_stream_metrics_properties http_stream_metrics_properties;
+
+static void s_cache_http_stream_metrics_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamMetrics");
+    AWS_FATAL_ASSERT(cls);
+    http_stream_metrics_properties.http_stream_metrics_class = (*env)->NewGlobalRef(env, cls);
+
+    http_stream_metrics_properties.constructor_id = (*env)->GetMethodID(env, cls, "<init>", "(JJJJJJI)V");
+    AWS_FATAL_ASSERT(http_stream_metrics_properties.constructor_id);
 }
 
 struct java_event_stream_server_listener_properties event_stream_server_listener_properties;
@@ -687,7 +715,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
-        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZ)V");
+        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZLjava/lang/Throwable;Ljava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =
@@ -1004,6 +1032,9 @@ static void s_cache_mqtt5_connack_packet(JNIEnv *env) {
     mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id = (*env)->GetFieldID(
         env, mqtt5_connack_packet_properties.connack_packet_class, "assignedClientIdentifier", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_assigned_client_identifier_field_id);
+    mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id = (*env)->GetFieldID(
+        env, mqtt5_connack_packet_properties.connack_packet_class, "topicAliasMaximum", "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_topic_alias_maximum_field_id);
     mqtt5_connack_packet_properties.connack_reason_string_field_id = (*env)->GetFieldID(
         env, mqtt5_connack_packet_properties.connack_packet_class, "reasonString", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_connack_packet_properties.connack_reason_string_field_id);
@@ -1279,6 +1310,9 @@ static void s_cache_mqtt5_publish_packet(JNIEnv *env) {
     mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id = (*env)->GetFieldID(
         env, mqtt5_publish_packet_properties.publish_packet_class, "messageExpiryIntervalSeconds", "Ljava/lang/Long;");
     AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_message_expiry_interval_seconds_field_id);
+    mqtt5_publish_packet_properties.publish_topic_alias_field_id =
+        (*env)->GetFieldID(env, mqtt5_publish_packet_properties.publish_packet_class, "topicAlias", "Ljava/lang/Long;");
+    AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_topic_alias_field_id);
     mqtt5_publish_packet_properties.publish_response_topic_field_id = (*env)->GetFieldID(
         env, mqtt5_publish_packet_properties.publish_packet_class, "responseTopic", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(mqtt5_publish_packet_properties.publish_response_topic_field_id);
@@ -1348,6 +1382,14 @@ static void s_cache_mqtt5_negotiated_settings(JNIEnv *env) {
         (*env)->GetFieldID(
             env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "maximumPacketSizeToServer", "J");
     AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_maximum_packet_size_to_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "topicAliasMaximumToServer", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_server_field_id);
+    mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id =
+        (*env)->GetFieldID(
+            env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "topicAliasMaximumToClient", "I");
+    AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_topic_alias_maximum_to_client_field_id);
     mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id =
         (*env)->GetFieldID(env, mqtt5_negotiated_settings_properties.negotiated_settings_class, "serverKeepAlive", "I");
     AWS_FATAL_ASSERT(mqtt5_negotiated_settings_properties.negotiated_settings_server_keep_alive_field_id);
@@ -1558,6 +1600,48 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         "lifecycleEvents",
         "Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5ClientOptions$LifecycleEvents;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.lifecycle_events_field_id);
+    mqtt5_client_options_properties.topic_aliasing_options_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "topicAliasingOptions",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
+}
+
+struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
+static void s_cache_topic_aliasing_options(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class);
+
+    mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "outboundBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$OutboundTopicAliasBehaviorType;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.outbound_behavior_field_id);
+
+    mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "outboundCacheMaxSize",
+        "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.outbound_cache_max_size_field_id);
+
+    mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "inboundBehavior",
+        "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$InboundTopicAliasBehaviorType;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.inbound_behavior_field_id);
+
+    mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_topic_aliasing_options_properties.mqtt5_topic_aliasing_options_class,
+        "inboundCacheMaxSize",
+        "Ljava/lang/Integer;");
+    AWS_FATAL_ASSERT(mqtt5_topic_aliasing_options_properties.inbound_cache_max_size_field_id);
 }
 
 struct java_aws_mqtt5_client_properties mqtt5_client_properties;
@@ -1674,6 +1758,43 @@ static void s_cache_mqtt5_client_jitter_mode(JNIEnv *env) {
     mqtt5_client_jitter_mode_properties.client_get_value_id =
         (*env)->GetMethodID(env, mqtt5_client_jitter_mode_properties.mqtt5_client_jitter_mode_class, "getValue", "()I");
     AWS_FATAL_ASSERT(mqtt5_client_jitter_mode_properties.client_get_value_id);
+}
+
+struct java_aws_mqtt5_outbound_topic_alias_behavior_type_properties mqtt5_outbound_topic_alias_behavior_type_properties;
+
+static void s_cache_mqtt5_outbound_topic_alias_behavior_type(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$OutboundTopicAliasBehaviorType");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class =
+        (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(
+        mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class);
+    // Functions
+    mqtt5_outbound_topic_alias_behavior_type_properties.get_value_method_id = (*env)->GetMethodID(
+        env,
+        mqtt5_outbound_topic_alias_behavior_type_properties.mqtt5_outbound_topic_alias_behavior_type_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_outbound_topic_alias_behavior_type_properties.get_value_method_id);
+}
+
+struct java_aws_mqtt5_inbound_topic_alias_behavior_type_properties mqtt5_inbound_topic_alias_behavior_type_properties;
+
+static void s_cache_mqtt5_inbound_topic_alias_behavior_type(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/mqtt5/TopicAliasingOptions$InboundTopicAliasBehaviorType");
+    AWS_FATAL_ASSERT(cls);
+    mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class =
+        (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class);
+    // Functions
+    mqtt5_inbound_topic_alias_behavior_type_properties.get_value_method_id = (*env)->GetMethodID(
+        env,
+        mqtt5_inbound_topic_alias_behavior_type_properties.mqtt5_inbound_topic_alias_behavior_type_class,
+        "getValue",
+        "()I");
+    AWS_FATAL_ASSERT(mqtt5_inbound_topic_alias_behavior_type_properties.get_value_method_id);
 }
 
 struct java_aws_mqtt5_subscribe_packet_properties mqtt5_subscribe_packet_properties;
@@ -2132,9 +2253,59 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
 }
 
+struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;
+
+static void s_cache_s3express_credentials_provider_factory_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProviderFactory");
+    AWS_FATAL_ASSERT(cls);
+
+    s3express_credentials_provider_factory_properties.createS3ExpressCredentialsProvider = (*env)->GetMethodID(
+        env,
+        cls,
+        "createS3ExpressCredentialsProvider",
+        "(Lsoftware/amazon/awssdk/crt/s3/S3Client;)Lsoftware/amazon/awssdk/crt/s3/S3ExpressCredentialsProvider;");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_factory_properties.createS3ExpressCredentialsProvider);
+}
+
+struct java_s3express_credentials_properties_properties s3express_credentials_properties_properties;
+
+static void s_cache_s3express_credentials_properties_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProperties");
+    AWS_FATAL_ASSERT(cls);
+    s3express_credentials_properties_properties.s3express_credentials_properties_class = (*env)->NewGlobalRef(env, cls);
+
+    s3express_credentials_properties_properties.constructor_method_id = (*env)->GetMethodID(
+        env, s3express_credentials_properties_properties.s3express_credentials_properties_class, "<init>", "()V");
+
+    s3express_credentials_properties_properties.host_field_id =
+        (*env)->GetFieldID(env, cls, "hostValue", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3express_credentials_properties_properties.host_field_id);
+
+    s3express_credentials_properties_properties.region_field_id =
+        (*env)->GetFieldID(env, cls, "region", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3express_credentials_properties_properties.region_field_id);
+}
+
+struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
+
+static void s_cache_s3express_credentials_provider_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3ExpressCredentialsProvider");
+    AWS_FATAL_ASSERT(cls);
+
+    s3express_credentials_provider_properties.getS3ExpressCredentials = (*env)->GetMethodID(
+        env,
+        cls,
+        "getS3ExpressCredentials",
+        "(Lsoftware/amazon/awssdk/crt/s3/S3ExpressCredentialsProperties;Lsoftware/amazon/awssdk/crt/auth/credentials/"
+        "Credentials;J)V");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_properties.getS3ExpressCredentials);
+
+    s3express_credentials_provider_properties.destroyProvider = (*env)->GetMethodID(env, cls, "destroyProvider", "()V");
+    AWS_FATAL_ASSERT(s3express_credentials_provider_properties.destroyProvider);
+}
+
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
-
     s_cache_http_request_body_stream(env);
     s_cache_aws_signing_config(env);
     s_cache_predicate(env);
@@ -2163,6 +2334,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_http2_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
+    s_cache_http_stream_metrics_properties(env);
     s_cache_event_stream_server_listener_properties(env);
     s_cache_event_stream_server_listener_handler_properties(env);
     s_cache_event_stream_server_connection_handler_properties(env);
@@ -2230,6 +2402,12 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_boxed_boolean(env);
     s_cache_boxed_list(env);
     s_cache_boxed_array_list(env);
+    s_cache_s3express_credentials_provider_factory_properties(env);
+    s_cache_s3express_credentials_properties_properties(env);
+    s_cache_s3express_credentials_provider_properties(env);
+    s_cache_mqtt5_outbound_topic_alias_behavior_type(env);
+    s_cache_mqtt5_inbound_topic_alias_behavior_type(env);
+    s_cache_topic_aliasing_options(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

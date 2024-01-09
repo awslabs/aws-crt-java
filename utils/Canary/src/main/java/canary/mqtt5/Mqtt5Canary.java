@@ -76,27 +76,29 @@ public class Mqtt5Canary {
 
     static int operationFutureWaitTime = 30;
 
+    private static final int MAX_PAYLOAD_SIZE = 65535; // Use UINT64_MAX for the payload size
+
     static void printUsage() {
         System.out.println(
-            "Usage:\n" +
-            "  --help            This message\n"+
-            "  --endpoint        MQTT5 endpoint hostname (optional, default=localhost)\n"+
-            "  --port            MQTT5 endpoint port to use (optional, default=1883)\n"+
-            "  --ca_file         A path to a CA certificate file (optional)\n"+
-            "  --cert            A path to a certificate file (optional, will use mTLS if defined)\n" +
-            "  --key             A path to a private key file (optional, will use mTLS if defined)\n" +
-            "  --clientID        The ClientID to connect with (optional, default=MQTT5_Sample_Java_<UUID>)\n"+
-            "  --use_websockets  If defined, websockets will be used (optional)\n"+
-            "  --use_tls         If defined, TLS (or mTLS) will be used (optional)\n"+
-            "\n"+
-            " --threads          The number of EventLoop group threads to use (optional, default=8)\n"+
-            " --clients          The number of clients to use (optional, default=3, max=50)\n"+
-            " --tps              The number of seconds to wait after performing an operation (optional, default=12)\n"+
-            " --seconds          The number of seconds to run the Canary test (optional, default=600)\n"+
-            " --log_console      If defined, logging will print to stdout (optional, default=true, type=boolean)\n"+
-            " --log_aws          If defined, logging will occur using the AWS Logger (optional, type=boolean) \n"+
-            " --log_aws_level    If defined, logging to AWS Logger will use that log level (optional, default=Debug)\n"+
-            " --log_file         If defined, logging will be written to this file (optional)"
+                "Usage:\n" +
+                        "  --help            This message\n"+
+                        "  --endpoint        MQTT5 endpoint hostname (optional, default=localhost)\n"+
+                        "  --port            MQTT5 endpoint port to use (optional, default=1883)\n"+
+                        "  --ca_file         A path to a CA certificate file (optional)\n"+
+                        "  --cert            A path to a certificate file (optional, will use mTLS if defined)\n" +
+                        "  --key             A path to a private key file (optional, will use mTLS if defined)\n" +
+                        "  --clientID        The ClientID to connect with (optional, default=MQTT5_Sample_Java_<UUID>)\n"+
+                        "  --use_websockets  If defined, websockets will be used (optional)\n"+
+                        "  --use_tls         If defined, TLS (or mTLS) will be used (optional)\n"+
+                        "\n"+
+                        " --threads          The number of EventLoop group threads to use (optional, default=8)\n"+
+                        " --clients          The number of clients to use (optional, default=3, max=50)\n"+
+                        " --tps              The number of seconds to wait after performing an operation (optional, default=12)\n"+
+                        " --seconds          The number of seconds to run the Canary test (optional, default=600)\n"+
+                        " --log_console      If defined, logging will print to stdout (optional, default=true, type=boolean)\n"+
+                        " --log_aws          If defined, logging will occur using the AWS Logger (optional, type=boolean) \n"+
+                        " --log_aws_level    If defined, logging to AWS Logger will use that log level (optional, default=Debug)\n"+
+                        " --log_file         If defined, logging will be written to this file (optional)"
         );
     }
 
@@ -154,7 +156,12 @@ public class Mqtt5Canary {
                     break;
                 case "--tps":
                     if (idx + 1 < args.length) {
-                        configTps = Integer.parseInt(args[++idx]);
+                        int tps = Integer.parseInt(args[++idx]);
+                        if (tps == 0) {
+                            configTps = 0;
+                        } else {
+                            configTps = 1000 / tps;
+                        }
                     }
                     break;
                 case "--seconds":
@@ -256,7 +263,7 @@ public class Mqtt5Canary {
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed...");
+            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed with errorCode : " + onConnectionFailureReturn.getErrorCode());
             clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
             clientsData.get(clientIdx).subscribedToTopics = false;
         }
@@ -286,8 +293,7 @@ public class Mqtt5Canary {
             PublishPacket publishPacket = publishReturn.getPublishPacket();
             int clientIdx = clients.indexOf(client);
             PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
-                    "  Topic: " + publishPacket.getTopic() + "\n" +
-                    "  Payload: " + new String(publishPacket.getPayload()));
+                    "  Topic: " + publishPacket.getTopic() + "\n");
         }
     }
 
@@ -364,8 +370,6 @@ public class Mqtt5Canary {
 
     public static void setupOperations() {
         // For now have everything evenly distributed
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_NULL);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_START);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_STOP);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_SUBSCRIBE);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE);
@@ -410,7 +414,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Started client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -438,7 +441,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Stopped client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -471,7 +473,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = true;
         PrintLog("[OP] Subscribed client ID " + clientIdx);
@@ -505,7 +506,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
         PrintLog("[OP] Unsubscribed client ID " + clientIdx);
@@ -535,7 +535,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -557,7 +556,13 @@ public class Mqtt5Canary {
         PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
         publishPacketBuilder.withQOS(qos);
-        publishPacketBuilder.withPayload("Hello World".getBytes());
+
+        int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
+        byte[] payload_bytes = new byte[payload_size];
+        for (int i = 0; i < payload_size; i++) {
+            payload_bytes[i] = (byte)random.nextInt(128);
+        }
+        publishPacketBuilder.withPayload(payload_bytes);
         publishPacketBuilder.withTopic(topic);
 
         // Add user properties!
@@ -575,7 +580,6 @@ public class Mqtt5Canary {
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
-            exitWithError(1);
         }
         PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -734,9 +738,9 @@ public class Mqtt5Canary {
             PerformRandomOperation();
 
             try {
-                Thread.sleep(configTps * 1000);
+                Thread.sleep(configTps);
             } catch (Exception ex) {
-                PrintLog("[OP] Could not sleep for " + (configTps*1000) + " seconds due to exception! Exception: " + ex);
+                PrintLog("[OP] Could not sleep for " + (configTps) + " seconds due to exception! Exception: " + ex);
                 exitWithError(1);
             }
         }

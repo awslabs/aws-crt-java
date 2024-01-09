@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include "credentials.h"
 #include "crt.h"
 #include "http_connection_manager.h"
 #include "java_class_ids.h"
@@ -456,7 +457,7 @@ JNIEXPORT jlong JNICALL
         proxy_connection_type,
         &proxy_tls_connection_options,
         jni_proxy_host,
-        (uint16_t)jni_proxy_port,
+        jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
         jni_proxy_authorization_type,
@@ -538,7 +539,6 @@ static int s_credentials_provider_delegate_get_credentials(
     void *callback_user_data) {
 
     struct aws_credentials_provider_callback_data *callback_data = delegate_user_data;
-    struct aws_allocator *allocator = aws_jni_get_allocator();
 
     int return_value = AWS_OP_ERR;
 
@@ -556,50 +556,10 @@ static int s_credentials_provider_delegate_get_credentials(
         credentials_handler_properties.on_handler_get_credentials_method_id);
     if (aws_jni_check_and_clear_exception(env)) {
         aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-        goto fetch_credentials_failed;
+        goto done;
     }
 
-    jbyteArray java_access_key_id =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id);
-    jbyteArray java_secret_access_key =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.secret_access_key_field_id);
-    jbyteArray java_session_token =
-        (*env)->GetObjectField(env, java_credentials, credentials_properties.session_token_field_id);
-
-    /**
-     * Construct Anonymous Credentials.
-     * Anonymous Credentials are used to skip signing.
-     */
-    if (java_access_key_id == NULL && java_secret_access_key == NULL) {
-        struct aws_credentials *native_credentials = aws_credentials_new_anonymous(allocator);
-        if (!native_credentials) {
-            aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
-            // error has been raised from creating function
-            goto empty_credentials;
-        }
-
-        callback(native_credentials, AWS_ERROR_SUCCESS, callback_user_data);
-        aws_credentials_release(native_credentials);
-
-        return_value = AWS_OP_SUCCESS;
-        goto empty_credentials;
-    }
-
-    if (java_access_key_id == NULL || java_secret_access_key == NULL) {
-        aws_jni_throw_runtime_exception(
-            env, "DelegateCredentialProvider - Both accessKeyId and secretAccessKey must be either null or non-null");
-        goto empty_credentials;
-    }
-
-    struct aws_byte_cursor access_key_id = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_access_key_id);
-    struct aws_byte_cursor secret_access_key = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_secret_access_key);
-    struct aws_byte_cursor session_token;
-    AWS_ZERO_STRUCT(session_token);
-    if (java_session_token != NULL) {
-        session_token = aws_jni_byte_cursor_from_jbyteArray_acquire(env, java_session_token);
-    }
-    struct aws_credentials *native_credentials =
-        aws_credentials_new(allocator, access_key_id, secret_access_key, session_token, UINT64_MAX);
+    struct aws_credentials *native_credentials = aws_credentials_new_from_java_credentials(env, java_credentials);
     if (!native_credentials) {
         aws_jni_throw_runtime_exception(env, "Failed to create native credentials");
         // error has been raised from creating function
@@ -609,17 +569,8 @@ static int s_credentials_provider_delegate_get_credentials(
     aws_credentials_release(native_credentials);
 
     return_value = AWS_OP_SUCCESS;
+
 done:
-    aws_jni_byte_cursor_from_jbyteArray_release(env, java_access_key_id, access_key_id);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, java_secret_access_key, secret_access_key);
-    if (java_session_token != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, java_session_token, session_token);
-    }
-empty_credentials:
-    (*env)->DeleteLocalRef(env, java_access_key_id);
-    (*env)->DeleteLocalRef(env, java_secret_access_key);
-    (*env)->DeleteLocalRef(env, java_session_token);
-fetch_credentials_failed:
     (*env)->DeleteLocalRef(env, java_credentials);
 
     aws_jni_release_thread_env(callback_data->jvm, env);
@@ -788,7 +739,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredential
             proxy_connection_type,
             &proxy_tls_connection_options,
             proxy_host,
-            (uint16_t)proxy_port,
+            proxy_port,
             proxy_authorization_username,
             proxy_authorization_password,
             proxy_authorization_type,
@@ -878,38 +829,9 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
     }
 
     jobject java_credentials = NULL;
-    jbyteArray access_key_id = NULL;
-    jbyteArray secret_access_key = NULL;
-    jbyteArray session_token = NULL;
 
     if (credentials) {
-        java_credentials = (*env)->NewObject(
-            env, credentials_properties.credentials_class, credentials_properties.constructor_method_id);
-        if (java_credentials != NULL) {
-
-            struct aws_byte_cursor access_key_id_cursor = aws_credentials_get_access_key_id(credentials);
-            if (access_key_id_cursor.len > 0) {
-                access_key_id = aws_jni_byte_array_from_cursor(env, &access_key_id_cursor);
-            }
-
-            struct aws_byte_cursor secret_access_key_cursor = aws_credentials_get_secret_access_key(credentials);
-            if (secret_access_key_cursor.len > 0) {
-                secret_access_key = aws_jni_byte_array_from_cursor(env, &secret_access_key_cursor);
-            }
-
-            struct aws_byte_cursor session_token_cursor = aws_credentials_get_session_token(credentials);
-            if (session_token_cursor.len > 0) {
-                session_token = aws_jni_byte_array_from_cursor(env, &session_token_cursor);
-            }
-
-            (*env)->SetObjectField(env, java_credentials, credentials_properties.access_key_id_field_id, access_key_id);
-            (*env)->SetObjectField(
-                env, java_credentials, credentials_properties.secret_access_key_field_id, secret_access_key);
-            if (session_token != NULL) {
-                (*env)->SetObjectField(
-                    env, java_credentials, credentials_properties.session_token_field_id, session_token);
-            }
-        }
+        java_credentials = aws_java_credentials_from_native_new(env, credentials);
     }
 
     (*env)->CallVoidMethod(
@@ -922,15 +844,6 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
     if (java_credentials != NULL) {
-        if (access_key_id) {
-            (*env)->DeleteLocalRef(env, access_key_id);
-        }
-        if (secret_access_key) {
-            (*env)->DeleteLocalRef(env, secret_access_key);
-        }
-        if (session_token) {
-            (*env)->DeleteLocalRef(env, session_token);
-        }
         (*env)->DeleteLocalRef(env, java_credentials);
     }
 

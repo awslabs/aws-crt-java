@@ -80,11 +80,19 @@ public interface HttpStreamBaseResponseHandler {
     }
 
     /**
+     * Called right before stream is complete, whether successful or unsuccessful.
+     * @param stream The HTTP stream to which the metrics apply
+     * @param metrics The [HttpStreamMetrics] containing metrics for the given stream
+     */
+    default void onMetrics(HttpStreamBase stream, HttpStreamMetrics metrics) {
+        /* Optional callback, nothing to do by default */
+    }
+
+    /**
      * Called from Native when the Response has completed.
-     * 
+     *
      * @param stream    completed HttpStreamBase
      * @param errorCode resultant errorCode for the response
      */
     void onResponseComplete(HttpStreamBase stream, int errorCode);
-
 }

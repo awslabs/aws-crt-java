@@ -103,7 +103,9 @@ public class S3Client extends CrtResource {
                 options.getConnectTimeoutMs(),
                 options.getTcpKeepAliveOptions(),
                 monitoringThroughputThresholdInBytesPerSecond,
-                monitoringFailureIntervalInSeconds));
+                monitoringFailureIntervalInSeconds,
+                options.getEnableS3Express(),
+                options.getS3ExpressCredentialsProviderFactory()));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -120,16 +122,22 @@ public class S3Client extends CrtResource {
 
     public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
+        if(isNull()) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                    "S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
+            throw new IllegalStateException("S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
+        }
+
         if (options.getHttpRequest() == null) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
-            return null;
+            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
         }
 
         if (options.getResponseHandler() == null) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
-            return null;
+            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
         }
 
         S3MetaRequest metaRequest = new S3MetaRequest();
@@ -215,7 +223,9 @@ public class S3Client extends CrtResource {
             int connectTimeoutMs,
             S3TcpKeepAliveOptions tcpKeepAliveOptions,
             long monitoringThroughputThresholdInBytesPerSecond,
-            int monitoringFailureIntervalInSeconds) throws CrtRuntimeException;
+            int monitoringFailureIntervalInSeconds,
+            boolean enableS3Express,
+            S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 

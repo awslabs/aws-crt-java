@@ -11,6 +11,7 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -20,10 +21,6 @@ import java.util.function.Consumer;
 
 /**
  * Configuration for the creation of Mqtt5Clients
- *
- * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
- * preview window is especially valuable in shaping the final product.  During the preview period we may make
- * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
  */
 public class Mqtt5ClientOptions {
 
@@ -47,6 +44,7 @@ public class Mqtt5ClientOptions {
     private LifecycleEvents lifecycleEvents;
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
+    private TopicAliasingOptions topicAliasingOptions;
 
     /**
      * Returns the host name of the MQTT server to connect to.
@@ -257,6 +255,15 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns the topic aliasing options to be used by the client
+     *
+     * @return the topic aliasing options to be used by the client
+     */
+    public TopicAliasingOptions getTopicAliasingOptions() {
+        return this.topicAliasingOptions;
+    }
+
+    /**
      * Creates a Mqtt5ClientOptionsBuilder instance
      * @param builder The builder to get the Mqtt5ClientOptions values from
      */
@@ -281,6 +288,7 @@ public class Mqtt5ClientOptions {
         this.lifecycleEvents = builder.lifecycleEvents;
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
+        this.topicAliasingOptions = builder.topicAliasingOptions;
     }
 
     /*******************************************************************************
@@ -494,20 +502,20 @@ public class Mqtt5ClientOptions {
          */
         DEFAULT(0),
 
-        /*
+        /**
          * Re-queues QoS 1+ publishes on disconnect; un-acked publishes go to the front while unprocessed publishes stay
          * in place.  All other operations (QoS 0 publishes, subscribe, unsubscribe) are failed.
          */
         FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT(1),
 
-        /*
+        /**
          * QoS 0 publishes that are not complete at the time of disconnection are failed.  Un-acked QoS 1+ publishes are
          * re-queued at the head of the line for immediate retransmission on a session resumption.  All other operations
          * are requeued in original order behind any retransmissions.
          */
         FAIL_QOS0_PUBLISH_ON_DISCONNECT(2),
 
-        /*
+        /**
          * All operations that are not complete at the time of disconnection are failed, except operations that
          * the MQTT5 spec requires to be retransmitted (un-acked QoS1+ publishes).
          */
@@ -551,10 +559,6 @@ public class Mqtt5ClientOptions {
     /**
      * All of the options for a Mqtt5Client. This includes the settings to make a connection, as well as the
      * event callbacks, publish callbacks, and more.
-     *
-     * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
-     * preview window is especially valuable in shaping the final product.  During the preview period we may make
-     * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
      */
     static final public class Mqtt5ClientOptionsBuilder {
 
@@ -578,6 +582,7 @@ public class Mqtt5ClientOptions {
         private LifecycleEvents lifecycleEvents;
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
+        private TopicAliasingOptions topicAliasingOptions;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -831,6 +836,17 @@ public class Mqtt5ClientOptions {
          */
         public Mqtt5ClientOptionsBuilder withPublishEvents(PublishEvents publishEvents) {
             this.publishEvents = publishEvents;
+            return this;
+        }
+
+        /**
+         * Sets the topic aliasing options for clients constructed from this builder
+         *
+         * @param options topic aliasing options that the client should use
+         * @return The Mqtt5ClientOptionsBuilder object
+         */
+        public Mqtt5ClientOptionsBuilder withTopicAliasingOptions(TopicAliasingOptions options) {
+            this.topicAliasingOptions = options;
             return this;
         }
 

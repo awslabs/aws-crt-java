@@ -30,7 +30,7 @@ void aws_http_proxy_options_jni_init(
     jint proxy_connection_type,
     struct aws_tls_connection_options *tls_options,
     jbyteArray proxy_host,
-    uint16_t proxy_port,
+    jint proxy_port,
     jbyteArray proxy_authorization_username,
     jbyteArray proxy_authorization_password,
     int proxy_authorization_type,
@@ -39,7 +39,7 @@ void aws_http_proxy_options_jni_init(
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     options->connection_type = proxy_connection_type;
-    options->port = proxy_port;
+    options->port = (uint32_t)proxy_port;
     options->auth_type = proxy_authorization_type;
 
     if (proxy_host != NULL) {

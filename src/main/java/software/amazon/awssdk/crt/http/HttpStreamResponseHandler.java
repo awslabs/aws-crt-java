@@ -59,10 +59,18 @@ public interface HttpStreamResponseHandler {
     }
 
     /**
+     * Called right before stream is complete, whether successful or unsuccessful.
+     * @param stream The HTTP stream to which the metrics apply
+     * @param metrics The [HttpStreamMetrics] containing metrics for the given stream
+     */
+    default void onMetrics(HttpStream stream, HttpStreamMetrics metrics) {
+        /* Optional callback, nothing to do by default */
+    }
+
+    /**
      * Called from Native when the Response has completed.
      * @param stream completed stream
      * @param errorCode resultant errorCode for the response
      */
     void onResponseComplete(HttpStream stream, int errorCode);
-
 }

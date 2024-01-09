@@ -43,7 +43,6 @@ import software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket.UnsubscribePac
 import software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket.RetainHandlingType;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -51,153 +50,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
-public class Mqtt5ClientTest extends CrtTestFixture {
-
-    // MQTT5 Codebuild/Direct connections data
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_HOST = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_HOST");
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_PORT = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_PORT");
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST");
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT");
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST");
-    static final String AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT = System.getenv("AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT");
-    // MQTT5 Codebuild/Websocket connections data
-    static final String AWS_TEST_MQTT5_WS_MQTT_HOST = System.getenv("AWS_TEST_MQTT5_WS_MQTT_HOST");
-    static final String AWS_TEST_MQTT5_WS_MQTT_PORT = System.getenv("AWS_TEST_MQTT5_WS_MQTT_PORT");
-    static final String AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST = System.getenv("AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST");
-    static final String AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT = System.getenv("AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT");
-    static final String AWS_TEST_MQTT5_WS_MQTT_TLS_HOST = System.getenv("AWS_TEST_MQTT5_WS_MQTT_TLS_HOST");
-    static final String AWS_TEST_MQTT5_WS_MQTT_TLS_PORT = System.getenv("AWS_TEST_MQTT5_WS_MQTT_TLS_PORT");
-    // MQTT5 Codebuild misc connections data
-    static final String AWS_TEST_MQTT5_BASIC_AUTH_USERNAME = System.getenv("AWS_TEST_MQTT5_BASIC_AUTH_USERNAME");
-    static final String AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD = System.getenv("AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD");
-    static final String AWS_TEST_MQTT5_CERTIFICATE_FILE = System.getenv("AWS_TEST_MQTT5_CERTIFICATE_FILE");
-    static final String AWS_TEST_MQTT5_KEY_FILE = System.getenv("AWS_TEST_MQTT5_KEY_FILE");
-    // MQTT5 Proxy
-    static final String AWS_TEST_MQTT5_PROXY_HOST = System.getenv("AWS_TEST_MQTT5_PROXY_HOST");
-    static final String AWS_TEST_MQTT5_PROXY_PORT = System.getenv("AWS_TEST_MQTT5_PROXY_PORT");
-    // MQTT5 Endpoint/Host credentials
-    static final String AWS_TEST_MQTT5_IOT_CORE_HOST = System.getenv("AWS_TEST_MQTT5_IOT_CORE_HOST");
-    static final String AWS_TEST_MQTT5_IOT_CORE_REGION = System.getenv("AWS_TEST_MQTT5_IOT_CORE_REGION");
-    static final String AWS_TEST_MQTT5_IOT_CORE_RSA_CERT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
-    static final String AWS_TEST_MQTT5_IOT_CORE_RSA_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
-    // MQTT5 Static credential related
-    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY");
-    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY");
-    static final String AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN = System.getenv("AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN");
-    // MQTT5 Cognito
-    static final String AWS_TEST_MQTT5_COGNITO_ENDPOINT = System.getenv("AWS_TEST_MQTT5_COGNITO_ENDPOINT");
-    static final String AWS_TEST_MQTT5_COGNITO_IDENTITY = System.getenv("AWS_TEST_MQTT5_COGNITO_IDENTITY");
-    // MQTT5 Keystore
-    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT");
-    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE");
-    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD");
-    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS");
-    static final String AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD");
-    // MQTT5 PKCS12
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY");
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD = System.getenv("AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD");
-    // MQTT5 PKCS11
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB = System.getenv("AWS_TEST_PKCS11_LIB");
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL = System.getenv("AWS_TEST_PKCS11_TOKEN_LABEL");
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN = System.getenv("AWS_TEST_PKCS11_PIN");
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL = System.getenv("AWS_TEST_PKCS11_PKEY_LABEL");
-    static final String AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE = System.getenv("AWS_TEST_PKCS11_CERT_FILE");
-    // MQTT5 X509
-    static final String AWS_TEST_MQTT5_IOT_CORE_X509_CERT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_CERT");
-    static final String AWS_TEST_MQTT5_IOT_CORE_X509_KEY = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_KEY");
-    static final String AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT");
-    static final String AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS");
-    static final String AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME = System.getenv("AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME");
-    // MQTT5 Windows Cert Store
-    static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
-    static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE = System.getenv("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE");
-
-    private int OPERATION_TIMEOUT_TIME = 30;
+public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     public Mqtt5ClientTest() {
-    }
-
-    /**
-     * ============================================================
-     * TEST HELPER FUNCTIONS
-     * ============================================================
-     */
-
-    static final class LifecycleEvents_Futured implements Mqtt5ClientOptions.LifecycleEvents {
-        CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
-        CompletableFuture<Void> stopFuture = new CompletableFuture<>();
-
-        ConnAckPacket connectSuccessPacket = null;
-        NegotiatedSettings connectSuccessSettings = null;
-
-        int connectFailureCode = 0;
-        ConnAckPacket connectFailurePacket = null;
-
-        int disconnectFailureCode = 0;
-        DisconnectPacket disconnectPacket = null;
-
-        @Override
-        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
-
-        @Override
-        public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
-            ConnAckPacket connAckData = onConnectionSuccessReturn.getConnAckPacket();
-            NegotiatedSettings negotiatedSettings = onConnectionSuccessReturn.getNegotiatedSettings();
-            connectSuccessPacket = connAckData;
-            connectSuccessSettings = negotiatedSettings;
-            connectedFuture.complete(null);
-        }
-
-        @Override
-        public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
-            connectFailureCode = onConnectionFailureReturn.getErrorCode();
-            connectFailurePacket = onConnectionFailureReturn.getConnAckPacket();
-            connectedFuture.completeExceptionally(new Exception("Could not connect! Error name: " + CRT.awsErrorName(connectFailureCode)));
-        }
-
-        @Override
-        public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
-            disconnectFailureCode = onDisconnectionReturn.getErrorCode();
-            disconnectPacket = onDisconnectionReturn.getDisconnectPacket();
-        }
-
-        @Override
-        public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
-            stopFuture.complete(null);
-        }
-    }
-
-    static final class PublishEvents_Futured implements PublishEvents {
-        CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
-        PublishPacket publishPacket = null;
-
-        @Override
-        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
-            publishPacket = result.getPublishPacket();
-            publishReceivedFuture.complete(null);
-        }
-    }
-
-    static final class PublishEvents_Futured_Counted implements PublishEvents {
-        CompletableFuture<Void> publishReceivedFuture = new CompletableFuture<>();
-        int currentPublishCount = 0;
-        int desiredPublishCount = 0;
-        List<PublishPacket> publishPacketsReceived = new ArrayList<PublishPacket>();
-
-        @Override
-        public void onMessageReceived(Mqtt5Client client, PublishReturn result) {
-            currentPublishCount += 1;
-            if (currentPublishCount == desiredPublishCount) {
-                publishReceivedFuture.complete(null);
-            } else if (currentPublishCount > desiredPublishCount) {
-                publishReceivedFuture.completeExceptionally(new Throwable("Too many publish packets received"));
-            }
-
-            if (publishPacketsReceived.contains(result)) {
-                publishReceivedFuture.completeExceptionally(new Throwable("Duplicate publish packet received!"));
-            }
-            publishPacketsReceived.add(result.getPublishPacket());
-        }
     }
 
     /**
@@ -608,7 +463,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-                connectBuilder.withClientId("MQTT5 CRT");
+                connectBuilder.withClientId("MQTT5 CRT" + UUID.randomUUID().toString());
                 connectBuilder.withKeepAliveIntervalSeconds(1000L);
                 connectBuilder.withMaximumPacketSizeBytes(1000L);
                 connectBuilder.withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -876,7 +731,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-                connectBuilder.withClientId("MQTT5 CRT");
+                connectBuilder.withClientId("MQTT5 CRT"+UUID.randomUUID().toString());
                 connectBuilder.withKeepAliveIntervalSeconds(1000L);
                 connectBuilder.withMaximumPacketSizeBytes(1000L);
                 connectBuilder.withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -1868,7 +1723,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 // TODO: Add support for this in the future
                 // assertEquals(
                 //     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                //     events.connectSuccessSettings.getSessionExpiryInterval(),
+                //     events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                 //     600000L);
 
                 client.stop(new DisconnectPacketBuilder().build());
@@ -1916,11 +1771,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                     "test/MQTT5_Binding_Java_" + testUUID);
                 assertEquals(
                     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                    events.connectSuccessSettings.getSessionExpiryInterval(),
+                    events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                     0L);
                 assertEquals(
                     "Negotiated Settings keep alive result does not match sent keep alive",
-                    events.connectSuccessSettings.getServerKeepAlive(),
+                    events.connectSuccessSettings.getServerKeepAliveSeconds(),
                     360);
                 assertEquals(
                         "Negotiated Settings rejoined session does not match expected value",
@@ -1972,11 +1827,11 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                         "test/MQTT5_Binding_Java_" + testUUID);
                 assertEquals(
                         "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                        events.connectSuccessSettings.getSessionExpiryInterval(),
+                        events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                         3600L);
                 assertEquals(
                         "Negotiated Settings keep alive result does not match sent keep alive",
-                        events.connectSuccessSettings.getServerKeepAlive(),
+                        events.connectSuccessSettings.getServerKeepAliveSeconds(),
                         360);
                 assertEquals(
                         "Negotiated Settings rejoined session does not match expected value",
@@ -1984,6 +1839,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                         events.connectSuccessSettings.getRejoinedSession());
 
                 client.stop(new DisconnectPacketBuilder().build());
+                events.stopFuture.get();
             }
 
             builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
@@ -2270,6 +2126,98 @@ public class Mqtt5ClientTest extends CrtTestFixture {
                 tlsContext.close();
             }
 
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /* Shared subscriptions test */
+    @Test
+    public void Op_SharedSubscription() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        int messageCount = 10;
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+        String sharedTopicfilter = "$share/crttest/test/MQTT5_Binding_Java_" + testUUID;
+
+        try {
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+
+            // Publisher builder
+            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured publisherLCEvents = new LifecycleEvents_Futured();
+            publisherBuilder.withLifecycleEvents(publisherLCEvents);
+            publisherBuilder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured_Counted publishEvents = new PublishEvents_Futured_Counted();
+            publishEvents.desiredPublishCount = messageCount;
+
+            // SubscriberOne builder
+            Mqtt5ClientOptionsBuilder subscriberOneBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured subscriberOneLCEvents = new LifecycleEvents_Futured();
+            subscriberOneBuilder.withLifecycleEvents(subscriberOneLCEvents);
+            subscriberOneBuilder.withTlsContext(tlsContext);
+            subscriberOneBuilder.withPublishEvents(publishEvents);
+
+            // SubscriberTwo builder
+            Mqtt5ClientOptionsBuilder subscriberTwoBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured subscriberTwoLCEvents = new LifecycleEvents_Futured();
+            subscriberTwoBuilder.withLifecycleEvents(subscriberTwoLCEvents);
+            subscriberTwoBuilder.withTlsContext(tlsContext);
+            subscriberTwoBuilder.withPublishEvents(publishEvents);
+
+            // PublishPacketBuilder
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+
+            // SubscribePacketBuilder
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+            subscribePacketBuilder.withSubscription(sharedTopicfilter, QOS.AT_LEAST_ONCE);
+
+            try (
+                Mqtt5Client publisherClient = new Mqtt5Client(publisherBuilder.build());
+                Mqtt5Client subscriberOneClient = new Mqtt5Client(subscriberOneBuilder.build());
+                Mqtt5Client subscriberTwoClient = new Mqtt5Client(subscriberTwoBuilder.build())
+            ) {
+                publisherClient.start();
+                subscriberOneClient.start();
+                subscriberTwoClient.start();
+
+                publisherLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberOneLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberTwoLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                for (int i = 0; i < messageCount; ++i) {
+                    publishPacketBuilder.withPayload(String.valueOf(i).getBytes());
+                    publisherClient.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                }
+
+                publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait a little longer just to ensure that no packets beyond expectations are arrived.
+                publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Check that both clients received packets.
+                // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough
+                // to ensure that AWS IoT Core sent different packets to different subscribers.
+                assertTrue(publishEvents.clientsReceived.size() == 2);
+
+                subscriberOneClient.stop(new DisconnectPacketBuilder().build());
+                subscriberTwoClient.stop(new DisconnectPacketBuilder().build());
+                publisherClient.stop(new DisconnectPacketBuilder().build());
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -3230,6 +3178,7 @@ public class Mqtt5ClientTest extends CrtTestFixture {
     /* MQTT5 ConnWS_Cred_UC2 - default credentials connect */
     @Test
     public void ConnWS_Cred_UC2() {
+        skipIfAndroid(); // Credential Provider support not yet added for Android
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION);
         CredentialsProvider provider = null;

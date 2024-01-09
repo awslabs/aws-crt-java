@@ -224,6 +224,16 @@ public class S3MetaRequestOptions {
      * The configuration related to signing used by S3 client. It will override the client level configuration if provided.
      * `AwsSigningConfig.getDefaultS3SigningConfig(region, credentialsProvider);` can be used as helper to create the default configuration to be used for S3.
      *
+     * If not set, the client configuration will be used.
+     * If set:
+     *  - All fields are optional. The credentials will be resolve from client if not set.
+     *  - S3 Client will derive the right config for signing process based on this.
+     *
+     * Notes:
+     * - For SIGV4_S3EXPRESS, S3 client will use the credentials in the config to derive the S3Express
+     *      credentials that are used in the signing process.
+     * - Client may make modifications to signing config before passing it on to signer.
+     *
      * @param signingConfig configuration related to signing via an AWS signing process.
      * @return this
      */

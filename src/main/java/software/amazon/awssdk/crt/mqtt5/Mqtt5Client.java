@@ -30,9 +30,6 @@ import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket.ConnectPacketBuild
  *
  * One Mqtt5Client class creates one connection.
  *
- * MQTT5 support is currently in <b>developer preview</b>.  We encourage feedback at all times, but feedback during the
- * preview window is especially valuable in shaping the final product.  During the preview period we may make
- * backwards-incompatible changes to the public API, but in general, this is something we will try our best to avoid.
  */
 public class Mqtt5Client extends CrtResource {
 
@@ -47,6 +44,11 @@ public class Mqtt5Client extends CrtResource {
     private boolean isConnected;
 
     /**
+     * A private config used to save config for mqtt3 connection creation
+     */
+    private Mqtt5ClientOptions clientOptions;
+
+    /**
      * Creates a Mqtt5Client instance using the provided Mqtt5ClientOptions. Once the Mqtt5Client is created,
      * changing the settings will not cause a change in already created Mqtt5Client's.
      *
@@ -54,6 +56,7 @@ public class Mqtt5Client extends CrtResource {
      * @throws CrtRuntimeException If the system is unable to allocate space for a native MQTT5 client structure
      */
     public Mqtt5Client(Mqtt5ClientOptions options) throws CrtRuntimeException {
+        clientOptions = options;
         ClientBootstrap bootstrap = options.getBootstrap();
         SocketOptions socketOptions = options.getSocketOptions();
         TlsContext tlsContext = options.getTlsContext();
@@ -202,6 +205,21 @@ public class Mqtt5Client extends CrtResource {
         isConnected = connected;
     }
 
+
+    /*******************************************************************************
+     * Mqtt5 to Mqtt3 Adapter
+     ******************************************************************************/
+
+    /**
+     * Returns the Mqtt5ClientOptions used for the Mqtt5Client
+     *
+     * @return Mqtt5ClientOptions
+     */
+    public Mqtt5ClientOptions getClientOptions()
+    {
+        return clientOptions;
+    }
+
     /*******************************************************************************
      * websocket methods
      ******************************************************************************/
@@ -227,6 +245,7 @@ public class Mqtt5Client extends CrtResource {
             args.complete(handshakeRequest);
         }
     }
+
 
     /*******************************************************************************
      * native methods

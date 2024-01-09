@@ -28,6 +28,7 @@ public class HttpClientConnectionManagerOptions {
     private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
@@ -155,7 +156,9 @@ public class HttpClientConnectionManagerOptions {
     public URI getUri() { return uri; }
 
     /**
-     * Sets the port to connect to for connections in the connection pool
+     * Sets the port to connect to for connections in the connection pool.
+     * For 32bit values exceeding Integer.MAX_VALUE use two's complement
+     * (i.e. -1 == 0xFFFFFFFF).
      * @param port The port to connect to
      * @return this
      */
@@ -167,6 +170,8 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return the port to connect to for connections in the connection pool.
      *         Returns -1 if none has been explicitly set.
+     *         Note that two's complement is used for 32bit values exceeding
+     *         Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getPort() { return port; }
 
@@ -199,6 +204,30 @@ public class HttpClientConnectionManagerOptions {
      * @return the proxy options for connections in the connection pool
      */
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
+
+    /**
+     * Optional.
+     * Sets how proxy is fetched from the environment.
+     * Reading proxy configuration from environment is disabled if this is NULL for backward compatibility.
+     * Only works when proxyOptions is not set. The proxy settings follow the following precedence
+     * 1. Configured Proxy Setting
+     * 2. Environment (if enabled)
+     * 3. No proxy
+     * @param httpProxyEnvironmentVariableSetting  for this connection manager
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
+        return this;
+    }
+
+    /**
+     * @return the proxy environment variable setting
+     */
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
+    }
 
     /**
      * @return true if manual window management is used, false otherwise

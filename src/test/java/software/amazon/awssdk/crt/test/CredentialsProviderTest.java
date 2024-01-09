@@ -32,10 +32,10 @@ public class CredentialsProviderTest extends CrtTestFixture {
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
 
-    private static String COGNITO_ENDPOINT = System.getenv("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
-    private static String COGNITO_IDENTITY = System.getenv("AWS_TEST_MQTT311_COGNITO_IDENTITY");
-    private static String TEST_HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
-    private static String TEST_HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
+    private static String COGNITO_ENDPOINT = System.getProperty("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
+    private static String COGNITO_IDENTITY = System.getProperty("AWS_TEST_MQTT311_COGNITO_IDENTITY");
+    private static String TEST_HTTP_PROXY_HOST = System.getProperty("AWS_TEST_HTTP_PROXY_HOST");
+    private static String TEST_HTTP_PROXY_PORT = System.getProperty("AWS_TEST_HTTP_PROXY_PORT");
 
     private boolean isCIEnvironmentSetUp() {
         if (COGNITO_IDENTITY == null ) {
@@ -157,12 +157,13 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testDelegate() {
+        final long expireTime = 123456;
         DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
             @Override
             public Credentials getCredentials() {
                 return new Credentials(ACCESS_KEY_ID.getBytes(), SECRET_ACCESS_KEY.getBytes(),
-                        SESSION_TOKEN.getBytes());
+                        SESSION_TOKEN.getBytes(), expireTime);
             }
         };
         builder.withHandler(credentialsHandler);
@@ -172,6 +173,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
             assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
             assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+            assertEquals(expireTime, credentials.getExpirationTimePointSecs());
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

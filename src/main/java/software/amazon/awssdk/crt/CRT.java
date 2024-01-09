@@ -4,6 +4,10 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -87,7 +91,6 @@ public final class CRT {
      * @return a string describing the detected platform the CRT is executing on
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
-
         CrtPlatform platform = getPlatformImpl();
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
@@ -101,6 +104,8 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
+        } else if (name.contains("android")){
+            return "android";
         }
 
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
@@ -115,14 +120,13 @@ public final class CRT {
             return systemPropertyOverride;
         }
 
-        String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
+        String environmentOverride = System.getProperty(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
         if (environmentOverride != null && environmentOverride.length() > 0) {
             return environmentOverride;
         }
 
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
-
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
@@ -301,6 +305,15 @@ public final class CRT {
 
             // open a stream to read the shared lib contents from this JAR
             String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
+            // Check whether there is a platform specific resource path to use
+            CrtPlatform platform = getPlatformImpl();
+            if (platform != null){
+                String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
+                if (platformLibResourcePath != null){
+                    libResourcePath = platformLibResourcePath;
+                }
+            }
+
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
@@ -395,8 +408,12 @@ public final class CRT {
     private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String[] platforms = new String[] {
-                // Search for test impl first, fall back to crt
+                // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+                // Search for android test impl specifically because getOSIdentifier will return "linux" on android
+                "software.amazon.awssdk.crt.test.android.CrtPlatformImpl",
+                "software.amazon.awssdk.crt.android.CrtPlatformImpl",
+                // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {
             try {
@@ -466,6 +483,9 @@ public final class CRT {
 
         if (invoke_native_shutdown) {
             onJvmShutdown();
+            ClientBootstrap.closeStaticDefault();
+            EventLoopGroup.closeStaticDefault();
+            HostResolver.closeStaticDefault();
         }
     }
 

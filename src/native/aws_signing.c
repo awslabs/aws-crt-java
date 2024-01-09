@@ -314,12 +314,20 @@ int aws_build_signing_config(
         env, java_config, aws_signing_config_properties.signature_type_field_id);
 
     jstring region = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.region_field_id);
-    config_data->region = aws_jni_new_string_from_jstring(env, region);
-    config->region = aws_byte_cursor_from_string(config_data->region);
+    if (region == NULL) {
+        AWS_ZERO_STRUCT(config->region);
+    } else {
+        config_data->region = aws_jni_new_string_from_jstring(env, region);
+        config->region = aws_byte_cursor_from_string(config_data->region);
+    }
 
     jstring service = (jstring)(*env)->GetObjectField(env, java_config, aws_signing_config_properties.service_field_id);
-    config_data->service = aws_jni_new_string_from_jstring(env, service);
-    config->service = aws_byte_cursor_from_string(config_data->service);
+    if (service == NULL) {
+        AWS_ZERO_STRUCT(config->service);
+    } else {
+        config_data->service = aws_jni_new_string_from_jstring(env, service);
+        config->service = aws_byte_cursor_from_string(config_data->service);
+    }
 
     int64_t epoch_time_millis = (*env)->GetLongField(env, java_config, aws_signing_config_properties.time_field_id);
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)epoch_time_millis);

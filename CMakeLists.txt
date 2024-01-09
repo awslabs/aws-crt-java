@@ -61,6 +61,7 @@ if (BUILD_DEPS)
     if (UNIX AND NOT APPLE)
         set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
         set(FIPS ON CACHE BOOL "FIPS compliance")
+        set(PERL_EXECUTABLE "perl")
 
         # temporarily disable certain warnings as errors for the aws-lc build
         set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")

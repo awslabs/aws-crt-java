@@ -215,6 +215,48 @@
             </build>
         </profile>
         <profile>
+            <id>native-graal</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.9.28</version> <!-- or newer version -->
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>test-native</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>test</phase>
+                            </execution>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>aws-crt-java</imageName>
+                            <mainClass>software.amazon.awssdk.crt.App</mainClass>
+                            <buildArgs>
+                                --no-fallback
+                                --verbose
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.2.3</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <distributionManagement>
                 <snapshotRepository>
@@ -293,6 +335,30 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#testing-support-version-compatibility -->
+        <dependency>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>junit-platform-native</artifactId>
+            <version>0.9.28</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.10.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+            <version>1.10.1</version>
+        </dependency>
+        <dependency>
+           <groupId>org.junit.vintage</groupId>
+             <artifactId>junit-vintage-engine</artifactId>
+             <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -410,7 +476,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.21.0</version>
+                <version>3.2.3</version>
                 <configuration>
                     <systemPropertyVariables>
                         <crt.classifier>${crt.classifier}</crt.classifier>

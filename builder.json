@@ -37,6 +37,7 @@
     "targets": {
         "linux": {
             "!build_steps": [
+                "perl -v",
                 "mvn -P continuous-integration -B compile"
             ],
             "!test_steps": [

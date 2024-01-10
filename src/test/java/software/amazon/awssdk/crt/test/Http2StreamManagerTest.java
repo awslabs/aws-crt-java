@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.jupiter.api.condition.DisabledInNativeImage;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -195,6 +196,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testSerialRequests() throws Exception {
         skipIfAndroid();
+        skipIfNativeImage();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
@@ -202,6 +204,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testMaxParallelRequests() throws Exception {
         skipIfAndroid();
+        skipIfNativeImage();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }

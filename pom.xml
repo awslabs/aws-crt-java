@@ -241,10 +241,11 @@
                         </executions>
                         <configuration>
                             <imageName>aws-crt-java</imageName>
-                            <mainClass>software.amazon.awssdk.crt.App</mainClass>
+                           <!-- <mainClass>software.amazon.awssdk.crt.App</mainClass> -->
                             <buildArgs>
                                 --no-fallback
                                 --verbose
+                                -H:IncludeResources=".*\\.dylib"
                             </buildArgs>
                         </configuration>
                     </plugin>

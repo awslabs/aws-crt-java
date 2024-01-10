@@ -308,4 +308,8 @@ public class CrtTestFixture {
             Assume.assumeFalse(platform.getOSIdentifier().contains("android"));
         }
     }
+
+    protected void skipIfNativeImage() {
+        Assume.assumeFalse(System.getProperty("org.graalvm.nativeimage.imagecode") != null);
+    }
 }

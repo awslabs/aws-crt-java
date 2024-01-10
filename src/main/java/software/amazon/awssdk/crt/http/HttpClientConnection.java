@@ -105,7 +105,9 @@ public class HttpClientConnection extends CrtResource {
     }
 
     /**
-     * Returns true unless the underlying http connection is shutting down, or has been shutdown.
+     * Check the underlying http connection is still open or not.
+     *
+     * @return true unless the underlying http connection is shutting down, or has been shutdown.
      */
     public boolean isOpen() {
         if (isNull()) {

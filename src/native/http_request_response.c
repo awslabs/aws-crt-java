@@ -743,6 +743,25 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     aws_http_connection_close(native_conn);
 }
 
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionIsOpen(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
+
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.isOpen: Invalid aws_http_connection");
+        return;
+    }
+
+    return aws_http_connection_is_open(native_conn);
+}
+
 JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionGetVersion(
     JNIEnv *env,
     jclass jni_class,

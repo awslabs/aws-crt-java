@@ -756,7 +756,7 @@ JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnec
 
     if (!native_conn) {
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.isOpen: Invalid aws_http_connection");
-        return;
+        return false;
     }
 
     return aws_http_connection_is_open(native_conn);

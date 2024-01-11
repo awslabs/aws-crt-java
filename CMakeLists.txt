@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
+option(CRT_FIPS "Whether to build with FIPS compliance" OFF)
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
@@ -60,8 +61,18 @@ if (BUILD_DEPS)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
         set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
-        set(FIPS ON CACHE BOOL "FIPS compliance")
-        set(PERL_EXECUTABLE "perl")
+        if (CRT_FIPS)
+            set(FIPS ON CACHE BOOL "FIPS compliance")
+            set(PERL_EXECUTABLE "perl")
+        else()
+            set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
+            set(DISABLE_GO ON CACHE BOOL "Disable codegen")
+        endif()
+
+        if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
+            set(DISABLE_PERL OFF CACHE BOOL "Build with Perl to avoid using pre-compiled binary with AVX512")
+            set(MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX ON CACHE BOOL "Disable AVX512 on old GCC that not supports it")
+        endif()
 
         # temporarily disable certain warnings as errors for the aws-lc build
         set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")

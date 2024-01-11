@@ -101,6 +101,24 @@ jobs:
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
+
+  linux-fips:
+    runs-on: ubuntu-22.04 # latest
+    strategy:
+      matrix:
+        image:
+          - ubunutu-20-aarch64
+          - ubunutu-20-x64
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DCRT_FIPS=ON
+
   # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
   #
   # At build time we can properly figure out that we're targeting armv7.

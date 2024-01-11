@@ -2636,7 +2636,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 // Subscribe and verify the retained message
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
+                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
                 try {
                     successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {

@@ -319,23 +319,8 @@ public class SubscribePacket {
         /**
          * Creates a new SubscribePacketBuilder with one subscription defined.
          *
-         * @param topicFilter The topic filter to subscribe to
-         * @param qos The maximum QoS on which the subscriber will accept publish messages
-         * @param noLocal Whether the server will not send publishes to a client when that client was the one who
-         * sent the publish
-         * @param retainAsPublished Whether messages sent due to this subscription keep the retain flag preserved
-         * on the message
-         * @param retainHandlingType Whether retained messages on matching topics be sent in reaction to this subscription
-         */
-        public SubscribePacketBuilder(String topicFilter, QOS qos, Boolean noLocal, Boolean retainAsPublished, RetainHandlingType retainHandlingType) {
-            withSubscription(new Subscription(topicFilter, qos, noLocal, retainAsPublished, retainHandlingType));
-        }
-
-        /**
-         * Creates a new SubscribePacketBuilder with one subscription defined.
-         *
-         * @param topicFilter The topic filter to subscribe to
-         * @param qos The maximum QoS on which the subscriber will accept publish messages
+         * @param topicFilter The topic filter to subscribe to.
+         * @param qos The maximum QoS on which the subscriber will accept publish messages.
          */
         public SubscribePacketBuilder(String topicFilter, QOS qos) {
             withSubscription(new Subscription(topicFilter, qos));

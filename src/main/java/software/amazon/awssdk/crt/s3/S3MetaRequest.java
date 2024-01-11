@@ -49,6 +49,9 @@ public class S3MetaRequest extends CrtResource {
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     public void cancel() {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
+        }
         s3MetaRequestCancel(getNativeHandle());
     }
 
@@ -59,6 +62,9 @@ public class S3MetaRequest extends CrtResource {
      * @return token to resume request. might be null if request has not started executing yet
      */
     public ResumeToken pause() {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
+        }
         return s3MetaRequestPause(getNativeHandle());
     }
 
@@ -86,6 +92,9 @@ public class S3MetaRequest extends CrtResource {
      * @see S3ClientOptions#withReadBackpressureEnabled
      */
     public void incrementReadWindow(long bytes) {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
+        }
         s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
     }
 

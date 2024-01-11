@@ -48,6 +48,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
                 try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                     resp.actuallyConnected = true;
+                    assertTrue(conn.isOpen());
                 }
                 break;
             } catch (Exception e) {

@@ -98,10 +98,28 @@ public class HttpClientConnection extends CrtResource {
      * the connection as well in order to release the native resources.
      */
     public void shutdown() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
+        }
         httpClientConnectionShutdown(getNativeHandle());
     }
 
+    /**
+     * Check the underlying http connection is still open or not.
+     *
+     * @return true unless the underlying http connection is shutting down, or has been shutdown.
+     */
+    public boolean isOpen() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
+        }
+        return httpClientConnectionIsOpen(getNativeHandle());
+    }
+
     public HttpVersion getVersion() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
+        }
         short version = httpClientConnectionGetVersion(getNativeHandle());
         return HttpVersion.getEnumValueFromInteger((int) version);
     };
@@ -157,6 +175,7 @@ public class HttpClientConnection extends CrtResource {
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
 
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
+    private static native boolean httpClientConnectionIsOpen(long connectionBinding) throws CrtRuntimeException;
 
     private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
     private static native short httpClientConnectionGetVersion(long connectionBinding) throws CrtRuntimeException;

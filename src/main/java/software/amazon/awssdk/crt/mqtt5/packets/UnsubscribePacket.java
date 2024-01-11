@@ -51,14 +51,15 @@ public class UnsubscribePacket {
 
         /**
          * Sets a single topic filter that the client wishes to unsubscribe from.
-         * @param subscription A single topic filter that the client wishes to unsubscribe from
+         *
+         * @param topicFilter A single topic filter that the client wishes to unsubscribe from.
          * @return The UnsubscribePacketBuilder after setting the subscription.
          */
-        public UnsubscribePacketBuilder withSubscription(String subscription) {
+        public UnsubscribePacketBuilder withSubscription(String topicFilter) {
             if (this.subscriptions == null) {
                 this.subscriptions = new ArrayList<String>();
             }
-            this.subscriptions.add(subscription);
+            this.subscriptions.add(topicFilter);
             return this;
         }
 
@@ -83,10 +84,10 @@ public class UnsubscribePacket {
         /**
          * Creates a new UnsubscribePacketBuilder with one subscription defined.
          *
-         * @param subscription A single topic filter that the client wishes to unsubscribe from
+         * @param topicFilter A single topic filter that the client wishes to unsubscribe from.
          */
-        public UnsubscribePacketBuilder(String subscription) {
-            withSubscription(subscription);
+        public UnsubscribePacketBuilder(String topicFilter) {
+            withSubscription(topicFilter);
         }
 
         /**

@@ -3,7 +3,8 @@
     "includes": [
       { "pattern": ".*\\.so" },
       { "pattern": ".*\\.dylib" },
-      { "pattern": ".*\\.dll" }
+      { "pattern": ".*\\.dll" },
+      {"pattern":"\\Qosx/x86_64/cruntime/libaws-crt-jni.dylib\\E"}
     ]
   },
   "bundles": []

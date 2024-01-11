@@ -1516,7 +1516,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", "Hello World".getBytes());
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
+                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
                 publishBuilder.withMessageExpiryIntervalSeconds(-100L);
                 try {
                     CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());

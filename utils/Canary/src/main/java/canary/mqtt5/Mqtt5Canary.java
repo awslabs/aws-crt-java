@@ -525,8 +525,7 @@ public class Mqtt5Canary {
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
-        UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-        unsubscribePacketBuilder.withSubscription("Non_existent_topic_here");
+        UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("Non_existent_topic_here");
         try {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {

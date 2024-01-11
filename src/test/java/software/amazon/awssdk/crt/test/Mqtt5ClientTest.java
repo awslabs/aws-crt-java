@@ -1889,8 +1889,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
-            UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-            unsubscribePacketBuilder.withSubscription(testTopic);
+            UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder(testTopic);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -2769,8 +2768,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-                unsubscribePacketBuilder.withSubscription(testTopic);
+                UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder(testTopic);
 
                 try {
                     CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());

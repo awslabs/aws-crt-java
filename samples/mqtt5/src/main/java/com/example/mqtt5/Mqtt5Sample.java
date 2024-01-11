@@ -224,8 +224,7 @@ public class Mqtt5Sample {
                 }
 
                 // Unsubscribe
-                UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-                unsubscribePacketBuilder.withSubscription("test/topic");
+                UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("test/topic");
                 // Make sure it is successful
                 try {
                     client.unsubscribe(unsubscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);

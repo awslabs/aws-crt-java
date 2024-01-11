@@ -81,6 +81,15 @@ public class UnsubscribePacket {
         public UnsubscribePacketBuilder() {}
 
         /**
+         * Creates a new UnsubscribePacketBuilder with one subscription defined.
+         *
+         * @param subscription A single topic filter that the client wishes to unsubscribe from
+         */
+        public UnsubscribePacketBuilder(String subscription) {
+            withSubscription(subscription);
+        }
+
+        /**
          * Creates a new UnsubscribePacket using the settings set in the builder.
          * @return The UnsubscribePacket created from the builder
          */

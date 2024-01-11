@@ -59,10 +59,7 @@ public final class CRT {
         {
             public void run()
             {
-                CRT.onJvmShutdown();
-                ClientBootstrap.closeStaticDefault();
-                EventLoopGroup.closeStaticDefault();
-                HostResolver.closeStaticDefault();
+                CRT.releaseShutdownRef();
             }
         });
 
@@ -440,6 +437,55 @@ public final class CRT {
         CrtPlatform platform = getPlatformImpl();
         if (platform != null) {
             platform.jvmInit();
+        }
+    }
+
+    private static int shutdownRefCount = 1;
+
+    /**
+     * Public API that allows a user to indicate interest in controlling the CRT's time of shutdown.  The
+     * shutdown process works via ref-counting, with a default starting count of 1 which is decremented by a
+     * JVM shutdown hook.  Each external call to `acquireShutdownRef()` requires a corresponding call to
+     * `releaseShutdownRef()` when the caller is ready for the CRT to be shut down.  Once all shutdown references
+     * have been released, the CRT will be shut down.
+     *
+     * If the ref count is not properly driven to zero (and thus leaving the CRT active), the JVM may crash
+     * if unmanaged native code in the CRT is still busy and attempts to call back into the JVM after the JVM cleans
+     * up JNI.
+     */
+    public static void acquireShutdownRef() {
+        synchronized(CRT.class) {
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot acquire CRT shutdown when ref count is non-positive");
+            }
+            ++shutdownRefCount;
+        }
+    }
+
+    /**
+     * Public API to release a shutdown reference that blocks CRT shutdown from proceeding.  Must be called once, and
+     * only once, for each call to `acquireShutdownRef()`.  Once all shutdown references have been released (including
+     * the initial reference that is managed by a JVM shutdown hook), the CRT will begin its shutdown process which
+     * permanently severs all native-JVM interactions.
+     */
+    public static void releaseShutdownRef() {
+        boolean invoke_native_shutdown = false;
+        synchronized(CRT.class) {
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot release CRT shutdown when ref count is non-positive");
+            }
+
+            --shutdownRefCount;
+            if (shutdownRefCount == 0) {
+                invoke_native_shutdown = true;
+            }
+        }
+
+        if (invoke_native_shutdown) {
+            onJvmShutdown();
+            ClientBootstrap.closeStaticDefault();
+            EventLoopGroup.closeStaticDefault();
+            HostResolver.closeStaticDefault();
         }
     }
 

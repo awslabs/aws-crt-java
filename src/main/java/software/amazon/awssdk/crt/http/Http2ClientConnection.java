@@ -130,6 +130,9 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams,
             final byte[] debugData) {
+        if (isNull()) {
+            throw new IllegalStateException("Http2ClientConnection has been closed.");
+        }
         http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
                 debugData);
     }

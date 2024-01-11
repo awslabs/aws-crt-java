@@ -171,10 +171,7 @@ public class Mqtt5Sample {
             ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
             connectBuilder.withClientId(clientID);
             // Add a will
-            PublishPacketBuilder willBuilder = new PublishPacketBuilder();
-            willBuilder.withTopic("test/topic/will");
-            willBuilder.withPayload("Goodbye".getBytes());
-            willBuilder.withQOS(QOS.AT_MOST_ONCE);
+            PublishPacketBuilder willBuilder = new PublishPacketBuilder("test/topic/will", QOS.AT_MOST_ONCE, "Goodbye".getBytes());
             connectBuilder.withWill(willBuilder.build());
             // Add the connection options
             optionsBuilder.withConnectOptions(connectBuilder.build());
@@ -209,10 +206,7 @@ public class Mqtt5Sample {
                 }
 
                 // Publish
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-                publishPacketBuilder.withPayload("Hello World!".getBytes());
-                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
-                publishPacketBuilder.withTopic("test/topic");
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World!".getBytes());
                 // Add user properties
                 List<UserProperty> publishProperties = new ArrayList<UserProperty>();
                 publishProperties.add(new UserProperty("Red", "Blue"));

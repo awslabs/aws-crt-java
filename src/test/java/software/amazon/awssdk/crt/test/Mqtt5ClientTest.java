@@ -95,8 +95,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SocketOptions socketOptions = new SocketOptions();
             ) {
 
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder();
-                willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT")
@@ -202,8 +201,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
                 SocketOptions socketOptions = new SocketOptions();
             ) {
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder();
-                willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT");
@@ -459,8 +457,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
                 SocketOptions socketOptions = new SocketOptions();
             ) {
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder();
-                willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT" + UUID.randomUUID().toString());
@@ -727,8 +724,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
                 SocketOptions socketOptions = new SocketOptions();
             ) {
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder();
-                willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes()).withTopic("test/topic");
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT"+UUID.randomUUID().toString());
@@ -1520,8 +1516,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
-                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", "Hello World".getBytes());
                 publishBuilder.withMessageExpiryIntervalSeconds(-100L);
                 try {
                     CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
@@ -1568,8 +1563,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
-                publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic").withQOS(QOS.AT_LEAST_ONCE);
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
                 publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
                 try {
                     CompletableFuture<PublishResult> future = client.publish(publishBuilder.build());
@@ -1894,10 +1888,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builder.withPublishEvents(publishEvents);
 
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-            publishPacketBuilder.withTopic(testTopic);
-            publishPacketBuilder.withPayload("Hello World".getBytes());
-            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
@@ -1955,10 +1946,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withTlsContext(tlsContext);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            PublishPacketBuilder willPacket = new PublishPacketBuilder();
-            willPacket.withTopic(testTopic);
-            willPacket.withQOS(QOS.AT_LEAST_ONCE);
-            willPacket.withPayload("Hello World".getBytes());
+            PublishPacketBuilder willPacket = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
             connectOptions.withWill(willPacket.build());
             connectOptions.withWillDelayIntervalSeconds(0L);
             builder.withConnectOptions(connectOptions.build());
@@ -2033,8 +2021,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             Random random = new Random();
             random.nextBytes(randomBytes);
 
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-            publishPacketBuilder.withTopic(testTopic).withPayload(randomBytes).withQOS(QOS.AT_LEAST_ONCE);
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, randomBytes);
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
@@ -2094,10 +2081,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
 
             ConnectPacketBuilder connectPacketBuilder = new ConnectPacketBuilder();
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-            publishPacketBuilder.withTopic(testTopic);
-            publishPacketBuilder.withPayload("Hello World".getBytes());
-            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
             connectPacketBuilder.withWill(publishPacketBuilder.build());
             connectPacketBuilder.withKeepAliveIntervalSeconds(4l);
             builder.withConnectOptions(connectPacketBuilder.build());
@@ -2575,10 +2559,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-                publishPacketBuilder.withTopic(testTopic);
-                publishPacketBuilder.withPayload("Hello World".getBytes());
-                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 for (int i = 0; i < messageCount; i++) {
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2646,11 +2627,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Connect and publish a retained message
                 publisher.start();
                 publisherEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-                publishPacketBuilder.withTopic(testTopic)
-                    .withPayload("Hello World".getBytes())
-                    .withQOS(QOS.AT_LEAST_ONCE)
-                    .withRetain(true);
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                publishPacketBuilder.withRetain(true);
                 publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Setup for clearing the retained message
@@ -2851,8 +2829,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-                publishPacketBuilder.withTopic(testTopic).withQOS(QOS.AT_LEAST_ONCE).withPayload("null".getBytes());
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "null".getBytes());
 
                 try {
                     CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
@@ -2924,10 +2901,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Unacked operation size was not zero!");
                 }
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-                publishPacketBuilder.withTopic(testTopic);
-                publishPacketBuilder.withPayload("Hello World".getBytes());
-                publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 for (int i = 0; i < messageCount; i++) {
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

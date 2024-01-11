@@ -450,6 +450,30 @@ public class PublishPacket {
         public PublishPacketBuilder() {}
 
         /**
+         * Creates a new PublishPacketBuilder with most common parameters set.
+         *
+         * @param topic The topic this message should be published to.
+         * @param payload The payload for the publish message.
+         */
+        public PublishPacketBuilder(String topic, byte[] payload) {
+            this.topic = topic;
+            this.payload = payload;
+        }
+
+        /**
+         * Creates a new PublishPacketBuilder with most common parameters set.
+         *
+         * @param topic The topic this message should be published to.
+         * @param packetQOS The MQTT quality of service level the message should be delivered with.
+         * @param payload The payload for the publish message.
+         */
+        public PublishPacketBuilder(String topic, QOS packetQOS, byte[] payload) {
+            this.topic = topic;
+            this.packetQOS = packetQOS;
+            this.payload = payload;
+        }
+
+        /**
          * Creates a new PublishPacket using the settings set in the builder.
          *
          * @return The PublishPacket created from the builder

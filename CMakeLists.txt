@@ -71,6 +71,7 @@ if (BUILD_DEPS)
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
             set(DISABLE_PERL OFF CACHE BOOL "Build with Perl to avoid using pre-compiled binary with AVX512")
+            set(PERL_EXECUTABLE "perl")
             set(MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX ON CACHE BOOL "Disable AVX512 on old GCC that not supports it")
         endif()
 

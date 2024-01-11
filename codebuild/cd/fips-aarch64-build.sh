@@ -20,6 +20,6 @@ GIT_TAG=$(git describe --tags)
 
 JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.382.b05-1.amzn2.0.2.aarch64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=linux-aarch_64-fips
 
-# Upload the lib to S3
-aws s3 cp --recursive --include "*.so" target/cmake-build/aws-crt-java/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+# Upload the jar to S3
+# Don't upload the shared lib as we don't want fips to be part of the uber jar
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

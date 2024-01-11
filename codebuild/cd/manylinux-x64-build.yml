@@ -11,7 +11,7 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64 -Dcmake.disable_perl=OFF -Dcmake.disable_aws_lc_512avx=ON
+      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64
 
   post_build:
     commands:

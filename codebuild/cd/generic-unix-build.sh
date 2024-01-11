@@ -2,11 +2,11 @@
 
 set -ex
 
-cd `dirname $0`/../..
+cd $(dirname $0)/../..
 
 git submodule update --init
 
-AWS_CRT_HOST=`uname | tr '[:upper:]' '[:lower:]'`-`uname -m`
+AWS_CRT_HOST=$(uname | tr '[:upper:]' '[:lower:]')-$(uname -m)
 
 if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
@@ -18,7 +18,6 @@ if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
     SKIP_INSTALL=--skip-install
 fi
 
-
 if [[ $AWS_CRT_TARGET == linux-armv8 ]]; then
     CLASSIFIER=linux-aarch_64
 else
@@ -29,7 +28,8 @@ fi
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
 echo "Using builder version ${BUILDER_VERSION}"
 
-aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
+# aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
+aws s3 cp s3://aws-crt-builder/channels/fips/builder.pyz ./builder
 chmod a+x builder
 
 # Upload the lib to S3

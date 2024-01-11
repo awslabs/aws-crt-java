@@ -82,6 +82,8 @@ From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-cr
 
 The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
 
+The FIPS compliant jars are available from classifiers for linux. There are serval limitation we currently have to move to FIPS build for all platforms we support, so, we offer the available platforms `linux-x86_64-fips` and `linux-aarch_64-fips`. Note: the FIPS complaint compiled C libraries are not available from the "uber" jar.
+
 ``` xml
         <!-- Platform-specific Linux x86_64 JAR -->
         <dependency>
@@ -111,6 +113,8 @@ The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled 
 - linux-x86_64-musl (no auto-detect)
 - linux-armv7-musl (no auto-detect)
 - linux-aarch_64-musl (no auto-detect)
+- linux-x86_64-fips (no auto-detect)
+- linux-aarch_64-fips (no auto-detect)
 - osx-aarch_64
 - osx-x86_64
 - windows-x86_32

@@ -189,8 +189,7 @@ public class Mqtt5Sample {
                 }
 
                 // Subscribe
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-                subscribePacketBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
                 // Make sure it is successful
                 try {
                     SubAckPacket subAckPacket = client.subscribe(subscribePacketBuilder.build()).get(60, TimeUnit.SECONDS);

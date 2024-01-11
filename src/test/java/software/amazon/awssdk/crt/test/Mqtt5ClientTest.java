@@ -1610,8 +1610,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
-                subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
                 subscribeBuilder.withSubscriptionIdentifier(-100L);
                 try {
                     CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
@@ -1658,8 +1657,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder();
-                subscribeBuilder.withSubscription("test/topic", QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
                 subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
                 try {
                     CompletableFuture<SubAckPacket> future = client.subscribe(subscribeBuilder.build());
@@ -1889,9 +1887,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(publishEvents);
 
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
-
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
             unsubscribePacketBuilder.withSubscription(testTopic);
@@ -1963,8 +1959,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             tlsOptionsTwo.close();
             builderTwo.withTlsContext(tlsContextTwo);
 
-            SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder();
-            subscribeOptions.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             try (
                 Mqtt5Client clientOne = new Mqtt5Client(builder.build());
@@ -2023,8 +2018,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, randomBytes);
 
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -2077,8 +2071,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builderTwo.withPublishEvents(publishEvents);
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-            subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             ConnectPacketBuilder connectPacketBuilder = new ConnectPacketBuilder();
             PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
@@ -2160,8 +2153,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
 
             // SubscribePacketBuilder
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-            subscribePacketBuilder.withSubscription(sharedTopicfilter, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(sharedTopicfilter, QOS.AT_LEAST_ONCE);
 
             try (
                 Mqtt5Client publisherClient = new Mqtt5Client(publisherBuilder.build());
@@ -2555,8 +2547,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscriber.start();
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
@@ -2645,8 +2636,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 // Subscribe and verify the retained message
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
                 try {
                     successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2731,8 +2721,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
                 try {
                     CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());

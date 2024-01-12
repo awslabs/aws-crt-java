@@ -141,6 +141,18 @@ public class Mqtt5Client extends CrtResource {
     }
 
     /**
+     * Notifies the Mqtt5Client that you want it to end connectivity to the configured endpoint, disconnecting any
+     * existing connection and halting any reconnect attempts.
+     *
+     * This is an asynchronous operation.
+     *
+     * @throws CrtRuntimeException If the native client is unable to initialize the stop process.
+     */
+    public void stop() throws CrtRuntimeException {
+        stop(null);
+    }
+
+    /**
      * Tells the Mqtt5Client to attempt to send a PUBLISH packet.
      *
      * Will return a future containing a PublishPacket if the publish is successful.

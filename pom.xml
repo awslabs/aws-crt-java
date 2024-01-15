@@ -367,12 +367,17 @@
             <!-- shared libs built via cmake -->
             <resource>
                 <directory>${cmake.binaries}/lib</directory>
+
                 <excludes>
                     <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->
                     <exclude>**/*.dbg</exclude>                    <!-- UNIX debug info, same as PDBs -->
                     <exclude>**/*.a</exclude>                      <!-- ignore any libraries from building -->
                 </excludes>
+            </resource>
+            <!-- GraalVM Native Image Configuration Files -->
+            <resource>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
         <testResources>

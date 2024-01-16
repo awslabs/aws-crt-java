@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern":".*libaws-crt-jni.dylib"},
+      {"pattern":".*libaws-crt-jni.so"},
+      {"pattern":".*libaws-crt-jni.dll"}
+    ]
+  },
+  "bundles": []
+}

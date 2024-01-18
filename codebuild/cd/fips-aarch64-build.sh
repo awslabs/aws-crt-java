@@ -17,6 +17,7 @@ chmod a+x builder
 GIT_TAG=$(git describe --tags)
 
 ./builder build -p aws-crt-java run_tests=false --cmake-extra=-DCRT_FIPS=ON
+mv target/cmake-build/aws-crt-java/* target/cmake-build/
 
 JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.382.b05-1.amzn2.0.2.aarch64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=linux-aarch_64-fips
 

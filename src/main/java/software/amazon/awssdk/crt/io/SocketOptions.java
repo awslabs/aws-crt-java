@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 
 /**
  * This class wraps the aws_socket_options from aws-c-io to provide
@@ -87,7 +88,12 @@ public final class SocketOptions extends CrtResource {
      * 0 disables keepalive
      */
     public int keepAliveTimeoutSecs = 0;
-
+    /**
+     * Sets the number of keep alive probes allowed to fail before the connection is considered lost.
+     * If zero, OS defaults are used.
+     * On Windows, this option is meaningless until Windows 10 1703.
+     */
+    public int keepAliveMaxFailedProbes = 0;
     /**
      * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.
      */
@@ -97,7 +103,42 @@ public final class SocketOptions extends CrtResource {
      * Creates a new set of socket options
      */
     public SocketOptions() {
+    }
 
+    /**
+     * Enables TCP keepalive.
+     *
+     * @param keepAliveTimeoutSecs Sets the number of seconds to wait for a keepalive response before considering the
+     * connection timed out. 0 disables keepalive.
+     * @param keepAliveIntervalSecs Sets the number of seconds between TCP keepalive packets being sent to the peer.
+     * 0 disables keepalive.
+     */
+    public void setTcpKeepAlive(int keepAliveTimeoutSecs, int keepAliveIntervalSecs)
+    {
+        if (keepAliveTimeoutSecs == 0 || keepAliveIntervalSecs == 0) {
+            Log.log(Log.LogLevel.Warn, Log.LogSubject.IoSocket,
+                    "Both keepAliveTimeoutSecs and keepAliveIntervalSecs must be non-zero in order to enable TCP keepalive");
+        }
+        this.keepAliveTimeoutSecs = keepAliveTimeoutSecs;
+        this.keepAliveIntervalSecs = keepAliveIntervalSecs;
+        this.keepAlive = true;
+    }
+
+    /**
+     * Enables TCP keepalive.
+     *
+     * @param keepAliveTimeoutSecs Sets the number of seconds to wait for a keepalive response before considering the
+     * connection timed out. 0 disables keepalive.
+     * @param keepAliveIntervalSecs Sets the number of seconds between TCP keepalive packets being sent to the peer.
+     * 0 disables keepalive.
+     * @param keepAliveMaxFailedProbes Sets the number of keep alive probes allowed to fail before the connection is considered lost.
+     * If zero, OS defaults are used.
+     * On Windows, this option is meaningless until Windows 10 1703.
+     */
+    public void setTcpKeepAlive(int keepAliveTimeoutSecs, int keepAliveIntervalSecs, int keepAliveMaxFailedProbes)
+    {
+        this.keepAliveMaxFailedProbes = keepAliveMaxFailedProbes;
+        setTcpKeepAlive(keepAliveTimeoutSecs, keepAliveIntervalSecs);
     }
 
     @Override
@@ -109,6 +150,7 @@ public final class SocketOptions extends CrtResource {
                 connectTimeoutMs,
                 keepAliveIntervalSecs,
                 keepAliveTimeoutSecs,
+                keepAliveMaxFailedProbes,
                 keepAlive
             ));
         }
@@ -135,7 +177,8 @@ public final class SocketOptions extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, boolean keepAlive);
+    private static native long socketOptionsNew(
+            int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, int keepAliveMaxFailedProbes, boolean keepAlive);
 
     private static native void socketOptionsDestroy(long elg);
 };

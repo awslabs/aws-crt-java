@@ -9,8 +9,8 @@
     "methods":[{"name":"getSuppressed","parameterTypes":[] }]
   },
   {
-    "name":"java.util.concurrent.ForkJoinTask",
-    "fields":[{"name":"aux"}, {"name":"status"}]
+    "name":"org.hamcrest.core.Every",
+    "queryAllDeclaredMethods":true
   },
   {
     "name":"java.util.concurrent.atomic.AtomicBoolean",
@@ -19,25 +19,6 @@
   {
     "name":"java.util.concurrent.atomic.AtomicReference",
     "fields":[{"name":"value"}]
-  },
-  {
-    "name":"org.hamcrest.core.Every",
-    "queryAllDeclaredMethods":true
-  },
-  {
-    "name":"org.junit.internal.AssumptionViolatedException"
-  },
-  {
-    "name":"org.junit.platform.launcher.LauncherSession",
-    "methods":[{"name":"getLauncher","parameterTypes":[] }]
-  },
-  {
-    "name":"org.junit.platform.launcher.core.LauncherFactory",
-    "methods":[{"name":"openSession","parameterTypes":[] }]
-  },
-  {
-    "name":"org.junit.runner.Description",
-    "fields":[{"name":"fUniqueId"}]
   },
   {
     "name":"software.amazon.awssdk.crt.CRT"

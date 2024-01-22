@@ -216,21 +216,6 @@
         </profile>
         <profile>
             <id>graalvm-native</id>
-            <!-- https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#testing-support -->
-            <dependencies>
-                <dependency>
-                    <groupId>org.junit.platform</groupId>
-                    <artifactId>junit-platform-commons</artifactId>
-                    <version>1.10.1</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                    <version>5.10.1</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -346,7 +331,14 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#testing-support -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -367,7 +359,6 @@
             <!-- shared libs built via cmake -->
             <resource>
                 <directory>${cmake.binaries}/lib</directory>
-
                 <excludes>
                     <exclude>**/*.ilk</exclude>                    <!-- no one needs incremental linker files in their jar -->
                     <exclude>**/*.pdb</exclude>                    <!-- do not package pdbs, comment this out to debug C code -->

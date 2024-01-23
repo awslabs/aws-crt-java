@@ -36,7 +36,7 @@ public class S3MetaRequest extends CrtResource {
      * unusable after this call
      */
     @Override
-    protected void releaseNativeHandle() {
+    protected synchronized void releaseNativeHandle() {
         if (!isNull()) {
             s3MetaRequestDestroy(getNativeHandle());
         }
@@ -48,7 +48,7 @@ public class S3MetaRequest extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
-    public void cancel() {
+    public synchronized void cancel() {
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
@@ -61,7 +61,7 @@ public class S3MetaRequest extends CrtResource {
      * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo.
      * @return token to resume request. might be null if request has not started executing yet
      */
-    public ResumeToken pause() {
+    public synchronized ResumeToken pause() {
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
@@ -91,7 +91,7 @@ public class S3MetaRequest extends CrtResource {
 
      * @see S3ClientOptions#withReadBackpressureEnabled
      */
-    public void incrementReadWindow(long bytes) {
+    public synchronized void incrementReadWindow(long bytes) {
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }

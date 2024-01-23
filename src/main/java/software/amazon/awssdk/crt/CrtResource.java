@@ -36,11 +36,11 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Debug/diagnostic data about a CrtResource object
      */
-    public class ResourceInstance {
+    public static class ResourceInstance {
         public long nativeHandle;
         public final String canonicalName;
         private Throwable instantiation;
-        private CrtResource wrapper;
+        private final CrtResource wrapper;
 
         public ResourceInstance(CrtResource wrapper, String name) {
             canonicalName = name;
@@ -86,17 +86,17 @@ public abstract class CrtResource implements AutoCloseable {
      * Primarily intended for testing only.  Tracks the number of non-closed resources and signals
      * whenever a zero count is reached.
      */
-    private static boolean debugNativeObjects = System.getProperty(NATIVE_DEBUG_PROPERTY_NAME) != null;
+    private static final boolean debugNativeObjects = System.getProperty(NATIVE_DEBUG_PROPERTY_NAME) != null;
     private static int resourceCount = 0;
     private static final Lock lock = new ReentrantLock();
     private static final Condition emptyResources  = lock.newCondition();
     private static final AtomicLong nextId = new AtomicLong(0);
+    private static final Instant creationTime = Instant.now();
 
     private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
     private long nativeHandle;
-    private AtomicInteger refCount = new AtomicInteger(1);
-    private long id = nextId.getAndAdd(1);
-    private Instant creationTime = Instant.now();
+    private final AtomicInteger refCount = new AtomicInteger(1);
+    private final long id = nextId.getAndAdd(1);
     private String description;
 
     static {
@@ -123,7 +123,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Marks a resource as referenced by this resource.
      * @param resource The resource to add a reference to
      */
-    public void addReferenceTo(CrtResource resource) {
+    public final void addReferenceTo(CrtResource resource) {
         resource.addRef();
         synchronized(this) {
             referencedResources.add(resource);
@@ -138,7 +138,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Removes a reference from this resource to another.
      * @param resource The resource to remove a reference to
      */
-    public void removeReferenceTo(CrtResource resource) {
+    public final void removeReferenceTo(CrtResource resource) {
         boolean removed = false;
         synchronized(this) {
             removed = referencedResources.remove(resource);
@@ -164,7 +164,7 @@ public abstract class CrtResource implements AutoCloseable {
      * @param oldReference resource to stop referencing
      * @param newReference resource to start referencing
      */
-    protected void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
+    protected final void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
         if (oldReference != newReference) {
             if (newReference != null) {
                 addReferenceTo(newReference);
@@ -179,7 +179,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
-    protected void acquireNativeHandle(long handle) {
+    protected synchronized void acquireNativeHandle(long handle) {
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
@@ -229,14 +229,14 @@ public abstract class CrtResource implements AutoCloseable {
      * returns the native handle associated with this CRTResource.
      * @return native address
      */
-    public long getNativeHandle() {
+    public synchronized long getNativeHandle() {
         return nativeHandle;
     }
 
     /**
      * Increments the reference count to this resource.
      */
-    public void addRef() {
+    public final synchronized void addRef() {
         refCount.incrementAndGet();
     }
 
@@ -258,22 +258,22 @@ public abstract class CrtResource implements AutoCloseable {
      * resources it means it has already been cleaned up or was not properly constructed.
      * @return true if no native resource is bound, false otherwise
      */
-    public boolean isNull() {
+    public final synchronized boolean isNull() {
         return (nativeHandle == NULL);
     }
 
-    /*
+    /**
      * An ugly and unfortunate necessity.  The CRTResource currently entangles two loosely-coupled concepts:
      *  (1) management of a native resource
      *  (2) referencing of other resources and the resulting implied cleanup process
-     *
+     * <p>
      * Some classes don't represent an actual native resource.  Instead, they just want to use
      * the reference and cleanup framework.  See AwsIotMqttConnectionBuilder.java for example.
      *
      */
 
     @Override
-    public void close() {
+    public final void close() {
         decRef();
     }
 
@@ -281,7 +281,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
      */
-    public void decRef() {
+    public final synchronized void decRef() {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
@@ -334,7 +334,7 @@ public abstract class CrtResource implements AutoCloseable {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
         synchronized(this) {
-            if (referencedResources.size() > 0) {
+            if (!referencedResources.isEmpty()) {
                 builder.append("\n   Forward references by Id: ");
                 for (CrtResource reference : referencedResources) {
                     builder.append(String.format("%d ", reference.id));

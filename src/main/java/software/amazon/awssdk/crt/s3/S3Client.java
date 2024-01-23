@@ -120,7 +120,7 @@ public class S3Client extends CrtResource {
         this.shutdownComplete.complete(null);
     }
 
-    public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
+    public synchronized S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
         if(isNull()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
@@ -193,7 +193,7 @@ public class S3Client extends CrtResource {
      * unusable after this call
      */
     @Override
-    protected void releaseNativeHandle() {
+    protected synchronized void releaseNativeHandle() {
         if (!isNull()) {
             s3ClientDestroy(getNativeHandle());
         }

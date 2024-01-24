@@ -294,9 +294,26 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
         ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
                 .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
-        assertThrows(RuntimeException.class, builder::build);
-        Files.deleteIfExists(credsPath);
-        Files.deleteIfExists(confPath);
+
+        try (ProfileCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
+
+            try {
+                provider.getCredentials().join();
+                fail("Expected credential fetching to throw an exception since creds are missing from profile");
+            } catch (CompletionException e) {
+                assertNotNull(e.getCause());
+                Throwable innerException = e.getCause();
+
+                // Check that the right exception type caused the completion error in the future
+                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
+                assertEquals(RuntimeException.class, innerException.getClass());
+            }
+        } finally {
+            Files.deleteIfExists(credsPath);
+            Files.deleteIfExists(confPath);
+        }
     }
 
     @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has

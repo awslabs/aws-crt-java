@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.HashMap;
@@ -94,6 +95,7 @@ public abstract class CrtResource implements AutoCloseable {
     private static final Instant creationTime = Instant.now();
 
     private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private long nativeHandle;
     private final AtomicInteger refCount = new AtomicInteger(1);
     private final long id = nextId.getAndAdd(1);
@@ -175,11 +177,21 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    protected void acquireReadLock() {
+        this.rwl.readLock().lock();
+    }
+
+    protected void releaseReadLock() {
+        this.rwl.readLock().unlock();
+    }
+
+
     /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
-    protected synchronized void acquireNativeHandle(long handle) {
+    protected void acquireNativeHandle(long handle) {
+        this.rwl.writeLock().lock();
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
@@ -202,12 +214,14 @@ public abstract class CrtResource implements AutoCloseable {
 
         nativeHandle = handle;
         incrementNativeObjectCount();
+        this.rwl.writeLock().unlock();
     }
 
     /**
      * Begins the cleanup process associated with this native object and performs various debug-level bookkeeping operations.
      */
     private void release() {
+        this.rwl.writeLock().lock();
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s(%d)", this.getClass().getCanonicalName(), id));
 
@@ -223,20 +237,21 @@ public abstract class CrtResource implements AutoCloseable {
 
             nativeHandle = 0;
         }
+        this.rwl.writeLock().unlock();
     }
 
     /**
      * returns the native handle associated with this CRTResource.
      * @return native address
      */
-    public synchronized long getNativeHandle() {
+    public long getNativeHandle() {
         return nativeHandle;
     }
 
     /**
      * Increments the reference count to this resource.
      */
-    public final synchronized void addRef() {
+    public final void addRef() {
         refCount.incrementAndGet();
     }
 
@@ -258,7 +273,7 @@ public abstract class CrtResource implements AutoCloseable {
      * resources it means it has already been cleaned up or was not properly constructed.
      * @return true if no native resource is bound, false otherwise
      */
-    public final synchronized boolean isNull() {
+    public final boolean isNull() {
         return (nativeHandle == NULL);
     }
 
@@ -281,7 +296,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
      */
-    public final synchronized void decRef() {
+    public final void decRef() {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {

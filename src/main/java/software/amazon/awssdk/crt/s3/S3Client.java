@@ -122,6 +122,8 @@ public class S3Client extends CrtResource {
 
     public synchronized S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
+        acquireReadLock();
+
         if(isNull()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
@@ -175,6 +177,7 @@ public class S3Client extends CrtResource {
             /* The native code will keep the needed resource around */
             signingConfig.close();
         }
+        releaseReadLock();
         return metaRequest;
     }
 

@@ -36,7 +36,7 @@ public class S3MetaRequest extends CrtResource {
      * unusable after this call
      */
     @Override
-    protected synchronized void releaseNativeHandle() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
             s3MetaRequestDestroy(getNativeHandle());
         }
@@ -48,11 +48,13 @@ public class S3MetaRequest extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
-    public synchronized void cancel() {
+    public void cancel() {
+        acquireReadLock();
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
         s3MetaRequestCancel(getNativeHandle());
+        releaseReadLock();
     }
 
     /**
@@ -61,11 +63,15 @@ public class S3MetaRequest extends CrtResource {
      * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo.
      * @return token to resume request. might be null if request has not started executing yet
      */
-    public synchronized ResumeToken pause() {
+    public ResumeToken pause() {
+        acquireReadLock();
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        return s3MetaRequestPause(getNativeHandle());
+        ResumeToken token = s3MetaRequestPause(getNativeHandle());
+
+        releaseReadLock();
+        return token;
     }
 
     /**
@@ -91,11 +97,13 @@ public class S3MetaRequest extends CrtResource {
 
      * @see S3ClientOptions#withReadBackpressureEnabled
      */
-    public synchronized void incrementReadWindow(long bytes) {
+    public void incrementReadWindow(long bytes) {
+        acquireReadLock();
         if (isNull()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
         s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
+        releaseReadLock();
     }
 
     /*******************************************************************************

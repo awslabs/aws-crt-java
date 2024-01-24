@@ -120,7 +120,7 @@ public class S3Client extends CrtResource {
         this.shutdownComplete.complete(null);
     }
 
-    public synchronized S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
+    public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
         acquireReadLock();
 
@@ -163,21 +163,25 @@ public class S3Client extends CrtResource {
         ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
                 : new ChecksumConfig();
 
-        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
-                checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
-                ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                options.getResumeToken());
+        try {
+            long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
+                    options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
+                    checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                    ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                    httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
+                    responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                    options.getResumeToken());
 
-        metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
+            metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
-        if(didCreateSigningConfig) {
-            /* The native code will keep the needed resource around */
-            signingConfig.close();
+            if(didCreateSigningConfig) {
+                /* The native code will keep the needed resource around */
+                signingConfig.close();
+            }
+
+        } finally {
+            releaseReadLock();
         }
-        releaseReadLock();
         return metaRequest;
     }
 
@@ -196,7 +200,7 @@ public class S3Client extends CrtResource {
      * unusable after this call
      */
     @Override
-    protected synchronized void releaseNativeHandle() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
             s3ClientDestroy(getNativeHandle());
         }

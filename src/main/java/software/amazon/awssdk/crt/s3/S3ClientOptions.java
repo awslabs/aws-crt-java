@@ -360,6 +360,11 @@ public class S3ClientOptions {
         return this;
     }
 
+    /**
+     * Retrieves the memory limit set for the CRT client in bytes.
+     * If not set, this will return 0.
+     * @return long memory limit in bytes
+     */
     public long getMemoryLimitInBytes() {
         return memoryLimitInBytes;
     }

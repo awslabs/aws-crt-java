@@ -367,7 +367,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     size_t memory_limit_in_bytes;
-    if (aws_size_t_from_java(env, &memory_limit_in_bytes, jni_memory_limit_bytes_jlong, "Initial memory limit in bytes")) {
+    if (aws_size_t_from_java(
+            env, &memory_limit_in_bytes, jni_memory_limit_bytes_jlong, "Initial memory limit in bytes")) {
         return (jlong)NULL;
     }
 

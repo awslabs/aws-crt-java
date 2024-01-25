@@ -351,7 +351,7 @@ public class S3ClientOptions {
     /**
      * The amount of memory the CRT client is allowed to use.
      * The client makes a best-effort attempt at memory limiting but might exceed this limit in some cases.
-     * If not provided, it tries to calculate this value automatically from other settings, such as targetThroughput.
+     * If not provided, the client calculates this optimally from other settings, such as targetThroughput.
      * @param memoryLimitBytes Memory limit in bytes. It should be at least 1GiB.
      * @return this
      */

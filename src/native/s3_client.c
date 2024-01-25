@@ -344,7 +344,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
     jboolean enable_s3express,
-    jobject java_s3express_provider_factory) {
+    jobject java_s3express_provider_factory,
+    jlong jni_memory_limit_bytes_jlong) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -362,6 +363,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     size_t initial_read_window;
     if (aws_size_t_from_java(env, &initial_read_window, initial_read_window_jlong, "Initial read window")) {
+        return (jlong)NULL;
+    }
+
+    size_t memory_limit_in_bytes;
+    if (aws_size_t_from_java(env, &memory_limit_in_bytes, jni_memory_limit_bytes_jlong, "Initial memory limit in bytes")) {
         return (jlong)NULL;
     }
 
@@ -456,6 +462,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .s3express_provider_override_factory =
             java_s3express_provider_factory ? s_s3express_provider_jni_factory : NULL,
         .factory_user_data = callback_data,
+        .memory_limit_in_bytes = memory_limit_in_bytes,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;

@@ -360,15 +360,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     uint64_t part_size = (uint64_t)part_size_jlong;
     uint64_t multipart_upload_threshold = (uint64_t)multipart_upload_threshold_jlong;
+    uint64_t memory_limit_in_bytes = (uint64_t)jni_memory_limit_bytes_jlong;
 
     size_t initial_read_window;
     if (aws_size_t_from_java(env, &initial_read_window, initial_read_window_jlong, "Initial read window")) {
-        return (jlong)NULL;
-    }
-
-    size_t memory_limit_in_bytes;
-    if (aws_size_t_from_java(
-            env, &memory_limit_in_bytes, jni_memory_limit_bytes_jlong, "Initial memory limit in bytes")) {
         return (jlong)NULL;
     }
 

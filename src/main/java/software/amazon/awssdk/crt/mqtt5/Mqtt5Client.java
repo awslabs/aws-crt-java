@@ -133,7 +133,8 @@ public class Mqtt5Client extends CrtResource {
      *
      * This is an asynchronous operation.
      *
-     * @param disconnectPacket (optional) Properties of a DISCONNECT packet to send as part of the shutdown process
+     * @param disconnectPacket (optional) Properties of a DISCONNECT packet to send as part of the shutdown process. When
+     * disconnectPacket is null, no DISCONNECT packets will be sent.
      * @throws CrtRuntimeException If the native client is unable to initialize the stop process.
      */
     public void stop(DisconnectPacket disconnectPacket) throws CrtRuntimeException {
@@ -142,7 +143,7 @@ public class Mqtt5Client extends CrtResource {
 
     /**
      * Notifies the Mqtt5Client that you want it to end connectivity to the configured endpoint, disconnecting any
-     * existing connection and halting any reconnect attempts.
+     * existing connection and halting any reconnect attempts. No DISCONNECT packets will be sent.
      *
      * This is an asynchronous operation.
      *

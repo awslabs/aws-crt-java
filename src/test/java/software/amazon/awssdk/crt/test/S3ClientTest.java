@@ -5,7 +5,6 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.DefaultChainCredentialsProvider;
@@ -119,7 +118,8 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
-                .withComputeContentMd5(true);
+                .withComputeContentMd5(true)
+                .withMemoryLimitInBytes(5L * 1024 * 1024 * 1024);
         try (S3Client client = createS3Client(clientOptions)) {
 
         }

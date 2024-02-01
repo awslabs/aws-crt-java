@@ -30,6 +30,7 @@ public class S3ClientOptions {
     private long initialReadWindowSize;
     private int maxConnections;
     private boolean enableS3Express;
+    private long memoryLimitInBytes;
     private S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory;
     /**
      * For multi-part upload, content-md5 will be calculated if the
@@ -345,5 +346,28 @@ public class S3ClientOptions {
 
     public S3ExpressCredentialsProviderFactory getS3ExpressCredentialsProviderFactory() {
         return s3expressCredentialsProviderFactory;
+    }
+
+    /**
+     * The amount of memory the CRT client is allowed to use.
+     * The client makes a best-effort attempt at memory limiting but might exceed this limit in some cases.
+     * If not provided, the client calculates this optimally from other settings, such as targetThroughput.
+     * On a 64-bit system, the default is between 2Gib-8Gib.
+     * It must be at least 1GiB and will be capped to SIZE_MAX of the system.
+     * @param memoryLimitBytes Memory limit in bytes.
+     * @return this
+     */
+    public S3ClientOptions withMemoryLimitInBytes(long memoryLimitBytes) {
+        this.memoryLimitInBytes = memoryLimitBytes;
+        return this;
+    }
+
+    /**
+     * Retrieves the memory limit set for the CRT client in bytes.
+     * If not set, this will return 0.
+     * @return long memory limit in bytes
+     */
+    public long getMemoryLimitInBytes() {
+        return memoryLimitInBytes;
     }
 }

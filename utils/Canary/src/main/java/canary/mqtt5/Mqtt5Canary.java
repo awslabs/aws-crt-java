@@ -432,7 +432,7 @@ public class Mqtt5Canary {
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to stop client ID " + clientIdx);
-        client.stop(new DisconnectPacketBuilder().build());
+        client.stop();
         try {
             clientsData.get(clientIdx).stopFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {

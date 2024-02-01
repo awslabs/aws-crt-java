@@ -13,8 +13,9 @@ import software.amazon.awssdk.crt.http.HttpHeader;
 public interface S3MetaRequestResponseHandler {
 
     /**
-     * Invoked to provide response headers received during execution of the meta request, both for
-     * success and error HTTP status codes.
+     * Invoked to provide response headers received during the execution of the meta request.
+     * Note: the statusCode in this callback is not the final statusCode. It is possible that the statusCode in `onResponseHeaders`
+     * is 200, and then the request fail leading to a different statusCode in the final `onFinished` callback.
      *
      * @param statusCode statusCode of the HTTP response
      * @param headers the headers received
@@ -31,7 +32,7 @@ public interface S3MetaRequestResponseHandler {
      * Whenever the flow-control window reaches zero, data will stop downloading.
      * To keep data flowing, you must increment the window by returning a number
      * from this method, or by calling {@link S3MetaRequest#incrementReadWindow}.
-     * <p>
+     * </p>
      * If backpressure is disabled, you do not need to maintain the flow-control window,
      * data will arrive as fast as possible.
      *

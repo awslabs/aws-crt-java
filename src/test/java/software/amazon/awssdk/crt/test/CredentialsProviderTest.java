@@ -317,7 +317,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has
-            // been resolved
+            // been resolved.
     @Test
     public void testCreateDestroyEcs_ValidCreds()
             throws IOException, ExecutionException, InterruptedException, TimeoutException {

@@ -525,8 +525,7 @@ public class Mqtt5Canary {
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
-        UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
-        unsubscribePacketBuilder.withSubscription("Non_existent_topic_here");
+        UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("Non_existent_topic_here");
         try {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
@@ -554,16 +553,14 @@ public class Mqtt5Canary {
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
         PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
-        PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
-        publishPacketBuilder.withQOS(qos);
 
         int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
         byte[] payload_bytes = new byte[payload_size];
         for (int i = 0; i < payload_size; i++) {
             payload_bytes[i] = (byte)random.nextInt(128);
         }
-        publishPacketBuilder.withPayload(payload_bytes);
-        publishPacketBuilder.withTopic(topic);
+
+        PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(topic, qos, payload_bytes);
 
         // Add user properties!
         List<UserProperty> propertyList = new ArrayList<UserProperty>();

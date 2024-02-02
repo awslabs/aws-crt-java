@@ -169,9 +169,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                     ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
                     SocketOptions socketOptions = new SocketOptions();) {
 
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder();
-                willPacketBuilder.withQOS(QOS.AT_LEAST_ONCE).withPayload("Hello World".getBytes())
-                        .withTopic("test/topic");
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT")

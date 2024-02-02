@@ -308,6 +308,25 @@ public class SubscribePacket {
         public SubscribePacketBuilder() {}
 
         /**
+         * Creates a new SubscribePacketBuilder with one subscription defined.
+         *
+         * @param subscription The subscription to add within the SubscribePacket.
+         */
+        public SubscribePacketBuilder(Subscription subscription) {
+            withSubscription(subscription);
+        }
+
+        /**
+         * Creates a new SubscribePacketBuilder with one subscription defined.
+         *
+         * @param topicFilter The topic filter to subscribe to.
+         * @param qos The maximum QoS on which the subscriber will accept publish messages.
+         */
+        public SubscribePacketBuilder(String topicFilter, QOS qos) {
+            withSubscription(new Subscription(topicFilter, qos));
+        }
+
+        /**
          * Creates a new SUBSCRIBE packet using the settings set in the builder.
          * @return The SubscribePacket created from the builder
          */

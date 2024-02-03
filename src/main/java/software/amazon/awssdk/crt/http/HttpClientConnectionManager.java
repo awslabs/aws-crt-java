@@ -162,7 +162,6 @@ public class HttpClientConnectionManager extends CrtResource {
             }
             CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
             httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
-            releaseReadLock();
             return returnedFuture;
         } finally {
             releaseReadLock();

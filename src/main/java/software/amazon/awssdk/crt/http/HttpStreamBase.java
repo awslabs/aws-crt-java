@@ -107,7 +107,6 @@ public class HttpStreamBase extends CrtResource {
         acquireReadLock();
         try {
             if (!isNull()) {
-                releaseReadLock();
                 return httpStreamBaseGetResponseStatusCode(getNativeHandle());
             }
             throw new IllegalStateException("Can't get Status Code on Closed Stream");

@@ -165,7 +165,6 @@ public class Http2StreamManager extends CrtResource {
             if (isNull()) {
                 completionFuture.completeExceptionally(new IllegalStateException(
                         "Http2StreamManager has been closed, can't acquire new streams"));
-                releaseReadLock();
                 return completionFuture;
             }
             http2StreamManagerAcquireStream(this.getNativeHandle(),

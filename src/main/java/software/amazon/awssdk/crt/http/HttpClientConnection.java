@@ -126,7 +126,6 @@ public class HttpClientConnection extends CrtResource {
             if (isNull()) {
                 throw new IllegalStateException("HttpClientConnection has been closed.");
             }
-            releaseReadLock();
             return httpClientConnectionIsOpen(getNativeHandle());
         } finally {
             releaseReadLock();
@@ -140,7 +139,6 @@ public class HttpClientConnection extends CrtResource {
                 throw new IllegalStateException("HttpClientConnection has been closed.");
             }
             short version = httpClientConnectionGetVersion(getNativeHandle());
-            releaseReadLock();
             return HttpVersion.getEnumValueFromInteger((int) version);
         } finally {
             releaseReadLock();

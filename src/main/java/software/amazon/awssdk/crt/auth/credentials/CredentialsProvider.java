@@ -31,7 +31,6 @@ public class CredentialsProvider extends CrtResource {
             if (isNull()) {
                 future.completeExceptionally(new IllegalStateException(
                         "CredentialsProvider has been closed"));
-                releaseReadLock();
                 return future;
             }
             credentialsProviderGetCredentials(this, future, getNativeHandle());

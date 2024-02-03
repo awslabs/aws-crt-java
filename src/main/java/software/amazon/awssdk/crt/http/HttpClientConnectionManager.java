@@ -155,13 +155,18 @@ public class HttpClientConnectionManager extends CrtResource {
      * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.
      */
     public CompletableFuture<HttpClientConnection> acquireConnection() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
+        acquireReadLock();
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
+            }
+            CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
+            httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
+            releaseReadLock();
+            return returnedFuture;
+        } finally {
+            releaseReadLock();
         }
-
-        CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
-        return returnedFuture;
     }
 
     /**

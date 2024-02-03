@@ -256,7 +256,8 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Required override method that must begin the release process of the acquired native handle
+     * Required override method that must begin the release process of the acquired native handle.
+     * Only invoked with the write lock held.
      */
     protected abstract void releaseNativeHandle();
 

@@ -50,11 +50,14 @@ public class S3MetaRequest extends CrtResource {
 
     public void cancel() {
         acquireReadLock();
-        if (isNull()) {
-            throw new IllegalStateException("S3MetaRequest has been closed.");
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("S3MetaRequest has been closed.");
+            }
+            s3MetaRequestCancel(getNativeHandle());
+        } finally {
+            releaseReadLock();
         }
-        s3MetaRequestCancel(getNativeHandle());
-        releaseReadLock();
     }
 
     /**
@@ -65,12 +68,15 @@ public class S3MetaRequest extends CrtResource {
      */
     public ResumeToken pause() {
         acquireReadLock();
-        if (isNull()) {
-            throw new IllegalStateException("S3MetaRequest has been closed.");
+        ResumeToken token = null;
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("S3MetaRequest has been closed.");
+            }
+            token = s3MetaRequestPause(getNativeHandle());
+        } finally {
+            releaseReadLock();
         }
-        ResumeToken token = s3MetaRequestPause(getNativeHandle());
-
-        releaseReadLock();
         return token;
     }
 
@@ -99,11 +105,14 @@ public class S3MetaRequest extends CrtResource {
      */
     public void incrementReadWindow(long bytes) {
         acquireReadLock();
-        if (isNull()) {
-            throw new IllegalStateException("S3MetaRequest has been closed.");
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("S3MetaRequest has been closed.");
+            }
+            s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
+        } finally {
+            releaseReadLock();
         }
-        s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
-        releaseReadLock();
     }
 
     /*******************************************************************************

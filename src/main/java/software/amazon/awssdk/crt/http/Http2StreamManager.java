@@ -160,12 +160,14 @@ public class Http2StreamManager extends CrtResource {
 
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
-        if (isNull()) {
-            completionFuture.completeExceptionally(new IllegalStateException(
-                    "Http2StreamManager has been closed, can't acquire new streams"));
-            return completionFuture;
-        }
+        acquireReadLock();
         try {
+            if (isNull()) {
+                completionFuture.completeExceptionally(new IllegalStateException(
+                        "Http2StreamManager has been closed, can't acquire new streams"));
+                releaseReadLock();
+                return completionFuture;
+            }
             http2StreamManagerAcquireStream(this.getNativeHandle(),
                     request.marshalForJni(),
                     request.getBodyStream(),
@@ -173,6 +175,8 @@ public class Http2StreamManager extends CrtResource {
                     acquireStreamCompleted);
         } catch (CrtRuntimeException ex) {
             completionFuture.completeExceptionally(ex);
+        } finally {
+            releaseReadLock();
         }
         return completionFuture;
     }
@@ -188,10 +192,17 @@ public class Http2StreamManager extends CrtResource {
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        acquireReadLock();
+        HttpManagerMetrics metrics = null;
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+            }
+            metrics = http2StreamManagerFetchMetrics(getNativeHandle());
+        } finally {
+            releaseReadLock();
         }
-        return http2StreamManagerFetchMetrics(getNativeHandle());
+        return metrics;
     }
 
     /**

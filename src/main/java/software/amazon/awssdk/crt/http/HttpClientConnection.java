@@ -6,16 +6,10 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.Map;
-import java.util.HashMap;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStream;
-
-import static software.amazon.awssdk.crt.CRT.awsLastError;
 
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.
@@ -41,16 +35,22 @@ public class HttpClientConnection extends CrtResource {
      */
     public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
             throws CrtRuntimeException {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+        acquireReadLock();
+        HttpStreamBase stream = null;
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+            }
+            if (getVersion() == HttpVersion.HTTP_2) {
+                throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
+            }
+            stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                    request.marshalForJni(),
+                    request.getBodyStream(),
+                    new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+        } finally {
+            releaseReadLock();
         }
-        if (getVersion() == HttpVersion.HTTP_2) {
-            throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
-        }
-        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                request.marshalForJni(),
-                request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
 
         return (HttpStream)stream;
     }
@@ -65,14 +65,20 @@ public class HttpClientConnection extends CrtResource {
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
     public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
-        }
-        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+
+        acquireReadLock();
+        HttpStreamBase stream = null;
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
+            }
+            stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),
                 request.getBodyStream(),
                 new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-
+        } finally {
+            releaseReadLock();
+        }
         return stream;
     }
 
@@ -98,10 +104,15 @@ public class HttpClientConnection extends CrtResource {
      * the connection as well in order to release the native resources.
      */
     public void shutdown() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
+        acquireReadLock();
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
+            }
+            httpClientConnectionShutdown(getNativeHandle());
+        } finally {
+            releaseReadLock();
         }
-        httpClientConnectionShutdown(getNativeHandle());
     }
 
     /**
@@ -110,18 +121,30 @@ public class HttpClientConnection extends CrtResource {
      * @return true unless the underlying http connection is shutting down, or has been shutdown.
      */
     public boolean isOpen() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnection has been closed.");
+        acquireReadLock();
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnection has been closed.");
+            }
+            releaseReadLock();
+            return httpClientConnectionIsOpen(getNativeHandle());
+        } finally {
+            releaseReadLock();
         }
-        return httpClientConnectionIsOpen(getNativeHandle());
     }
 
     public HttpVersion getVersion() {
-        if (isNull()) {
-            throw new IllegalStateException("HttpClientConnection has been closed.");
+        acquireReadLock();
+        try {
+            if (isNull()) {
+                throw new IllegalStateException("HttpClientConnection has been closed.");
+            }
+            short version = httpClientConnectionGetVersion(getNativeHandle());
+            releaseReadLock();
+            return HttpVersion.getEnumValueFromInteger((int) version);
+        } finally {
+            releaseReadLock();
         }
-        short version = httpClientConnectionGetVersion(getNativeHandle());
-        return HttpVersion.getEnumValueFromInteger((int) version);
     };
 
     /** Called from Native when a new connection is acquired **/

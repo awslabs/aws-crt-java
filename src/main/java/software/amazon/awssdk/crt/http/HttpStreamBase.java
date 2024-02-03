@@ -71,11 +71,16 @@ public class HttpStreamBase extends CrtResource {
      * @see HttpClientConnectionManagerOptions#withManualWindowManagement
      */
     public void incrementWindow(int windowSize) {
-        if (windowSize < 0) {
-            throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
-        }
-        if (!isNull()) {
-            httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
+        acquireReadLock();
+        try {
+            if (windowSize < 0) {
+                throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
+            }
+            if (!isNull()) {
+                httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
+            }
+        } finally {
+            releaseReadLock();
         }
     }
 
@@ -83,8 +88,13 @@ public class HttpStreamBase extends CrtResource {
      * Activates the client stream.
      */
     public void activate() {
-        if (!isNull()) {
-            httpStreamBaseActivate(getNativeHandle(), this);
+        acquireReadLock();
+        try {
+            if (!isNull()) {
+                httpStreamBaseActivate(getNativeHandle(), this);
+            }
+        } finally {
+            releaseReadLock();
         }
     }
 
@@ -94,10 +104,16 @@ public class HttpStreamBase extends CrtResource {
      * @return The Http Response Status Code
      */
     public int getResponseStatusCode() {
-        if (!isNull()) {
-            return httpStreamBaseGetResponseStatusCode(getNativeHandle());
+        acquireReadLock();
+        try {
+            if (!isNull()) {
+                releaseReadLock();
+                return httpStreamBaseGetResponseStatusCode(getNativeHandle());
+            }
+            throw new IllegalStateException("Can't get Status Code on Closed Stream");
+        } finally {
+            releaseReadLock();
         }
-        throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
     /*******************************************************************************

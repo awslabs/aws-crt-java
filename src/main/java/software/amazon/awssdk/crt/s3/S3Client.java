@@ -105,7 +105,8 @@ public class S3Client extends CrtResource {
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
                 options.getEnableS3Express(),
-                options.getS3ExpressCredentialsProviderFactory()));
+                options.getS3ExpressCredentialsProviderFactory(),
+                options.getMemoryLimitInBytes()));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -232,7 +233,8 @@ public class S3Client extends CrtResource {
             long monitoringThroughputThresholdInBytesPerSecond,
             int monitoringFailureIntervalInSeconds,
             boolean enableS3Express,
-            S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory) throws CrtRuntimeException;
+            S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory,
+            long memoryLimitInBytes) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 

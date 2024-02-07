@@ -7,6 +7,7 @@
 
 import org.junit.Assume;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -179,6 +180,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     fail(ex.toString());
                 }
                 close();
+
+                // Check that onConnectionSuccess was called only once.
+                assertEquals("onConnectionSuccess was called more than once", 1, connectionEventsStatistics.onConnectionSuccessCalled);
             }
      }
 
@@ -212,6 +216,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     fail(ex.toString());
                 }
                 close();
+
+                // Check that onConnectionFailure was called only once.
+                assertEquals("onConnectionFailure was called more than once", 1, connectionEventsStatistics.onConnectionFailureCalled);
             }
      }
 };

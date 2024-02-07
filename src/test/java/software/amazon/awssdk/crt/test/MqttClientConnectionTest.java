@@ -181,8 +181,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 }
                 close();
 
-                // Check that onConnectionSuccess was called only once.
-                assertEquals("onConnectionSuccess was called more than once", 1, connectionEventsStatistics.onConnectionSuccessCalled);
+                assertEquals("Unexpected onConnectionSuccess call: ", 1, connectionEventsStatistics.onConnectionSuccessCalled);
+                assertEquals("Unexpected onConnectionClosed call: ", 1, connectionEventsStatistics.onConnectionClosedCalled);
             }
      }
 
@@ -217,8 +217,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 }
                 close();
 
-                // Check that onConnectionFailure was called only once.
-                assertEquals("onConnectionFailure was called more than once", 1, connectionEventsStatistics.onConnectionFailureCalled);
+                assertEquals("Unexpected onConnectionFailure call: ", 1, connectionEventsStatistics.onConnectionFailureCalled);
+                assertEquals("Unexpected onConnectionClosed call: ", 0, connectionEventsStatistics.onConnectionClosedCalled);
             }
      }
 };

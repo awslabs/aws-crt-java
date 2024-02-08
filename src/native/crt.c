@@ -484,6 +484,8 @@ static struct aws_log_subject_info s_crt_log_subject_infos[] = {
         AWS_LS_JAVA_CRT_RESOURCE, "JavaCrtResource", "Subject for CrtResource"),
     DEFINE_LOG_SUBJECT_INFO(
         AWS_LS_JAVA_CRT_S3, "JavaCrtS3", "Subject for the layer binding aws-c-s3 to Java"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_ANDROID_KEYCHAIN, "android-keychain", "Subject for Android KeyChain"),
     /* clang-format on */
 };
 

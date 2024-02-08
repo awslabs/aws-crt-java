@@ -510,7 +510,10 @@ int aws_get_boolean_from_jobject(
             (*env)->CallBooleanMethod(env, jboolean_obj, boxed_boolean_properties.boolean_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT5_CLIENT, "%s create_from_java: Error getting native value from %s", object_name, field_name);
+                AWS_LS_MQTT5_CLIENT,
+                "%s create_from_java: Error getting native value from %s",
+                object_name,
+                field_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *result_boolean_int = (uint8_t)jboolean_value;
@@ -567,7 +570,10 @@ int aws_get_enum_from_jobject(
         }
         if (enum_value < 0) {
             AWS_LOGF_ERROR(
-                AWS_LS_MQTT5_CLIENT, "%s create_from_java: Native value from %s is less than 0", object_name, enum_name);
+                AWS_LS_MQTT5_CLIENT,
+                "%s create_from_java: Native value from %s is less than 0",
+                object_name,
+                enum_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         } else if ((int32_t)enum_value > UINT16_MAX) {
             AWS_LOGF_ERROR(
@@ -663,7 +669,8 @@ static int s_get_qos_from_packet(
     if (jni_qos) {
         jint jni_qos_value = (*env)->CallIntMethod(env, jni_qos, mqtt5_packet_qos_properties.qos_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "%s create_from_java: Error getting native value from QoS", packet_name);
+            AWS_LOGF_ERROR(
+                AWS_LS_MQTT5_CLIENT, "%s create_from_java: Error getting native value from QoS", packet_name);
             return aws_raise_error(AWS_ERROR_INVALID_STATE);
         }
         *packet_qos = (enum aws_mqtt5_qos)jni_qos_value;
@@ -1580,13 +1587,15 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
     struct aws_mqtt5_packet_unsubscribe_view_java_jni *java_packet =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt5_packet_unsubscribe_view_java_jni));
     if (java_packet == NULL) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         return NULL;
     }
     int array_init = aws_array_list_init_dynamic(
         &java_packet->topic_filters, allocator, topic_filter_size, sizeof(struct aws_byte_cursor));
     if (array_init != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         goto on_error;
     }
     int jni_array_init = aws_array_list_init_dynamic(
@@ -1595,7 +1604,8 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni *aws_mqtt5_packet_unsubscribe_
         topic_filter_size,
         sizeof(struct buffer_and_cursor_array_holder_struct));
     if (jni_array_init != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
+        AWS_LOGF_ERROR(
+            AWS_LS_MQTT5_CLIENT, "UnsubscribePacket create_from_java: Creating new UnsubscribePacket failed");
         goto on_error;
     }
 

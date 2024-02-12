@@ -70,31 +70,21 @@ public class HttpStreamBase extends CrtResource {
      * @param windowSize How many bytes to increment the sliding window by.
      * @see HttpClientConnectionManagerOptions#withManualWindowManagement
      */
-    public void incrementWindow(int windowSize) {
-        acquireReadLock();
-        try {
-            if (windowSize < 0) {
-                throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
-            }
-            if (!isNull()) {
-                httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
-            }
-        } finally {
-            releaseReadLock();
+    public synchronized void incrementWindow(int windowSize) {
+        if (windowSize < 0) {
+            throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
+        }
+        if (!isNull()) {
+            httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
         }
     }
 
     /**
      * Activates the client stream.
      */
-    public void activate() {
-        acquireReadLock();
-        try {
-            if (!isNull()) {
-                httpStreamBaseActivate(getNativeHandle(), this);
-            }
-        } finally {
-            releaseReadLock();
+    public synchronized void activate() {
+        if (!isNull()) {
+            httpStreamBaseActivate(getNativeHandle(), this);
         }
     }
 
@@ -103,16 +93,11 @@ public class HttpStreamBase extends CrtResource {
      *
      * @return The Http Response Status Code
      */
-    public int getResponseStatusCode() {
-        acquireReadLock();
-        try {
-            if (!isNull()) {
-                return httpStreamBaseGetResponseStatusCode(getNativeHandle());
-            }
-            throw new IllegalStateException("Can't get Status Code on Closed Stream");
-        } finally {
-            releaseReadLock();
+    public synchronized int getResponseStatusCode() {
+        if (!isNull()) {
+            return httpStreamBaseGetResponseStatusCode(getNativeHandle());
         }
+        throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
     /*******************************************************************************

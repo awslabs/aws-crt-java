@@ -24,8 +24,7 @@ public class CredentialsProvider extends CrtResource {
      * Request credentials from the provider
      * @return A Future for Credentials that will be completed when they are acquired.
      */
-    public CompletableFuture<Credentials> getCredentials() {
-        acquireReadLock();
+    public synchronized CompletableFuture<Credentials> getCredentials() {
         CompletableFuture<Credentials> future = new CompletableFuture<>();
         try {
             if (isNull()) {
@@ -36,10 +35,7 @@ public class CredentialsProvider extends CrtResource {
             credentialsProviderGetCredentials(this, future, getNativeHandle());
         } catch (Exception e) {
             future.completeExceptionally(e);
-        } finally {
-            releaseReadLock();
         }
-
         return future;
     }
 
@@ -61,7 +57,7 @@ public class CredentialsProvider extends CrtResource {
      * Begins the release process of the provider's native handle
      */
     @Override
-    protected void releaseNativeHandle() {
+    protected synchronized void releaseNativeHandle() {
         if (!isNull()) {
             credentialsProviderDestroy(this, getNativeHandle());
         }

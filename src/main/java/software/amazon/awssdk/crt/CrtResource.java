@@ -95,7 +95,6 @@ public abstract class CrtResource implements AutoCloseable {
     private static final Instant creationTime = Instant.now();
 
     private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
-    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private long nativeHandle;
     private final AtomicInteger refCount = new AtomicInteger(1);
     private final long id = nextId.getAndAdd(1);
@@ -177,21 +176,11 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
-    protected void acquireReadLock() {
-        this.rwl.readLock().lock();
-    }
-
-    protected void releaseReadLock() {
-        this.rwl.readLock().unlock();
-    }
-
-
     /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
-    protected void acquireNativeHandle(long handle) {
-        this.rwl.writeLock().lock();
+    protected synchronized void acquireNativeHandle(long handle) {
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
@@ -214,14 +203,12 @@ public abstract class CrtResource implements AutoCloseable {
 
         nativeHandle = handle;
         incrementNativeObjectCount();
-        this.rwl.writeLock().unlock();
     }
 
     /**
      * Begins the cleanup process associated with this native object and performs various debug-level bookkeeping operations.
      */
-    private void release() {
-        this.rwl.writeLock().lock();
+    private synchronized void release() {
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s(%d)", this.getClass().getCanonicalName(), id));
 
@@ -237,14 +224,13 @@ public abstract class CrtResource implements AutoCloseable {
 
             nativeHandle = 0;
         }
-        this.rwl.writeLock().unlock();
     }
 
     /**
      * returns the native handle associated with this CRTResource.
      * @return native address
      */
-    public long getNativeHandle() {
+    public synchronized long getNativeHandle() {
         return nativeHandle;
     }
 
@@ -257,7 +243,6 @@ public abstract class CrtResource implements AutoCloseable {
 
     /**
      * Required override method that must begin the release process of the acquired native handle.
-     * Only invoked with the write lock held.
      */
     protected abstract void releaseNativeHandle();
 
@@ -274,7 +259,7 @@ public abstract class CrtResource implements AutoCloseable {
      * resources it means it has already been cleaned up or was not properly constructed.
      * @return true if no native resource is bound, false otherwise
      */
-    public final boolean isNull() {
+    public synchronized final boolean isNull() {
         return (nativeHandle == NULL);
     }
 

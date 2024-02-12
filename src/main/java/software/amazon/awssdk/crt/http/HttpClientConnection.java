@@ -33,26 +33,18 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
+    public synchronized HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
             throws CrtRuntimeException {
-        acquireReadLock();
-        HttpStreamBase stream = null;
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
-            }
-            if (getVersion() == HttpVersion.HTTP_2) {
-                throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
-            }
-            stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                    request.marshalForJni(),
-                    request.getBodyStream(),
-                    new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        } finally {
-            releaseReadLock();
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-
-        return (HttpStream)stream;
+        if (getVersion() == HttpVersion.HTTP_2) {
+            throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
+        }
+        return (HttpStream)httpClientConnectionMakeRequest(getNativeHandle(),
+                request.marshalForJni(),
+                request.getBodyStream(),
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
     }
 
     /**
@@ -64,22 +56,14 @@ public class HttpClientConnection extends CrtResource {
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
-    public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
-
-        acquireReadLock();
-        HttpStreamBase stream = null;
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
-            }
-            stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                request.marshalForJni(),
-                request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
-        } finally {
-            releaseReadLock();
+    public synchronized HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        return stream;
+        return httpClientConnectionMakeRequest(getNativeHandle(),
+            request.marshalForJni(),
+            request.getBodyStream(),
+            new HttpStreamResponseHandlerNativeAdapter(streamHandler));
     }
 
     /**
@@ -103,16 +87,11 @@ public class HttpClientConnection extends CrtResource {
      * Shuts down the underlying http connection.  Even if this function is called, you still need to properly close
      * the connection as well in order to release the native resources.
      */
-    public void shutdown() {
-        acquireReadLock();
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
-            }
-            httpClientConnectionShutdown(getNativeHandle());
-        } finally {
-            releaseReadLock();
+    public synchronized void shutdown() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
         }
+        httpClientConnectionShutdown(getNativeHandle());
     }
 
     /**
@@ -120,29 +99,19 @@ public class HttpClientConnection extends CrtResource {
      *
      * @return true unless the underlying http connection is shutting down, or has been shutdown.
      */
-    public boolean isOpen() {
-        acquireReadLock();
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnection has been closed.");
-            }
-            return httpClientConnectionIsOpen(getNativeHandle());
-        } finally {
-            releaseReadLock();
+    public synchronized boolean isOpen() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
         }
+        return httpClientConnectionIsOpen(getNativeHandle());
     }
 
-    public HttpVersion getVersion() {
-        acquireReadLock();
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnection has been closed.");
-            }
-            short version = httpClientConnectionGetVersion(getNativeHandle());
-            return HttpVersion.getEnumValueFromInteger((int) version);
-        } finally {
-            releaseReadLock();
+    public synchronized HttpVersion getVersion() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
         }
+        short version = httpClientConnectionGetVersion(getNativeHandle());
+        return HttpVersion.getEnumValueFromInteger((int) version);
     };
 
     /** Called from Native when a new connection is acquired **/

@@ -121,10 +121,7 @@ public class S3Client extends CrtResource {
         this.shutdownComplete.complete(null);
     }
 
-    public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
-
-        acquireReadLock();
-
+    public synchronized S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
         if(isNull()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
@@ -164,25 +161,21 @@ public class S3Client extends CrtResource {
         ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
                 : new ChecksumConfig();
 
-        try {
-            long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                    options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
-                    checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
-                    ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                    httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
-                    responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                    options.getResumeToken());
+        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
+                options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
+                checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
+                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                options.getResumeToken());
 
-            metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
+        metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
-            if(didCreateSigningConfig) {
-                /* The native code will keep the needed resource around */
-                signingConfig.close();
-            }
-
-        } finally {
-            releaseReadLock();
+        if(didCreateSigningConfig) {
+            /* The native code will keep the needed resource around */
+            signingConfig.close();
         }
+
         return metaRequest;
     }
 

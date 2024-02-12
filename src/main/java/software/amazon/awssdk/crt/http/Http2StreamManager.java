@@ -155,12 +155,11 @@ public class Http2StreamManager extends CrtResource {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+    private synchronized CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler) {
 
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
-        acquireReadLock();
         try {
             if (isNull()) {
                 completionFuture.completeExceptionally(new IllegalStateException(
@@ -174,8 +173,6 @@ public class Http2StreamManager extends CrtResource {
                     acquireStreamCompleted);
         } catch (CrtRuntimeException ex) {
             completionFuture.completeExceptionally(ex);
-        } finally {
-            releaseReadLock();
         }
         return completionFuture;
     }
@@ -190,18 +187,11 @@ public class Http2StreamManager extends CrtResource {
     /**
      * @return concurrency metrics for the current manager
      */
-    public HttpManagerMetrics getManagerMetrics() {
-        acquireReadLock();
-        HttpManagerMetrics metrics = null;
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
-            }
-            metrics = http2StreamManagerFetchMetrics(getNativeHandle());
-        } finally {
-            releaseReadLock();
+    public synchronized HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
         }
-        return metrics;
+        return http2StreamManagerFetchMetrics(getNativeHandle());
     }
 
     /**
@@ -230,7 +220,7 @@ public class Http2StreamManager extends CrtResource {
      * Closes this Connection Pool and any pending Connection Acquisitions
      */
     @Override
-    protected void releaseNativeHandle() {
+    protected synchronized void releaseNativeHandle() {
         if (!isNull()) {
             /*
              * Release our Native pointer and schedule tasks on the Native Event Loop to

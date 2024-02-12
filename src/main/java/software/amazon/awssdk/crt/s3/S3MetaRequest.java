@@ -48,16 +48,11 @@ public class S3MetaRequest extends CrtResource {
 
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
-    public void cancel() {
-        acquireReadLock();
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("S3MetaRequest has been closed.");
-            }
-            s3MetaRequestCancel(getNativeHandle());
-        } finally {
-            releaseReadLock();
+    public synchronized void cancel() {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
         }
+        s3MetaRequestCancel(getNativeHandle());
     }
 
     /**
@@ -66,18 +61,11 @@ public class S3MetaRequest extends CrtResource {
      * already uploaded parts will be skipped, but checksums on those will be verified if request specified checksum algo.
      * @return token to resume request. might be null if request has not started executing yet
      */
-    public ResumeToken pause() {
-        acquireReadLock();
-        ResumeToken token = null;
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("S3MetaRequest has been closed.");
-            }
-            token = s3MetaRequestPause(getNativeHandle());
-        } finally {
-            releaseReadLock();
+    public synchronized ResumeToken pause() {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        return token;
+        return s3MetaRequestPause(getNativeHandle());
     }
 
     /**
@@ -103,16 +91,11 @@ public class S3MetaRequest extends CrtResource {
 
      * @see S3ClientOptions#withReadBackpressureEnabled
      */
-    public void incrementReadWindow(long bytes) {
-        acquireReadLock();
-        try {
-            if (isNull()) {
-                throw new IllegalStateException("S3MetaRequest has been closed.");
-            }
-            s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
-        } finally {
-            releaseReadLock();
+    public synchronized void incrementReadWindow(long bytes) {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
         }
+        s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
     }
 
     /*******************************************************************************

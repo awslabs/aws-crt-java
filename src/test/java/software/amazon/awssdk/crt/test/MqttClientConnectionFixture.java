@@ -122,6 +122,16 @@ import java.util.function.Consumer;
     String caRoot = null;
     String iotEndpoint = null;
 
+    class ConnectionEventsStatistics {
+        int onConnectionSuccessCalled;
+        int onConnectionFailureCalled;
+        int onConnectionResumedCalled;
+        int onConnectionInterruptedCalled;
+        int onConnectionClosedCalled;
+    };
+
+    ConnectionEventsStatistics connectionEventsStatistics = new ConnectionEventsStatistics();
+
     Consumer<MqttConnectionConfig> connectionConfigTransformer = null;
     protected void setConnectionConfigTransformer(Consumer<MqttConnectionConfig> connectionConfigTransformer) {
         this.connectionConfigTransformer = connectionConfigTransformer;
@@ -155,11 +165,13 @@ import java.util.function.Consumer;
             MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
                 @Override
                 public void onConnectionResumed(boolean sessionPresent) {
+                    connectionEventsStatistics.onConnectionResumedCalled++;
                     System.out.println("Connection resumed");
                 }
 
                 @Override
                 public void onConnectionInterrupted(int errorCode) {
+                    connectionEventsStatistics.onConnectionInterruptedCalled++;
                     if (!disconnecting) {
                         System.out.println(
                                 "Connection interrupted: error: " + errorCode + " " + CRT.awsErrorString(errorCode));
@@ -169,18 +181,21 @@ import java.util.function.Consumer;
                 @Override
                 public void onConnectionFailure(OnConnectionFailureReturn data) {
                     System.out.println("Connection failed with error: " + data.getErrorCode() + " " + CRT.awsErrorString(data.getErrorCode()));
+                    connectionEventsStatistics.onConnectionFailureCalled++;
                     onConnectionFailureFuture.complete(data);
                 }
 
                 @Override
                 public void onConnectionSuccess(OnConnectionSuccessReturn data) {
                     System.out.println("Connection success. Session present: " + data.getSessionPresent());
+                    connectionEventsStatistics.onConnectionSuccessCalled++;
                     onConnectionSuccessFuture.complete(data);
                 }
 
                 @Override
                 public void onConnectionClosed(OnConnectionClosedReturn data) {
                     System.out.println("Connection disconnected successfully");
+                    connectionEventsStatistics.onConnectionClosedCalled++;
                     onConnectionClosedFuture.complete(data);
                 }
             };

@@ -51,7 +51,7 @@ public class TlsContextCustomKeyOperationOptions {
     }
 
     /**
-     * Returns the path to the X.509 certificate file on desk if it has been set.
+     * Returns the path to the X.509 certificate file on disk if it has been set.
      *
      * @return The path to the certificate file
      */

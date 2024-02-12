@@ -530,6 +530,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnectio
         return (jlong)NULL;
     }
 
+    aws_mqtt_client_connection_set_connection_result_handlers(
+        connection->client_connection, s_on_connection_success, connection, s_on_connection_failure, connection);
     aws_mqtt_client_connection_set_connection_interruption_handlers(
         connection->client_connection, s_on_connection_interrupted, connection, s_on_connection_resumed, connection);
     aws_mqtt_client_connection_set_connection_closed_handler(

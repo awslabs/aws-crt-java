@@ -220,7 +220,7 @@ public class Http2StreamManager extends CrtResource {
      * Closes this Connection Pool and any pending Connection Acquisitions
      */
     @Override
-    protected synchronized void releaseNativeHandle() {
+    protected void releaseNativeHandle() {
         if (!isNull()) {
             /*
              * Release our Native pointer and schedule tasks on the Native Event Loop to

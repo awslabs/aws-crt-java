@@ -187,4 +187,3 @@ public final class TlsKeyOperation {
     private static native void tlsKeyOperationCompleteExceptionally(long nativeHandle, Throwable ex);
 
 }
-

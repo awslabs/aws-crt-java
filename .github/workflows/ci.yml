@@ -7,8 +7,8 @@ on:
       - 'docs'
 
 env:
-  BUILDER_VERSION: release
-  BUILDER_SOURCE: v0.9.56
+  BUILDER_VERSION: v0.9.56
+  BUILDER_SOURCE: release
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
   LINUX_BASE_IMAGE: ubuntu-18-x64

@@ -43,7 +43,7 @@
         <cmake.s2nNoPqAsm>OFF</cmake.s2nNoPqAsm>
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
-        <cmake.crt_fips>OFF</cmake.crt_fips>
+        <cmake.crt_fips>ON</cmake.crt_fips>
     </properties>
 
     <profiles>

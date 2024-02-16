@@ -64,7 +64,7 @@ if (BUILD_DEPS)
             # 32 bit turn off fips
             set(CRT_FIPS OFF)
         endif()
-
+        message("Build with FIPS: " ${CRT_FIPS})
         set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
         if (CRT_FIPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")

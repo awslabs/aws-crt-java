@@ -16,7 +16,9 @@
     "build_dir": "target/cmake-build",
     "build_env": {
         "JAVA_HOME": "{java_home}",
-        "OVERRIDE_JAVA_HOME": "{java_home}"
+        "OVERRIDE_JAVA_HOME": "{java_home}",
+        "GO_PATH": "{go_path}",
+        "GOPROXY": "https://goproxy.io,direct"
     },
     "test_env": {
         "JAVA_HOME": "{java_home}",

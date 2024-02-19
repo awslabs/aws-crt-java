@@ -17,7 +17,6 @@
     "build_env": {
         "JAVA_HOME": "{java_home}",
         "OVERRIDE_JAVA_HOME": "{java_home}",
-        "GO_PATH": "{go_path}",
         "GOPROXY": "https://goproxy.io,direct"
     },
     "test_env": {
@@ -79,7 +78,10 @@
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
-                    ]
+                    ],
+                    "+build_env":  {
+                        "GO_PATH": "{go_path}"
+                    }
                 }
             },
             "hosts": {

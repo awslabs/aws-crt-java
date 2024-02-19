@@ -762,8 +762,8 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
-            int contentLength) throws IOException {
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express);
+            int contentLength, boolean contentMD5) throws IOException {
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express).withComputeContentMd5(contentMD5);
         Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -852,7 +852,15 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, false, null, false, 16 * 1024 * 1024);
+        testS3PutHelper(false, false, null, false, 16 * 1024 * 1024, false);
+    }
+
+    @Test
+    public void testS3PutWithMD5() throws IOException {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3PutHelper(false, false, null, false, 16 * 1024 * 1024, true);
     }
 
     // Test that we can upload by passing a filepath instead of an HTTP body stream
@@ -861,7 +869,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(true, false, null, false, 10 * 1024 * 1024);
+        testS3PutHelper(true, false, null, false, 10 * 1024 * 1024, false);
     }
 
     // Test that we can upload without provide the content length
@@ -870,7 +878,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, true, null, false, 10 * 1024 * 1024);
+        testS3PutHelper(false, true, null, false, 10 * 1024 * 1024, false);
     }
 
     // Test that we can upload to a path with special characters
@@ -879,21 +887,21 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt", false, 10 * 1024 * 1024);
+        testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt", false, 10 * 1024 * 1024, false);
     }
 
     @Test
     public void testS3PutS3Express() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, false, null, true, 16 * 1024 * 1024);
+        testS3PutHelper(false, false, null, true, 16 * 1024 * 1024, false);
     }
 
     @Test
     public void testS3PutS3ExpressSpecialCharPath() throws IOException {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt", true, 10 * 1024 * 1024);
+        testS3PutHelper(false, true, "/put_object_test_10MB@$%.txt", true, 10 * 1024 * 1024, false);
     }
 
     // Test that passing a nonexistent file path will cause an error

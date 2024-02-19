@@ -78,10 +78,7 @@
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
-                    ],
-                    "+build_env":  {
-                        "GO_PATH": "{go_path}"
-                    }
+                    ]
                 }
             },
             "hosts": {

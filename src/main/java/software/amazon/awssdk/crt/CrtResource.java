@@ -373,9 +373,13 @@ public abstract class CrtResource implements AutoCloseable {
      * Debug method to log all of the currently un-closed CRTResource objects.
      */
     public static void logNativeResources() {
-        Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
+        logNativeResources(ResourceLogLevel);
+    }
+
+    public static void logNativeResources(Log.LogLevel logLevel) {
+        Log.log(logLevel, Log.LogSubject.JavaCrtResource, "Dumping native object set:");
         collectNativeResource((resource) -> {
-            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, resource.getWrapper().getResourceLogDescription());
+            Log.log(logLevel, Log.LogSubject.JavaCrtResource, resource.getWrapper().getResourceLogDescription());
         });
     }
 
@@ -436,7 +440,7 @@ public abstract class CrtResource implements AutoCloseable {
 
                 if (resourceCount != 0) {
                     Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtResource, "waitForNoResources - timeOut");
-                    logNativeResources();
+                    logNativeResources(Log.LogLevel.Error);
                     throw new InterruptedException();
                 }
             } catch (InterruptedException e) {

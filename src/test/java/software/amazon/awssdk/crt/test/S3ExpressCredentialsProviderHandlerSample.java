@@ -67,8 +67,10 @@ public class S3ExpressCredentialsProviderHandlerSample implements S3ExpressCrede
                 .withMetaRequestType(MetaRequestType.DEFAULT).withHttpRequest(httpRequest)
                 .withResponseHandler(responseHandler).withSigningConfig(config);
 
-        try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-        }
+        S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions);
+        future.whenComplete((r,t) -> {
+            metaRequest.close();
+        });
         return future;
 
     }

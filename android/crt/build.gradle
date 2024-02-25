@@ -3,13 +3,6 @@ import java.util.regex.Pattern
 apply plugin: 'com.android.library'
 apply plugin: 'signing'
 
-// Before configuring, make sure libcrypto is installed
-preBuild {
-    println('Installing libcrypto prebuilt binaries')
-    def exec = (project.file('fetch_libcrypto.sh').absolutePath).execute()
-    exec.waitForProcessOutput(System.out, System.err)
-}
-
 Properties getGitTag() {
     def gitTag = "git describe --tags".execute().text.trim()
     def version = new Properties()
@@ -74,7 +67,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DBUILD_DEPS=ON"
+                arguments "-DBUILD_DEPS=ON -DCMAKE_VERBOSE_MAKEFILE=ON"
             }
         }
     }

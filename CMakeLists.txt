@@ -50,6 +50,7 @@ set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/lib")
 if (ANDROID)
     set(ANDROID_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
     set(AWS_LIBRARY_OUTPUT_DIR "${CMAKE_BINARY_DIR}/../../../lib")
+    set(CRT_FIPS OFF)
 endif()
 
 if (BUILD_DEPS)

@@ -16,7 +16,7 @@ parser.add_argument('--device_pool_arn', required=True, help="Arn for device poo
 current_working_directory = os.getcwd()
 build_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/debug/testapp-debug.apk'
 test_file_location = current_working_directory + '/src/test/android/testapp/build/outputs/apk/androidTest/debug/testapp-debug-androidTest.apk'
-# test_spec_file_location = current_working_directory + '/src/test/android/testapp/instrumentedTestSpec.yml'
+test_spec_file_location = current_working_directory + '/src/test/android/testapp/instrumentedTestSpec.yml'
 
 def main():
     args = parser.parse_args()
@@ -90,17 +90,17 @@ def main():
         device_farm_upload_status = client.get_upload(arn=device_farm_instrumentation_upload_arn)
 
     # Upload the test spec file to Device Farm
-    # upload_spec_file_name = 'CI-' + run_id + '-' + run_attempt + 'test-spec.yml'
-    # print('Upload file name: ' + upload_spec_file_name)
+    upload_spec_file_name = 'CI-' + run_id + '-' + run_attempt + 'test-spec.yml'
+    print('Upload file name: ' + upload_spec_file_name)
 
     # Prepare upload to Device Farm project
-    # create_upload_response = client.create_upload(
-    #     projectArn=project_arn,
-    #     name=upload_spec_file_name,
-    #     type='INSTRUMENTATION_TEST_SPEC'
-    # )
-    # device_farm_test_spec_upload_arn = create_upload_response['upload']['arn']
-    # device_farm_test_spec_upload_url = create_upload_response['upload']['url']
+    create_upload_response = client.create_upload(
+        projectArn=project_arn,
+        name=upload_spec_file_name,
+        type='INSTRUMENTATION_TEST_SPEC'
+    )
+    device_farm_test_spec_upload_arn = create_upload_response['upload']['arn']
+    device_farm_test_spec_upload_url = create_upload_response['upload']['url']
 
     # Default Instrumentation tests run on Device Farm result in detailed individual test breakdowns but comes
     # at the cost of the test suite running for up to two hours before completing. There is limited control for turning
@@ -108,17 +108,17 @@ def main():
     # A bare-bones test spec is used with instrumentation testing which will report a singular fail if any one test fails but
     # the resulting Test spec output file contains information on each unit test, whether they passed, failed, or were skipped.
     # Upload test spec yml
-    # with open(test_spec_file_location, 'rb') as f:
-    #     data = f.read()
-    # r = requests.put(device_farm_test_spec_upload_url, data=data)
-    # print('File upload status code: ' + str(r.status_code) + ' reason: ' + r.reason)
-    # device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
-    # while device_farm_upload_status['upload']['status'] != 'SUCCEEDED':
-    #     if device_farm_upload_status['upload']['status'] == 'FAILED':
-    #         print('Upload failed to process')
-    #         sys.exit(-1)
-    #     time.sleep(1)
-    #     device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
+    with open(test_spec_file_location, 'rb') as f:
+        data = f.read()
+    r = requests.put(device_farm_test_spec_upload_url, data=data)
+    print('File upload status code: ' + str(r.status_code) + ' reason: ' + r.reason)
+    device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
+    while device_farm_upload_status['upload']['status'] != 'SUCCEEDED':
+        if device_farm_upload_status['upload']['status'] == 'FAILED':
+            print('Upload failed to process')
+            sys.exit(-1)
+        time.sleep(1)
+        device_farm_upload_status = client.get_upload(arn=device_farm_test_spec_upload_arn)
 
     print('scheduling run')
     schedule_run_response = client.schedule_run(
@@ -129,7 +129,7 @@ def main():
         test={
             'type': 'INSTRUMENTATION',
             'testPackageArn': device_farm_instrumentation_upload_arn,
-            # 'testSpecArn': device_farm_test_spec_upload_arn
+            'testSpecArn': device_farm_test_spec_upload_arn
         },
         executionConfiguration={
             'jobTimeoutMinutes': 30
@@ -168,10 +168,10 @@ def main():
     client.delete_upload(
         arn=device_farm_instrumentation_upload_arn
     )
-    # print('Deleting ' + upload_spec_file_name + ' from Device Farm project')
-    # client.delete_upload(
-    #     arn=device_farm_test_spec_upload_arn
-    # )
+    print('Deleting ' + upload_spec_file_name + ' from Device Farm project')
+    client.delete_upload(
+        arn=device_farm_test_spec_upload_arn
+    )
 
     if is_success == False:
         print('Exiting with fail')

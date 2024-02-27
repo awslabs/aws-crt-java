@@ -89,6 +89,11 @@ public final class SocketOptions extends CrtResource {
     public int keepAliveTimeoutSecs = 0;
 
     /**
+     * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.
+     */
+    public boolean keepAlive = false;
+
+    /**
      * Creates a new set of socket options
      */
     public SocketOptions() {
@@ -103,7 +108,8 @@ public final class SocketOptions extends CrtResource {
                 type.getValue(),
                 connectTimeoutMs,
                 keepAliveIntervalSecs,
-                keepAliveTimeoutSecs
+                keepAliveTimeoutSecs,
+                keepAlive
             ));
         }
         return super.getNativeHandle();
@@ -129,7 +135,7 @@ public final class SocketOptions extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs);
+    private static native long socketOptionsNew(int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, boolean keepAlive);
 
     private static native void socketOptionsDestroy(long elg);
 };

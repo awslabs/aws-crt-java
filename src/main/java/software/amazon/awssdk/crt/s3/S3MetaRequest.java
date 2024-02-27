@@ -38,6 +38,13 @@ public class S3MetaRequest extends CrtResource {
     @Override
     protected void releaseNativeHandle() {
         if (!isNull()) {
+            /**
+             * Cancel the meta request before drop the refcount.
+             * The meta request is not referenced by Java any longer, everything from native to Java will be ignored.
+             * Cancelling the meta request instead of letting it keep flowing.
+             * Note: If the meta request has not finished yet, it will be finished with `AWS_ERROR_S3_CANCELED`.
+             **/
+            s3MetaRequestCancel(getNativeHandle());
             s3MetaRequestDestroy(getNativeHandle());
         }
     }

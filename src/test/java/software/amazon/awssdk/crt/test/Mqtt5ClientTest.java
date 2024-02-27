@@ -300,8 +300,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                client.stop(disconnect.build());
+                client.stop();
             }
 
         } catch (Exception ex) {
@@ -331,8 +330,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                client.stop(disconnect.build());
+                client.stop();
             }
         } catch (Exception ex) {
             fail(ex.getMessage());
@@ -358,8 +356,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                         client.start();
                         events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                        DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                        client.stop(disconnect.build());
+                        client.stop();
                     }
                 }
             }
@@ -388,8 +385,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -431,8 +427,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                             client.start();
                             events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                            DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                            client.stop(disconnect.build());
+                            client.stop();
                         }
                     }
                 }
@@ -554,8 +549,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
 
@@ -599,8 +593,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -642,8 +635,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                             client.start();
                             events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                            DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                            client.stop(disconnect.build());
+                            client.stop();
                         }
                     }
                 }
@@ -696,8 +688,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             client.start();
             events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-            DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-            client.stop(disconnect.build());
+            client.stop();
 
             client.close();
             tlsContext.close();
@@ -1120,8 +1111,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         fail("No exception occurred!");
                     }
 
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -1208,8 +1198,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                     // Stop the clients from disconnecting each other. If we do not do this, then the clients will
                     // attempt to reconnect endlessly, making a never ending loop.
-                    clientOne.stop(null);
-                    clientTwo.stop(null);
+                    clientOne.stop();
+                    clientTwo.stop();
                 }
             }
         } catch (Exception ex) {
@@ -1534,7 +1524,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Client publish did not fail!");
                 }
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1582,7 +1572,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Client publish did not fail!");
                 }
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1630,7 +1620,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Client subscribe did not fail!");
                 }
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1678,7 +1668,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Client subscribe did not fail!");
                 }
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1726,7 +1716,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 //     events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
                 //     600000L);
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1782,7 +1772,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         false,
                         events.connectSuccessSettings.getRejoinedSession());
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1838,7 +1828,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         false,
                         events.connectSuccessSettings.getRejoinedSession());
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
                 events.stopFuture.get();
             }
 
@@ -1855,7 +1845,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         true,
                         rejoinEvents.connectSuccessSettings.getRejoinedSession());
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1924,7 +1914,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     publishEvents.publishPacket,
                     null);
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -1988,7 +1978,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 clientTwo.subscribe(subscribeOptions.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                clientOne.stop(null);
+                clientOne.stop();
 
                 // Did we get a publish message?
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2050,7 +2040,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 assertTrue(java.util.Arrays.equals(publishEvents.publishPacket.getPayload(), randomBytes));
 
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
                 events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
             }
 
@@ -2210,9 +2200,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // to ensure that AWS IoT Core sent different packets to different subscribers.
                 assertTrue(publishEvents.clientsReceived.size() == 2);
 
-                subscriberOneClient.stop(new DisconnectPacketBuilder().build());
-                subscriberTwoClient.stop(new DisconnectPacketBuilder().build());
-                publisherClient.stop(new DisconnectPacketBuilder().build());
+                subscriberOneClient.stop();
+                subscriberTwoClient.stop();
+                publisherClient.stop();
             }
 
             if (tlsContext != null) {
@@ -2343,7 +2333,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Null subscribe packet did not cause exception with error!");
                 }
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -2385,7 +2375,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Empty subscribe packet did not cause exception with error!");
                 }
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -2427,7 +2417,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Null unsubscribe packet did not cause exception with error!");
                 }
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -2469,7 +2459,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Empty unsubscribe packet did not cause exception with error!");
                 }
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -2517,7 +2507,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 if (didExceptionOccur == false) {
                     fail("Was able to connect with Client ID longer than 128 characters (AWS_IOT_CORE_MAXIMUM_CLIENT_ID_LENGTH)");
                 }
-                client.stop(new DisconnectPacketBuilder().build());
+                client.stop();
             }
 
             if (tlsContext != null) {
@@ -2587,8 +2577,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Did we get all the messages?
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                subscriber.stop(new DisconnectPacketBuilder().build());
-                publisher.stop(new DisconnectPacketBuilder().build());
+                subscriber.stop();
+                publisher.stop();
             }
 
             if (tlsContext != null) {
@@ -2707,12 +2697,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 // Disconnect all clients
-                DisconnectPacketBuilder disconnectPacketBuilder = new DisconnectPacketBuilder();
-                publisher.stop(disconnectPacketBuilder.build());
+                publisher.stop();
                 publisherEvents.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                successSubscriber.stop(disconnectPacketBuilder.build());
+                successSubscriber.stop();
                 successSubscriberEvents.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                unsuccessfulSubscriber.stop(disconnectPacketBuilder.build());
+                unsuccessfulSubscriber.stop();
                 unsuccessfulSubscriberEvents.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
             }
 
@@ -2758,7 +2747,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 try {
                     CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());
-                    client.stop(new DisconnectPacketBuilder().build());
+                    client.stop();
                     SubAckPacket packet = subscribeResult.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     if (ex.getCause().getClass() == CrtRuntimeException.class) {
@@ -2807,7 +2796,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 try {
                     CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());
-                    client.stop(new DisconnectPacketBuilder().build());
+                    client.stop();
                     UnsubAckPacket packet = unsubscribeResult.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     if (ex.getCause().getClass() == CrtRuntimeException.class) {
@@ -2856,7 +2845,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 try {
                     CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
-                    client.stop(new DisconnectPacketBuilder().build());
+                    client.stop();
                     PublishResult publishData = publishResult.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     if (ex.getCause().getClass() == CrtRuntimeException.class) {
@@ -2947,7 +2936,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Unacked operation size was not zero!");
                 }
 
-                publisher.stop(new DisconnectPacketBuilder().build());
+                publisher.stop();
                 events.stopFuture.get(60, TimeUnit.SECONDS);
             }
 
@@ -2996,8 +2985,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3027,8 +3015,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3057,8 +3044,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3095,8 +3081,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                         client.start();
                         events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                        DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                        client.stop(disconnect.build());
+                        client.stop();
                     }
                 }
         } catch (Exception ex) {
@@ -3155,8 +3140,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3216,8 +3200,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3284,8 +3267,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {
@@ -3353,8 +3335,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                     client.start();
                     events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                    DisconnectPacketBuilder disconnect = new DisconnectPacketBuilder();
-                    client.stop(disconnect.build());
+                    client.stop();
                 }
             }
         } catch (Exception ex) {

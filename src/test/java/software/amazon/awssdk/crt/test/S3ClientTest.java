@@ -788,8 +788,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = {
-                    new HttpHeader("Host", s3express ? S3EXPRESS_ENDPOINT : ENDPOINT),
-                    new HttpHeader("x-amz-sdk-checksum-algorithm", "SHA1")
+                    new HttpHeader("Host", s3express ? S3EXPRESS_ENDPOINT : ENDPOINT)
             };
             HttpRequest httpRequest;
             String path = objectPath == null ? "/put_object_test_10MB.txt" : objectPath;
@@ -824,12 +823,15 @@ public class S3ClientTest extends CrtTestFixture {
                         new HttpHeader("Content-Length", Integer.valueOf(contentLength).toString()));
             }
             AwsSigningConfig config = AwsSigningConfig.getDefaultS3SigningConfig(REGION, null);
-            ChecksumConfig checksumConfig = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.SHA1)
-                    .withChecksumLocation(ChecksumLocation.TRAILER).withValidateChecksum(true);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
-                    .withResponseHandler(responseHandler)
-                    .withChecksumConfig(checksumConfig);
+                    .withResponseHandler(responseHandler);
+
+            if(!contentMD5) {
+                ChecksumConfig checksumConfig = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.SHA1)
+                        .withChecksumLocation(ChecksumLocation.TRAILER).withValidateChecksum(true);
+                metaRequestOptions = metaRequestOptions.withChecksumConfig(checksumConfig);
+            }
             if (s3express) {
                 config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_S3EXPRESS);
                 metaRequestOptions = metaRequestOptions.withSigningConfig(config);
@@ -860,7 +862,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        testS3PutHelper(false, false, null, false, 16 * 1024 * 1024, true);
+        testS3PutHelper(false, true, null, false, 16 * 1024 * 1024, true);
     }
 
     // Test that we can upload by passing a filepath instead of an HTTP body stream

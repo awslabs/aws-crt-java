@@ -329,7 +329,7 @@ public final class CRT {
                 }
             }
 
-            if (!tempSharedLib.setWritable(false)) {
+            if (!tempSharedLib.setReadOnly()) {
                 throw new CrtRuntimeException("Unable to make shared library read-only");
             }
 

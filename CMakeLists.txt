@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
-option(CRT_FIPS "Whether to build with FIPS compliance" ON)
+option(CRT_FIPS "Whether to build with FIPS compliance" OFF)
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
@@ -61,13 +61,13 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        if (CMAKE_SIZEOF_VOID_P EQUAL 4)
-            # 32 bit turn off fips
-            set(CRT_FIPS OFF)
-        endif()
-        message("Build with FIPS: " ${CRT_FIPS})
         set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
+        message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
+            if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+                # Error out for the known issue.
+                message(FATAL_ERROR "Static build for FIPS is not supported on 32bit platform.")
+            endif()
             set(FIPS ON CACHE BOOL "FIPS compliance")
             set(PERL_EXECUTABLE "perl")
             if (DEFINED ENV{GO_PATH})

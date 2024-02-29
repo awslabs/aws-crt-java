@@ -4,7 +4,7 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -P continuous-integration -B compile"
+        "aws-crt-java-build"
     ],
     "test_steps": [
         "aws-crt-java-test"
@@ -37,9 +37,6 @@
     },
     "targets": {
         "linux": {
-            "!build_steps": [
-                "mvn -P continuous-integration -B compile"
-            ],
             "!test_steps": [
                 "aws-crt-java-test"
             ],
@@ -89,7 +86,7 @@
                         "openjdk8"
                     ],
                     "!build_steps": [
-                        "mvn -P continuous-integration -B compile",
+                        "aws-crt-java-build",
                         "build-classifier"
                     ],
                     "!test_steps": [
@@ -97,10 +94,7 @@
                     ]
                 },
                 "openwrt": {
-                    "!packages": [],
-                    "!build_steps": [
-                        "mvn -P continuous-integration -B compile"
-                    ]
+                    "!packages": []
                 }
             }
         },
@@ -148,9 +142,6 @@
             "!build_env": {
                 "JAVA_HOME": "/usr/local/openjdk8"
             },
-            "!build_steps": [
-                "mvn -P continuous-integration -B compile"
-            ],
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]

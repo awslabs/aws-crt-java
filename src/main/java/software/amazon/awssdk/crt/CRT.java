@@ -506,12 +506,12 @@ public final class CRT {
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
-     * @return A user-friendly description of the error, get a corresponding string identifier for it.
+     * @return A user-friendly description of the error
      */
     public static native String awsErrorString(int errorCode);
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding string identifier for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call

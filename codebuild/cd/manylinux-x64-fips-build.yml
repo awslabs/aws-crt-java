@@ -7,6 +7,9 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - ./aws/install
   build:
     commands:
       - cd aws-crt-java
@@ -18,15 +21,8 @@ phases:
 
   post_build:
     commands:
-      # get the shared libs from the native build
-      - mkdir -p ../dist
-      # Don't include the shared lib as we don't want fips to be part of the uber jar
-      # get the platform specific jar with classifier
-      - cp target/*.jar ../dist/
-
-artifacts:
-  files:
-    - 'dist/**/*'
+      # upload artifacts to S3
+      - aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
 
 cache:
   paths:

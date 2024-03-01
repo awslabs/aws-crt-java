@@ -16,11 +16,10 @@ chmod a+x builder
 
 GIT_TAG=$(git describe --tags)
 
-./builder build -p aws-crt-java run_tests=false --cmake-extra=-DCRT_FIPS=ON
+./builder build -p aws-crt-java run_tests=false --target=linux-arm64 --cmake-extra=-DCRT_FIPS=ON
 mv target/cmake-build/aws-crt-java/* target/cmake-build/
 
-JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.382.b05-1.amzn2.0.2.aarch64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=linux-aarch_64-fips
+JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=linux-aarch_64-fips
 
-# Upload the jar to S3
-# Don't upload the shared lib as we don't want fips to be part of the uber jar
-aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"
+# the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for rest of the linux platforms.
+aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib

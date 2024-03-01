@@ -12,12 +12,6 @@ if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
 fi
 
-SKIP_INSTALL=
-
-if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
-    SKIP_INSTALL=--skip-install
-fi
-
 if [[ $AWS_CRT_TARGET == linux-armv8 ]]; then
     CLASSIFIER=linux-aarch_64
 else
@@ -43,3 +37,8 @@ JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B package -DskipTests -Dshared
 
 aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"
+
+if [[ $AWS_CRT_TARGET != linux-armv8 ]]; then
+    # the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for rest of the linux platforms.
+    aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
+fi

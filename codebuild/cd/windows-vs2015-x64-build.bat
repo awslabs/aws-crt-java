@@ -15,6 +15,7 @@ for /f %%A in ('git describe --tags') do (
 mvn -X install -DskipTests -Dcrt.classifier=windows-x86_64 || goto error
 
 aws s3 cp --recursive --exclude "*" --include "*.dll" .\target\cmake-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/lib
+aws s3 cp --recursive --exclude "*" --include "*.dll" .\target\cmake-build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/fips_lib
 aws s3 cp --recursive --exclude "*" --include "*.jar" .\target s3://aws-crt-java-pipeline/%GIT_TAG%/jar
 
 

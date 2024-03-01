@@ -502,11 +502,11 @@ public final class CRT {
     public static native int awsLastError();
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding description for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
-     * @return A user-friendly description of the error
+     * @return A user-friendly description of the error, get a corresponding string identifier for it.
      */
     public static native String awsErrorString(int errorCode);
 

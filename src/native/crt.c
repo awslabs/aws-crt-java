@@ -26,6 +26,8 @@
 
 #include <stdio.h>
 
+#include <openssl/crypto.h>
+
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"

@@ -16,7 +16,7 @@ class AWSCrtJavaBuild(Builder.Action):
         fips_build = True if args.fips else False
         if fips_build:
             env.shell.exec("mvn", "-P", "continuous-integration", "-B", "compile",
-                           "-Dcrt.classifier=ON", check=True)
+                           "-Dcmake.crt_fips=ON", check=True)
         else:
             env.shell.exec("mvn", "-P", "continuous-integration",
                            "-B", "compile", check=True)

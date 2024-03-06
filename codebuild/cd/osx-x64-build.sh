@@ -4,7 +4,7 @@ set -ex
 
 cd $(dirname $0)/../..
 
-git submodule update --init
+# git submodule update --init
 
 export GIT_TAG=$(git describe --tags)
 

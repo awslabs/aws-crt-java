@@ -13,7 +13,7 @@ phases:
   build:
     commands:
       - cd aws-crt-java
-      - git submodule update --init
+      # - git submodule update --init
       - curl -OL https://go.dev/dl/go1.21.6.linux-amd64.tar.gz && mkdir ./go
       - tar -C ./go -xvf go1.21.6.linux-amd64.tar.gz
       - export PATH=$PATH:./go/go/bin
@@ -22,6 +22,7 @@ phases:
   post_build:
     commands:
       # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
       - aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
 
 cache:

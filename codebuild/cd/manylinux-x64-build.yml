@@ -13,12 +13,13 @@ phases:
   build:
     commands:
       - cd aws-crt-java
-      - git submodule update --init
+      # - git submodule update --init
       - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64
 
   post_build:
     commands:
       # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
       - aws s3 cp --recursive --exclude "*" --include "*.so" ./target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
       - aws s3 cp --recursive --exclude "*" --include "aws-crt*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar
 cache:

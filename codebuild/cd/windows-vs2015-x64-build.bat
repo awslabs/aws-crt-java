@@ -6,7 +6,7 @@ echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR=Visual Studio 14 2015 Win64
 
-git submodule update --init
+@REM git submodule update --init
 
 for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A

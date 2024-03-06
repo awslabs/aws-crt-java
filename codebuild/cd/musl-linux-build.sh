@@ -13,9 +13,8 @@ echo "Using builder version ${BUILDER_VERSION}"
 
 aws ecr get-login-password | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
 export DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${BUILDER_VERSION}
-if [[$AWS_CRT_ARCH == armv7]]; then
-    docker run --rm --privileged multiarch/qemu-user-static:arm --reset -p yes
-fi
+export QEMU_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/multiarch-qemu-user-static:latest
+docker run --rm --privileged ${QEMU_IMAGE} --reset -p yes
 
 export CRT_CLASSIFIER=${CLASSIFIER}
 export BRANCH_TAG=$(git describe --tags)

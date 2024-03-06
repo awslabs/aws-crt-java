@@ -654,6 +654,30 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     }
 }
 
+/* FIPS mode can be checked if OpenSSL was configured and built for FIPS which then defines OPENSSL_FIPS.
+ *
+ * AWS-LC always defines FIPS_mode() that you can call and check what the library was built with. It does not define
+ * a public OPENSSL_FIPS/AWSLC_FIPS macro that we can (or need to) check here
+ *
+ * Safeguard with macro's, for example because Libressl dosn't define
+ * FIPS_mode() by default.
+ *
+ * Note: FIPS_mode() does not change the FIPS state of libcrypto. This only returns the current state. Applications
+ * using s2n must call FIPS_mode_set(1) prior to s2n_init.
+ * */
+JNIEXPORT
+jboolean JNICALL Java_software_amazon_awssdk_crt_CRT_libcryptoIsFIPS(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+
+#if defined(OPENSSL_FIPS) || defined(OPENSSL_IS_AWSLC)
+    if (FIPS_mode() == 1) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {
     struct aws_string *string = aws_string_new_from_array(aws_jni_get_allocator(), native_data->ptr, native_data->len);
     AWS_FATAL_ASSERT(string != NULL);

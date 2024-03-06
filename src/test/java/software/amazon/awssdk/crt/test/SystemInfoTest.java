@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+
 import software.amazon.awssdk.crt.*;
 
 import static org.junit.Assert.*;
@@ -34,5 +35,14 @@ public class SystemInfoTest extends CrtTestFixture {
         }
 
         assertEquals(processorCount, iteratedCpuCount);
+    }
+
+    @Test
+    public void testLibcryptoIsFIPS() {
+        if(System.getenv("CRT_FIPS") != null) {
+            assertTrue(CRT.libcryptoIsFIPS());
+        } else {
+            assertFalse(CRT.libcryptoIsFIPS());
+        }
     }
 }

@@ -548,7 +548,7 @@ public final class CRT {
         nativeCheckJniExceptionContract(clearException);
     }
 
-    public native boolean libcryptoIsFIPS();
+    public static native boolean libcryptoIsFIPS();
 
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 

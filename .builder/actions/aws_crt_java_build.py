@@ -15,3 +15,11 @@ class AWSCrtJavaBuild(Builder.Action):
         else:
             env.shell.exec("mvn", "-P", "continuous-integration",
                            "-B", "compile", check=True)
+
+        # allow custom python to be used
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--calssifier')
+        args = parser.parse_known_args(env.args.args)[0]
+        if args.calssifier:
+            env.shell.exec("mvn", "-B", "install", "-DskipTests", "-Dshared-lib.skip=true",
+                           f"-Dcrt.classifier={args.calssifier}", check=True)

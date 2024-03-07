@@ -87,7 +87,6 @@
                     ],
                     "!build_steps": [
                         "aws-crt-java-build",
-                        "build-classifier"
                     ],
                     "!test_steps": [
                         "aws-crt-java-test"

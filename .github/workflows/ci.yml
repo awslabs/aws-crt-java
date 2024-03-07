@@ -120,7 +120,7 @@ jobs:
         run: |
           export CRT_FIPS=ON
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DCRT_FIPS=ON --fips ON
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --cmake-extra=-DCRT_FIPS=ON
 
   # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
   #

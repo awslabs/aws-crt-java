@@ -86,7 +86,7 @@
                         "openjdk8"
                     ],
                     "!build_steps": [
-                        "aws-crt-java-build",
+                        "aws-crt-java-build"
                     ],
                     "!test_steps": [
                         "aws-crt-java-test"

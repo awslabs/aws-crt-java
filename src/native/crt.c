@@ -24,15 +24,14 @@
 #include <aws/mqtt/mqtt.h>
 #include <aws/s3/s3.h>
 
-#include <stdio.h>
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"
+#include <stdio.h>
 
 #ifdef AWS_OS_LINUX
-    #include <openssl/crypto.h>
+#    include <openssl/crypto.h>
 #endif
-
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;

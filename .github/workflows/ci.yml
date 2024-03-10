@@ -133,8 +133,8 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           cd crt/aws-lc/
-          git fetch origin
-          git branch
+          git checkout main && git pull
+          git checkout fips-2022-11-02
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
 
 

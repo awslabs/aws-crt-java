@@ -124,9 +124,10 @@ jobs:
     runs-on: ubuntu-22.04 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
+          fetch-depth: 0
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           export CRT_FIPS=ON

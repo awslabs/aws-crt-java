@@ -132,7 +132,6 @@ jobs:
           export CRT_FIPS=ON
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
           cd crt/aws-lc/ && git checkout fips-2022-11-02 && cd ../../
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
 

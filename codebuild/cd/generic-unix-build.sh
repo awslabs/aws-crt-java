@@ -4,7 +4,7 @@ set -ex
 
 cd $(dirname $0)/../..
 
-# git submodule update --init
+git submodule update --init
 
 AWS_CRT_HOST=$(uname | tr '[:upper:]' '[:lower:]')-$(uname -m)
 

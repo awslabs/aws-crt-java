@@ -4,7 +4,8 @@ set -ex
 
 cd $(dirname $0)/../..
 
-# git submodule update --init
+git submodule update --init
+# TODO: use the main branch for aws-lc FIPS build as https://github.com/aws/aws-lc/pull/1464 cannot be backport to FIPS approved branch until the labs validate it.
 
 # Pry the builder version this CRT is using out of ci.yml
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')

@@ -8,7 +8,7 @@ fi
 
 env
 
-# git submodule update --init
+git submodule update --init
 
 curl https://www.amazontrust.com/repository/AmazonRootCA1.pem --output /tmp/AmazonRootCA1.pem
 cert=$(aws secretsmanager get-secret-value --secret-id "unit-test/certificate" --query "SecretString" | cut -f2 -d":" | cut -f2 -d\") && echo -e "$cert" >/tmp/certificate.pem

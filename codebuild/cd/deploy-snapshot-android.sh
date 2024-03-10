@@ -3,7 +3,7 @@
 set -ex
 set -o pipefail # Make sure one process in pipe fail gets bubble up
 
-# git submodule update --init
+git submodule update --init
 cd ./android
 
 GPG_KEY=$(cat /tmp/aws-sdk-common-runtime.key.asc)

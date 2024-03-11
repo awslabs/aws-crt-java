@@ -3,8 +3,6 @@ import Builder
 import os
 import argparse
 
-# This action is used by the musl-linux-build.sh script to build the binaries for release.
-
 
 class AWSCrtJavaBuild(Builder.Action):
 

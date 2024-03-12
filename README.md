@@ -82,7 +82,7 @@ From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-cr
 
 The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
 
-The FIPS compliant "uber" jars are available as a classifier, which contains the same supported platforms as the regular "uber" jar. For linux, `libcryptoIsFIPS` is available to check the libcrypto built with is FIPS compliant or not. Note: for linux, only 64bit platform with glibc are FIPS compliant.
+The FIPS compliant "uber" jars are available as a classifier "fips-compat", which contains the same supported platforms as the regular "uber" jar. `isFIPS` is available to check the libcrypto built with is FIPS compliant or not. Note: for linux, only 64bit platform with glibc are FIPS compliant.
 
 ``` xml
         <!-- Platform-specific Linux x86_64 JAR -->
@@ -117,7 +117,7 @@ The FIPS compliant "uber" jars are available as a classifier, which contains the
 - osx-x86_64
 - windows-x86_32
 - windows-x86_64
-- fips (no auto-detect)
+- fips-compat (no auto-detect)
 
 ### Auto-detect
 

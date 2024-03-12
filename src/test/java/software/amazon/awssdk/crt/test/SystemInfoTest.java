@@ -40,8 +40,8 @@ public class SystemInfoTest extends CrtTestFixture {
     }
 
     @Test
-    public void testLibcryptoIsFIPS() {
+    public void testIsFIPS() {
         Assume.assumeTrue(System.getenv("CRT_FIPS") != null);
-        assertTrue(CRT.libcryptoIsFIPS());
+        assertTrue(CRT.isFIPS());
     }
 }

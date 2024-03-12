@@ -67,7 +67,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DBUILD_DEPS=ON -DCMAKE_VERBOSE_MAKEFILE=ON"
+                arguments "-DBUILD_DEPS=ON"
             }
         }
     }

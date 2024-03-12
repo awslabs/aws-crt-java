@@ -22,8 +22,7 @@ fi
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
 echo "Using builder version ${BUILDER_VERSION}"
 
-# aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
-aws s3 cp s3://aws-crt-builder/channels/fips/builder.pyz ./builder
+aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
 chmod a+x builder
 
 # Upload the lib to S3
@@ -39,6 +38,8 @@ aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"
 
 if [[ $AWS_CRT_TARGET != linux-armv8 ]]; then
-    # the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for rest of the linux platforms.
+    # This script used to compile for linux-armv6, linux-armv7 and linux-armv8 with no-fips
+    # Only when compile for linux-armv8, the shared lib should only be uploaded to /lib and not for /fips_lib
+    # Because: the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for all other platforms.
     aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
 fi

@@ -25,5 +25,5 @@ export GIT_TAG=$(git describe --tags)
 
 aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"
-# the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for rest of the linux platforms.
+# the FIPS subset contains FIPS build for linux-armv8 and linux-x64, and NON-FIPS build for all other platforms.
 aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib

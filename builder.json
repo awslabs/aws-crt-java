@@ -37,9 +37,6 @@
     },
     "targets": {
         "linux": {
-            "!test_steps": [
-                "aws-crt-java-test"
-            ],
             "architectures": {
                 "armv6": {
                     "!packages": [],
@@ -84,12 +81,6 @@
                     "!packages": [
                         "maven",
                         "openjdk8"
-                    ],
-                    "!build_steps": [
-                        "aws-crt-java-build"
-                    ],
-                    "!test_steps": [
-                        "aws-crt-java-test"
                     ]
                 },
                 "openwrt": {

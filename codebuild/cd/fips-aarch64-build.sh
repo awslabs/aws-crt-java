@@ -5,7 +5,7 @@ set -ex
 cd $(dirname $0)/../..
 
 git submodule update --init
-# use hte FIPS approved branch.
+# use the FIPS approved branch.
 cd crt/aws-lc/ && git checkout fips-2022-11-02 && cd ../../
 
 # Pry the builder version this CRT is using out of ci.yml

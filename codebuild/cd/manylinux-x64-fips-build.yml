@@ -14,8 +14,8 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      # use the FIPS approved branch.
-      - cd crt/aws-lc/ && git checkout fips-2022-11-02 && cd ../../
+      # double check aws-lc is the FIPS approved branch.
+      - bash ./codebuild/cd/test-fips-branch.sh
       - curl -OL https://go.dev/dl/go1.21.6.linux-amd64.tar.gz && mkdir ./go
       - tar -C ./go -xvf go1.21.6.linux-amd64.tar.gz
       - export PATH=$PATH:./go/go/bin

@@ -5,15 +5,14 @@ set -ex
 cd $(dirname $0)/../..
 
 git submodule update --init
-# use the FIPS approved branch.
-cd crt/aws-lc/ && git checkout fips-2022-11-02 && cd ../../
+# double check aws-lc is the FIPS approved branch.
+bash ./codebuild/cd/test-fips-branch.sh
 
 # Pry the builder version this CRT is using out of ci.yml
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
 echo "Using builder version ${BUILDER_VERSION}"
 
-# aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
-aws s3 cp s3://aws-crt-builder/channels/fips/builder.pyz ./builder
+aws s3 cp s3://aws-crt-builder/releases/${BUILDER_VERSION}/builder.pyz ./builder
 chmod a+x builder
 
 GIT_TAG=$(git describe --tags)

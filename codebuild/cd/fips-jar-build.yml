@@ -18,6 +18,9 @@ phases:
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/${GIT_TAG}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
       # Override with the FIPS libs
       - aws s3 cp --recursive s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      # Run a test to make sure we get the FIPS libs
+      - export CRT_FIPS=ON
+      - mvn test -Dtest=software.amazon.awssdk.crt.test.SystemInfoTest -Dshared-lib.skip=true
       - mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=fips-compat
 
   post_build:

@@ -19,7 +19,6 @@ phases:
       # upload artifacts to S3
       - export GIT_TAG=$(git describe --tags)
       - aws s3 cp --recursive --exclude "*" --include "*.so" ./target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
-      - aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
       - aws s3 cp --recursive --exclude "*" --include "aws-crt*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar
 
 cache:

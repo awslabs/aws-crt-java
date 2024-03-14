@@ -14,7 +14,6 @@ class AWSCrtJavaBuild(Builder.Action):
             env.shell.exec("mvn", "-P", "continuous-integration",
                            "-B", "compile", check=True)
 
-        # allow custom python to be used
         parser = argparse.ArgumentParser()
         parser.add_argument('--classifier')
         args = parser.parse_known_args(env.args.args)[0]

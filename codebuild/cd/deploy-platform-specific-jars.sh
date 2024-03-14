@@ -6,10 +6,10 @@ if [[ $DEPLOY_VERSION = *-SNAPSHOT ]]; then
   # snapshot doesn't need to gpg sign the file to deploy
   DEPLOY_FILE_GOAL=deploy:deploy-file
   DEPLOY_REPOSITORY_URL=https://aws.oss.sonatype.org/content/repositories/snapshots
-
 else
   # Need to sign the file to deploy to staging repo
-  DEPLOY_FILE_GOAL=gpg:sign-and-deploy-file
+  # pin to 3.1.0, somehow the latest 3.2.0 breaks the file deploy with 401.
+  DEPLOY_FILE_GOAL=org.apache.maven.plugins:maven-gpg-plugin:3.1.0:sign-and-deploy-file
   DEPLOY_REPOSITORY_URL=https://aws.oss.sonatype.org:443/service/local/staging/deployByRepositoryId/${STAGING_REPO_ID}
 fi
 

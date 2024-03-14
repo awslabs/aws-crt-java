@@ -10,7 +10,7 @@ cd ./crt/aws-lc || exit 1
 current_commit=$(git rev-parse HEAD)
 
 # Check if the current commit is from the "fips-2022-11-02" branch
-if git merge-base --is-ancestor "$current_commit" fips-2022-11-02; then
+if git merge-base --is-ancestor "$current_commit" "origin/fips-2022-11-02"; then
     echo "Current aws-lc commit is from the 'fips-2022-11-02' branch"
     status=0
 else

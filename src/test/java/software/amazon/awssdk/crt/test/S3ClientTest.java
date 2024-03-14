@@ -857,6 +857,7 @@ public class S3ClientTest extends CrtTestFixture {
         testS3PutHelper(false, false, null, false, 16 * 1024 * 1024, false);
     }
 
+    // MD5 is not FIPS allowed. Make sure the cypto lib we used still supports MD5.
     @Test
     public void testS3PutWithMD5() throws IOException {
         skipIfAndroid();

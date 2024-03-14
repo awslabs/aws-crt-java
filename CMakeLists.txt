@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
-option(CRT_FIPS "Whether to build with FIPS compliance" OFF)
+option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
 if (POLICY CMP0069)
     cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
@@ -123,6 +123,10 @@ include(UseJava)
 include(AwsPlatformDetect)
 include(AwsSharedLibSetup)
 include(AwsCRuntime)
+
+if (CRT_FIPS AND NOT FIPS)
+    message(FATAL_ERROR "CRT_FIPS can only be set when build with aws-lc.")
+endif()
 
 aws_determine_local_c_runtime(AWS_C_RUNTIME)
 

@@ -104,9 +104,6 @@ jobs:
 
   linux-fips-x64:
     runs-on: ubuntu-22.04 # latest
-    strategy:
-      matrix:
-        awslc-branch: [main, fips-2022-11-02]
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4
@@ -115,19 +112,16 @@ jobs:
           fetch-depth: 0
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
+          bash codebuild/cd/test-fips-branch.sh
           export CRT_FIPS=ON
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
-          cd crt/aws-lc/ && git checkout ${{ matrix.awslc-branch }} && cd ../../
           ./builder build -p ${{ env.PACKAGE_NAME }}
 
 
 
   linux-fips-armv8:
     runs-on: ubuntu-22.04 # latest
-    strategy:
-      matrix:
-        awslc-branch: [main, fips-2022-11-02]
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4
@@ -136,10 +130,10 @@ jobs:
           fetch-depth: 0
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
+          bash codebuild/cd/test-fips-branch.sh
           export CRT_FIPS=ON
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
-          cd crt/aws-lc/ && git checkout ${{ matrix.awslc-branch }} && cd ../../
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
 
 

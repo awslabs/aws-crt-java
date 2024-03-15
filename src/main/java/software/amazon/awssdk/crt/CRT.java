@@ -548,7 +548,10 @@ public final class CRT {
         nativeCheckJniExceptionContract(clearException);
     }
 
+    public static native boolean isFIPS();
+
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 
     private static native void onJvmShutdown();
+
 };

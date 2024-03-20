@@ -157,7 +157,7 @@ Platforms without FIPS compliance are also included in this jar, for compatibili
 * **NOT compliant**: linux-armv6, linux-armv7, linux-armv7-musl, linux-aarch_64-musl, linux-x86_32, linux-x86_64-musl, osx-aarch_64, osx-x86_64, windows-x86_32, windows-x86_64
 
 > [!WARNING]
-> The classifier and the platforms with FIPS compliant are subjected to be changed in the future.
+> The classifier, and platforms with FIPS compliance are subject to change in the future. 
 
 
 ## System Properties

@@ -82,9 +82,14 @@ From maven: (https://search.maven.org/artifact/software.amazon.awssdk.crt/aws-cr
 
 The `aws-crt` JAR in Maven Central is a large "uber" jar that contains compiled C libraries for many different platforms (Windows, Linux, etc). If size is an issue, you can pick a smaller platform-specific JAR by setting the `<classifier>`.
 
-The classifier `fips-compat` provides an "uber" jar with FIPS compliance on *some platforms*. **WARNING:** Platforms without FIPS compliance are also included in this jar, for compatibility's sake. Check `CRT.isFIPS()` at runtime to ensure you are on a FIPS compliant platform. The current breakdown is:
-* **FIPS compliant**: linux-aarch_64, linux-x86_64
-* **NOT compliant**: linux-armv6, linux-armv7, linux-armv7-musl, linux-aarch_64-musl, linux-x86_32, linux-x86_64-musl, osx-aarch_64, osx-x86_64, windows-x86_32, windows-x86_64
+The classifier `fips-where-available` provides an "uber" jar with FIPS compliance on *some platforms*.
+
+> [!WARNING]
+> Platforms without FIPS compliance are also included in this jar, for compatibility's sake. Check `CRT.isFIPS()` at runtime to ensure you are on a FIPS compliant platform. The current breakdown is:
+> * **FIPS compliant**: linux-aarch_64, linux-x86_64
+> * **NOT compliant**: linux-armv6, linux-armv7, linux-armv7-musl, linux-aarch_64-musl, linux-x86_32, linux-x86_64-musl, osx-aarch_64, osx-x86_64, windows-x86_32, windows-x86_64 \
+> The classifier and the platforms with FIPS compliant are subjected to be changed in the future.
+
 
 ``` xml
         <!-- Platform-specific Linux x86_64 JAR -->
@@ -119,7 +124,7 @@ The classifier `fips-compat` provides an "uber" jar with FIPS compliance on *som
 - osx-x86_64
 - windows-x86_32
 - windows-x86_64
-- fips-compat (no auto-detect)
+- fips-where-available (no auto-detect)
 
 ### Auto-detect
 

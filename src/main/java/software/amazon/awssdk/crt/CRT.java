@@ -407,6 +407,10 @@ public final class CRT {
 
     private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+
         String[] platforms = new String[] {
                 // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),

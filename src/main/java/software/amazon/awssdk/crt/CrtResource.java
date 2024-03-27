@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.HashMap;
@@ -36,11 +37,11 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Debug/diagnostic data about a CrtResource object
      */
-    public class ResourceInstance {
+    public static class ResourceInstance {
         public long nativeHandle;
         public final String canonicalName;
         private Throwable instantiation;
-        private CrtResource wrapper;
+        private final CrtResource wrapper;
 
         public ResourceInstance(CrtResource wrapper, String name) {
             canonicalName = name;
@@ -86,17 +87,18 @@ public abstract class CrtResource implements AutoCloseable {
      * Primarily intended for testing only.  Tracks the number of non-closed resources and signals
      * whenever a zero count is reached.
      */
-    private static boolean debugNativeObjects = System.getProperty(NATIVE_DEBUG_PROPERTY_NAME) != null;
+    private static final boolean debugNativeObjects = System.getProperty(NATIVE_DEBUG_PROPERTY_NAME) != null;
     private static int resourceCount = 0;
     private static final Lock lock = new ReentrantLock();
     private static final Condition emptyResources  = lock.newCondition();
     private static final AtomicLong nextId = new AtomicLong(0);
+    private static final Instant creationTime = Instant.now();
 
     private final ArrayList<CrtResource> referencedResources = new ArrayList<>();
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private long nativeHandle;
-    private AtomicInteger refCount = new AtomicInteger(1);
-    private long id = nextId.getAndAdd(1);
-    private Instant creationTime = Instant.now();
+    private final AtomicInteger refCount = new AtomicInteger(1);
+    private final long id = nextId.getAndAdd(1);
     private String description;
 
     static {
@@ -123,7 +125,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Marks a resource as referenced by this resource.
      * @param resource The resource to add a reference to
      */
-    public void addReferenceTo(CrtResource resource) {
+    public final void addReferenceTo(CrtResource resource) {
         resource.addRef();
         synchronized(this) {
             referencedResources.add(resource);
@@ -138,7 +140,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Removes a reference from this resource to another.
      * @param resource The resource to remove a reference to
      */
-    public void removeReferenceTo(CrtResource resource) {
+    public final void removeReferenceTo(CrtResource resource) {
         boolean removed = false;
         synchronized(this) {
             removed = referencedResources.remove(resource);
@@ -164,7 +166,7 @@ public abstract class CrtResource implements AutoCloseable {
      * @param oldReference resource to stop referencing
      * @param newReference resource to start referencing
      */
-    protected void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
+    protected final void swapReferenceTo(CrtResource oldReference, CrtResource newReference) {
         if (oldReference != newReference) {
             if (newReference != null) {
                 addReferenceTo(newReference);
@@ -175,11 +177,21 @@ public abstract class CrtResource implements AutoCloseable {
         }
     }
 
+    protected void acquireReadLock() {
+        this.rwl.readLock().lock();
+    }
+
+    protected void releaseReadLock() {
+        this.rwl.readLock().unlock();
+    }
+
+
     /**
      * Takes ownership of a native object where the native pointer is tracked as a long.
      * @param handle pointer to the native object being acquired
      */
     protected void acquireNativeHandle(long handle) {
+        this.rwl.writeLock().lock();
         if (!isNull()) {
             throw new IllegalStateException("Can't acquire >1 Native Pointer");
         }
@@ -202,12 +214,14 @@ public abstract class CrtResource implements AutoCloseable {
 
         nativeHandle = handle;
         incrementNativeObjectCount();
+        this.rwl.writeLock().unlock();
     }
 
     /**
      * Begins the cleanup process associated with this native object and performs various debug-level bookkeeping operations.
      */
     private void release() {
+        this.rwl.writeLock().lock();
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Releasing class %s(%d)", this.getClass().getCanonicalName(), id));
 
@@ -223,6 +237,7 @@ public abstract class CrtResource implements AutoCloseable {
 
             nativeHandle = 0;
         }
+        this.rwl.writeLock().unlock();
     }
 
     /**
@@ -236,12 +251,13 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Increments the reference count to this resource.
      */
-    public void addRef() {
+    public final void addRef() {
         refCount.incrementAndGet();
     }
 
     /**
-     * Required override method that must begin the release process of the acquired native handle
+     * Required override method that must begin the release process of the acquired native handle.
+     * Only invoked with the write lock held.
      */
     protected abstract void releaseNativeHandle();
 
@@ -258,22 +274,22 @@ public abstract class CrtResource implements AutoCloseable {
      * resources it means it has already been cleaned up or was not properly constructed.
      * @return true if no native resource is bound, false otherwise
      */
-    public boolean isNull() {
+    public final boolean isNull() {
         return (nativeHandle == NULL);
     }
 
-    /*
+    /**
      * An ugly and unfortunate necessity.  The CRTResource currently entangles two loosely-coupled concepts:
      *  (1) management of a native resource
      *  (2) referencing of other resources and the resulting implied cleanup process
-     *
+     * <p>
      * Some classes don't represent an actual native resource.  Instead, they just want to use
      * the reference and cleanup framework.  See AwsIotMqttConnectionBuilder.java for example.
      *
      */
 
     @Override
-    public void close() {
+    public final void close() {
         decRef();
     }
 
@@ -281,7 +297,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
      */
-    public void decRef() {
+    public final void decRef() {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
@@ -334,7 +350,7 @@ public abstract class CrtResource implements AutoCloseable {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
         synchronized(this) {
-            if (referencedResources.size() > 0) {
+            if (!referencedResources.isEmpty()) {
                 builder.append("\n   Forward references by Id: ");
                 for (CrtResource reference : referencedResources) {
                     builder.append(String.format("%d ", reference.id));

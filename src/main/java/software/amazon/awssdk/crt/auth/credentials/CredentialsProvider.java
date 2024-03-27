@@ -25,11 +25,19 @@ public class CredentialsProvider extends CrtResource {
      * @return A Future for Credentials that will be completed when they are acquired.
      */
     public CompletableFuture<Credentials> getCredentials() {
+        acquireReadLock();
         CompletableFuture<Credentials> future = new CompletableFuture<>();
         try {
+            if (isNull()) {
+                future.completeExceptionally(new IllegalStateException(
+                        "CredentialsProvider has been closed"));
+                return future;
+            }
             credentialsProviderGetCredentials(this, future, getNativeHandle());
         } catch (Exception e) {
             future.completeExceptionally(e);
+        } finally {
+            releaseReadLock();
         }
 
         return future;

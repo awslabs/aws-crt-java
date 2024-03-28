@@ -4,18 +4,20 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -P continuous-integration -B compile"
+        "aws-crt-java-build"
     ],
     "test_steps": [
         "aws-crt-java-test"
     ],
     "+imports": [
-        "JDK8"
+        "JDK8",
+        "golang"
     ],
     "build_dir": "target/cmake-build",
     "build_env": {
         "JAVA_HOME": "{java_home}",
-        "OVERRIDE_JAVA_HOME": "{java_home}"
+        "OVERRIDE_JAVA_HOME": "{java_home}",
+        "GOPROXY": "https://goproxy.io,direct"
     },
     "test_env": {
         "JAVA_HOME": "{java_home}",
@@ -35,12 +37,6 @@
     },
     "targets": {
         "linux": {
-            "!build_steps": [
-                "mvn -P continuous-integration -B compile"
-            ],
-            "!test_steps": [
-                "aws-crt-java-test"
-            ],
             "architectures": {
                 "armv6": {
                     "!packages": [],
@@ -87,18 +83,14 @@
                         "openjdk8"
                     ],
                     "!build_steps": [
-                        "mvn -P continuous-integration -B compile",
-                        "build-classifier"
+                        "aws-crt-java-build"
                     ],
                     "!test_steps": [
                         "aws-crt-java-test"
                     ]
                 },
                 "openwrt": {
-                    "!packages": [],
-                    "!build_steps": [
-                        "mvn -P continuous-integration -B compile"
-                    ]
+                    "!packages": []
                 }
             }
         },
@@ -146,9 +138,6 @@
             "!build_env": {
                 "JAVA_HOME": "/usr/local/openjdk8"
             },
-            "!build_steps": [
-                "mvn -P continuous-integration -B compile"
-            ],
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]

@@ -7,6 +7,9 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
+      # AWSCLI v2 not available on x86, so installing v1
+      - /opt/python/cp37-cp37m/bin/python -m pip install --upgrade awscli
+      - ln -s `find /opt -name aws` /usr/local/bin/aws
   build:
     commands:
       - cd aws-crt-java
@@ -14,15 +17,10 @@ phases:
       - JAVA_HOME=/opt/jdk1.8.0_201/ setarch i386 mvn -B package -DskipTests -Punix-x86 -Dcrt.classifier=linux-x86_32
   post_build:
     commands:
-      # get the shared libs from the native build
-      - mkdir -p ../dist
-      - cp -rv target/cmake-build/lib ../dist/
-      # get the platform specific jar with classifier
-      - cp target/*.jar ../dist/
-
-artifacts:
-  files:
-    - 'dist/**/*'
+      # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
+      - aws s3 cp --recursive --exclude "*" --include "*.so" ./target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+      - aws s3 cp --recursive --exclude "*" --include "aws-crt*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar
 
 cache:
   paths:

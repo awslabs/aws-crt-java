@@ -2,22 +2,15 @@
 
 set -ex
 
-cd `dirname $0`/../..
+cd $(dirname $0)/../..
 
 git submodule update --init
 
-AWS_CRT_HOST=`uname | tr '[:upper:]' '[:lower:]'`-`uname -m`
+AWS_CRT_HOST=$(uname | tr '[:upper:]' '[:lower:]')-$(uname -m)
 
 if [ -z "$AWS_CRT_TARGET" ]; then
     AWS_CRT_TARGET=$AWS_CRT_HOST
 fi
-
-SKIP_INSTALL=
-
-if [[ "$AWS_CRT_TARGET" != "$AWS_CRT_HOST" ]]; then
-    SKIP_INSTALL=--skip-install
-fi
-
 
 if [[ $AWS_CRT_TARGET == linux-armv8 ]]; then
     CLASSIFIER=linux-aarch_64

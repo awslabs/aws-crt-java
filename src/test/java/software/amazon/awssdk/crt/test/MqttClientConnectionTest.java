@@ -7,6 +7,7 @@
 
 import org.junit.Assume;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -179,6 +180,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     fail(ex.toString());
                 }
                 close();
+
+                assertEquals("Unexpected onConnectionSuccess call: ", 1, connectionEventsStatistics.onConnectionSuccessCalled);
+                assertEquals("Unexpected onConnectionClosed call: ", 1, connectionEventsStatistics.onConnectionClosedCalled);
             }
      }
 
@@ -212,6 +216,9 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     fail(ex.toString());
                 }
                 close();
+
+                assertEquals("Unexpected onConnectionFailure call: ", 1, connectionEventsStatistics.onConnectionFailureCalled);
+                assertEquals("Unexpected onConnectionClosed call: ", 0, connectionEventsStatistics.onConnectionClosedCalled);
             }
      }
 };

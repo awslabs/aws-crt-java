@@ -100,6 +100,11 @@ public final class SocketOptions extends CrtResource {
     public boolean keepAlive = false;
 
     /**
+     * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.
+     */
+    public boolean keepAlive = false;
+
+    /**
      * Creates a new set of socket options
      */
     public SocketOptions() {

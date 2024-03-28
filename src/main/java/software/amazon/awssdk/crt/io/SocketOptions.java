@@ -94,10 +94,6 @@ public final class SocketOptions extends CrtResource {
      * On Windows, this option is meaningless until Windows 10 1703.
      */
     public int keepAliveMaxFailedProbes = 0;
-    /**
-     * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.
-     */
-    public boolean keepAlive = false;
 
     /**
      * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.

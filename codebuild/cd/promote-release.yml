@@ -16,16 +16,18 @@ phases:
       - echo PKG_VERSION=$PKG_VERSION
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
-      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.xml $HOME/.m2/settings.xml
+      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.token.xml $HOME/.m2/settings.xml
       # import gpg key
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
       - gpg --import /tmp/aws-sdk-common-runtime.key.asc
       - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       - export REPOSITORY_ID=$(cat $CODEBUILD_SRC_DIR_aws_crt/repositoryId.txt)
       - export ANDROID_REPOSITORY_ID=$(cat $CODEBUILD_SRC_DIR_aws_crt/android_repositoryId.txt)
-      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/Password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
-      # Use the password from secret manager to update the settings
-      - sed -i 's/password-to-replace/'"$ST_PASSWORD"'/g' $HOME/.m2/settings.xml
+      - export ST_USERNAME=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f2 -d":" | cut -f1 -d"," | sed -e 's/[\\\"\}]//g')
+      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f3 -d":" | sed -e 's/[\\\"\}]//g')
+      # Use the username and password from secret manager to update the settings
+      - sed -i 's/token-username/'"$ST_USERNAME"'/g' $HOME/.m2/settings.xml
+      - sed -i 's/token-password/'"$ST_PASSWORD"'/g' $HOME/.m2/settings.xml
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java

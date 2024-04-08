@@ -40,8 +40,8 @@ phases:
       - export ST_USERNAME=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f2 -d":" | cut -f1 -d"," | sed -e 's/[\\\"\}]//g')
       - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f3 -d":" | sed -e 's/[\\\"\}]//g')
       # Use the username and password from secret manager to update the settings
-      - sed -i 's/token-username/'"$ST_USERNAME"'/g' $HOME/.m2/settings.xml
-      - sed -i 's/token-password/'"$ST_PASSWORD"'/g' $HOME/.m2/settings.xml
+      - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
+      - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java

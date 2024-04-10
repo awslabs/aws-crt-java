@@ -1,5 +1,7 @@
 package software.amazon.awssdk.crt.utils;
 
+import software.amazon.awssdk.crt.CRT;
+
 public class StringUtils {
     static {
         new CRT();

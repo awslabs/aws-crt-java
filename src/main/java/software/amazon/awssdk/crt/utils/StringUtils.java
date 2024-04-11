@@ -1,6 +1,12 @@
 package software.amazon.awssdk.crt.utils;
 
+import software.amazon.awssdk.crt.CRT;
+
 public class StringUtils {
+    static {
+        new CRT();
+    };
+
     /**
      * Returns a new String composed of copies of the CharSequence elements joined together with a copy of the specified delimiter.
      * Like `Strings.join()` but works on Android before API 26.

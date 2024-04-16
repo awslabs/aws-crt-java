@@ -1480,6 +1480,19 @@ static void s_cache_http_proxy_connection_type(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_proxy_connection_type_properties.proxy_get_value_id);
 }
 
+struct java_aws_http_proxy_authorization_type_properties http_proxy_authorization_type_properties;
+
+static void s_cache_http_proxy_authorization_type(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpProxyOptions$HttpProxyAuthorizationType");
+    AWS_FATAL_ASSERT(cls);
+    http_proxy_authorization_type_properties.http_proxy_authorization_type_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(http_proxy_authorization_type_properties.http_proxy_authorization_type_class);
+    // Functions
+    http_proxy_authorization_type_properties.proxy_get_value_id = (*env)->GetMethodID(
+        env, http_proxy_authorization_type_properties.http_proxy_authorization_type_class, "getValue", "()I");
+    AWS_FATAL_ASSERT(http_proxy_authorization_type_properties.proxy_get_value_id);
+}
+
 struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
 
 static void s_cache_mqtt5_client_options(JNIEnv *env) {
@@ -2372,6 +2385,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_mqtt5_negotiated_settings(env);
     s_cache_http_proxy_options(env);
     s_cache_http_proxy_connection_type(env);
+    s_cache_http_proxy_authorization_type(env);
     s_cache_mqtt5_client_options(env);
     s_cache_mqtt5_client_properties(env);
     s_cache_mqtt5_client_operation_statistics_properties(env);

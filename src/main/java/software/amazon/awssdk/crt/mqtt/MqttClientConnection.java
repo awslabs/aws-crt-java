@@ -185,7 +185,7 @@ public class MqttClientConnection extends CrtResource {
                         options.getHost(),
                         options.getPort(),
                         proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
-                        options.getAuthorizationType().getValue(),
+                        options.getAuthorizationType().getValueTest(),
                         options.getAuthorizationUsername(),
                         options.getAuthorizationPassword());
             }

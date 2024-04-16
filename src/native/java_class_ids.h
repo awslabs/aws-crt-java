@@ -628,6 +628,7 @@ extern struct java_aws_http_proxy_options_properties http_proxy_options_properti
 /* http.HttpProxyOptions.HttpProxyConnectionType */
 struct java_aws_http_proxy_connection_type_properties {
     jclass http_proxy_connection_type_class;
+    jint proxy_test_int_id;
     jmethodID proxy_get_value_id;
 };
 extern struct java_aws_http_proxy_connection_type_properties http_proxy_connection_type_properties;
@@ -635,7 +636,7 @@ extern struct java_aws_http_proxy_connection_type_properties http_proxy_connecti
 /* http.HttpProxyOptions.HttpProxyAuthorizationType */
 struct java_aws_http_proxy_authorization_type_properties {
     jclass http_proxy_authorization_type_class;
-    jmethodID proxy_get_value_id;
+    jmethodID proxy_get_value_test_id;
 };
 extern struct java_aws_http_proxy_authorization_type_properties http_proxy_authorization_type_properties;
 

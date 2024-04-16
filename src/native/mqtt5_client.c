@@ -187,10 +187,13 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
     }
     if (jni_proxy_authorization_type) {
         jint jni_proxy_authorization_type_value = (*env)->CallIntMethod(
-            env, jni_proxy_authorization_type, http_proxy_authorization_type_properties.proxy_get_value_id);
+            env, jni_proxy_authorization_type, http_proxy_connection_type_properties.proxy_get_value_id);
         if (aws_jni_check_and_clear_exception(env)) {
             goto on_error;
         }
+        AWS_LOGF_DEBUG(
+        AWS_LS_MQTT5_CLIENT, "jni_proxy_authorization_type: =%p: setup authorization type , value is %d", (void *)jni_proxy_authorization_type, jni_proxy_authorization_type_value);
+
         http_options->options.auth_type = (enum aws_http_proxy_authentication_type)jni_proxy_authorization_type_value;
     }
 

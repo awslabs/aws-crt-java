@@ -194,7 +194,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
 
             proxyHost = proxyOptions.getHost();
             proxyPort = proxyOptions.getPort();
-            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValueTest();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }

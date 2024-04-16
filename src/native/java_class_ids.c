@@ -1488,9 +1488,9 @@ static void s_cache_http_proxy_authorization_type(JNIEnv *env) {
     http_proxy_authorization_type_properties.http_proxy_authorization_type_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(http_proxy_authorization_type_properties.http_proxy_authorization_type_class);
     // Functions
-    http_proxy_authorization_type_properties.proxy_get_value_id = (*env)->GetMethodID(
-        env, http_proxy_authorization_type_properties.http_proxy_authorization_type_class, "getValue", "()I");
-    AWS_FATAL_ASSERT(http_proxy_authorization_type_properties.proxy_get_value_id);
+    http_proxy_authorization_type_properties.proxy_get_value_test_id = (*env)->GetMethodID(
+        env, http_proxy_authorization_type_properties.http_proxy_authorization_type_class, "getValueTest", "()I");
+    AWS_FATAL_ASSERT(http_proxy_authorization_type_properties.proxy_get_value_test_id);
 }
 
 struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;

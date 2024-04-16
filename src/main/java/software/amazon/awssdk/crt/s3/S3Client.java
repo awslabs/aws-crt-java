@@ -45,7 +45,7 @@ public class S3Client extends CrtResource {
             proxyHost = proxyOptions.getHost();
             proxyPort = proxyOptions.getPort();
             proxyTlsContext = proxyOptions.getTlsContext();
-            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
+            proxyAuthorizationType = proxyOptions.getAuthorizationType().getValueTest();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
         }

@@ -16,6 +16,7 @@ import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider.X509C
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig.AwsSigningAlgorithm;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyAuthorizationType;
 import software.amazon.awssdk.crt.http.HttpProxyOptions.HttpProxyConnectionType;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
@@ -157,6 +158,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 proxyOptions.setHost(AWS_TEST_MQTT5_PROXY_HOST);
                 proxyOptions.setPort((Integer.parseInt(AWS_TEST_MQTT5_PROXY_PORT)));
                 proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
+                proxyOptions.setAuthorizationType(HttpProxyAuthorizationType.Basic);
                 builder.withHttpProxyOptions(proxyOptions);
 
                 try (Mqtt5Client client = new Mqtt5Client(builder.build())) {

@@ -187,7 +187,7 @@ static struct aws_http_proxy_options_java_jni *s_aws_mqtt5_http_proxy_options_cr
     }
     if (jni_proxy_authorization_type) {
         jint jni_proxy_authorization_type_value = (*env)->CallIntMethod(
-            env, jni_proxy_authorization_type, http_proxy_connection_type_properties.proxy_get_value_id);
+            env, jni_proxy_authorization_type, http_proxy_authorization_type_properties.proxy_get_value_test_id);
         if (aws_jni_check_and_clear_exception(env)) {
             goto on_error;
         }

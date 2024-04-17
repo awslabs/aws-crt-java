@@ -21,6 +21,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
+            "-Djvm.options=-Xcheck:jni"
         ]
         cmd_args.extend(extra_args)
         cmd_args.append("test")

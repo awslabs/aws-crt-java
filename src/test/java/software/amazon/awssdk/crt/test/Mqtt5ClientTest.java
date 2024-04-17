@@ -83,10 +83,6 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void New_UC2() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
 
             try (
@@ -103,12 +99,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 connectBuilder.withClientId("MQTT5 CRT")
                 .withKeepAliveIntervalSeconds(1000L)
                 .withMaximumPacketSizeBytes(1000L)
-                .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
+                .withPassword("rw".getBytes())
                 .withReceiveMaximum(1000L)
                 .withRequestProblemInformation(true)
                 .withRequestResponseInformation(true)
                 .withSessionExpiryIntervalSeconds(1000L)
-                .withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
+                .withUsername("rw")
                 .withWill(willPacketBuilder.build())
                 .withWillDelayIntervalSeconds(1000L);
 
@@ -117,8 +113,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    "AWS_TEST_MQTT5_DIRECT_MQTT_HOST", (long)8883);
                 builder.withBootstrap(bootstrap)
                 .withConnackTimeoutMs(100L)
                 .withConnectOptions(connectBuilder.build())
@@ -155,8 +150,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
-                proxyOptions.setHost(AWS_TEST_MQTT5_PROXY_HOST);
-                proxyOptions.setPort((Integer.parseInt(AWS_TEST_MQTT5_PROXY_PORT)));
+                proxyOptions.setHost("localhost");
+                proxyOptions.setPort(3128);
                 proxyOptions.setConnectionType(HttpProxyConnectionType.Tunneling);
                 proxyOptions.setAuthorizationType(HttpProxyAuthorizationType.Basic);
                 builder.withHttpProxyOptions(proxyOptions);

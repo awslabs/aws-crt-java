@@ -632,6 +632,13 @@ struct java_aws_http_proxy_connection_type_properties {
 };
 extern struct java_aws_http_proxy_connection_type_properties http_proxy_connection_type_properties;
 
+/* http.HttpProxyOptions.HttpProxyAuthorizationType */
+struct java_aws_http_proxy_authorization_type_properties {
+    jclass http_proxy_authorization_type_class;
+    jmethodID proxy_get_value_id;
+};
+extern struct java_aws_http_proxy_authorization_type_properties http_proxy_authorization_type_properties;
+
 /* mqtt5.ClientOptions */
 struct java_aws_mqtt5_client_options_properties {
     jclass client_options_class;

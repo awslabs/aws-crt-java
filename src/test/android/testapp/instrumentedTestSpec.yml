@@ -18,7 +18,7 @@ phases:
       # Alternatively, you may specify a customized command.
       # Please refer to Android's documentation (https://developer.android.com/studio/test/command-line#run-tests-with-adb)
       # for more options on running instrumentation tests from the command line.
-      - echo "Start Instrumentation test"
+      - echo "Start Instrumentation test From Repo"
       - |
         adb -s $DEVICEFARM_DEVICE_UDID shell "am instrument -r -w --no-window-animation \
         $DEVICEFARM_TEST_PACKAGE_NAME/$DEVICEFARM_TEST_PACKAGE_RUNNER 2>&1 || echo \": -1\"" |

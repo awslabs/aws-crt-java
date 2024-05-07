@@ -325,6 +325,22 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>generate-graalvm-files</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.2.3</version>
+                        <configuration>
+                            <argLine>-agentlib:native-image-agent=config-output-dir=graalvm-configuration -Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                            <forkCount>1</forkCount>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencies>

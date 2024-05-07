@@ -458,6 +458,10 @@
     "methods":[{"name":"<init>","parameterTypes":[] }]
   },
   {
+    "name":"software.amazon.awssdk.crt.http.HttpProxyOptions$HttpProxyAuthorizationType",
+    "methods":[{"name":"getValue","parameterTypes":[] }]
+  },
+  {
     "name":"software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandlerNativeAdapter",
     "methods":[{"name":"onFinished","parameterTypes":["int","int","byte[]","int","boolean","java.lang.Throwable","java.nio.ByteBuffer"] }, {"name":"onProgress","parameterTypes":["software.amazon.awssdk.crt.s3.S3MetaRequestProgress"] }, {"name":"onResponseBody","parameterTypes":["byte[]","long","long"] }, {"name":"onResponseHeaders","parameterTypes":["int","java.nio.ByteBuffer"] }]
   },

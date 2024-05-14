@@ -24,14 +24,19 @@
 #include <aws/mqtt/mqtt.h>
 #include <aws/s3/s3.h>
 
-#include <stdio.h>
-
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"
+#include <stdio.h>
+
+#ifdef AWS_OS_LINUX
+#    include <openssl/crypto.h>
+#endif
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
+int g_crt_fips_mode = 0;
+
 static struct aws_allocator *s_init_allocator(void) {
     if (g_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
@@ -484,6 +489,8 @@ static struct aws_log_subject_info s_crt_log_subject_infos[] = {
         AWS_LS_JAVA_CRT_RESOURCE, "JavaCrtResource", "Subject for CrtResource"),
     DEFINE_LOG_SUBJECT_INFO(
         AWS_LS_JAVA_CRT_S3, "JavaCrtS3", "Subject for the layer binding aws-c-s3 to Java"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_ANDROID_KEYCHAIN, "android-keychain", "Subject for Android KeyChain"),
     /* clang-format on */
 };
 
@@ -583,6 +590,19 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
         g_memory_tracing = 1;
     }
 
+/* FIPS mode can be checked if OpenSSL was configured and built for FIPS which then defines OPENSSL_FIPS.
+ *
+ * AWS-LC always defines FIPS_mode() that you can call and check what the library was built with. It does not define
+ * a public OPENSSL_FIPS/AWSLC_FIPS macro that we can (or need to) check here
+ *
+ * Safeguard with macro's, for example because Libressl dosn't define
+ * FIPS_mode() by default.
+ * */
+#if defined(OPENSSL_FIPS) || defined(OPENSSL_IS_AWSLC)
+    /* Try to enable fips mode for libcrypto */
+    g_crt_fips_mode = FIPS_mode_set(1);
+#endif
+
     /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
     struct aws_allocator *allocator = aws_default_allocator();
     aws_mqtt_library_init(allocator);
@@ -650,6 +670,14 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     if (g_memory_tracing > 1) {
         aws_mem_tracer_dump(aws_jni_get_allocator());
     }
+}
+
+JNIEXPORT
+jboolean JNICALL Java_software_amazon_awssdk_crt_CRT_isFIPS(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+
+    return g_crt_fips_mode == 1;
 }
 
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {

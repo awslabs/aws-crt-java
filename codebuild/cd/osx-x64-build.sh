@@ -2,13 +2,13 @@
 
 set -ex
 
-cd `dirname $0`/../..
+cd $(dirname $0)/../..
 
 git submodule update --init
 
 export GIT_TAG=$(git describe --tags)
 
-mvn -B package -DskipTests -P mac-x64  -Dcrt.classifier=osx-x86_64
+mvn -B package -DskipTests -P mac-x64 -Dcrt.classifier=osx-x86_64
 
 # Copy artifacts to dist
 mkdir -p ../dist

@@ -407,6 +407,10 @@ public final class CRT {
 
     private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+
         String[] platforms = new String[] {
                 // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
@@ -502,7 +506,7 @@ public final class CRT {
     public static native int awsLastError();
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding description for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
@@ -511,7 +515,7 @@ public final class CRT {
     public static native String awsErrorString(int errorCode);
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding string identifier for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
@@ -548,7 +552,10 @@ public final class CRT {
         nativeCheckJniExceptionContract(clearException);
     }
 
+    public static native boolean isFIPS();
+
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 
     private static native void onJvmShutdown();
+
 };

@@ -366,13 +366,13 @@ jobs:
   #       python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
 
 
-  graalvm:
+  GraalVM:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        java-version: ['21', '17', '11', '8']
+        java-version: ['22', 21', '17']
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2

@@ -366,8 +366,12 @@ jobs:
   #       python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
 
 
-  osx-x64-graalvm:
-    runs-on: macos-13
+  graalvm:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        java-version: ['21', '17', '11', '8']
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -376,7 +380,7 @@ jobs:
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '17'
+          java-version: ${{ matrix.java-version }}
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ env.PACKAGE_NAME }} + consumers

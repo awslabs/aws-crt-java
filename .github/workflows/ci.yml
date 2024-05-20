@@ -372,7 +372,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        java-version: ['22', 21', '17']
+        java-version: ['22', '21', '17']
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2

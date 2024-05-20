@@ -369,6 +369,7 @@ jobs:
   graalvm:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
         java-version: ['21', '17', '11', '8']

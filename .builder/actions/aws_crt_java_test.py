@@ -11,8 +11,6 @@ class AWSCrtJavaTest(Builder.Action):
             os.remove('log.txt')
 
         profiles = 'continuous-integration'
-        if os.getenv("CRT_GRAALVM") is not None:
-            profiles = 'graalvm-native'
 
         cmd_args = [
             "mvn", "-B",

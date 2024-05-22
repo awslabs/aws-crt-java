@@ -50,21 +50,20 @@ import java.util.stream.DoubleStream;
 
 public class S3ClientTest extends CrtTestFixture {
 
-    static final String ENDPOINT = System.getProperty("ENDPOINT") == null
-            ? "aws-crt-test-stuff-us-west-2.s3.us-west-2.amazonaws.com"
-            : System.getenv("ENDPOINT");
-    static final String S3EXPRESS_ENDPOINT = System.getenv("S3EXPRESS_ENDPOINT") == null
-            ? "crts-west2--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com"
-            : System.getenv("S3EXPRESS_ENDPOINT");
-    static final String S3EXPRESS_ENDPOINT_EAST1 = System.getenv("S3EXPRESS_ENDPOINT_EAST1") == null
-            ? "crts-east1--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com"
-            : System.getenv("S3EXPRESS_ENDPOINT_EAST1");
-    static final String REGION = System.getenv("REGION") == null ? "us-west-2" : System.getenv("REGION");
+    static final String BUCKET_NAME = System.getenv("CRT_S3_TEST_BUCKET_NAME") == null
+            ? "aws-c-s3-test-bucket"
+            : System.getenv("CRT_S3_TEST_BUCKET_NAME");
 
 
-    static final String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
-    static final String COPY_SOURCE_KEY = "crt-canary-obj.txt";
-    static final String X_AMZ_COPY_SOURCE_HEADER = "x-amz-copy-source";
+    static final String PUBLIC_BUCKET_NAME = String.format("%s-public", BUCKET_NAME);
+    static final String REGION = "us-west-2";
+    static final String ENDPOINT = String.format("%s.s3.%s.amazonaws.com", BUCKET_NAME, REGION);
+    static final String S3EXPRESS_ENDPOINT_USW2_AZ1 = String.format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com", BUCKET_NAME);
+    static final String S3EXPRESS_ENDPOINT_USE1_AZ4 = String.format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com", BUCKET_NAME);
+
+    static final String PRE_EXIST_1MB_PATH = "/pre-existing-1MB";
+    static final String PRE_EXIST_10MB_PATH = "/pre-existing-10MB";
+    static final String UPLOAD_DIR = "/upload";
 
     public S3ClientTest() {
     }
@@ -319,7 +318,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -366,7 +365,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/key_does_not_exist.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", "/key_does_not_exist", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -401,7 +400,7 @@ public class S3ClientTest extends CrtTestFixture {
         };
 
         HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-        HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+        HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                 .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -440,7 +439,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -485,7 +484,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT + ":443") };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
@@ -511,8 +510,6 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-
-        final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
 
@@ -550,7 +547,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", filePath, headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT)
@@ -602,8 +599,6 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-
-        final String filePath = "/get_object_test_1MB.txt";
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
 
@@ -632,7 +627,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", filePath, headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT)
@@ -677,7 +672,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler).withSigningConfig(signingConfig);
@@ -728,7 +723,7 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             signingConfig.setShouldSignHeader(shouldSignHeader);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
@@ -761,6 +756,10 @@ public class S3ClientTest extends CrtTestFixture {
         return payload.array();
     }
 
+    private String uploadObjectPathInit(String objectPath) {
+        return UPLOAD_DIR+objectPath;
+    }
+
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
             int contentLength, boolean contentMD5) throws IOException {
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express).withComputeContentMd5(contentMD5);
@@ -788,11 +787,11 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = {
-                    new HttpHeader("Host", s3express ? S3EXPRESS_ENDPOINT : ENDPOINT)
+                    new HttpHeader("Host", s3express ? S3EXPRESS_ENDPOINT_USW2_AZ1 : ENDPOINT)
             };
             HttpRequest httpRequest;
             String path = objectPath == null ? "/put_object_test_10MB.txt" : objectPath;
-            String encodedPath = Uri.encodeUriPath(path);
+            String encodedPath = Uri.encodeUriPath(uploadObjectPathInit(path));
             final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(contentLength));
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
                 @Override
@@ -924,7 +923,7 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Host", ENDPOINT),
                     new HttpHeader("Content-Length", String.valueOf(1024)),
             };
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_nonexistent_file", headers, null);
+            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_nonexistent_file"), headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
@@ -1006,7 +1005,7 @@ public class S3ClientTest extends CrtTestFixture {
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
                     new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
 
-            HttpRequest httpRequest = new HttpRequest("PUT", "/put_object_test_128MB.txt", headers, payloadStream);
+            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_object_test_128MB"), headers, payloadStream);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
@@ -1050,7 +1049,7 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Content-Length", Integer.valueOf(payloadResume.capacity()).toString()), };
 
             HttpRequest httpRequestResume = new HttpRequest("PUT",
-                    "/put_object_test_128MB.txt", headersResume, payloadStreamResume);
+                uploadObjectPathInit("/put_object_test_128MB"), headersResume, payloadStreamResume);
 
             CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
             CompletableFuture<Void> onProgressFutureResume = new CompletableFuture<>();
@@ -1129,7 +1128,8 @@ public class S3ClientTest extends CrtTestFixture {
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
                     new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
 
-            HttpRequest httpRequest = new HttpRequest("PUT", "/java_round_trip_test_fc.txt", headers, payloadStream);
+            String objectPath = uploadObjectPathInit("/prefix/round_trip/java_round_trip_test_fc.txt");
+            HttpRequest httpRequest = new HttpRequest("PUT", objectPath, headers, payloadStream);
             ChecksumConfig config = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
                     .withChecksumLocation(ChecksumLocation.TRAILER);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
@@ -1145,7 +1145,7 @@ public class S3ClientTest extends CrtTestFixture {
 
             HttpHeader[] getHeaders = { new HttpHeader("Host", ENDPOINT), };
 
-            HttpRequest httpGetRequest = new HttpRequest("GET", "/java_round_trip_test_fc.txt", getHeaders, null);
+            HttpRequest httpGetRequest = new HttpRequest("GET", objectPath, getHeaders, null);
 
             CompletableFuture<Integer> onGetFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler getResponseHandler = new S3MetaRequestResponseHandler() {
@@ -1179,6 +1179,9 @@ public class S3ClientTest extends CrtTestFixture {
             };
             ArrayList<ChecksumAlgorithm> algorList = new ArrayList<ChecksumAlgorithm>();
             algorList.add(ChecksumAlgorithm.CRC32);
+            algorList.add(ChecksumAlgorithm.CRC32C);
+            algorList.add(ChecksumAlgorithm.SHA1);
+            algorList.add(ChecksumAlgorithm.SHA256);
             ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true)
                     .withValidateChecksumAlgorithmList(algorList);
             S3MetaRequestOptions getRequestOptions = new S3MetaRequestOptions()
@@ -1188,67 +1191,6 @@ public class S3ClientTest extends CrtTestFixture {
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(getRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onGetFinishedFuture.get());
-            }
-        } catch (InterruptedException | ExecutionException ex) {
-            Assert.fail(ex.getMessage());
-        }
-    }
-
-    @Test
-    public void testS3GetChecksums() {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        Assume.assumeTrue(hasAwsCredentials());
-
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
-        try (S3Client client = createS3Client(clientOptions)) {
-            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
-            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
-
-                @Override
-                public void onFinished(S3FinishedResponseContext context) {
-                    if (context.getErrorCode() != 0) {
-                        onFinishedFuture.completeExceptionally(makeExceptionFromFinishedResponseContext(context));
-                        return;
-                    }
-                    if (!context.isChecksumValidated()) {
-                        onFinishedFuture.completeExceptionally(
-                                new RuntimeException("Checksum was not validated"));
-                        return;
-                    }
-                    if (context.getChecksumAlgorithm() != ChecksumAlgorithm.CRC32) {
-                        onFinishedFuture.completeExceptionally(
-                                new RuntimeException("Checksum was not validated via CRC32"));
-                        return;
-                    }
-                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
-                }
-
-                @Override
-                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    byte[] bytes = new byte[bodyBytesIn.remaining()];
-                    bodyBytesIn.get(bytes);
-                    return 0;
-                }
-            };
-
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/java_get_test_fc.txt", headers, null);
-            ArrayList<ChecksumAlgorithm> algorList = new ArrayList<ChecksumAlgorithm>();
-            algorList.add(ChecksumAlgorithm.CRC32);
-            algorList.add(ChecksumAlgorithm.CRC32C);
-            algorList.add(ChecksumAlgorithm.SHA1);
-            algorList.add(ChecksumAlgorithm.SHA256);
-            ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true)
-                    .withValidateChecksumAlgorithmList(algorList);
-
-            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                    .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
-                    .withResponseHandler(responseHandler)
-                    .withChecksumConfig(validateChecksumConfig);
-
-            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
@@ -1314,8 +1256,8 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            HttpHeader[] headers = { new HttpHeader("Host", S3EXPRESS_ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", "/get_object_test_1MB.txt", headers, null);
+            HttpHeader[] headers = { new HttpHeader("Host", S3EXPRESS_ENDPOINT_USW2_AZ1) };
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_10MB_PATH, headers, null);
 
             AwsSigningConfig config = new AwsSigningConfig();
             config.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4_S3EXPRESS);
@@ -1371,10 +1313,10 @@ public class S3ClientTest extends CrtTestFixture {
         };
 
         HttpHeader[] headers = {
-                new HttpHeader("Host", region.equals("us-east-1")? S3EXPRESS_ENDPOINT_EAST1 : S3EXPRESS_ENDPOINT),
+                new HttpHeader("Host", region.equals("us-east-1")? S3EXPRESS_ENDPOINT_USE1_AZ4 : S3EXPRESS_ENDPOINT_USW2_AZ1),
         };
         HttpRequest httpRequest;
-        String path = "/put_object_test_10MB.txt";
+        String path = uploadObjectPathInit("/put_object_test_10MB.txt");
         String encodedPath = Uri.encodeUriPath(path);
         final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(10 * 1024 * 1024));
         HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
@@ -1452,6 +1394,11 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
+
+        String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
+        String COPY_SOURCE_KEY = "crt-canary-obj.txt";
+        String X_AMZ_COPY_SOURCE_HEADER = "x-amz-copy-source";
+
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {

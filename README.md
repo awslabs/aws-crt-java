@@ -196,6 +196,8 @@ static: certificate has an existing certificate-key pair that was previously imp
 ## Testing
 Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
 
+### MQTT Tests
+
 Environment variables can be set like so:
 ```
 export ENV_VARIABLE_NAME="<variable value>"
@@ -235,6 +237,22 @@ These can be set persistently via Maven settings (usually in `~/.m2/settings.xml
   </profiles>
 </settings>%
 ```
+
+### S3 Tests
+
+To run `S3ClientTest` successfully, aws credentials and a set of pre-configured S3 buckets will be needed. There is a helper script from aws-c-s3 that can be used to set up the test environment, [here](https://github.com/awslabs/aws-c-s3/tree/main/tests/test_helper).
+
+To run the tests properly:
+
+``` sh
+cd aws-crt-java
+pip3 install boto3
+export CRT_S3_TEST_BUCKET_NAME=<bucket_name>
+python3 crt/aws-c-s3/tests/test_helper/test_helper.py init
+# Run S3ClientTest. eg: mvn -Dtest=S3ClientTest test
+```
+
+more details about the helper can be found from [here](https://github.com/awslabs/aws-c-s3/blob/main/tests/test_helper/README.md).
 
 ## IDEs
 * CMake is configured to export a compilation database at target/cmake-build/compile_commands.json

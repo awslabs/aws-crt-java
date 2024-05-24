@@ -145,12 +145,11 @@
     },
     "variants":{
         "graalvm": {
+            "!packages": [],
             "!imports": [
             ],
-            "!test_env": [
-            ],
-            "!build_env": [
-            ],
+            "!test_env": {},
+            "!build_env": {},
             "!test_steps": [
                 "mvn clean test -Pgraalvm-native"
             ]

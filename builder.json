@@ -141,7 +141,9 @@
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]
-        },
+        }
+    },
+    "variants":{
         "graalvm": {
             "!imports": [
             ],

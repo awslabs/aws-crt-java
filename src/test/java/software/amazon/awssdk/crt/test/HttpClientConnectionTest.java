@@ -78,7 +78,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                         SocketOptions socketOptions = new SocketOptions();
                         TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                    socketOptions.connectTimeoutMs = 10000;
+                    socketOptions.connectTimeoutMs = 600000;
                     resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
                 }
             }

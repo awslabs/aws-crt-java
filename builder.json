@@ -149,11 +149,7 @@
             "!imports": [
             ],
             "!test_env": {},
-            "!build_env": {},
-            "!test_steps": [
-                "setup-cross-ci-crt-environment",
-                "mvn clean test -Pgraalvm-native"
-            ]
+            "!build_env": {}
         }
     }
 }

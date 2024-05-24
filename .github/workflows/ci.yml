@@ -386,5 +386,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
+          export GRAAL_VM=ON
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=graalvm downstream

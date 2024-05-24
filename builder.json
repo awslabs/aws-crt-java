@@ -141,6 +141,17 @@
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]
+        },
+        "graalvm": {
+            "!imports": [
+            ],
+            "!test_env": [
+            ],
+            "!build_env": [
+            ],
+            "!test_steps": [
+                "mvn clean test -Pgraalvm-native"
+            ]
         }
     }
 }

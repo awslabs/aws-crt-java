@@ -429,7 +429,8 @@
   },
   {
     "name":"software.amazon.awssdk.crt.s3.ResumeToken",
-    "fields":[{"name":"nativeType"}, {"name":"numPartsCompleted"}, {"name":"partSize"}, {"name":"totalNumParts"}, {"name":"uploadId"}]
+    "fields":[{"name":"nativeType"}, {"name":"numPartsCompleted"}, {"name":"partSize"}, {"name":"totalNumParts"}, {"name":"uploadId"}],
+    "methods":[{"name":"<init>","parameterTypes":[] }]
   },
   {
     "name":"software.amazon.awssdk.crt.s3.S3Client",

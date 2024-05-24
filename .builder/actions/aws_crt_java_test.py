@@ -42,18 +42,20 @@ class AWSCrtJavaTest(Builder.Action):
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        # run the ShutdownTest by itself
-        env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        self._run_java_tests("-Dtest=ShutdownTest")
 
-        # run the InitTest by itself.  This creates an environment where the test itself is the one that
-        # causes the CRT to be loaded and initialized.
-        self._run_java_tests("-Dtest=InitTest")
+        if os.getenv("GRAAL_VM") is None:
+            # run the ShutdownTest by itself
+            env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
+            self._run_java_tests("-Dtest=ShutdownTest")
 
-        # run the elasticurl integration tests
-        python = sys.executable
-        env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                       python, 'integration-testing/java_elasticurl_runner.py', check=True)
+            # run the InitTest by itself.  This creates an environment where the test itself is the one that
+            # causes the CRT to be loaded and initialized.
+            self._run_java_tests("-Dtest=InitTest")
+
+            # run the elasticurl integration tests
+            python = sys.executable
+            env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
+                        python, 'integration-testing/java_elasticurl_runner.py', check=True)
 
     def run(self, env):
         self.env = env

@@ -148,7 +148,9 @@
             "!packages": [],
             "!imports": [
             ],
-            "!test_env": {},
+            "!test_env": {
+                "GRAAL_VM": true
+            },
             "!build_env": {}
         }
     }

@@ -221,7 +221,7 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
-                        <version>0.9.28</version> <!-- or newer version -->
+                        <version>0.10.2</version> <!-- or newer version -->
                         <extensions>true</extensions>
                         <executions>
                             <execution>
@@ -245,8 +245,9 @@
                             </agent>
                             <imageName>aws-crt-java</imageName>
                             <buildArgs>
-                                --no-fallback
-                                --verbose
+                                <buildArg>--no-fallback</buildArg>
+                                <buildArg>--initialize-at-build-time=org.junit.Ignore,java.lang.annotation.Annotation,org.junit.runners.model.FrameworkField</buildArg>
+                                <buildArg>--verbose</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>
@@ -354,7 +355,7 @@
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
-            <version>5.10.1</version>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>

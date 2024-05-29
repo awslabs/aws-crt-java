@@ -152,6 +152,16 @@ import org.junit.After;
     }
 
     MqttClientConnectionFixture() {
+        /**
+         * Disable test for native image, because:
+         * - On MacOS, when cert and private key used for TLS, it will be imported to KeyChain,
+         *      and KeyChain will restrict other application to use the private key
+         * - For GraalVM test, Java will run the tests firstly, and import the mTLS private key.
+         *      After that, when native test runs, it's a different application than Java,
+         *      which will use the same key, and MacOS blocks the usage and result in hanging.
+         * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
+         *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
+         */
         skipIfNativeImage();
     }
 

@@ -251,6 +251,7 @@ import java.util.function.Consumer;
                     connected.get();
                 } finally {
                     client.close();
+                    connection.close();
                 }
                 return true;
             }
@@ -444,4 +445,3 @@ import java.util.function.Consumer;
         return onConnectionClosedFuture.get(60, TimeUnit.SECONDS);
     }
 }
-

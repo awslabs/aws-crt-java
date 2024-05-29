@@ -151,6 +151,7 @@ import java.util.function.Consumer;
             return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions);
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
+            close();
         }
         return false;
     }
@@ -251,7 +252,6 @@ import java.util.function.Consumer;
                     connected.get();
                 } finally {
                     client.close();
-                    connection.close();
                 }
                 return true;
             }

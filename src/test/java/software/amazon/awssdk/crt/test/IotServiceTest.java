@@ -39,8 +39,10 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                 AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);)
             {
+                System.err.println("start 1");
                 try (TlsContext context = new TlsContext(contextOptions);)
                 {
+                    System.err.println("start 2");
                     connectDirectWithConfig(
                         context,
                         AWS_TEST_MQTT311_IOT_CORE_HOST,
@@ -48,6 +50,7 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                         null,
                         null,
                         null);
+                        System.err.println("start 3");
 
                     CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
                     subscribed.thenApply(packetId -> subsAcked++);
@@ -65,8 +68,13 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                 }
                 catch (Exception ex)
                 {
+                    System.err.println("fail 1");
                     fail(ex.getMessage());
+                    System.err.println("fail 2");
                 }
+
+                System.err.println("exit 1");
             }
+            System.err.println("exit 2");
     }
 };

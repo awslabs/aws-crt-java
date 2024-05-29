@@ -60,16 +60,13 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                     unsubscribed.get();
 
                     assertEquals("No Subscriptions", 0, subsAcked);
-
+                    close();
                     disconnect();
                 }
                 catch (Exception ex)
                 {
                     fail(ex.getMessage());
                 }
-            }
-            finally {
-                close();
             }
     }
 };

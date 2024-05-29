@@ -396,7 +396,10 @@ import org.junit.After;
     }
 
     void close() {
-        connection.close();
+        if(connection!=null) {
+            connection.close();
+            connection = null;
+        }
     }
 
     CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {

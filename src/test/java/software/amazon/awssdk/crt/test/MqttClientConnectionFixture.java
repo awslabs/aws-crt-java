@@ -152,6 +152,7 @@ import org.junit.After;
     }
 
     MqttClientConnectionFixture() {
+        skipIfNativeImage();
     }
 
     boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)

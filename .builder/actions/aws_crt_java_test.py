@@ -23,6 +23,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true",
+            "-Dtest=IotServiceTest"
         ]
         cmd_args.extend(extra_args)
         cmd_args.append("test")
@@ -39,7 +40,10 @@ class AWSCrtJavaTest(Builder.Action):
     def start_maven_tests(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
-        env.shell.exec('sudo', 'ls')
+        env.shell.exec('sudo', 'security', 'import', '$AWS_TEST_MQTT311_IOT_CORE_RSA_CERT',
+                       '-k', '/Library/Keychains/System.keychain', '-t', 'cert', '-A')
+        env.shell.exec('sudo', 'security', 'import', '$$AWS_TEST_MQTT311_IOT_CORE_RSA_KEY',
+                       '-k', '/Library/Keychains/System.keychain', '-t', 'priv', '-A')
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 

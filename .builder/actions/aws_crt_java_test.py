@@ -39,9 +39,9 @@ class AWSCrtJavaTest(Builder.Action):
     def start_maven_tests(self, env):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
+        env.shell.exec('sudo', 'ls')
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
-
 
         if os.getenv("GRAAL_VM") is None:
             # run the ShutdownTest by itself
@@ -55,7 +55,7 @@ class AWSCrtJavaTest(Builder.Action):
             # run the elasticurl integration tests
             python = sys.executable
             env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                        python, 'integration-testing/java_elasticurl_runner.py', check=True)
+                           python, 'integration-testing/java_elasticurl_runner.py', check=True)
 
     def run(self, env):
         self.env = env

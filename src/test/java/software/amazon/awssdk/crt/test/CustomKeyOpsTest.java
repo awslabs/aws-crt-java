@@ -256,14 +256,13 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
                 null,
                 null,
                 null);
-            disconnect();
-            close();
         }
         catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
+        } finally {
+            disconnect();
+            close();
         }
-        disconnect();
-        close();
     }
 
     @Test

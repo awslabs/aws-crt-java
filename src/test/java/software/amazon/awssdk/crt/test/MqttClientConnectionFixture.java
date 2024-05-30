@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.junit.After;
 
-import org.junit.After;
 import org.junit.Assume;
 
  class MissingCredentialsException extends RuntimeException {

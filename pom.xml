@@ -231,13 +231,6 @@
                                 </goals>
                                 <phase>test</phase>
                             </execution>
-                            <execution>
-                                <id>build-native</id>
-                                <goals>
-                                    <goal>build</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
                         </executions>
                         <configuration>
                             <agent>

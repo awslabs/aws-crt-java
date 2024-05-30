@@ -161,7 +161,8 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         // don't bother.
         // If we have a leak, we should have it on all platforms, and we'll catch it
         // elsewhere.
-        if (CRT.getOSIdentifier() != "android") {
+        // Disable the leak check for GraalVM as it's not using JVM, the assumption is not applicable.
+        if (CRT.getOSIdentifier() != "android" && System.getProperty("org.graalvm.nativeimage.imagecode") == null) {
             int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
             fixedGrowth += (numThreads * GROWTH_PER_THREAD);
             // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
@@ -189,7 +190,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testSerialRequests() throws Exception {
         skipIfAndroid();
-        skipIfNativeImage();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
@@ -197,7 +197,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     @Test
     public void testMaxParallelRequests() throws Exception {
         skipIfAndroid();
-        skipIfNativeImage();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
     }

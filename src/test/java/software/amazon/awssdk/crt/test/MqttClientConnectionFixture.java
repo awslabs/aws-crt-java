@@ -8,7 +8,6 @@
 import static org.junit.Assert.*;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -174,7 +173,6 @@ import org.junit.Assume;
             return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions);
         } catch (Exception ex) {
             fail("Exception during connect: " + ex.toString());
-            close();
         }
         return false;
     }

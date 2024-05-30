@@ -11,7 +11,7 @@ class AWSCrtJavaTest(Builder.Action):
             os.remove('log.txt')
 
         profiles = 'continuous-integration'
-        if os.getenv("GRAAL_VM") is not None:
+        if os.getenv("AWS_GRAAL_VM_CI") is not None:
             profiles = 'graalvm-native'
 
         cmd_args = [
@@ -47,7 +47,7 @@ class AWSCrtJavaTest(Builder.Action):
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        if os.getenv("GRAAL_VM") is None:
+        if os.getenv("AWS_GRAAL_VM_CI") is None:
             # run the ShutdownTest by itself
             env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
             self._run_java_tests("-Dtest=ShutdownTest")

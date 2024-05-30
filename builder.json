@@ -149,7 +149,7 @@
             "!imports": [
             ],
             "!test_env": {
-                "GRAAL_VM": true
+                "AWS_GRAAL_VM_CI": true
             },
             "!build_env": {}
         }

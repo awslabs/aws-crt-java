@@ -90,6 +90,7 @@
         // Indicate system properties are already set for future tests
         System.setProperty("are.test.properties.setup", "true");
 
+        System.setProperty("AWS_GRAAL_VM_CI", "True");
         System.setProperty("AWS_TEST_IS_CI", "True");
 
         SetPropertyFromFile("AWS_TEST_MQTT5_IOT_CORE_HOST", "AWS_TEST_MQTT5_IOT_CORE_HOST.txt");
@@ -141,4 +142,3 @@
     public void testTearDown(Object context) {
     }
  }
-

@@ -8,6 +8,7 @@
 import static org.junit.Assert.*;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtPlatform;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.junit.After;
+import org.junit.Assume;
 
  class MissingCredentialsException extends RuntimeException {
      MissingCredentialsException(String message) {
@@ -40,6 +42,7 @@ import org.junit.After;
     private CompletableFuture<OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
     private CompletableFuture<OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
 
+    static final boolean AWS_GRAAL_VM_CI = System.getProperty("AWS_GRAAL_VM_CI") != null;
     static final boolean AWS_TEST_IS_CI = System.getProperty("AWS_TEST_IS_CI") != null;
     static final String AWS_TEST_MQTT311_ROOTCA = System.getProperty("AWS_TEST_MQTT311_ROOT_CA");
     // Static credential related
@@ -162,7 +165,7 @@ import org.junit.After;
          * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
          *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
          */
-        skipIfNativeImage();
+        Assume.assumeFalse(AWS_GRAAL_VM_CI && CRT.getOSIdentifier() == "osx");
     }
 
     boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)

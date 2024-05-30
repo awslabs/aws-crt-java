@@ -44,6 +44,7 @@ public class CrtTestFixture {
     // Setup System properties from environment variables set by builder for use by
     // unit tests.
     private static void SetupTestProperties() {
+        SetPropertyFromEnv("AWS_GRAAL_VM_CI");
         SetPropertyFromEnv("AWS_TEST_IS_CI");
         SetPropertyFromEnv("AWS_TEST_MQTT311_ROOT_CA");
         SetPropertyFromEnv("ENDPOINT");
@@ -307,9 +308,5 @@ public class CrtTestFixture {
         if (platform != null) {
             Assume.assumeFalse(platform.getOSIdentifier().contains("android"));
         }
-    }
-
-    protected void skipIfNativeImage() {
-        Assume.assumeFalse(System.getProperty("org.graalvm.nativeimage.imagecode") != null);
     }
 }

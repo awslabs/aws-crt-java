@@ -22,8 +22,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.memory.tracing=2",
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true",
-            "-Dtest=IotServiceTest"
+            "-Daws.crt.ci=true"
         ]
         cmd_args.extend(extra_args)
         cmd_args.append("test")

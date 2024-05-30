@@ -31,7 +31,6 @@ Vagrantfile
 doxygen/html/
 doxygen/latex/
 
-
 #cmake artifacts
 dependencies
 _build

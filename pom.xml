@@ -44,6 +44,7 @@
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.crt_fips>OFF</cmake.crt_fips>
+        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
     <profiles>
@@ -246,6 +247,9 @@
                     </plugin>
                 </plugins>
             </build>
+            <properties>
+                <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
+            </properties>
         </profile>
         <profile>
             <id>release</id>
@@ -454,7 +458,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.21.0</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <crt.classifier>${crt.classifier}</crt.classifier>

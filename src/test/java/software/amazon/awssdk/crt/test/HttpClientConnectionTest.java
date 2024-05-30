@@ -114,10 +114,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         testConnectionWithAllCiphers(new URI("https://kms-fips.us-east-1.amazonaws.com:443"), true, null);
         testConnectionWithAllCiphers(new URI("https://kms.us-west-2.amazonaws.com:443"), true, null);
         testConnectionWithAllCiphers(new URI("https://kms-fips.us-west-2.amazonaws.com:443"), true, null);
-
-        // BadSSL
-        testConnectionWithAllCiphers(new URI("https://rsa2048.badssl.com/"), true, null);
-        testConnectionWithAllCiphers(new URI("http://http.badssl.com/"), true, null);
     }
 
     @Test

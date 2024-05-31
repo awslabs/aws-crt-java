@@ -17,7 +17,6 @@ import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
@@ -1395,7 +1394,8 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        String COPY_SOURCE_BUCKET = "aws-crt-test-stuff-us-west-2";
+        // In C, we used the same bucket for copy tests.
+        String COPY_SOURCE_BUCKET = BUCKET_NAME;
         String COPY_SOURCE_KEY = "crt-canary-obj.txt";
         String X_AMZ_COPY_SOURCE_HEADER = "x-amz-copy-source";
 

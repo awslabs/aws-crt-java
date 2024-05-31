@@ -193,27 +193,21 @@ Please note that on Mac, once a private key is used with a certificate, that cer
 static: certificate has an existing certificate-key pair that was previously imported into the Keychain.  Using key from Keychain instead of the one provided.
 ```
 
-## Testing
-Many tests require environment variables to be set. These environment variables are translated at runtime to system properties for use by the tests. These tests will be quietly skipped if the properties they require are not set.
+## Tests with resource required
+Some tests require pre-configured resources to run properly, and proper environment variables to be set.
+These tests will be quietly skipped if the environment variables they require are not set.
 
-### MQTT Tests
+### IoT tests
 
-Environment variables can be set like so:
-```
-export ENV_VARIABLE_NAME="<variable value>"
-```
-Many tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
+Many IoT related tests require that you have [set up](https://console.aws.amazon.com/iot) an AWS IoT Thing.
 
-Partial list of environment variables:
-- `AWS_TEST_MQTT311_IOT_CORE_HOST`: AWS IoT service endpoint hostname for MQTT3
-- `AWS_TEST_MQTT311_IOT_CORE_RSA_CERT`: Path to the IoT thing certificate for MQTT3
-- `AWS_TEST_MQTT311_IOT_CORE_RSA_KEY`: Path to the IoT thing private key for MQTT3
-- `AWS_TEST_MQTT311_IOT_CORE_ECC_CERT`: Path to the IoT thing with EC-based certificate for MQTT3
-- `AWS_TEST_MQTT311_IOT_CORE_ECC_KEY`: Path to the IoT thing with ECC private key for MQTT3 (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
-- `AWS_TEST_MQTT311_ROOT_CA`: Path to the root certificate
-- `AWS_TEST_HTTP_PROXY_HOST`: Hostname of proxy
-- `AWS_TEST_HTTP_PROXY_PORT`: Port of proxy
-- `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+* Some required environment variables
+  * `AWS_TEST_MQTT311_IOT_CORE_HOST`: AWS IoT service endpoint hostname for MQTT3
+  * `AWS_TEST_MQTT311_IOT_CORE_RSA_CERT`: Path to the IoT thing certificate for MQTT3
+  * `AWS_TEST_MQTT311_IOT_CORE_RSA_KEY`: Path to the IoT thing private key for MQTT3
+  * `AWS_TEST_MQTT311_IOT_CORE_ECC_CERT`: Path to the IoT thing with EC-based certificate for MQTT3
+  * `AWS_TEST_MQTT311_IOT_CORE_ECC_KEY`: Path to the IoT thing with ECC private key for MQTT3 (The ECC key file should only contains the ECC Private Key section to working on MacOS.)
+  * `AWS_TEST_MQTT311_ROOT_CA`: Path to the root certificate
 
 Other Environment Variables that can be set can be found in the `SetupTestProperties()` function in [CrtTestFixture.java](https://github.com/awslabs/aws-crt-java/blob/main/src/test/java/software/amazon/awssdk/crt/test/CrtTestFixture.java)
 
@@ -238,21 +232,33 @@ These can be set persistently via Maven settings (usually in `~/.m2/settings.xml
 </settings>%
 ```
 
+### Proxy Tests
+
+Most of proxy related tests need pre-configured Proxy host to run the tests properly.
+
+* Required environment variables:
+  * `AWS_TEST_HTTP_PROXY_HOST`: Hostname of proxy
+  * `AWS_TEST_HTTP_PROXY_PORT`: Port of proxy
+  * `NETWORK_TESTS_DISABLED`: Set this if tests are running in a constrained environment where network access is not guaranteed/allowed.
+
 ### S3 Tests
 
-To run `S3ClientTest` successfully, aws credentials and a set of pre-configured S3 buckets will be needed. There is a helper script from aws-c-s3 that can be used to set up the test environment, [here](https://github.com/awslabs/aws-c-s3/tree/main/tests/test_helper).
+Most of S3 related tests requires aws credentials and a set of pre-configured S3 buckets. There is a helper script from aws-c-s3 that can be used to set up the test environment, [here](https://github.com/awslabs/aws-c-s3/tree/main/tests/test_helper).
 
-To run the tests properly:
+Example to use the helper and run the S3 tests:
 
 ``` sh
 cd aws-crt-java
-pip3 install boto3
+python3 -m pip install boto3
 export CRT_S3_TEST_BUCKET_NAME=<bucket_name>
 python3 crt/aws-c-s3/tests/test_helper/test_helper.py init
 # Run S3ClientTest. eg: mvn -Dtest=S3ClientTest test
 ```
 
 more details about the helper can be found from [here](https://github.com/awslabs/aws-c-s3/blob/main/tests/test_helper/README.md).
+
+* Required environment variable:
+  * `CRT_S3_TEST_BUCKET_NAME`: The basic bucket name for S3 tests.
 
 ## IDEs
 * CMake is configured to export a compilation database at target/cmake-build/compile_commands.json

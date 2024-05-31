@@ -18,7 +18,7 @@ This library is licensed under the Apache 2.0 License.
 * [Platform-Specific JARs](#platform-specific-jars)
 * [System Properties](#system-properties)
 * [TLS Behavior](#tls-behavior)
-* [Testing](#testing)
+* [Tests with resource required](#tests-with-resource-required)
 * [IDEs](#ides)
 * [Debugging](#debugging)
 
@@ -194,7 +194,8 @@ static: certificate has an existing certificate-key pair that was previously imp
 ```
 
 ## Tests with resource required
-Some tests require pre-configured resources to run properly, and proper environment variables to be set.
+
+Some tests require pre-configured resources and proper environment variables to be set to run properly.
 These tests will be quietly skipped if the environment variables they require are not set.
 
 ### IoT tests

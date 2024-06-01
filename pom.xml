@@ -345,6 +345,7 @@
     </profiles>
 
     <dependencies>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -369,6 +370,11 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>23.1.1</version>
         </dependency>
     </dependencies>
     <build>

@@ -175,10 +175,6 @@
     "methods":[{"name":"<init>","parameterTypes":["java.nio.ByteBuffer","software.amazon.awssdk.crt.http.HttpRequestBodyStream"] }]
   },
   {
-    "name":"software.amazon.awssdk.crt.http.HttpRequestBase",
-    "fields":[{"name":"bodyStream"}]
-  },
-  {
     "name":"software.amazon.awssdk.crt.http.HttpRequestBodyStream",
     "methods":[{"name":"getLength","parameterTypes":[] }, {"name":"resetPosition","parameterTypes":[] }, {"name":"sendRequestBody","parameterTypes":["java.nio.ByteBuffer"] }]
   },

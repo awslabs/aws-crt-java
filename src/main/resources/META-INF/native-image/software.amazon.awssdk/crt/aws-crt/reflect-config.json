@@ -1,5 +1,6 @@
 [
   {
+    "condition" : { "typeReachable" : "org.junit.Assume" },
     "name":"org.hamcrest.core.Every",
     "queryAllDeclaredMethods":true
   }

@@ -18,7 +18,7 @@ This library is licensed under the Apache 2.0 License.
 * [Platform-Specific JARs](#platform-specific-jars)
 * [System Properties](#system-properties)
 * [TLS Behavior](#tls-behavior)
-* [Tests with resource required](#tests-with-resource-required)
+* [Testing](#testing)
 * [IDEs](#ides)
 * [Debugging](#debugging)
 
@@ -193,7 +193,7 @@ Please note that on Mac, once a private key is used with a certificate, that cer
 static: certificate has an existing certificate-key pair that was previously imported into the Keychain.  Using key from Keychain instead of the one provided.
 ```
 
-## Tests with resource required
+## Testing
 
 Some tests require pre-configured resources and proper environment variables to be set to run properly.
 These tests will be quietly skipped if the environment variables they require are not set.
@@ -244,7 +244,7 @@ Most of proxy related tests need pre-configured Proxy host to run the tests prop
 
 ### S3 Tests
 
-Most of S3 related tests requires aws credentials and a set of pre-configured S3 buckets. There is a helper script from aws-c-s3 that can be used to set up the test environment, [here](https://github.com/awslabs/aws-c-s3/tree/main/tests/test_helper).
+Most of S3 related tests require AWS credentials and a set of pre-configured S3 buckets. There is a helper script from aws-c-s3 that can be used to set up the test environment, [here](https://github.com/awslabs/aws-c-s3/tree/main/tests/test_helper).
 
 Example to use the helper and run the S3 tests:
 

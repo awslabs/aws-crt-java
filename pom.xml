@@ -250,13 +250,6 @@
             <properties>
                 <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.graalvm.sdk</groupId>
-                    <artifactId>nativeimage</artifactId>
-                    <version>24.0.0</version>
-                </dependency>
-            </dependencies>
         </profile>
         <profile>
             <id>release</id>
@@ -358,6 +351,11 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>23.1.1</version>
         </dependency>
     </dependencies>
     <build>

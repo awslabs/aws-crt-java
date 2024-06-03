@@ -55,7 +55,7 @@ public class ResumeToken {
 
         public ResumeToken build() {
             return new ResumeToken(this);
-        } 
+        }
     };
 
     private int nativeType;
@@ -71,6 +71,10 @@ public class ResumeToken {
         this.numPartsCompleted = builder.numPartsCompleted;
         this.uploadId = builder.uploadId;
     }
+    /**
+     * Default constructor
+     */
+    private ResumeToken() {}
 
     /******
      * Common Fields.
@@ -106,7 +110,7 @@ public class ResumeToken {
     }
 
     /******
-     * Upload Specific fields. 
+     * Upload Specific fields.
      ******/
     /**
      * @return upload Id

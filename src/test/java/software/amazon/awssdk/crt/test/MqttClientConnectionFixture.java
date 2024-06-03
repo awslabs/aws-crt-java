@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import org.junit.After;
 
  class MissingCredentialsException extends RuntimeException {
      MissingCredentialsException(String message) {
@@ -140,6 +141,13 @@ import java.util.function.Consumer;
     Consumer<MqttMessage> connectionMessageTransfomer = null;
     protected void setConnectionMessageTransformer(Consumer<MqttMessage> connectionMessageTransfomer) {
         this.connectionMessageTransfomer = connectionMessageTransfomer;
+    }
+
+    @After
+    @Override
+    public void tearDown() {
+        close();
+        super.tearDown();
     }
 
     MqttClientConnectionFixture() {
@@ -386,7 +394,10 @@ import java.util.function.Consumer;
     }
 
     void close() {
-        connection.close();
+        if(connection!=null) {
+            connection.close();
+            connection = null;
+        }
     }
 
     CompletableFuture<Integer> publish(String topic, byte[] payload, QualityOfService qos) {
@@ -444,4 +455,3 @@ import java.util.function.Consumer;
         return onConnectionClosedFuture.get(60, TimeUnit.SECONDS);
     }
 }
-

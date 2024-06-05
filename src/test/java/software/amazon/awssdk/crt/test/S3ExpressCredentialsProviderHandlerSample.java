@@ -54,11 +54,15 @@ public class S3ExpressCredentialsProviderHandlerSample implements S3ExpressCrede
 
             @Override
             public void onFinished(S3FinishedResponseContext context) {
-                String sessionToken = getResultString("<SessionToken>", "</SessionToken>");
-                String secretKey = getResultString("<SecretAccessKey>", "</SecretAccessKey>");
-                String accessKeyId = getResultString("<AccessKeyId>", "</AccessKeyId>");
-                Credentials creds = new Credentials(accessKeyId.getBytes(), secretKey.getBytes(), sessionToken.getBytes());
-                future.complete(creds);
+                try {
+                    String sessionToken = getResultString("<SessionToken>", "</SessionToken>");
+                    String secretKey = getResultString("<SecretAccessKey>", "</SecretAccessKey>");
+                    String accessKeyId = getResultString("<AccessKeyId>", "</AccessKeyId>");
+                    Credentials creds = new Credentials(accessKeyId.getBytes(), secretKey.getBytes(), sessionToken.getBytes());
+                    future.complete(creds);
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
             }
         };
 

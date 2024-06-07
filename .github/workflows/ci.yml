@@ -145,6 +145,8 @@ jobs:
   linux-musl-armv7:
     runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     steps:
+      - name: Install qemu/docker
+        run: docker run --rm --privileged aptman/qus -s -- -p arm32v7
       - name: Checkout Sources
         uses: actions/checkout@v2
         with:
@@ -162,6 +164,9 @@ jobs:
         image:
           - raspbian-bullseye
     steps:
+    # set arm arch
+    - name: Install qemu/docker
+      run: docker run --rm --privileged aptman/qus -s --
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh

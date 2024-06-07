@@ -143,7 +143,7 @@ jobs:
   # At run time we have to force armv7 (via environment variable) in order to achieve proper resource path
   # resolution.
   linux-musl-armv7:
-    runs-on: codebuild-aws-crt-java-codebuild-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     steps:
       - name: Install qemu/docker
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
@@ -157,7 +157,7 @@ jobs:
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-alpine-3.16-armv7 build -p ${{ env.PACKAGE_NAME }} --classifier "armv7"
 
   raspberry:
-    runs-on: codebuild-aws-crt-java-codebuild-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     strategy:
       fail-fast: false
       matrix:

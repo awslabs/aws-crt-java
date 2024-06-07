@@ -67,7 +67,6 @@
                     "!build_steps": [
                         "build"
                     ],
-                    "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
@@ -83,10 +82,12 @@
                         "openjdk8"
                     ],
                     "!build_steps": [
-                        "aws-crt-java-build"
+                        "build"
                     ],
-                    "!test_steps": [
-                        "aws-crt-java-test"
+                    "!cmake_args": [
+                        "-DCMAKE_BUILD_TYPE=Release",
+                        "-DBUILD_DEPS=ON",
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "openwrt": {

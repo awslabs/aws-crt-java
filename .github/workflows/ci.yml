@@ -147,7 +147,7 @@ jobs:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
-          brew install docker
+          brew install docker docker-machine
           docker-machine create --driver virtualbox default
           docker-machine env default
           eval "$(docker-machine env default)"

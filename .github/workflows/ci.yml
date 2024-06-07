@@ -70,7 +70,7 @@ jobs:
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
-    runs-on: macos-13-xlarge # latest
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         arch: [armv6, armv7, arm64]
@@ -82,16 +82,12 @@ jobs:
           ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
   linux-musl:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: macos-14-xlarge # latest
     strategy:
       matrix:
         image:
-          - alpine-3.16-x64
           - alpine-3.16-arm64
-          - openwrt-x64-openjdk8
     steps:
-      - name: Install qemu/docker
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Checkout Sources
         uses: actions/checkout@v2
         with:
@@ -143,12 +139,10 @@ jobs:
   # At run time we have to force armv7 (via environment variable) in order to achieve proper resource path
   # resolution.
   linux-musl-armv7:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: macos-14-xlarge # latest
     steps:
-      - name: Install qemu/docker
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}

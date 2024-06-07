@@ -81,25 +81,6 @@ jobs:
   #         chmod a+x builder
   #         ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
 
-  # linux-musl:
-  #   runs-on: ubuntu-22.04 # latest
-  #   strategy:
-  #     matrix:
-  #       image:
-  #         - alpine-3.16-x64
-  #         - alpine-3.16-arm64
-  #         - openwrt-x64-openjdk8
-  #   steps:
-  #     - name: Install qemu/docker
-  #       run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  #     - name: Checkout Sources
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: true
-  #     - name: Build ${{ env.PACKAGE_NAME }}
-  #       run: |
-  #         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-  #         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
 
   # linux-fips-x64:
@@ -137,6 +118,22 @@ jobs:
   #         ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
 
 
+  linux-musl:
+    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+    strategy:
+      matrix:
+        image:
+          - alpine-3.16-arm64
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+
   # armv7 needs its own action due to inability to differentiate at runtime armv6 vs armv7 in the jvm:
   #
   # At build time we can properly figure out that we're targeting armv7.
@@ -145,10 +142,8 @@ jobs:
   linux-musl-armv7:
     runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     steps:
-      - name: Install qemu/docker
-        uses: dbhi/qus/action@main
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -164,9 +159,10 @@ jobs:
         image:
           - raspbian-bullseye
     steps:
-    # set arm arch
-    - name: Install qemu/docker
-      uses: dbhi/qus/action@main
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh

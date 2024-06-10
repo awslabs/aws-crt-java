@@ -91,9 +91,11 @@
                     "!run_tests": true,
                     "architectures": {
                         "armv7": {
-                            "+build_env": {
-                                "AWS_CRT_ARCH": "armv7"
-                            },
+                            "_comment": [
+                                "Due to inability to differentiate at runtime armv6 vs armv7 in the jvm",
+                                "At build time we can properly figure out that we're targeting armv7.",
+                                "At run time we have to force armv7 (via environment variable) in order to achieve proper resource path resolution."
+                            ],
                             "+test_env": {
                                 "AWS_CRT_ARCH": "armv7"
                             }

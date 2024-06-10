@@ -11,7 +11,7 @@ class AWSCrtJavaTest(Builder.Action):
             os.remove('log.txt')
 
         profiles = 'continuous-integration'
-        if os.getenv("AWS_GRAAL_VM_CI") is not None:
+        if os.getenv("AWS_GRAALVM_CI") is not None:
             profiles = 'graalvm-native'
 
         cmd_args = [
@@ -42,15 +42,16 @@ class AWSCrtJavaTest(Builder.Action):
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        if os.getenv("AWS_GRAAL_VM_CI") is None:
-            # run the ShutdownTest by itself
-            env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-            self._run_java_tests("-Dtest=ShutdownTest")
+        # run the ShutdownTest by itself
+        env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
+        self._run_java_tests("-Dtest=ShutdownTest")
 
-            # run the InitTest by itself.  This creates an environment where the test itself is the one that
-            # causes the CRT to be loaded and initialized.
-            self._run_java_tests("-Dtest=InitTest")
+        # run the InitTest by itself.  This creates an environment where the test itself is the one that
+        # causes the CRT to be loaded and initialized.
+        self._run_java_tests("-Dtest=InitTest")
 
+        if os.getenv("AWS_GRAALVM_CI") is None:
+            # Skip elasticurl for GRAALVM, as GraalVM generates binary instead of jar used by elasticurl.
             # run the elasticurl integration tests
             python = sys.executable
             env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',

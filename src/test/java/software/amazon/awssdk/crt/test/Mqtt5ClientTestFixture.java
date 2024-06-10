@@ -23,7 +23,7 @@ import org.junit.Assume;
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5ClientTestFixture extends CrtTestFixture {
 
-    static final boolean AWS_GRAAL_VM_CI = System.getProperty("AWS_GRAAL_VM_CI") != null;
+    static final boolean AWS_GRAALVM_CI = System.getProperty("AWS_GRAALVM_CI") != null;
     // MQTT5 Codebuild/Direct connections data
     static final String AWS_TEST_MQTT5_DIRECT_MQTT_HOST = System.getProperty("AWS_TEST_MQTT5_DIRECT_MQTT_HOST");
     static final String AWS_TEST_MQTT5_DIRECT_MQTT_PORT = System.getProperty("AWS_TEST_MQTT5_DIRECT_MQTT_PORT");
@@ -96,7 +96,7 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
          * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
          *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
          */
-        Assume.assumeFalse(AWS_GRAAL_VM_CI && CRT.getOSIdentifier() == "osx");
+        Assume.assumeFalse(AWS_GRAALVM_CI && CRT.getOSIdentifier() == "osx");
     }
 
     /**

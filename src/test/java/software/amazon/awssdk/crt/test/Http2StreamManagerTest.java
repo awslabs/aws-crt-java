@@ -155,13 +155,12 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             return null;
         };
 
-        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
-        // observable correlation
-        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we
-        // don't bother.
+        // For Android: Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
+        // observable correlation to when System.gc() is called. Therefore, we cannot reliably
+        // sample it, so we don't bother.
+        // For GraalVM: It's not using JVM, there is no reason to check the JVM memory.
         // If we have a leak, we should have it on all platforms, and we'll catch it
         // elsewhere.
-        // Disable the leak check for GraalVM as it's not using JVM, the assumption is not applicable.
         if (CRT.getOSIdentifier() != "android" && System.getProperty("org.graalvm.nativeimage.imagecode") == null) {
             int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
             fixedGrowth += (numThreads * GROWTH_PER_THREAD);

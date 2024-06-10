@@ -155,23 +155,15 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             return null;
         };
 
-        // For Android: Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
-        // observable correlation to when System.gc() is called. Therefore, we cannot reliably
-        // sample it, so we don't bother.
-        // For GraalVM: It's not using JVM, there is no reason to check the JVM memory.
-        // If we have a leak, we should have it on all platforms, and we'll catch it
-        // elsewhere.
-        if (CRT.getOSIdentifier() != "android" && System.getProperty("org.graalvm.nativeimage.imagecode") == null) {
-            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
-            // the workload
-            // we're running, 8K worth of growth (an additional 4K for an increased healthy
-            // margin)
-            // in the JVM only is acceptable.
-            fixedGrowth = Math.max(fixedGrowth, 8192);
-            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
-        }
+        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+        fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+        // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
+        // the workload
+        // we're running, 8K worth of growth (an additional 4K for an increased healthy
+        // margin)
+        // in the JVM only is acceptable.
+        fixedGrowth = Math.max(fixedGrowth, 8192);
+        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
     }
 
     @Test

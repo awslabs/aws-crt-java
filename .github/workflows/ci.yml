@@ -129,9 +129,9 @@ jobs:
           - openwrt-x64-openjdk8
     steps:
       - name: Install qemu/docker
-        uses: dbhi/qus/action@main
-        with:
-          targets: arm
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/setup-qemu-ci.sh ./setup-qemu-ci.sh && chmod a+x ./setup-qemu-ci.sh
+          ./setup-qemu-ci.sh arm
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh

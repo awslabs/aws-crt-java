@@ -157,7 +157,9 @@ jobs:
     runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     steps:
       - name: Install qemu/docker
-        run: docker run --rm --privileged aptman/qus -s -- -p arm
+        uses: dbhi/qus/action@main
+        with:
+          targets: arm
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh

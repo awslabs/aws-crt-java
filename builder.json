@@ -88,7 +88,17 @@
                     "!test_steps": [
                         "aws-crt-java-test"
                     ],
-                    "!run_tests": true
+                    "!run_tests": true,
+                    "architectures": {
+                        "armv7": {
+                            "+build_env": {
+                                "AWS_CRT_ARCH": "armv7"
+                            },
+                            "+test_env": {
+                                "AWS_CRT_ARCH": "armv7"
+                            }
+                        }
+                    }
                 },
                 "openwrt": {
                     "!packages": []

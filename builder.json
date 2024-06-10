@@ -88,20 +88,7 @@
                     "!test_steps": [
                         "aws-crt-java-test"
                     ],
-                    "architectures": {
-                        "armv7": {
-                            "!imports": [],
-                            "!packages": [],
-                            "!build_steps": [
-                                "build"
-                            ],
-                            "!cmake_args": [
-                                "-DCMAKE_BUILD_TYPE=Release",
-                                "-DBUILD_DEPS=ON",
-                                "-DBUILD_TESTING=OFF"
-                            ]
-                        }
-                    }
+                    "!run_tests": true
                 },
                 "openwrt": {
                     "!packages": []

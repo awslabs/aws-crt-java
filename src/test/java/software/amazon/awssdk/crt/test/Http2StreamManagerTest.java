@@ -25,8 +25,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
     private final static int NUM_REQUESTS = 60;
-    private final static int NUM_ITERATIONS = 10;
-    private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://d1cz66xoahf9cl.cloudfront.net/"; // Use cloudfront for HTTP/2
     private final static String path = "/random_32_byte.data";
@@ -134,6 +132,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         Assert.assertTrue(numStreamsFailures.get() <= allowedFailures);
     }
 
+    @Override
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         skipIfNetworkUnavailable();
 
@@ -146,24 +145,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
-    }
-
-    public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
-        skipIfNetworkUnavailable();
-        Callable<Void> fn = () -> {
-            testParallelRequests(numThreads, numRequests);
-            return null;
-        };
-
-        int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-        fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-        // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
-        // the workload
-        // we're running, 8K worth of growth (an additional 4K for an increased healthy
-        // margin)
-        // in the JVM only is acceptable.
-        fixedGrowth = Math.max(fixedGrowth, 8192);
-        CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
     }
 
     @Test

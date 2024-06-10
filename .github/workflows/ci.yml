@@ -119,14 +119,26 @@ jobs:
 
 
 
-  linux-musl:
+  linux-musl-x86:
     runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         image:
           - alpine-3.16-x64
-          - alpine-3.16-armv7
           - openwrt-x64-openjdk8
+    steps:
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
+
+  linux-musl-arm:
+    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large # Aarch64 runner from codebuild
+    strategy:
+      matrix:
+        image:
+          - alpine-3.16-armv7
+          - alpine-3.16-arm64
     steps:
       - name: Install qemu/docker
         run: |
@@ -137,20 +149,8 @@ jobs:
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
-  linux-musl-arm:
-    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
-    strategy:
-      matrix:
-        image:
-          - alpine-3.16-arm64
-    steps:
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
-
   raspberry:
-    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
+    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large # Aarch64 runner from codebuild
     strategy:
       fail-fast: false
       matrix:

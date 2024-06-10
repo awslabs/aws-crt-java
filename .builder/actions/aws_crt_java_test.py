@@ -25,6 +25,8 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.ci=true"
         ]
         cmd_args.extend(extra_args)
+        if os.getenv("AWS_GRAALVM_CI") is not None:
+            cmd_args.append("clean")
         cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)

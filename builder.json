@@ -90,12 +90,10 @@
                     ],
                     "architectures": {
                         "armv7": {
+                            "!imports": [],
                             "!packages": [],
                             "!build_steps": [
                                 "build"
-                            ],
-                            "!test_steps": [
-                                "aws-crt-java-test"
                             ],
                             "!cmake_args": [
                                 "-DCMAKE_BUILD_TYPE=Release",

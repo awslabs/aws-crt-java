@@ -25,8 +25,6 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.ci=true"
         ]
         cmd_args.extend(extra_args)
-        if os.getenv("AWS_GRAALVM_CI") is not None:
-            cmd_args.append("clean")
         cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)
@@ -44,16 +42,21 @@ class AWSCrtJavaTest(Builder.Action):
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        # run the ShutdownTest by itself
-        env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        self._run_java_tests("-Dtest=ShutdownTest")
-
-        # run the InitTest by itself.  This creates an environment where the test itself is the one that
-        # causes the CRT to be loaded and initialized.
-        self._run_java_tests("-Dtest=InitTest")
-
         if os.getenv("AWS_GRAALVM_CI") is None:
-            # Skip elasticurl for GRAALVM, as GraalVM generates binary instead of jar used by elasticurl.
+            # not running separate test for GraalVM, because GraalVM needs
+            # rebuild to have separate test to run and rebuild will fail the MQTT tests.
+            # because currently builder will pull the MQTT related cert/private to the
+            # `cmake-build` directory and it will be removed after rebuild :)
+            # also those tests mostly for JVM, which is not very meaning for GraalVM, skip them.
+
+            # run the ShutdownTest by itself
+            env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
+            self._run_java_tests("-Dtest=ShutdownTest")
+
+            # run the InitTest by itself.  This creates an environment where the test itself is the one that
+            # causes the CRT to be loaded and initialized.
+            self._run_java_tests("-Dtest=InitTest")
+
             # run the elasticurl integration tests
             python = sys.executable
             env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',

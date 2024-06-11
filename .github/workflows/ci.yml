@@ -37,10 +37,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Install qemu/docker
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/setup-qemu-ci.sh ./setup-qemu-ci.sh && chmod a+x ./setup-qemu-ci.sh
-              ./setup-qemu-ci.sh arm
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
@@ -67,10 +63,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Install qemu/docker
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/setup-qemu-ci.sh ./setup-qemu-ci.sh && chmod a+x ./setup-qemu-ci.sh
-          ./setup-qemu-ci.sh arm
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
@@ -135,17 +127,13 @@ jobs:
           - alpine-3.16-x64
           - openwrt-x64-openjdk8
     steps:
-      - name: Install qemu/docker
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/setup-qemu-ci.sh ./setup-qemu-ci.sh && chmod a+x ./setup-qemu-ci.sh
-          ./setup-qemu-ci.sh arm
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-musl-arm:
-    runs-on: codebuild-aws-crt-java-codebuild-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large # Aarch64 runner from codebuild
+    runs-on: ubuntu-22.04 # latest
     strategy:
       matrix:
         image:

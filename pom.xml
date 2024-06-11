@@ -44,6 +44,7 @@
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.crt_fips>OFF</cmake.crt_fips>
+        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
     <profiles>
@@ -215,6 +216,42 @@
             </build>
         </profile>
         <profile>
+            <id>graalvm-native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.2</version> <!-- or newer version -->
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>test-native</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>test</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <agent>
+                                <enabled>true</enabled>
+                            </agent>
+                            <imageName>aws-crt-java</imageName>
+                            <buildArgs>
+                                <buildArg>--no-fallback</buildArg>
+                                <buildArg>--initialize-at-build-time=org.junit.Ignore,java.lang.annotation.Annotation,org.junit.runners.model.FrameworkField</buildArg>
+                                <buildArg>--verbose</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
+            </properties>
+        </profile>
+        <profile>
             <id>release</id>
             <distributionManagement>
                 <snapshotRepository>
@@ -292,7 +329,14 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#testing-support -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -319,6 +363,10 @@
                     <exclude>**/*.dbg</exclude>                    <!-- UNIX debug info, same as PDBs -->
                     <exclude>**/*.a</exclude>                      <!-- ignore any libraries from building -->
                 </excludes>
+            </resource>
+            <!-- GraalVM Native Image Configuration Files -->
+            <resource>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
         <testResources>
@@ -410,7 +458,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.21.0</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <systemPropertyVariables>
                         <crt.classifier>${crt.classifier}</crt.classifier>

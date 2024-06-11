@@ -4,6 +4,14 @@
  */
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
+import org.junit.Test;
+import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.io.*;
+
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -11,28 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
-import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.*;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.Log;
 
 public class Http2StreamManagerTest extends HttpClientTestFixture {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
     private final static int NUM_REQUESTS = 60;
-    private final static int NUM_ITERATIONS = 10;
-    private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://d1cz66xoahf9cl.cloudfront.net/"; // Use cloudfront for HTTP/2
     private final static String path = "/random_32_byte.data";
@@ -140,6 +132,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         Assert.assertTrue(numStreamsFailures.get() <= allowedFailures);
     }
 
+    @Override
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         skipIfNetworkUnavailable();
 
@@ -152,32 +145,6 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
-    }
-
-    public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
-        skipIfNetworkUnavailable();
-        Callable<Void> fn = () -> {
-            testParallelRequests(numThreads, numRequests);
-            return null;
-        };
-
-        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
-        // observable correlation
-        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we
-        // don't bother.
-        // If we have a leak, we should have it on all platforms, and we'll catch it
-        // elsewhere.
-        if (CRT.getOSIdentifier() != "android") {
-            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
-            // the workload
-            // we're running, 8K worth of growth (an additional 4K for an increased healthy
-            // margin)
-            // in the JVM only is acceptable.
-            fixedGrowth = Math.max(fixedGrowth, 8192);
-            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
-        }
     }
 
     @Test

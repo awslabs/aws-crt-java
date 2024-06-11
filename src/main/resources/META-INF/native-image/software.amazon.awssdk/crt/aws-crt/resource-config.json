@@ -1,0 +1,16 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": ".*libaws-crt-jni.dylib"
+      },
+      {
+        "pattern": ".*libaws-crt-jni.so"
+      },
+      {
+        "pattern": ".*aws-crt-jni.dll"
+      }
+    ]
+  },
+  "bundles": []
+}

@@ -1,0 +1,2125 @@
+[
+  {
+    "name": "[Lsoftware.amazon.awssdk.crt.SystemInfo$CpuInfo;"
+  },
+  {
+    "name": "java.lang.Boolean",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "booleanValue",
+        "parameterTypes": []
+      },
+      {
+        "name": "getBoolean",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.lang.Integer",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "intValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.lang.Long",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "longValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.lang.NullPointerException",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.lang.String",
+    "methods": [
+      {
+        "name": "lastIndexOf",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "substring",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.lang.System",
+    "methods": [
+      {
+        "name": "getProperty",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setProperty",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.nio.Buffer",
+    "methods": [
+      {
+        "name": "capacity",
+        "parameterTypes": []
+      },
+      {
+        "name": "limit",
+        "parameterTypes": []
+      },
+      {
+        "name": "position",
+        "parameterTypes": []
+      },
+      {
+        "name": "remaining",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.nio.ByteBuffer",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
+    "name": "java.util.ArrayList",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.util.List",
+    "methods": [
+      {
+        "name": "add",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      },
+      {
+        "name": "get",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "size",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.util.concurrent.CompletableFuture",
+    "methods": [
+      {
+        "name": "complete",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      },
+      {
+        "name": "completeExceptionally",
+        "parameterTypes": [
+          "java.lang.Throwable"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.util.function.Predicate",
+    "methods": [
+      {
+        "name": "test",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.AsyncCallback",
+    "methods": [
+      {
+        "name": "onFailure",
+        "parameterTypes": [
+          "java.lang.Throwable"
+        ]
+      },
+      {
+        "name": "onSuccess",
+        "parameterTypes": []
+      },
+      {
+        "name": "onSuccess",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.CRT",
+    "methods": [
+      {
+        "name": "testJniException",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.CrtResource",
+    "methods": [
+      {
+        "name": "addRef",
+        "parameterTypes": []
+      },
+      {
+        "name": "close",
+        "parameterTypes": []
+      },
+      {
+        "name": "getNativeHandle",
+        "parameterTypes": []
+      },
+      {
+        "name": "releaseReferences",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.CrtRuntimeException",
+    "fields": [
+      {
+        "name": "errorCode"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.SystemInfo$CpuInfo",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int",
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.auth.credentials.Credentials",
+    "fields": [
+      {
+        "name": "accessKeyId"
+      },
+      {
+        "name": "expirationTimePointSecs"
+      },
+      {
+        "name": "secretAccessKey"
+      },
+      {
+        "name": "sessionToken"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.auth.credentials.CredentialsProvider",
+    "methods": [
+      {
+        "name": "onGetCredentialsComplete",
+        "parameterTypes": [
+          "java.util.concurrent.CompletableFuture",
+          "software.amazon.awssdk.crt.auth.credentials.Credentials"
+        ]
+      },
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.auth.credentials.DelegateCredentialsHandler",
+    "methods": [
+      {
+        "name": "getCredentials",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.auth.signing.AwsSigningConfig",
+    "fields": [
+      {
+        "name": "algorithm"
+      },
+      {
+        "name": "credentials"
+      },
+      {
+        "name": "credentialsProvider"
+      },
+      {
+        "name": "expirationInSeconds"
+      },
+      {
+        "name": "omitSessionToken"
+      },
+      {
+        "name": "region"
+      },
+      {
+        "name": "service"
+      },
+      {
+        "name": "shouldNormalizeUriPath"
+      },
+      {
+        "name": "shouldSignHeader"
+      },
+      {
+        "name": "signatureType"
+      },
+      {
+        "name": "signedBodyHeader"
+      },
+      {
+        "name": "signedBodyValue"
+      },
+      {
+        "name": "time"
+      },
+      {
+        "name": "useDoubleUriEncode"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.auth.signing.AwsSigningResult",
+    "fields": [
+      {
+        "name": "signature"
+      },
+      {
+        "name": "signedRequest"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.cal.EccKeyPair",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ClientConnectionContinuationHandler",
+    "methods": [
+      {
+        "name": "onContinuationClosedShim",
+        "parameterTypes": []
+      },
+      {
+        "name": "onContinuationMessageShim",
+        "parameterTypes": [
+          "byte[]",
+          "byte[]",
+          "int",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ClientConnectionHandler",
+    "methods": [
+      {
+        "name": "onConnectionClosedShim",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "onConnectionSetupShim",
+        "parameterTypes": [
+          "long",
+          "int"
+        ]
+      },
+      {
+        "name": "onProtocolMessage",
+        "parameterTypes": [
+          "byte[]",
+          "byte[]",
+          "int",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.MessageFlushCallback",
+    "methods": [
+      {
+        "name": "onCallbackInvoked",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerConnection",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerConnectionContinuation",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerConnectionContinuationHandler",
+    "methods": [
+      {
+        "name": "onContinuationClosedShim",
+        "parameterTypes": []
+      },
+      {
+        "name": "onContinuationMessageShim",
+        "parameterTypes": [
+          "byte[]",
+          "byte[]",
+          "int",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerConnectionHandler",
+    "methods": [
+      {
+        "name": "onIncomingStream",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.eventstream.ServerConnectionContinuation",
+          "byte[]"
+        ]
+      },
+      {
+        "name": "onProtocolMessage",
+        "parameterTypes": [
+          "byte[]",
+          "byte[]",
+          "int",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerListener",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.eventstream.ServerListenerHandler",
+    "methods": [
+      {
+        "name": "onConnectionShutdownShim",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.eventstream.ServerConnection",
+          "int"
+        ]
+      },
+      {
+        "name": "onNewConnection",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.eventstream.ServerConnection",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.Http2Stream",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.Http2StreamManager",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpClientConnection",
+    "methods": [
+      {
+        "name": "onConnectionAcquired",
+        "parameterTypes": [
+          "java.util.concurrent.CompletableFuture",
+          "long",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpClientConnectionManager",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpHeader",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "byte[]",
+          "byte[]"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpManagerMetrics",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long",
+          "long",
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpProxyOptions",
+    "methods": [
+      {
+        "name": "getAuthorizationPassword",
+        "parameterTypes": []
+      },
+      {
+        "name": "getAuthorizationType",
+        "parameterTypes": []
+      },
+      {
+        "name": "getAuthorizationUsername",
+        "parameterTypes": []
+      },
+      {
+        "name": "getConnectionType",
+        "parameterTypes": []
+      },
+      {
+        "name": "getHost",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPort",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTlsContext",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpProxyOptions$HttpProxyConnectionType",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpRequest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.nio.ByteBuffer",
+          "software.amazon.awssdk.crt.http.HttpRequestBodyStream"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpRequestBase",
+    "fields": [
+      {
+        "name": "bodyStream"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpRequestBodyStream",
+    "methods": [
+      {
+        "name": "getLength",
+        "parameterTypes": []
+      },
+      {
+        "name": "resetPosition",
+        "parameterTypes": []
+      },
+      {
+        "name": "sendRequestBody",
+        "parameterTypes": [
+          "java.nio.ByteBuffer"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpStream",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpStream$HttpStreamWriteChunkCompletionCallback",
+    "methods": [
+      {
+        "name": "onChunkCompleted",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpStreamMetrics",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long",
+          "long",
+          "long",
+          "long",
+          "long",
+          "long",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpStreamResponseHandlerNativeAdapter",
+    "methods": [
+      {
+        "name": "onMetrics",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpStreamBase",
+          "software.amazon.awssdk.crt.http.HttpStreamMetrics"
+        ]
+      },
+      {
+        "name": "onResponseBody",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpStreamBase",
+          "java.nio.ByteBuffer"
+        ]
+      },
+      {
+        "name": "onResponseComplete",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpStreamBase",
+          "int"
+        ]
+      },
+      {
+        "name": "onResponseHeaders",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpStreamBase",
+          "int",
+          "int",
+          "java.nio.ByteBuffer"
+        ]
+      },
+      {
+        "name": "onResponseHeadersDone",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpStreamBase",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.ClientBootstrap",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.DirectoryEntry",
+    "fields": [
+      {
+        "name": "fileSize"
+      },
+      {
+        "name": "isDirectory"
+      },
+      {
+        "name": "isFile"
+      },
+      {
+        "name": "isSymLink"
+      },
+      {
+        "name": "path"
+      },
+      {
+        "name": "relativePath"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.DirectoryTraversalHandler",
+    "methods": [
+      {
+        "name": "onDirectoryEntry",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.io.DirectoryEntry"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.EventLoopGroup",
+    "methods": [
+      {
+        "name": "onCleanupComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions",
+    "fields": [
+      {
+        "name": "backoffScaleFactorMS"
+      },
+      {
+        "name": "eventLoopGroup"
+      },
+      {
+        "name": "jitterMode"
+      },
+      {
+        "name": "maxRetries"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions$JitterMode",
+    "fields": [
+      {
+        "name": "value"
+      }
+    ],
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.StandardRetryOptions",
+    "fields": [
+      {
+        "name": "backoffRetryOptions"
+      },
+      {
+        "name": "initialBucketCapacity"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.TlsContextCustomKeyOperationOptions",
+    "fields": [
+      {
+        "name": "certificateFileContents"
+      },
+      {
+        "name": "certificateFilePath"
+      },
+      {
+        "name": "operationHandler"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.TlsContextPkcs11Options",
+    "fields": [
+      {
+        "name": "certificateFileContents"
+      },
+      {
+        "name": "certificateFilePath"
+      },
+      {
+        "name": "pkcs11Lib"
+      },
+      {
+        "name": "privateKeyObjectLabel"
+      },
+      {
+        "name": "slotId"
+      },
+      {
+        "name": "tokenLabel"
+      },
+      {
+        "name": "userPin"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.TlsKeyOperation",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long",
+          "byte[]",
+          "int",
+          "int",
+          "int"
+        ]
+      },
+      {
+        "name": "invokePerformOperation",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.io.TlsKeyOperationHandler",
+          "software.amazon.awssdk.crt.io.TlsKeyOperation"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.io.TlsKeyOperationHandler",
+    "methods": [
+      {
+        "name": "performOperation",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.io.TlsKeyOperation"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt.MqttClientConnection",
+    "methods": [
+      {
+        "name": "onConnectionClosed",
+        "parameterTypes": []
+      },
+      {
+        "name": "onConnectionComplete",
+        "parameterTypes": [
+          "int",
+          "boolean"
+        ]
+      },
+      {
+        "name": "onConnectionFailure",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "onConnectionInterrupted",
+        "parameterTypes": [
+          "int",
+          "software.amazon.awssdk.crt.AsyncCallback"
+        ]
+      },
+      {
+        "name": "onConnectionResumed",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "onConnectionSuccess",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "onWebsocketHandshake",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpRequest",
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt.MqttClientConnection$MessageHandler",
+    "methods": [
+      {
+        "name": "deliver",
+        "parameterTypes": [
+          "java.lang.String",
+          "byte[]",
+          "boolean",
+          "int",
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt.MqttClientConnectionOperationStatistics",
+    "fields": [
+      {
+        "name": "incompleteOperationCount"
+      },
+      {
+        "name": "incompleteOperationSize"
+      },
+      {
+        "name": "unackedOperationCount"
+      },
+      {
+        "name": "unackedOperationSize"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt.MqttException",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+    "fields": [
+      {
+        "name": "websocketHandshakeTransform"
+      }
+    ],
+    "methods": [
+      {
+        "name": "onWebsocketHandshake",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.http.HttpRequest",
+          "long"
+        ]
+      },
+      {
+        "name": "setIsConnected",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOperationStatistics",
+    "fields": [
+      {
+        "name": "incompleteOperationCount"
+      },
+      {
+        "name": "incompleteOperationSize"
+      },
+      {
+        "name": "unackedOperationCount"
+      },
+      {
+        "name": "unackedOperationSize"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions",
+    "fields": [
+      {
+        "name": "ackTimeoutSeconds"
+      },
+      {
+        "name": "connackTimeoutMs"
+      },
+      {
+        "name": "extendedValidationAndFlowControlOptions"
+      },
+      {
+        "name": "hostName"
+      },
+      {
+        "name": "httpProxyOptions"
+      },
+      {
+        "name": "lifecycleEvents"
+      },
+      {
+        "name": "maxReconnectDelayMs"
+      },
+      {
+        "name": "minConnectedTimeToResetReconnectDelayMs"
+      },
+      {
+        "name": "minReconnectDelayMs"
+      },
+      {
+        "name": "offlineQueueBehavior"
+      },
+      {
+        "name": "pingTimeoutMs"
+      },
+      {
+        "name": "port"
+      },
+      {
+        "name": "publishEvents"
+      },
+      {
+        "name": "retryJitterMode"
+      },
+      {
+        "name": "sessionBehavior"
+      },
+      {
+        "name": "topicAliasingOptions"
+      }
+    ],
+    "methods": [
+      {
+        "name": "getBootstrap",
+        "parameterTypes": []
+      },
+      {
+        "name": "getExtendedValidationAndFlowControlOptions",
+        "parameterTypes": []
+      },
+      {
+        "name": "getOfflineQueueBehavior",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRetryJitterMode",
+        "parameterTypes": []
+      },
+      {
+        "name": "getSessionBehavior",
+        "parameterTypes": []
+      },
+      {
+        "name": "getSocketOptions",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTlsContext",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions$ClientOfflineQueueBehavior",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions$ClientSessionBehavior",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions$ExtendedValidationAndFlowControlOptions",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions$LifecycleEvents",
+    "methods": [
+      {
+        "name": "onAttemptingConnect",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn"
+        ]
+      },
+      {
+        "name": "onConnectionFailure",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn"
+        ]
+      },
+      {
+        "name": "onConnectionSuccess",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn"
+        ]
+      },
+      {
+        "name": "onDisconnection",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn"
+        ]
+      },
+      {
+        "name": "onStopped",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.OnStoppedReturn"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions$PublishEvents",
+    "methods": [
+      {
+        "name": "onMessageReceived",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.Mqtt5Client",
+          "software.amazon.awssdk.crt.mqtt5.PublishReturn"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.NegotiatedSettings",
+    "fields": [
+      {
+        "name": "assignedClientID"
+      },
+      {
+        "name": "maximumPacketSizeToServer"
+      },
+      {
+        "name": "maximumQOS"
+      },
+      {
+        "name": "receiveMaximumFromServer"
+      },
+      {
+        "name": "rejoinedSession"
+      },
+      {
+        "name": "retainAvailable"
+      },
+      {
+        "name": "serverKeepAlive"
+      },
+      {
+        "name": "sessionExpiryInterval"
+      },
+      {
+        "name": "sharedSubscriptionsAvailable"
+      },
+      {
+        "name": "subscriptionIdentifiersAvailable"
+      },
+      {
+        "name": "topicAliasMaximumToClient"
+      },
+      {
+        "name": "topicAliasMaximumToServer"
+      },
+      {
+        "name": "wildcardSubscriptionsAvailable"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeSetQOS",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int",
+          "software.amazon.awssdk.crt.mqtt5.packets.ConnAckPacket"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.packets.ConnAckPacket",
+          "software.amazon.awssdk.crt.mqtt5.NegotiatedSettings"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int",
+          "software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.OnStoppedReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.PublishResult",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.packets.PubAckPacket"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.PublishReturn",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.QOS",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions",
+    "fields": [
+      {
+        "name": "inboundBehavior"
+      },
+      {
+        "name": "inboundCacheMaxSize"
+      },
+      {
+        "name": "outboundBehavior"
+      },
+      {
+        "name": "outboundCacheMaxSize"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions$InboundTopicAliasBehaviorType",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions$OutboundTopicAliasBehaviorType",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.ConnAckPacket",
+    "fields": [
+      {
+        "name": "assignedClientIdentifier"
+      },
+      {
+        "name": "maximumPacketSize"
+      },
+      {
+        "name": "maximumQOS"
+      },
+      {
+        "name": "reasonCode"
+      },
+      {
+        "name": "reasonString"
+      },
+      {
+        "name": "receiveMaximum"
+      },
+      {
+        "name": "responseInformation"
+      },
+      {
+        "name": "retainAvailable"
+      },
+      {
+        "name": "serverKeepAlive"
+      },
+      {
+        "name": "serverReference"
+      },
+      {
+        "name": "sessionExpiryIntervalSeconds"
+      },
+      {
+        "name": "sessionPresent"
+      },
+      {
+        "name": "sharedSubscriptionsAvailable"
+      },
+      {
+        "name": "subscriptionIdentifiersAvailable"
+      },
+      {
+        "name": "topicAliasMaximum"
+      },
+      {
+        "name": "userProperties"
+      },
+      {
+        "name": "wildcardSubscriptionsAvailable"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeAddMaximumQOS",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "nativeAddReasonCode",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.ConnAckPacket$ConnectReasonCode",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket",
+    "fields": [
+      {
+        "name": "clientId"
+      },
+      {
+        "name": "keepAliveIntervalSeconds"
+      },
+      {
+        "name": "maximumPacketSizeBytes"
+      },
+      {
+        "name": "password"
+      },
+      {
+        "name": "receiveMaximum"
+      },
+      {
+        "name": "requestProblemInformation"
+      },
+      {
+        "name": "requestResponseInformation"
+      },
+      {
+        "name": "sessionExpiryIntervalSeconds"
+      },
+      {
+        "name": "userProperties"
+      },
+      {
+        "name": "username"
+      },
+      {
+        "name": "will"
+      },
+      {
+        "name": "willDelayIntervalSeconds"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket",
+    "fields": [
+      {
+        "name": "reasonCode"
+      },
+      {
+        "name": "reasonString"
+      },
+      {
+        "name": "serverReference"
+      },
+      {
+        "name": "sessionExpiryIntervalSeconds"
+      },
+      {
+        "name": "userProperties"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "getReasonCode",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeAddDisconnectReasonCode",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.DisconnectPacket$DisconnectReasonCode",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.PubAckPacket",
+    "fields": [
+      {
+        "name": "reasonCode"
+      },
+      {
+        "name": "reasonString"
+      },
+      {
+        "name": "userProperties"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeAddReasonCode",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.PubAckPacket$PubAckReasonCode",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket",
+    "fields": [
+      {
+        "name": "contentType"
+      },
+      {
+        "name": "correlationData"
+      },
+      {
+        "name": "messageExpiryIntervalSeconds"
+      },
+      {
+        "name": "packetQOS"
+      },
+      {
+        "name": "payload"
+      },
+      {
+        "name": "payloadFormat"
+      },
+      {
+        "name": "responseTopic"
+      },
+      {
+        "name": "retain"
+      },
+      {
+        "name": "subscriptionIdentifiers"
+      },
+      {
+        "name": "topic"
+      },
+      {
+        "name": "topicAlias"
+      },
+      {
+        "name": "userProperties"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPayloadFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "getQOS",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeSetPayloadFormatIndicator",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "nativeSetQOS",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket$PayloadFormatIndicator",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.SubAckPacket",
+    "fields": [
+      {
+        "name": "reasonCodes"
+      },
+      {
+        "name": "reasonString"
+      },
+      {
+        "name": "userProperties"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeAddSubackCode",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.SubAckPacket$SubAckReasonCode",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket",
+    "fields": [
+      {
+        "name": "subscriptionIdentifier"
+      },
+      {
+        "name": "subscriptions"
+      },
+      {
+        "name": "userProperties"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket$RetainHandlingType",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.SubscribePacket$Subscription",
+    "fields": [
+      {
+        "name": "noLocal"
+      },
+      {
+        "name": "retainAsPublished"
+      }
+    ],
+    "methods": [
+      {
+        "name": "getNoLocal",
+        "parameterTypes": []
+      },
+      {
+        "name": "getQOS",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRetainAsPublished",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRetainHandlingType",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTopicFilter",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.UnsubAckPacket",
+    "fields": [
+      {
+        "name": "reasonCodes"
+      },
+      {
+        "name": "reasonString"
+      },
+      {
+        "name": "userProperties"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "nativeAddUnsubackCode",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.UnsubAckPacket$UnsubAckReasonCode",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.UnsubscribePacket",
+    "fields": [
+      {
+        "name": "subscriptions"
+      },
+      {
+        "name": "userProperties"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.mqtt5.packets.UserProperty",
+    "fields": [
+      {
+        "name": "key"
+      },
+      {
+        "name": "value"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.ResumeToken",
+    "fields": [
+      {
+        "name": "nativeType"
+      },
+      {
+        "name": "numPartsCompleted"
+      },
+      {
+        "name": "partSize"
+      },
+      {
+        "name": "totalNumParts"
+      },
+      {
+        "name": "uploadId"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3Client",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProperties",
+    "fields": [
+      {
+        "name": "hostValue"
+      },
+      {
+        "name": "region"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProvider",
+    "methods": [
+      {
+        "name": "destroyProvider",
+        "parameterTypes": []
+      },
+      {
+        "name": "getS3ExpressCredentials",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProperties",
+          "software.amazon.awssdk.crt.auth.credentials.Credentials",
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProviderFactory",
+    "methods": [
+      {
+        "name": "createS3ExpressCredentialsProvider",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3Client"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3MetaRequest",
+    "methods": [
+      {
+        "name": "onShutdownComplete",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3MetaRequestProgress",
+    "fields": [
+      {
+        "name": "bytesTransferred"
+      },
+      {
+        "name": "contentLength"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.http.HttpProxyOptions$HttpProxyAuthorizationType",
+    "methods": [
+      {
+        "name": "getValue",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandlerNativeAdapter",
+    "methods": [
+      {
+        "name": "onFinished",
+        "parameterTypes": [
+          "int",
+          "int",
+          "byte[]",
+          "int",
+          "boolean",
+          "java.lang.Throwable",
+          "java.nio.ByteBuffer"
+        ]
+      },
+      {
+        "name": "onProgress",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3MetaRequestProgress"
+        ]
+      },
+      {
+        "name": "onResponseBody",
+        "parameterTypes": [
+          "byte[]",
+          "long",
+          "long"
+        ]
+      },
+      {
+        "name": "onResponseHeaders",
+        "parameterTypes": [
+          "int",
+          "java.nio.ByteBuffer"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3TcpKeepAliveOptions",
+    "fields": [
+      {
+        "name": "keepAliveIntervalSec"
+      },
+      {
+        "name": "keepAliveMaxFailedProbes"
+      },
+      {
+        "name": "keepAliveTimeoutSec"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "sun.management.VMManagementImpl",
+    "fields": [
+      {
+        "name": "compTimeMonitoringSupport"
+      },
+      {
+        "name": "currentThreadCpuTimeSupport"
+      },
+      {
+        "name": "objectMonitorUsageSupport"
+      },
+      {
+        "name": "otherThreadCpuTimeSupport"
+      },
+      {
+        "name": "remoteDiagnosticCommandsSupport"
+      },
+      {
+        "name": "synchronizerUsageSupport"
+      },
+      {
+        "name": "threadAllocatedMemorySupport"
+      },
+      {
+        "name": "threadContentionMonitoringSupport"
+      }
+    ]
+  }
+]

@@ -96,6 +96,9 @@
                                 "At build time we can properly figure out that we're targeting armv7.",
                                 "At run time we have to force armv7 (via environment variable) in order to achieve proper resource path resolution."
                             ],
+                            "+build_env": {
+                                "AWS_CRT_ARCH": "armv7"
+                            },
                             "+test_env": {
                                 "AWS_CRT_ARCH": "armv7"
                             }

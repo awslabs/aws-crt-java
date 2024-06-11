@@ -364,3 +364,27 @@ jobs:
         Start-Process -NoNewWindow python .\non_tls_server.py
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
+
+
+  GraalVM:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        java-version: ['22', '21', '17']
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build ${{ env.PACKAGE_NAME }} + consumers
+        run: |
+          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+          python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=graalvm downstream

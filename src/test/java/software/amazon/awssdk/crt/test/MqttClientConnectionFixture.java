@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.junit.After;
 
+import org.junit.Assume;
+
  class MissingCredentialsException extends RuntimeException {
      MissingCredentialsException(String message) {
          super(message);
@@ -39,6 +41,7 @@ import org.junit.After;
     private CompletableFuture<OnConnectionFailureReturn> onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
     private CompletableFuture<OnConnectionClosedReturn> onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
 
+    static final boolean AWS_GRAALVM_CI = System.getProperty("AWS_GRAALVM_CI") != null;
     static final boolean AWS_TEST_IS_CI = System.getProperty("AWS_TEST_IS_CI") != null;
     static final String AWS_TEST_MQTT311_ROOTCA = System.getProperty("AWS_TEST_MQTT311_ROOT_CA");
     // Static credential related
@@ -151,6 +154,17 @@ import org.junit.After;
     }
 
     MqttClientConnectionFixture() {
+        /**
+         * Disable test for native image, because:
+         * - On MacOS, when cert and private key used for TLS, it will be imported to KeyChain,
+         *      and KeyChain will restrict other application to use the private key
+         * - For GraalVM test, Java will run the tests firstly, and import the mTLS private key.
+         *      After that, when native test runs, it's a different application than Java,
+         *      which will use the same key, and MacOS blocks the usage and result in hanging.
+         * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
+         *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
+         */
+        Assume.assumeFalse(AWS_GRAALVM_CI && CRT.getOSIdentifier() == "osx");
     }
 
     boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)

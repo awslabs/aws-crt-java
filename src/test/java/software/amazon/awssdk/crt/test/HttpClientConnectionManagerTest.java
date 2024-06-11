@@ -1,12 +1,10 @@
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -27,15 +24,12 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
     private final static int NUM_REQUESTS = 60;
-    private final static int NUM_ITERATIONS = 10;
-    private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://aws-crt-test-stuff.s3.amazonaws.com";
     private final static String path = "/random_32_byte.data";
@@ -79,12 +73,12 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         final AtomicInteger numErrorCode = new AtomicInteger(0);
 
         final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
-        List<CompletableFuture> requestCompleteFutures = new ArrayList<>();
+        List<CompletableFuture<Void>> requestCompleteFutures = new ArrayList<>();
 
         for (int i = 0; i < numRequests; i++) {
 
             Log.log(Log.LogLevel.Trace, Log.LogSubject.HttpConnectionManager, String.format("Starting request %d", i));
-            CompletableFuture requestCompleteFuture = new CompletableFuture();
+            CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             requestCompleteFutures.add(requestCompleteFuture);
 
             threadPool.execute(() -> {
@@ -130,7 +124,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
 
         // Wait for all Requests to complete
-        for (CompletableFuture f : requestCompleteFutures) {
+        for (CompletableFuture<Void> f : requestCompleteFutures) {
             f.join();
         }
 
@@ -144,6 +138,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         Assert.assertTrue(numConnectionFailures.get() <= allowedFailures);
     }
 
+    @Override
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         skipIfNetworkUnavailable();
 
@@ -156,27 +151,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
-    }
-
-    public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
-        skipIfNetworkUnavailable();
-        Callable<Void> fn = () -> {
-            testParallelRequests(numThreads, numRequests);
-            return null;
-        };
-
-        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no observable correlation
-        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we don't bother.
-        // If we have a leak, we should have it on all platforms, and we'll catch it elsewhere.
-        if (CRT.getOSIdentifier() != "android") {
-            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With the workload
-            // we're running, 8K worth of growth (an additional 4K for an increased healthy margin)
-            // in the JVM only is acceptable.
-            fixedGrowth = Math.max(fixedGrowth, 8192);
-            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
-        }
     }
 
     @Test

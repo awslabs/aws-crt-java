@@ -142,5 +142,16 @@
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]
         }
+    },
+    "variants":{
+        "graalvm": {
+            "!packages": [],
+            "!imports": [
+            ],
+            "!test_env": {
+                "AWS_GRAALVM_CI": true
+            },
+            "!build_env": {}
+        }
     }
 }

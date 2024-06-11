@@ -11,6 +11,8 @@ class AWSCrtJavaTest(Builder.Action):
             os.remove('log.txt')
 
         profiles = 'continuous-integration'
+        if os.getenv("AWS_GRAALVM_CI") is not None:
+            profiles = 'graalvm-native'
 
         cmd_args = [
             "mvn", "-B",
@@ -20,7 +22,7 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.memory.tracing=2",
             "-Daws.crt.debugnative=true",
             "-Daws.crt.aws_trace_log_per_test",
-            "-Daws.crt.ci=true",
+            "-Daws.crt.ci=true"
         ]
         cmd_args.extend(extra_args)
         cmd_args.append("test")
@@ -40,18 +42,25 @@ class AWSCrtJavaTest(Builder.Action):
 
         self._run_java_tests("-DrerunFailingTestsCount=5")
 
-        # run the ShutdownTest by itself
-        env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
-        self._run_java_tests("-Dtest=ShutdownTest")
+        if os.getenv("AWS_GRAALVM_CI") is None:
+            # not running separate test for GraalVM, because GraalVM needs
+            # rebuild to have separate test to run and rebuild will fail the MQTT tests.
+            # because currently builder will pull the MQTT related cert/private to the
+            # `cmake-build` directory and it will be removed after rebuild :)
+            # also those tests mostly for JVM, which is not very meaning for GraalVM, skip them.
 
-        # run the InitTest by itself.  This creates an environment where the test itself is the one that
-        # causes the CRT to be loaded and initialized.
-        self._run_java_tests("-Dtest=InitTest")
+            # run the ShutdownTest by itself
+            env.shell.setenv('AWS_CRT_SHUTDOWN_TESTING', '1')
+            self._run_java_tests("-Dtest=ShutdownTest")
 
-        # run the elasticurl integration tests
-        python = sys.executable
-        env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
-                       python, 'integration-testing/java_elasticurl_runner.py', check=True)
+            # run the InitTest by itself.  This creates an environment where the test itself is the one that
+            # causes the CRT to be loaded and initialized.
+            self._run_java_tests("-Dtest=InitTest")
+
+            # run the elasticurl integration tests
+            python = sys.executable
+            env.shell.exec(python, 'crt/aws-c-http/integration-testing/http_client_test.py',
+                           python, 'integration-testing/java_elasticurl_runner.py', check=True)
 
     def run(self, env):
         self.env = env

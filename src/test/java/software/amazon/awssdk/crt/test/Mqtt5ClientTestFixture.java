@@ -18,9 +18,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assume;
+
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5ClientTestFixture extends CrtTestFixture {
 
+    static final boolean AWS_GRAALVM_CI = System.getProperty("AWS_GRAALVM_CI") != null;
     // MQTT5 Codebuild/Direct connections data
     static final String AWS_TEST_MQTT5_DIRECT_MQTT_HOST = System.getProperty("AWS_TEST_MQTT5_DIRECT_MQTT_HOST");
     static final String AWS_TEST_MQTT5_DIRECT_MQTT_PORT = System.getProperty("AWS_TEST_MQTT5_DIRECT_MQTT_PORT");
@@ -83,6 +86,17 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
     protected int OPERATION_TIMEOUT_TIME = 30;
 
     public Mqtt5ClientTestFixture() {
+        /**
+         * Disable test for native image, because:
+         * - On MacOS, when cert and private key used for TLS, it will be imported to KeyChain,
+         *      and KeyChain will restrict other application to use the private key
+         * - For GraalVM test, Java will run the tests firstly, and import the mTLS private key.
+         *      After that, when native test runs, it's a different application than Java,
+         *      which will use the same key, and MacOS blocks the usage and result in hanging.
+         * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
+         *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
+         */
+        Assume.assumeFalse(AWS_GRAALVM_CI && CRT.getOSIdentifier() == "osx");
     }
 
     /**

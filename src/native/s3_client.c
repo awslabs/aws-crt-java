@@ -953,7 +953,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_signing_config,
     jobject java_response_handler_jobject,
     jbyteArray jni_endpoint,
-    jobject java_resume_token_jobject) {
+    jobject java_resume_token_jobject,
+    jlong jni_object_size_hint) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1038,6 +1039,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         }
         checksum_config.validate_checksum_algorithms = &response_checksum_list;
     }
+    
+    uint64_t *object_size_hint = (uint64_t *) jni_object_size_hint;
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
@@ -1053,6 +1056,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .shutdown_callback = s_on_s3_meta_request_shutdown_complete_callback,
         .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
         .resume_token = resume_token,
+        .object_size_hint = object_size_hint,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);

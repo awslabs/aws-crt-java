@@ -276,7 +276,7 @@ jobs:
           cd src/test/android/testapp
           ../../../../gradlew assembledebug
           ../../../../gradlew assembleAndroidTest
-      - name: Device Farm Tests
+      - name: Device Farm Tests Highly Available
         run: |
           echo "Running Device Farm Python Script"
           python3 ./.github/workflows/run_android_ci.py \
@@ -284,6 +284,15 @@ jobs:
           --run_attempt ${{ github.run_attempt }} \
           --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
           --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
+          - name: Device Farm Tests Highly Available
+      - name: Device Farm Tests Android 8.0.0
+        run: |
+          echo "Running Device Farm Python Script"
+          python3 ./.github/workflows/run_android_ci.py \
+          --run_id ${{ github.run_id }} \
+          --run_attempt ${{ github.run_attempt }} \
+          --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArnAndroid8" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
 
   # check that docs can still build
   check-docs:

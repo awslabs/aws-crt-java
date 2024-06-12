@@ -119,8 +119,8 @@ jobs:
 
 
 
-  linux-musl-x86:
-    runs-on: ubuntu-22.04 # latest
+  linux-musl-x64:
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         image:
@@ -133,7 +133,7 @@ jobs:
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-musl-arm:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         image:

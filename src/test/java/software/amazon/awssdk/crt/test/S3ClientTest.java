@@ -367,7 +367,9 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler)
-                    .withObjectSizeHint(1024L * 1024);
+                    // Passing a 5GB size hint intentionally to verify
+                    // that an incorrect size_hint and size_hint > UINT32.MAX work fine.
+                    .withObjectSizeHint(5L * 1024 * 1024 * 1024);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());

@@ -236,5 +236,5 @@ public class S3Client extends CrtResource {
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
             AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
-            byte[] endpoint, ResumeToken resumeToken, long objectSizeHint);
+            byte[] endpoint, ResumeToken resumeToken, Long objectSizeHint);
 }

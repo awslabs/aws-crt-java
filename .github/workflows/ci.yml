@@ -283,7 +283,7 @@ jobs:
           --run_id ${{ github.run_id }} \
           --run_attempt ${{ github.run_attempt }} \
           --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
           --device_pool highly_available
       - name: Device Farm Tests Android 8.0.0
         run: |
@@ -292,7 +292,7 @@ jobs:
           --run_id ${{ github.run_id }} \
           --run_attempt ${{ github.run_attempt }} \
           --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArnAndroid8" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\')
+          --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArnAndroid8" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
           --device_pool android_8
 
   # check that docs can still build

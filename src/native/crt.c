@@ -320,7 +320,6 @@ error:
     return AWS_OP_ERR;
 }
 
-
 int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix) {
     jlong jlong_value = (*env)->CallLongMethod(env, java_Long, boxed_long_properties.long_value_method_id);
 

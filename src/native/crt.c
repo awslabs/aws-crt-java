@@ -322,9 +322,7 @@ error:
 
 int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix) {
     jlong jlong_value = (*env)->CallLongMethod(env, java_Long, boxed_long_properties.long_value_method_id);
-
-    if (aws_jni_check_and_clear_exception(env)) {
-        aws_jni_throw_illegal_argument_exception(env, "unable to convert %s", errmsg_prefix);
+    if ((*env)->ExceptionCheck(env)) {
         goto error;
     }
 

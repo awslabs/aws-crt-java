@@ -1042,7 +1042,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     uint64_t object_size_hint = 0;
     if (jni_object_size_hint != NULL) {
-        if (aws_uint64_t_from_java_Long(env, &object_size_hint, jni_object_size_hint, "object_size_hint")) {
+        if (aws_uint64_t_from_java_Long(env, &object_size_hint, jni_object_size_hint, "objectSizeHint")) {
             goto done;
         }
     }

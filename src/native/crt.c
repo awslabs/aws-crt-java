@@ -321,7 +321,7 @@ error:
 }
 
 int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix) {
-    if (java_long == NULL) {
+    if (java_Long == NULL) {
         aws_jni_throw_null_pointer_exception(env, "%s can't be null");
         goto error;
     }

@@ -320,6 +320,30 @@ error:
     return AWS_OP_ERR;
 }
 
+int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix) {
+    if (java_Long == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "%s can't be null");
+        goto error;
+    }
+
+    jlong jlong_value = (*env)->CallLongMethod(env, java_Long, boxed_long_properties.long_value_method_id);
+    if ((*env)->ExceptionCheck(env)) {
+        goto error;
+    }
+
+    int64_t jlong_value_int64 = (int64_t)jlong_value;
+    if (jlong_value_int64 < 0) {
+        aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
+        goto error;
+    }
+    *out_long = (uint64_t)jlong_value_int64;
+    return AWS_OP_SUCCESS;
+
+error:
+    *out_long = 0;
+    return AWS_OP_ERR;
+}
+
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
     jbyteArray jArray = (*env)->NewByteArray(env, (jsize)size);
     return jArray;

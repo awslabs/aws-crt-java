@@ -88,6 +88,7 @@ public class S3MetaRequestOptions {
     private AwsSigningConfig signingConfig;
     private URI endpoint;
     private ResumeToken resumeToken;
+    private Long objectSizeHint;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -262,5 +263,21 @@ public class S3MetaRequestOptions {
 
     public ResumeToken getResumeToken() {
         return resumeToken;
+    }
+
+    /*
+     * (Optional)
+     * Total object size hint, in bytes.
+     * The optimal strategy for downloading a file depends on its size.
+     * Set this hint to help the S3 client choose the best strategy for this particular file.
+     * This is just used as an estimate, so it's okay to provide an approximate value if the exact size is unknown.
+     */
+    public S3MetaRequestOptions withObjectSizeHint(Long objectSizeHint) {
+        this.objectSizeHint = objectSizeHint;
+        return this;
+    }
+
+    public Long getObjectSizeHint() {
+        return objectSizeHint;
     }
 }

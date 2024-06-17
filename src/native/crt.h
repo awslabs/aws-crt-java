@@ -83,6 +83,13 @@ bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out);
 int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix);
 
 /*******************************************************************************
+ * Set a uint64_t based on a Long (jobject).
+ * If conversion fails, a java IllegalArgumentException is thrown like
+ * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.
+ ******************************************************************************/
+int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix);
+
+/*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
  ******************************************************************************/
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size);

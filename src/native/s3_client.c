@@ -755,6 +755,19 @@ static void s_on_s3_meta_request_finish_callback(
             error_response_cursor = aws_byte_cursor_from_buf(error_response_body);
         }
         jbyteArray jni_payload = aws_jni_byte_array_from_cursor(env, &error_response_cursor);
+
+        jobject jni_operation_name = NULL;
+        if (meta_request_result->error_response_operation_name != NULL) {
+            jni_operation_name = aws_jni_string_from_string(env, meta_request_result->error_response_operation_name);
+            if (jni_operation_name == NULL) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_S3_META_REQUEST,
+                    "id=%p: Ignored Exception from S3MetaRequest.onFinished.aws_jni_string_from_string",
+                    (void *)meta_request);
+                aws_jni_check_and_clear_exception(env);
+            }
+        }
+
         /* Only propagate java_exception if crt error code is callback failure */
         jthrowable java_exception =
             meta_request_result->error_code == AWS_ERROR_HTTP_CALLBACK_FAILURE ? callback_data->java_exception : NULL;
@@ -791,6 +804,7 @@ static void s_on_s3_meta_request_finish_callback(
             meta_request_result->error_code,
             meta_request_result->response_status,
             jni_payload,
+            jni_operation_name,
             meta_request_result->validation_algorithm,
             meta_request_result->did_validate,
             java_exception,
@@ -804,6 +818,10 @@ static void s_on_s3_meta_request_finish_callback(
         }
         if (jni_payload) {
             (*env)->DeleteLocalRef(env, jni_payload);
+        }
+
+        if (jni_operation_name) {
+            (*env)->DeleteLocalRef(env, jni_operation_name);
         }
 
         aws_byte_buf_clean_up(&headers_buf);
@@ -943,6 +961,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_s3_meta_request_jobject,
     jbyteArray jni_region,
     jint meta_request_type,
+    jbyteArray jni_operation_name,
     jint checksum_location,
     jint checksum_algorithm,
     jboolean validate_response,
@@ -960,6 +979,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
+    struct aws_byte_cursor operation_name;
+    AWS_ZERO_STRUCT(operation_name);
     struct aws_byte_cursor request_filepath;
     AWS_ZERO_STRUCT(request_filepath);
     struct aws_s3_meta_request_resume_token *resume_token =
@@ -997,6 +1018,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_FATAL_ASSERT(
         AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
                               env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
+
+    if (jni_operation_name) {
+        operation_name = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_operation_name);
+        if (operation_name.ptr == NULL) {
+            goto done;
+        }
+        if (operation_name.len == 0) {
+            aws_jni_throw_illegal_argument_exception(env, "Operation name cannot be empty");
+            goto done;
+        }
+    }
 
     if (jni_request_filepath) {
         request_filepath = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_request_filepath);
@@ -1049,6 +1081,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
+        .operation_name = operation_name,
         .checksum_config = &checksum_config,
         .message = request_message,
         .send_filepath = request_filepath,
@@ -1079,6 +1112,7 @@ done:
     aws_s3_meta_request_resume_token_release(resume_token);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     aws_http_message_release(request_message);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_operation_name, operation_name);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
     aws_uri_clean_up(&endpoint);
     if (success) {

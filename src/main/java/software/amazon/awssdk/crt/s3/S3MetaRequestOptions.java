@@ -80,6 +80,7 @@ public class S3MetaRequestOptions {
     }
 
     private MetaRequestType metaRequestType;
+    private String operationName;
     private ChecksumConfig checksumConfig;
     private HttpRequest httpRequest;
     private Path requestFilePath;
@@ -97,6 +98,38 @@ public class S3MetaRequestOptions {
 
     public MetaRequestType getMetaRequestType() {
         return metaRequestType;
+    }
+
+    /**
+     * The S3 operation name (eg: "CreateBucket"),
+     * this MUST be set for {@link MetaRequestType#DEFAULT},
+     * it is not necessary for other meta request types.
+     *
+     * See <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations_Amazon_Simple_Storage_Service.html">
+     * S3 API documentation</a> for the canonical list of names.
+     *
+     * This name is used to fill out details in metrics and error reports.
+     * It also drives some operation-specific behavior.
+     * If you pass the wrong name, you risk getting the wrong behavior.
+     *
+     * For example, every operation except "GetObject" has its response checked
+     * for error, even if the HTTP status-code was 200 OK
+     * (see <a href=https://repost.aws/knowledge-center/s3-resolve-200-internalerror>knowledge center</a>).
+     * If you used the {@link MetaRequestType#DEFAULT DEFAULT} type to do
+     * <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">GetObject</a>,
+     * but mis-named it "Download", and the object looked like XML with an error code,
+     * then the meta-request would fail. You risk logging the full response body,
+     * and leaking sensitive data.
+     * @param operationName the operation name for this {@link MetaRequestType#DEFAULT} meta request
+     * @return this
+     */
+    public S3MetaRequestOptions withOperationName(String operationName) {
+        this.operationName = operationName;
+        return this;
+    }
+
+    public String getOperationName() {
+        return operationName;
     }
 
     /**

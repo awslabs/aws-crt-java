@@ -715,7 +715,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished =
-        (*env)->GetMethodID(env, cls, "onFinished", "(II[BIZLjava/lang/Throwable;Ljava/nio/ByteBuffer;)V");
+        (*env)->GetMethodID(env, cls, "onFinished", "(II[BLjava/lang/String;IZLjava/lang/Throwable;Ljava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onFinished);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseHeaders =

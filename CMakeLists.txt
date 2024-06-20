@@ -184,9 +184,10 @@ set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}/${AWS_
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
-aws_use_package(aws-c-http)
+
+# link the high-level libraries that will recursively pull in the rest
+# (don't repeat dependencies here, or the linker will spit out warnings)
 aws_use_package(aws-c-mqtt)
-aws_use_package(aws-c-auth)
 aws_use_package(aws-c-event-stream)
 aws_use_package(aws-c-s3)
 

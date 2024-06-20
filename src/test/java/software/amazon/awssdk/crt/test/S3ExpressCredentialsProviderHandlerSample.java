@@ -68,8 +68,11 @@ public class S3ExpressCredentialsProviderHandlerSample implements S3ExpressCrede
 
         AwsSigningConfig config = AwsSigningConfig.getDefaultS3SigningConfig(properties.getRegion(), null);
         S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
-                .withMetaRequestType(MetaRequestType.DEFAULT).withHttpRequest(httpRequest)
-                .withResponseHandler(responseHandler).withSigningConfig(config);
+                .withMetaRequestType(MetaRequestType.DEFAULT)
+                .withOperationName("CreateSession")
+                .withHttpRequest(httpRequest)
+                .withResponseHandler(responseHandler)
+                .withSigningConfig(config);
 
         S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions);
         future.whenComplete((r,t) -> {

@@ -2044,6 +2044,7 @@
           "int",
           "int",
           "byte[]",
+          "java.lang.String",
           "int",
           "boolean",
           "java.lang.Throwable",

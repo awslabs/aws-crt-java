@@ -141,6 +141,14 @@ public class S3Client extends CrtResource {
             throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
         }
 
+        String operationName = options.getOperationName();
+        if (operationName == null && options.getMetaRequestType() == S3MetaRequestOptions.MetaRequestType.DEFAULT) {
+            // The upcoming release of aws-c-s3 v0.6.0 will require an operation name for DEFAULT meta-requests.
+            // Set a default value for now, in case this code gets mixed with the upcoming aws-c-s3 release.
+            // But when we take the upcoming release for real, change this code to throw IllegalArgumentException.
+            operationName = new String("DEFAULT");
+        }
+
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
                 options.getResponseHandler());
@@ -163,7 +171,9 @@ public class S3Client extends CrtResource {
                 : new ChecksumConfig();
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(), checksumConfig.getChecksumLocation().getNativeValue(),
+                options.getMetaRequestType().getNativeValue(),
+                operationName == null ? null : operationName.getBytes(UTF8),
+                checksumConfig.getChecksumLocation().getNativeValue(),
                 checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
                 httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
@@ -232,7 +242,8 @@ public class S3Client extends CrtResource {
     private static native void s3ClientDestroy(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
-            int metaRequestType, int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
+            int metaRequestType, byte[] operationName,
+            int checksumLocation, int checksumAlgorithm, boolean validateChecksum,
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
             AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,

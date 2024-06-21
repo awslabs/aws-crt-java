@@ -10,6 +10,7 @@ public class S3FinishedResponseContext {
     private final int errorCode;
     private final int responseStatus;
     private final byte[] errorPayload;
+    private final String errorOperationName;
     private final ChecksumAlgorithm checksumAlgorithm;
     private final boolean didValidateChecksum;
 
@@ -24,10 +25,11 @@ public class S3FinishedResponseContext {
      * didValidateChecksum which is true if the response was validated.
      * cause of the error such as a Java exception in a callback. Maybe NULL if there was no exception in a callback.
      */
-    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause, final HttpHeader[] errorHeaders) {
+    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final String errorOperationName, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause, final HttpHeader[] errorHeaders) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
+        this.errorOperationName = errorOperationName;
         this.checksumAlgorithm = checksumAlgorithm;
         this.didValidateChecksum = didValidateChecksum;
         this.cause = cause;
@@ -51,6 +53,18 @@ public class S3FinishedResponseContext {
      */
     public byte[] getErrorPayload() {
         return this.errorPayload;
+    }
+
+    /**
+     * @return the name of the S3 operation that failed, in the case of a failed HTTP response.
+     * For example, if {@link S3MetaRequestOptions.MetaRequestType#PUT_OBJECT} fails
+     * this could be "PutObject", "CreateMultipartUpload", "UploadPart",
+     * "CompleteMultipartUpload", or others. For {@link S3MetaRequestOptions.MetaRequestType#DEFAULT},
+     * this is the name passed to {@link S3MetaRequestOptions#withOperationName}.
+     * May be null.
+     */
+    public String getErrorOperationName() {
+        return this.errorOperationName;
     }
 
     /*

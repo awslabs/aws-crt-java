@@ -3,6 +3,8 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -17,6 +19,7 @@ import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
@@ -103,8 +106,9 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     private RuntimeException makeExceptionFromFinishedResponseContext(S3FinishedResponseContext context) {
-        return new RuntimeException(String.format("error code:(%d) response status code(%d), error payload(%s)",
+        return new RuntimeException(String.format("error code:(%d)(%s) response status code(%d), error payload(%s)",
                 context.getErrorCode(),
+                CRT.awsErrorName(context.getErrorCode()),
                 context.getResponseStatus(),
                 new String(context.getErrorPayload(), java.nio.charset.StandardCharsets.UTF_8),
                 context.getCause()));
@@ -330,7 +334,7 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.fail(ex.getMessage());
         }
     }
-    
+
     @Test
     public void testS3GetWithSizeHint() {
         skipIfAndroid();
@@ -380,7 +384,7 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3GetErrorHeadersAreReported() {
+    public void testS3GetErrorFinishedResponseContextHasAllData() {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
@@ -390,12 +394,7 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
                 @Override
-                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-                    byte[] bytes = new byte[bodyBytesIn.remaining()];
-                    bodyBytesIn.get(bytes);
-                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3, "Body Response: " + Arrays.toString(bytes));
-                    return 0;
-                }
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) { return 0; }
 
                 @Override
                 public void onFinished(S3FinishedResponseContext context) {
@@ -404,6 +403,12 @@ public class S3ClientTest extends CrtTestFixture {
                     try {
                         assertNotNull(context.getErrorHeaders());
                         assertTrue(context.getErrorCode() > 0);
+                        assertTrue(context.getResponseStatus() >= 400);
+                        assertNotNull(context.getErrorPayload());
+                        String payload = new String(context.getErrorPayload(), StandardCharsets.UTF_8);
+                        assertTrue(payload.contains("<Error>"));
+                        assertNotNull(context.getErrorOperationName());
+                        assertFalse(context.getErrorOperationName().isEmpty());
                         onFinishedFuture.complete(0); // Assertions passed
                     } catch (AssertionError e) {
                         onFinishedFuture.complete(-1); // Assertions failed

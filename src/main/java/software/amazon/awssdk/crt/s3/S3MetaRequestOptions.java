@@ -102,8 +102,8 @@ public class S3MetaRequestOptions {
 
     /**
      * The S3 operation name (eg: "CreateBucket"),
-     * this MUST be set for {@link MetaRequestType#DEFAULT},
-     * it is not necessary for other meta request types.
+     * this should be set for {@link MetaRequestType#DEFAULT},
+     * it is ignored for other meta request types since the operation is implicit.
      *
      * See <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations_Amazon_Simple_Storage_Service.html">
      * S3 API documentation</a> for the canonical list of names.

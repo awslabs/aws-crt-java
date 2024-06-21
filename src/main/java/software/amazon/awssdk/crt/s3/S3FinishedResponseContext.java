@@ -40,7 +40,7 @@ public class S3FinishedResponseContext {
         return this.errorCode;
     }
 
-    /**
+    /*
      * If the request didn't receive a response due to a connection
      * failure or some other issue the response status will be 0.
      */
@@ -48,7 +48,7 @@ public class S3FinishedResponseContext {
         return this.responseStatus;
     }
 
-    /**
+    /*
      * In the case of a failed http response get the payload of the response.
      */
     public byte[] getErrorPayload() {
@@ -56,7 +56,7 @@ public class S3FinishedResponseContext {
     }
 
     /**
-     * In the case of a failed http response, get the name of the S3 operation that failed.
+	 * @return the name of the S3 operation that failed, in the case of a failed HTTP response.
      * For example, if {@link S3MetaRequestOptions.MetaRequestType#PUT_OBJECT} fails
      * this could be "PutObject", "CreateMultipartUpload", "UploadPart",
      * "CompleteMultipartUpload", or others. For {@link S3MetaRequestOptions.MetaRequestType#DEFAULT},
@@ -67,7 +67,7 @@ public class S3FinishedResponseContext {
         return this.errorOperationName;
     }
 
-    /**
+    /*
      * if no checksum is found, or the request finished with an error the Algorithm will be None,
      * otherwise the algorithm will correspond to the one attached to the object when uploaded.
      */

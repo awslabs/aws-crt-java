@@ -142,6 +142,12 @@ public class S3Client extends CrtResource {
         }
 
         String operationName = options.getOperationName();
+        if (operationName == null && options.getMetaRequestType() == S3MetaRequestOptions.MetaRequestType.DEFAULT) {
+            // The upcoming release of aws-c-s3 v0.6.0 will require an operation name for DEFAULT meta-requests.
+            // Set a default value for now, in case this code gets mixed with the upcoming aws-c-s3 release.
+            // But when we take the upcoming release for real, change this code to throw IllegalArgumentException.
+            operationName = new String("DEFAULT");
+        }
 
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(

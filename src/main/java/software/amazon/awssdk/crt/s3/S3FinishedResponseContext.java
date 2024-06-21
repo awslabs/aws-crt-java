@@ -56,7 +56,7 @@ public class S3FinishedResponseContext {
     }
 
     /**
-	 * @return the name of the S3 operation that failed, in the case of a failed HTTP response.
+     * @return the name of the S3 operation that failed, in the case of a failed HTTP response.
      * For example, if {@link S3MetaRequestOptions.MetaRequestType#PUT_OBJECT} fails
      * this could be "PutObject", "CreateMultipartUpload", "UploadPart",
      * "CompleteMultipartUpload", or others. For {@link S3MetaRequestOptions.MetaRequestType#DEFAULT},

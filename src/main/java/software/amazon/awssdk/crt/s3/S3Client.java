@@ -141,6 +141,8 @@ public class S3Client extends CrtResource {
             throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
         }
 
+        String operationName = options.getOperationName();
+
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
                 options.getResponseHandler());

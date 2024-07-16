@@ -337,6 +337,8 @@ jobs:
         submodules: true
     - name: Configure local host
       run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
         python3 -m pip install h2
         cd crt/aws-c-http/tests/py_localhost/
         python3 server.py &

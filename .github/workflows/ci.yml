@@ -192,8 +192,8 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  osx:  # With integration tests
-    runs-on: macos-13 # latest
+  macos:  # With integration tests
+    runs-on: macos-14 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -205,8 +205,8 @@ jobs:
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  osx-arm64:
-    runs-on: macos-13 # latest
+  macos-arm64:
+    runs-on: macos-14 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -219,8 +219,8 @@ jobs:
         run: |
           python3 codebuild/macos_compatibility_check.py armv8
 
-  osx-x64:
-    runs-on: macos-13
+  macos-x64:
+    runs-on: macos-14-large
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v2
@@ -328,8 +328,8 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  localhost-test-mac:
-    runs-on: macos-13 # latest
+  localhost-test-macos:
+    runs-on: macos-14 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3

@@ -320,7 +320,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) , new HttpHeader("Range", "bytes=10-9") };
             HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()

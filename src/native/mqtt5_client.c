@@ -1772,6 +1772,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
 
     struct aws_socket_options *socket_options = NULL;
     struct aws_socket_options tmp_socket_options;
+    AWS_ZERO_STRUCT(tmp_socket_options);
     jobject jni_socket_options =
         (*env)->CallObjectMethod(env, jni_options, mqtt5_client_options_properties.options_get_socket_options_id);
     if (aws_jni_check_and_clear_exception(env)) {

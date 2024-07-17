@@ -7,7 +7,7 @@ on:
       - 'docs'
 
 env:
-  BUILDER_VERSION: v0.9.60
+  BUILDER_VERSION: v0.9.62
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -192,8 +192,8 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  osx:  # With integration tests
-    runs-on: macos-13 # latest
+  macos: 
+    runs-on: macos-14 #latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -204,9 +204,10 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+          python3 codebuild/macos_compatibility_check.py 
 
-  osx-arm64:
-    runs-on: macos-13 # latest
+  macos-x64:
+    runs-on: macos-14-large #latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
@@ -214,23 +215,9 @@ jobs:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
         run: |
-          mvn -B compile -P mac-arm64
-      - name: verify backward compatibility
-        run: |
-          python3 codebuild/macos_compatibility_check.py armv8
-
-  osx-x64:
-    runs-on: macos-13
-    steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        run: |
-          mvn -B compile -P mac-x64
-      - name: verify backward compatibility
-        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
           python3 codebuild/macos_compatibility_check.py
 
   android:
@@ -328,8 +315,8 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  localhost-test-mac:
-    runs-on: macos-13 # latest
+  localhost-test-macos:
+    runs-on: macos-14 # latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -337,6 +324,8 @@ jobs:
         submodules: true
     - name: Configure local host
       run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
         python3 -m pip install h2
         cd crt/aws-c-http/tests/py_localhost/
         python3 server.py &

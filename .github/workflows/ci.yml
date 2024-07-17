@@ -193,7 +193,7 @@ jobs:
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
   macos:  # With integration tests
-    runs-on: macos-14 # latest
+    runs-on: macos-14-xlarge # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3

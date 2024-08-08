@@ -330,7 +330,6 @@
             <groupId>org.graalvm.sdk</groupId>
             <artifactId>nativeimage</artifactId>
             <version>24.0.2</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

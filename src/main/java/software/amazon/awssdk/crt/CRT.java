@@ -245,6 +245,72 @@ public final class CRT {
         return output;
     }
 
+    public static void extractLibrary(String path) {
+        try {
+            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+            File extractFile = new File(path, libraryName);
+            extractFile.createNewFile();
+            if (!extractFile.setExecutable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library executable by owner only");
+            }
+            if (!extractFile.setWritable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
+            }
+            if (!extractFile.setReadable(true, true)) {
+                throw new CrtRuntimeException("Unable to make shared library readable by owner only");
+            }
+            String os = getOSIdentifier();
+            // open a stream to read the shared lib contents from this JAR
+            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
+            // Check whether there is a platform specific resource path to use
+            CrtPlatform platform = getPlatformImpl();
+            if (platform != null){
+                String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
+                if (platformLibResourcePath != null){
+                    libResourcePath = platformLibResourcePath;
+                }
+            }
+
+            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
+                if (in == null) {
+                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
+                }
+
+                // Copy from jar stream to temp file
+                try (FileOutputStream out = new FileOutputStream(extractFile)) {
+                    int read;
+                    byte [] bytes = new byte[1024];
+                    while ((read = in.read(bytes)) != -1){
+                        out.write(bytes, 0, read);
+                    }
+                }
+            }
+
+            if (!extractFile.setWritable(false)) {
+                throw new CrtRuntimeException("Unable to make shared library read-only");
+            }
+
+            // load the shared lib from the temp path
+        } catch (CrtRuntimeException crtex) {
+            System.err.println("Unable to initialize AWS CRT: " + crtex);
+            crtex.printStackTrace();
+            throw crtex;
+        } catch (UnknownPlatformException upe) {
+            System.err.println("Unable to determine platform for AWS CRT: " + upe);
+            upe.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to determine platform for AWS CRT");
+            rex.initCause(upe);
+            throw rex;
+        } catch (Exception ex) {
+            System.err.println("Unable to unpack AWS CRT lib: " + ex);
+            ex.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
+            rex.initCause(ex);
+            throw rex;
+        }
+
+    }
+
     private static void extractAndLoadLibrary(String path) {
         try {
             // Check java.io.tmpdir

@@ -252,6 +252,44 @@
             </properties>
         </profile>
         <profile>
+            <id>crt-jvm-build</id>
+            <activation>
+                <property>
+                  <name>!crt.graalvm</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.8.1</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/software/amazon/awssdk/crt/NativeFeature.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>crt-graalvm-build</id>
+            <activation>
+                <property>
+                    <name>crt.graalvm</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.graalvm.sdk</groupId>
+                    <artifactId>nativeimage</artifactId>
+                    <version>24.0.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>release</id>
             <distributionManagement>
                 <snapshotRepository>
@@ -326,12 +364,6 @@
     </profiles>
 
     <dependencies>
-        <dependency>
-            <groupId>org.graalvm.sdk</groupId>
-            <artifactId>nativeimage</artifactId>
-            <version>24.0.2</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

@@ -48,9 +48,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                     .withSocketOptions(sockOpts)
                     .withTlsConnectionOptions(tlsConnectionOptions)
                     .withUri(uri)
-                    .withMaxConnections(numConnections)
-                    .withConnectionAcquisitionTimeoutInMilliseconds(5000)
-                    .withMaxPendingConnectionAcquisitions(10);
+                    .withMaxConnections(numConnections);
 
             return HttpClientConnectionManager.create(options);
         }

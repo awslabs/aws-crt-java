@@ -320,7 +320,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * If set, {@link HttpClientConnectionManager#acquireConnection()} will fail with
      * AWS_ERROR_HTTP_CONNECTION_MANAGER_MAX_PENDING_ACQUISITIONS_EXCEEDED if there are already pending acquisitions
-     * equal to `max_pending_connection_acquisitions`.
+     * equal to `maxPendingConnectionAcquisitions`.
      *
      * @param maxPendingConnectionAcquisitions maximum pending acquisitions allowed 
      * @return this

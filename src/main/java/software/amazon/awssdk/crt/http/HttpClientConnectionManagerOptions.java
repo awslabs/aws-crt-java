@@ -33,8 +33,8 @@ public class HttpClientConnectionManagerOptions {
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
-    private int connectionAcquisitionTimeoutInMilliseconds;
-    private int maxPendingConnectionAcquisitions;
+    private long connectionAcquisitionTimeoutInMilliseconds;
+    private long maxPendingConnectionAcquisitions;
 
 	private static final String HTTP = "http";
     private static final String HTTPS = "https";
@@ -291,7 +291,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return Return the connection acquisition timeout in miliseconds
      */
-    public int getConnectionAcquisitionTimeoutInMilliseconds() {
+    public long getConnectionAcquisitionTimeoutInMilliseconds() {
 		return connectionAcquisitionTimeoutInMilliseconds;
 	}
 
@@ -312,7 +312,7 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return Return the max pending connection acquisitions 
      */
-    public int getMaxPendingConnectionAcquisitions() {
+    public long getMaxPendingConnectionAcquisitions() {
 		return maxPendingConnectionAcquisitions;
 	}
 

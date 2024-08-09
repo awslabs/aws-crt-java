@@ -116,8 +116,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
     jint jni_expected_protocol_version,
-    jint jni_max_pending_connection_acquisitions,
-    jint jni_connection_acquisition_timeout_ms) {
+    jlong jni_max_pending_connection_acquisitions,
+    jlong jni_connection_acquisition_timeout_ms) {
 
     (void)jni_class;
     (void)jni_expected_protocol_version;

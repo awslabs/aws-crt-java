@@ -271,7 +271,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int monitoringFailureIntervalInSeconds,
                                                         int expectedProtocol,
                                                         int maxPendingConnectionAcquisitions,
-                                                        connectionAcquisitionTimeoutInMilliseconds) throws CrtRuntimeException;
+                                                        int connectionAcquisitionTimeoutInMilliseconds) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

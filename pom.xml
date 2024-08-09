@@ -254,9 +254,7 @@
         <profile>
             <id>crt-jvm-build</id>
             <activation>
-                <property>
-                  <name>!crt.graalvm</name>
-                </property>
+                <jdk>(,11)</jdk>
             </activation>
             <build>
                 <plugins>
@@ -276,9 +274,7 @@
         <profile>
             <id>crt-graalvm-build</id>
             <activation>
-                <property>
-                    <name>crt.graalvm</name>
-                </property>
+                <jdk>[11,)</jdk>
             </activation>
             <dependencies>
                 <dependency>

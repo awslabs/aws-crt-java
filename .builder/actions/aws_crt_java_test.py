@@ -24,8 +24,6 @@ class AWSCrtJavaTest(Builder.Action):
             "-Daws.crt.aws_trace_log_per_test",
             "-Daws.crt.ci=true"
         ]
-        if os.getenv("AWS_GRAALVM_CI") is not None:
-            cmd_args.extend(["-Dcrt.graalvm=true"])
 
         cmd_args.extend(extra_args)
         cmd_args.append("test")

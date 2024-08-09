@@ -288,6 +288,9 @@ public class HttpClientConnectionManagerOptions {
         return this;
     }
 
+    /**
+     * @return Return the connection acquisition timeout in miliseconds
+     */
     public int getConnectionAcquisitionTimeoutInMilliseconds() {
 		return connectionAcquisitionTimeoutInMilliseconds;
 	}
@@ -306,6 +309,9 @@ public class HttpClientConnectionManagerOptions {
 	}
 
 
+    /**
+     * @return Return the max pending connection acquisitions 
+     */
     public int getMaxPendingConnectionAcquisitions() {
 		return maxPendingConnectionAcquisitions;
 	}

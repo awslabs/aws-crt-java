@@ -245,64 +245,19 @@ public final class CRT {
         return output;
     }
 
-    private static void extractAndLoadLibrary(String path) {
+    public static void extractLibrary(File extractFile) {
         try {
-            // Check java.io.tmpdir
-            String tmpdirPath;
-            File tmpdirFile;
-            try {
-                tmpdirFile = new File(path).getAbsoluteFile();
-                tmpdirPath = tmpdirFile.getAbsolutePath();
-                if (tmpdirFile.exists()) {
-                    if (!tmpdirFile.isDirectory()) {
-                        throw new IOException("not a directory: " + tmpdirPath);
-                    }
-                } else {
-                    tmpdirFile.mkdirs();
-                }
-
-                if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                    throw new IOException("access denied: " + tmpdirPath);
-                }
-            } catch (Exception ex) {
-                String msg = "Invalid directory: " + path;
-                throw new IOException(msg, ex);
-            }
-
-            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-
-            // Prefix the lib we'll extract to disk
-            String tempSharedLibPrefix = "AWSCRT_";
-
-            File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
-            if (!tempSharedLib.setExecutable(true, true)) {
+            if (!extractFile.setExecutable(true, true)) {
                 throw new CrtRuntimeException("Unable to make shared library executable by owner only");
             }
-            if (!tempSharedLib.setWritable(true, true)) {
+            if (!extractFile.setWritable(true, true)) {
                 throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
             }
-            if (!tempSharedLib.setReadable(true, true)) {
+            if (!extractFile.setReadable(true, true)) {
                 throw new CrtRuntimeException("Unable to make shared library readable by owner only");
             }
-
-			// The temp lib file should be deleted when we're done with it.
-			// Ask Java to try and delete it on exit. We call this immediately
-			// so that if anything goes wrong writing the file to disk, or
-			// loading it as a shared lib, it will still get cleaned up.
-			tempSharedLib.deleteOnExit();
-
-            // Unfortunately File.deleteOnExit() won't work on Windows, where
-            // files cannot be deleted while they're in use. On Windows, once
-            // our .dll is loaded, it can't be deleted by this process.
-            //
-            // The Windows-only solution to this problem is to scan on startup
-            // for old instances of the .dll and try to delete them. If another
-            // process is still using the .dll, the delete will fail, which is fine.
+            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String os = getOSIdentifier();
-            if (os.equals("windows")) {
-                tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
-            }
-
             // open a stream to read the shared lib contents from this JAR
             String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
             // Check whether there is a platform specific resource path to use
@@ -313,14 +268,13 @@ public final class CRT {
                     libResourcePath = platformLibResourcePath;
                 }
             }
-
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
                 }
 
                 // Copy from jar stream to temp file
-                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
+                try (FileOutputStream out = new FileOutputStream(extractFile)) {
                     int read;
                     byte [] bytes = new byte[1024];
                     while ((read = in.read(bytes)) != -1){
@@ -328,13 +282,9 @@ public final class CRT {
                     }
                 }
             }
-
-            if (!tempSharedLib.setWritable(false)) {
+            if (!extractFile.setWritable(false)) {
                 throw new CrtRuntimeException("Unable to make shared library read-only");
             }
-
-            // load the shared lib from the temp path
-            System.load(tempSharedLib.getAbsolutePath());
         } catch (CrtRuntimeException crtex) {
             System.err.println("Unable to initialize AWS CRT: " + crtex);
             crtex.printStackTrace();
@@ -352,6 +302,71 @@ public final class CRT {
             rex.initCause(ex);
             throw rex;
         }
+    }
+
+    public static void extractLibrary(String path) {
+        String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+        File extractFile = new File(path, libraryName);
+        try {
+            extractFile.createNewFile();
+        } catch (Exception ex) {
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to create file on path:" + extractFile.getAbsolutePath());
+            rex.initCause(ex);
+            throw rex;
+        }
+        extractLibrary(extractFile);
+    }
+
+    private static void extractAndLoadLibrary(String path) {
+        // Check java.io.tmpdir
+        String tmpdirPath;
+        File tmpdirFile;
+        try {
+            tmpdirFile = new File(path).getAbsoluteFile();
+            tmpdirPath = tmpdirFile.getAbsolutePath();
+            if (tmpdirFile.exists()) {
+                if (!tmpdirFile.isDirectory()) {
+                    throw new IOException("not a directory: " + tmpdirPath);
+                }
+            } else {
+                tmpdirFile.mkdirs();
+            }
+
+            if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
+                throw new IOException("access denied: " + tmpdirPath);
+            }
+        } catch (Exception ex) {
+            CrtRuntimeException rex = new CrtRuntimeException("Invalid directory: " + path);
+            rex.initCause(ex);
+            throw rex;
+        }
+
+        String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+
+        // Prefix the lib we'll extract to disk
+        String tempSharedLibPrefix = "AWSCRT_";
+        File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
+
+        // The temp lib file should be deleted when we're done with it.
+        // Ask Java to try and delete it on exit. We call this immediately
+        // so that if anything goes wrong writing the file to disk, or
+        // loading it as a shared lib, it will still get cleaned up.
+        tempSharedLib.deleteOnExit();
+
+        // Unfortunately File.deleteOnExit() won't work on Windows, where
+        // files cannot be deleted while they're in use. On Windows, once
+        // our .dll is loaded, it can't be deleted by this process.
+        //
+        // The Windows-only solution to this problem is to scan on startup
+        // for old instances of the .dll and try to delete them. If another
+        // process is still using the .dll, the delete will fail, which is fine.
+        String os = getOSIdentifier();
+        if (os.equals("windows")) {
+            tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
+        }
+        extractLibrary(tempSharedLib);
+        // load the shared lib from the temp path
+        System.load(tempSharedLib.getAbsolutePath());
     }
 
     private static void loadLibraryFromJar() {

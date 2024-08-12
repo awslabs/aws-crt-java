@@ -335,7 +335,7 @@ public final class CRT {
             if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
                 throw new IOException("access denied: " + tmpdirPath);
             }
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             CrtRuntimeException rex = new CrtRuntimeException("Invalid directory: " + path);
             rex.initCause(ex);
             throw rex;
@@ -345,8 +345,17 @@ public final class CRT {
 
         // Prefix the lib we'll extract to disk
         String tempSharedLibPrefix = "AWSCRT_";
-        File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
-
+        File tempSharedLib = null;
+        try{
+            tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
+        }
+        catch (IOException ex){
+            System.err.println("Unable to create temp file to extract AWS CRT library" + ex);
+            ex.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to create temp file to extract AWS CRT library");
+            rex.initCause(ex);
+            throw rex;
+        }
         // The temp lib file should be deleted when we're done with it.
         // Ask Java to try and delete it on exit. We call this immediately
         // so that if anything goes wrong writing the file to disk, or
@@ -367,6 +376,7 @@ public final class CRT {
         extractLibrary(tempSharedLib);
         // load the shared lib from the temp path
         System.load(tempSharedLib.getAbsolutePath());
+
     }
 
     private static void loadLibraryFromJar() {

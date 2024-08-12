@@ -70,28 +70,28 @@ if (BUILD_DEPS)
         message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
-            list(append AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
 
             set(PERL_EXECUTABLE "perl")
-            list(append AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
 
             if (DEFINED ENV{GO_PATH})
                 set(GO_EXECUTABLE $ENV{GO_PATH}/go)
-                list(append AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
                 message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
         else()
-            list(append AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
-            list(append AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
             set(PERL_EXECUTABLE "perl")
             # Build with Perl to avoid using pre-compiled binary with AVX512
-            list(append AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
-            list(append AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
             # Disable AVX512 on old GCC that not supports it
-            list(append AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
         # temporarily disable certain warnings as errors for the aws-lc build
@@ -107,7 +107,7 @@ if (BUILD_DEPS)
                 set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-array-parameter")
             endif()
         endif()
-        list(append AWSLC_CMAKE_ARGUMENTS ${AWSLC_CMAKE_C_FLAGS})
+        list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         prebuild_dependency(

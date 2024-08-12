@@ -136,7 +136,9 @@ public class HttpClientConnectionManager extends CrtResource {
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
                                             monitoringFailureIntervalInSeconds,
-                                            expectedHttpVersion.getValue()));
+                                            expectedHttpVersion.getValue(),
+                                            options.getMaxPendingConnectionAcquisitions(),
+                                            options.getConnectionAcquisitionTimeoutInMilliseconds()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -267,7 +269,9 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,
                                                         int monitoringFailureIntervalInSeconds,
-                                                        int expectedProtocol) throws CrtRuntimeException;
+                                                        int expectedProtocol,
+                                                        long maxPendingConnectionAcquisitions,
+                                                        long connectionAcquisitionTimeoutInMilliseconds) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

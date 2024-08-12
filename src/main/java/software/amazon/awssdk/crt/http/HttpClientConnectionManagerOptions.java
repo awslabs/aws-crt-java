@@ -33,8 +33,10 @@ public class HttpClientConnectionManagerOptions {
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
+    private long connectionAcquisitionTimeoutInMilliseconds;
+    private long maxPendingConnectionAcquisitions;
 
-    private static final String HTTP = "http";
+	private static final String HTTP = "http";
     private static final String HTTPS = "https";
 
     /**
@@ -285,6 +287,48 @@ public class HttpClientConnectionManagerOptions {
         this.maxConnectionIdleInMilliseconds = maxConnectionIdleInMilliseconds;
         return this;
     }
+
+    /**
+     * @return Return the connection acquisition timeout in miliseconds
+     */
+    public long getConnectionAcquisitionTimeoutInMilliseconds() {
+		return connectionAcquisitionTimeoutInMilliseconds;
+	}
+
+
+     /**
+     * If set, {@link HttpClientConnectionManager#acquireConnection()}
+     * will give up after waiting this long for a connection from the pool,
+     * failing with error AWS_ERROR_HTTP_CONNECTION_MANAGER_ACQUISITION_TIMEOUT.
+     * @param connectionAcquisitionTimeoutInMilliseconds timeout in milliseconds. 
+     * @return this
+     */
+	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(int connectionAcquisitionTimeoutInMilliseconds) {
+		this.connectionAcquisitionTimeoutInMilliseconds = connectionAcquisitionTimeoutInMilliseconds;
+        return this;
+	}
+
+
+    /**
+     * @return Return the max pending connection acquisitions 
+     */
+    public long getMaxPendingConnectionAcquisitions() {
+		return maxPendingConnectionAcquisitions;
+	}
+
+
+    /**
+     * If set, {@link HttpClientConnectionManager#acquireConnection()} will fail with
+     * AWS_ERROR_HTTP_CONNECTION_MANAGER_MAX_PENDING_ACQUISITIONS_EXCEEDED if there are already pending acquisitions
+     * equal to `maxPendingConnectionAcquisitions`.
+     *
+     * @param maxPendingConnectionAcquisitions maximum pending acquisitions allowed 
+     * @return this
+     */
+	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(int maxPendingConnectionAcquisitions) {
+		this.maxPendingConnectionAcquisitions = maxPendingConnectionAcquisitions;
+        return this;
+	}
 
     /**
      * @return How long to allow connections to be idle before reaping them

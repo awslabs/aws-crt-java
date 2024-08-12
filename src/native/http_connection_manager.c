@@ -115,7 +115,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_max_connection_idle_in_milliseconds,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
-    jint jni_expected_protocol_version) {
+    jint jni_expected_protocol_version,
+    jlong jni_max_pending_connection_acquisitions,
+    jlong jni_connection_acquisition_timeout_ms) {
 
     (void)jni_class;
     (void)jni_expected_protocol_version;
@@ -187,6 +189,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
     manager_options.enable_read_back_pressure = jni_manual_window_management;
     manager_options.max_connection_idle_in_milliseconds = jni_max_connection_idle_in_milliseconds;
+    manager_options.max_pending_connection_acquisitions = jni_max_pending_connection_acquisitions;
+    manager_options.connection_acquisition_timeout_ms = jni_connection_acquisition_timeout_ms;
 
     struct aws_http_connection_monitoring_options monitoring_options;
     AWS_ZERO_STRUCT(monitoring_options);

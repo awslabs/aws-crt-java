@@ -245,6 +245,10 @@ public final class CRT {
         return output;
     }
 
+
+    /**
+     * Extract the CRT JNI library on current platform to a specific FIle.
+     */
     public static void extractLibrary(File extractFile) {
         try {
             if (!extractFile.setExecutable(true, true)) {
@@ -304,6 +308,9 @@ public final class CRT {
         }
     }
 
+    /**
+     * Extract the CRT JNI library on current platform to a specific path.
+     */
     public static void extractLibrary(String path) {
         String libraryName = System.mapLibraryName(CRT_LIB_NAME);
         File extractFile = new File(path, libraryName);

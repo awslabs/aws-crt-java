@@ -97,3 +97,6 @@ docs/
 
 # graalvm manually generated config files
 graalvm-configuration
+
+# LSP
+.cache

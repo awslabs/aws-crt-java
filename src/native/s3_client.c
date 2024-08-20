@@ -521,7 +521,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
 
     aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
-
+    if (tls_options) {
+        aws_tls_connection_options_clean_up(tls_options);
+    }
     return (jlong)client;
 }
 

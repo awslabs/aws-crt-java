@@ -973,7 +973,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jobject java_response_handler_jobject,
     jbyteArray jni_endpoint,
     jobject java_resume_token_jobject,
-    jobject jni_object_size_hint) {
+    jobject jni_object_size_hint,
+    jbyteArray jni_response_filepath,
+    jint jni_response_file_option,
+    jlong jni_response_file_position,
+    jboolean jni_response_file_delete_on_failure) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -983,6 +987,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     AWS_ZERO_STRUCT(operation_name);
     struct aws_byte_cursor request_filepath;
     AWS_ZERO_STRUCT(request_filepath);
+    struct aws_byte_cursor response_filepath;
+    AWS_ZERO_STRUCT(response_filepath);
     struct aws_s3_meta_request_resume_token *resume_token =
         s_native_resume_token_from_java_new(env, java_resume_token_jobject);
     struct aws_s3_meta_request *meta_request = NULL;
@@ -1041,6 +1047,17 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         }
     }
 
+    if (jni_response_filepath) {
+        response_filepath = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_response_filepath);
+        if (response_filepath.ptr == NULL) {
+            goto done;
+        }
+        if (response_filepath.len == 0) {
+            aws_jni_throw_illegal_argument_exception(env, "Response file path cannot be empty");
+            goto done;
+        }
+    }
+
     struct aws_uri endpoint;
     AWS_ZERO_STRUCT(endpoint);
     if (jni_endpoint != NULL) {
@@ -1095,6 +1112,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .endpoint = jni_endpoint != NULL ? &endpoint : NULL,
         .resume_token = resume_token,
         .object_size_hint = jni_object_size_hint != NULL ? &object_size_hint : NULL,
+        .recv_filepath = response_filepath,
+        .recv_file_option = jni_response_file_option,
+        .recv_file_position = jni_response_file_position,
+        .recv_file_delete_on_failure = jni_response_file_delete_on_failure,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);

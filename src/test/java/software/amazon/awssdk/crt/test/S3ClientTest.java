@@ -138,7 +138,6 @@ public class S3ClientTest extends CrtTestFixture {
                     .withRegion(REGION)
                     .withTlsContext(tlsContext);
             try (S3Client client = createS3Client(clientOptions)) {
-
             }
         }
     }

@@ -384,7 +384,7 @@ public class S3MetaRequestOptions {
      * @param responseFilePath path to file to write response body to.
      * @return this
      */
-    public S3MetaRequestOptions withResponseFilePath(Path responseFilePath, ResponseFileOption responseFileOption) {
+    public S3MetaRequestOptions withResponseFilePath(Path responseFilePath) {
         this.responseFilePath = responseFilePath;
         return this;
     }

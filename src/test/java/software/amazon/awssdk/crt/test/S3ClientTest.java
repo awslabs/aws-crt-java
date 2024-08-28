@@ -126,6 +126,21 @@ public class S3ClientTest extends CrtTestFixture {
 
         }
     }
+        
+    @Test
+    public void testS3ClientCreateDestroyWithTLS() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsContextOptions);) {
+            S3ClientOptions clientOptions = new S3ClientOptions()
+                    .withRegion(REGION)
+                    .withTlsContext(tlsContext);
+            try (S3Client client = createS3Client(clientOptions)) {
+            }
+        }
+    }
 
     @Test
     public void testS3ClientCreateDestroyWithCredentialsProvider() {
@@ -260,8 +275,9 @@ public class S3ClientTest extends CrtTestFixture {
             proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
             proxyOptions.setAuthorizationUsername("username");
             proxyOptions.setAuthorizationPassword("password");
-            try (S3Client client = createS3Client(new S3ClientOptions().withRegion(REGION)
-                    .withProxyOptions(proxyOptions), elg)) {
+            try (S3Client client = createS3Client(new S3ClientOptions()
+                        .withRegion(REGION)
+                        .withProxyOptions(proxyOptions), elg)) {
             }
         }
     }

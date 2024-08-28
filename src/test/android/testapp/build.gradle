@@ -79,7 +79,6 @@ dependencies {
     implementation 'commons-cli:commons-cli:1.5.0' // For Elasticurl CommandLine related classes
     implementation 'com.sun.net.httpserver:http:20070405' // For CredentialProvidersTest HttpServer
     implementation 'junit:junit:4.13'
-    implementation 'org.graalvm.sdk:graal-sdk:21.3.11'
     androidTestImplementation "junit:junit:4.13"
 
     androidTestImplementation "androidx.test:core:1.2.0"

@@ -74,7 +74,7 @@ android {
 
     sourceSets {
         main {
-            java.srcDir '../../src/main/java'
+            // java.srcDir '../../src/main/java'
             java.srcDir 'src/main/java'
             java.exclude '../../src/main/java/software/amazon/awssdk/crt/NativeFeature.java'
         }

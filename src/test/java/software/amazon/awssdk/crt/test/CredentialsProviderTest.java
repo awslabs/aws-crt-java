@@ -11,6 +11,8 @@ import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.Log.LogLevel;
 import software.amazon.awssdk.crt.auth.credentials.*;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.*;
@@ -20,6 +22,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -252,6 +255,37 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 "aws_secret_access_key=" + SECRET_ACCESS_KEY, "aws_session_token=" + SESSION_TOKEN));
 
         ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
+                .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
+
+        try (ProfileCredentialsProvider provider = builder.build()) {
+            assertNotNull(provider);
+            assertTrue(provider.getNativeHandle() != 0);
+
+            Credentials credentials = provider.getCredentials().join();
+            assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
+            assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+        } finally {
+            Files.deleteIfExists(credsPath);
+            Files.deleteIfExists(confPath);
+        }
+    }
+
+    @Test
+    public void testCreateDestroyProfile_withProcess() throws IOException {
+        Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
+        Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "with_process");
+        String content = "[profile default]\n" +
+                         "region=us-east-1\n" +
+                         "[profile foo]\n" +
+                         "region=us-west-2\n" +
+                         "credential_process=echo '{\"Version\": 1, \"AccessKeyId\": \"" + ACCESS_KEY_ID + "\", " +
+                         "\"SecretAccessKey\": \"" + SECRET_ACCESS_KEY + "\", " +
+                         "\"SessionToken\":\"" + SESSION_TOKEN + "\", " +
+                         "\"Expiration\":\"2020-02-25T06:03:31Z\"}'\n";
+        Files.write(confPath, content.getBytes());
+        ProfileCredentialsProvider.Builder builder = ProfileCredentialsProvider.builder()
+        .withProfileName("foo")
                 .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
         try (ProfileCredentialsProvider provider = builder.build()) {

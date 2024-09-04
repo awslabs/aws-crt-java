@@ -126,7 +126,7 @@ public class S3ClientTest extends CrtTestFixture {
 
         }
     }
-        
+
     @Test
     public void testS3ClientCreateDestroyWithTLS() {
         skipIfAndroid();
@@ -376,7 +376,6 @@ public class S3ClientTest extends CrtTestFixture {
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
             HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
 
-            // Path responsePath = Files.createTempFile("testS3GetFilePath", ".txt");
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseFilePath(responsePath)

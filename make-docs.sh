@@ -2,12 +2,12 @@
 
 set -e
 
-pushd $(dirname $0) > /dev/null
+pushd $(dirname $0) >/dev/null
 
 # clean
 rm -rf docs/
 
 # build
-javadoc @javadoc.options
+mvn clean javadoc:javadoc -Prelease
 
-popd > /dev/null
+popd >/dev/null

@@ -6,7 +6,6 @@
 -bottom 'Copyright &copy; Amazon.com, Inc. or its affiliates. All Rights Reserved.'
 -sourcepath src/main/java
 -notimestamp
--subpackages software.amazon.awssdk.crt
 -exclude software.amazon.awssdk.crt.internal
 -quiet
 -Xdoclint:all,-missing

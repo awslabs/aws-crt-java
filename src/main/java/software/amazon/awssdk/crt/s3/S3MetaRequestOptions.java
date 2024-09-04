@@ -400,7 +400,7 @@ public class S3MetaRequestOptions {
      *
      * By default, the option is set to {@link ResponseFileOption#CREATE_OR_REPLACE}.
      *
-     * @param recvFileOption The option for handling the response file.
+     * @param responseFileOption The option for handling the response file.
      * @return this
      */
     public S3MetaRequestOptions withResponseFileOption(ResponseFileOption responseFileOption) {
@@ -417,7 +417,7 @@ public class S3MetaRequestOptions {
      * This option is only applicable when {@link withResponseFileOption} is set
      * to {@link ResponseFileOption#WRITE_TO_POSITION}.
      *
-     * @param recvFilePosition The position to start writing to the response file.
+     * @param responseFilePosition The position to start writing to the response file.
      * @return this
      */
     public S3MetaRequestOptions withResponseFilePosition(long responseFilePosition) {
@@ -434,7 +434,7 @@ public class S3MetaRequestOptions {
      * from S3.
      * This option is only applicable when a response file path is set.
      *
-     * @param recvFileDeleteOnFailure True to delete the response file on failure,
+     * @param responseFileDeleteOnFailure True to delete the response file on failure,
      *                                false to leave it as-is.
      */
     public S3MetaRequestOptions withResponseFileDeleteOnFailure(boolean responseFileDeleteOnFailure) {

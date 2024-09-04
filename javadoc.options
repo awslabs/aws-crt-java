@@ -8,5 +8,5 @@
 -notimestamp
 -exclude software.amazon.awssdk.crt.internal
 -quiet
--Xdoclint:all,-missing
+-Xdoclint:all
 -Xwerror

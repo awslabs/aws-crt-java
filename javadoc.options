@@ -9,5 +9,5 @@
 -subpackages software.amazon.awssdk.crt
 -exclude software.amazon.awssdk.crt.internal
 -quiet
--Xdoclint:all
+-Xdoclint:all,-missing
 -Xwerror

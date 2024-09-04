@@ -394,11 +394,12 @@ public class S3MetaRequestOptions {
     }
 
     /**
-     * Sets the option for how to handle the response file when downloading an object
-     * from S3.
+     * Sets the option for how to handle the response file when downloading an
+     * object from S3.
      * This option is only applicable when {@link withResponseFilePath} is set.
      *
-     * By default, the option is set to {@link ResponseFileOption#CREATE_OR_REPLACE}.
+     * By default, the option is set to
+     * {@link ResponseFileOption#CREATE_OR_REPLACE}.
      *
      * @param responseFileOption The option for handling the response file.
      * @return this
@@ -417,7 +418,8 @@ public class S3MetaRequestOptions {
      * This option is only applicable when {@link withResponseFileOption} is set
      * to {@link ResponseFileOption#WRITE_TO_POSITION}.
      *
-     * @param responseFilePosition The position to start writing to the response file.
+     * @param responseFilePosition The position to start writing to the response
+     *                             file.
      * @return this
      */
     public S3MetaRequestOptions withResponseFilePosition(long responseFilePosition) {
@@ -430,18 +432,19 @@ public class S3MetaRequestOptions {
     }
 
     /**
-     * Sets whether to delete the response file on failure when downloading an object
-     * from S3.
+     * Sets whether to delete the response file on failure when downloading an
+     * object from S3.
      * This option is only applicable when a response file path is set.
      *
-     * @param responseFileDeleteOnFailure True to delete the response file on failure,
-     *                                false to leave it as-is.
+     * @param responseFileDeleteOnFailure True to delete the response file on
+     *                                    failure,
+     *                                    False to leave it as-is.
+     * @return this
      */
     public S3MetaRequestOptions withResponseFileDeleteOnFailure(boolean responseFileDeleteOnFailure) {
         this.responseFileDeleteOnFailure = responseFileDeleteOnFailure;
         return this;
     }
-
     public boolean getResponseFileDeleteOnFailure() {
         return responseFileDeleteOnFailure;
     }

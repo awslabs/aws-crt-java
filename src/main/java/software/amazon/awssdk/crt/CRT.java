@@ -4,16 +4,15 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.internal.ExtractLib;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -245,85 +244,6 @@ public final class CRT {
         return output;
     }
 
-
-    /**
-     * Extract the CRT JNI library on current platform to a specific FIle.
-     */
-    public static void extractLibrary(File extractFile) {
-        try {
-            if (!extractFile.setExecutable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library executable by owner only");
-            }
-            if (!extractFile.setWritable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
-            }
-            if (!extractFile.setReadable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library readable by owner only");
-            }
-            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-            String os = getOSIdentifier();
-            // open a stream to read the shared lib contents from this JAR
-            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" +  getCRuntime(os) + "/" + libraryName;
-            // Check whether there is a platform specific resource path to use
-            CrtPlatform platform = getPlatformImpl();
-            if (platform != null){
-                String platformLibResourcePath = platform.getResourcePath(getCRuntime(os), libraryName);
-                if (platformLibResourcePath != null){
-                    libResourcePath = platformLibResourcePath;
-                }
-            }
-            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
-                if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
-                }
-
-                // Copy from jar stream to temp file
-                try (FileOutputStream out = new FileOutputStream(extractFile)) {
-                    int read;
-                    byte [] bytes = new byte[1024];
-                    while ((read = in.read(bytes)) != -1){
-                        out.write(bytes, 0, read);
-                    }
-                }
-            }
-            if (!extractFile.setWritable(false)) {
-                throw new CrtRuntimeException("Unable to make shared library read-only");
-            }
-        } catch (CrtRuntimeException crtex) {
-            System.err.println("Unable to initialize AWS CRT: " + crtex);
-            crtex.printStackTrace();
-            throw crtex;
-        } catch (UnknownPlatformException upe) {
-            System.err.println("Unable to determine platform for AWS CRT: " + upe);
-            upe.printStackTrace();
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to determine platform for AWS CRT");
-            rex.initCause(upe);
-            throw rex;
-        } catch (Exception ex) {
-            System.err.println("Unable to unpack AWS CRT lib: " + ex);
-            ex.printStackTrace();
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
-            rex.initCause(ex);
-            throw rex;
-        }
-    }
-
-    /**
-     * Extract the CRT JNI library on current platform to a specific path.
-     */
-    public static void extractLibrary(String path) {
-        String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-        File extractFile = new File(path, libraryName);
-        try {
-            extractFile.createNewFile();
-        } catch (Exception ex) {
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to create file on path:" + extractFile.getAbsolutePath());
-            rex.initCause(ex);
-            throw rex;
-        }
-        extractLibrary(extractFile);
-    }
-
     private static void extractAndLoadLibrary(String path) {
         // Check java.io.tmpdir
         String tmpdirPath;
@@ -380,7 +300,7 @@ public final class CRT {
         if (os.equals("windows")) {
             tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
         }
-        extractLibrary(tempSharedLib);
+        ExtractLib.extractLibrary(tempSharedLib);
         // load the shared lib from the temp path
         System.load(tempSharedLib.getAbsolutePath());
 

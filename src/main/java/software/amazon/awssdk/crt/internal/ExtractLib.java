@@ -17,6 +17,11 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 public class ExtractLib {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
 
+
+    /**
+     * Extract the CRT JNI library on current platform to a specific File
+     * @param extractFile the File extracting to
+     */
     public static void extractLibrary(File extractFile) {
 
         try {
@@ -79,6 +84,7 @@ public class ExtractLib {
 
     /**
      * Extract the CRT JNI library on current platform to a specific path.
+     * @param path the path extracting to
      */
     public static void extractLibrary(String path) {
         String libraryName = System.mapLibraryName(CRT_LIB_NAME);

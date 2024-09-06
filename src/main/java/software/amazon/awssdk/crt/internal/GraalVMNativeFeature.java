@@ -12,7 +12,7 @@ import software.amazon.awssdk.crt.CRT;
  * Implementation of GraalVM feature to extract the share lib to the image path.
  * Internal API, not for external usage.
  */
-public class NativeFeature implements Feature {
+public class GraalVMNativeFeature implements Feature {
 
     @Override
     public void afterImageWrite(AfterImageWriteAccess access) {

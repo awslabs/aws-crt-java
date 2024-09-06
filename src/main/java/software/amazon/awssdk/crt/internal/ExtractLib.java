@@ -19,7 +19,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  * Internal API, not for external usage.
  */
 public class ExtractLib {
-    private static final String CRT_LIB_NAME = "aws-crt-jni";
 
     /**
      * Extract the CRT JNI library on current platform to a specific File
@@ -38,7 +37,7 @@ public class ExtractLib {
             if (!extractFile.setReadable(true, true)) {
                 throw new CrtRuntimeException("Unable to make shared library readable by owner only");
             }
-            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+            String libraryName = System.mapLibraryName(CRT.CRT_LIB_NAME);
             String os = CRT.getOSIdentifier();
             // open a stream to read the shared lib contents from this JAR
             String libResourcePath = "/" + os + "/" + CRT.getArchIdentifier() + "/" + CRT.getCRuntime(os) + "/"
@@ -93,7 +92,7 @@ public class ExtractLib {
      * @param path the path extracting to
      */
     public static void extractLibrary(String path) {
-        String libraryName = System.mapLibraryName(CRT_LIB_NAME);
+        String libraryName = System.mapLibraryName(CRT.CRT_LIB_NAME);
         File extractFile = new File(path, libraryName);
         try {
             extractFile.createNewFile();

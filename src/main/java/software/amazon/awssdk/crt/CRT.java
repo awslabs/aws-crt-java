@@ -28,7 +28,7 @@ public final class CRT {
     private static final String CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY = "aws.crt.arch";
     private static final String CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE = "AWS_CRT_ARCH";
 
-    private static final String CRT_LIB_NAME = "aws-crt-jni";
+    public static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
     private static final CrtPlatform s_platform;
 

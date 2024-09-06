@@ -16,7 +16,7 @@ public class NativeFeature implements Feature {
 
     @Override
     public void afterImageWrite(AfterImageWriteAccess access) {
-      new CRT();
-      ExtractLib.extractLibrary(access.getImagePath().getParent().toString());
+        new CRT();
+        ExtractLib.extractLibrary(access.getImagePath().getParent().toString());
     }
 }

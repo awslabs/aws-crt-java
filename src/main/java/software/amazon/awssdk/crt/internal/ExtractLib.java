@@ -21,9 +21,9 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 public class ExtractLib {
     private static final String CRT_LIB_NAME = "aws-crt-jni";
 
-
     /**
      * Extract the CRT JNI library on current platform to a specific File
+     *
      * @param extractFile the File extracting to
      */
     public static void extractLibrary(File extractFile) {
@@ -41,12 +41,13 @@ public class ExtractLib {
             String libraryName = System.mapLibraryName(CRT_LIB_NAME);
             String os = CRT.getOSIdentifier();
             // open a stream to read the shared lib contents from this JAR
-            String libResourcePath = "/" + os + "/" + CRT.getArchIdentifier() + "/" +  CRT.getCRuntime(os) + "/" + libraryName;
+            String libResourcePath = "/" + os + "/" + CRT.getArchIdentifier() + "/" + CRT.getCRuntime(os) + "/"
+                    + libraryName;
             // Check whether there is a platform specific resource path to use
             CrtPlatform platform = CRT.getPlatformImpl();
-            if (platform != null){
+            if (platform != null) {
                 String platformLibResourcePath = platform.getResourcePath(CRT.getCRuntime(os), libraryName);
-                if (platformLibResourcePath != null){
+                if (platformLibResourcePath != null) {
                     libResourcePath = platformLibResourcePath;
                 }
             }
@@ -58,8 +59,8 @@ public class ExtractLib {
                 // Copy from jar stream to temp file
                 try (FileOutputStream out = new FileOutputStream(extractFile)) {
                     int read;
-                    byte [] bytes = new byte[1024];
-                    while ((read = in.read(bytes)) != -1){
+                    byte[] bytes = new byte[1024];
+                    while ((read = in.read(bytes)) != -1) {
                         out.write(bytes, 0, read);
                     }
                 }
@@ -88,6 +89,7 @@ public class ExtractLib {
 
     /**
      * Extract the CRT JNI library on current platform to a specific path.
+     *
      * @param path the path extracting to
      */
     public static void extractLibrary(String path) {
@@ -96,7 +98,8 @@ public class ExtractLib {
         try {
             extractFile.createNewFile();
         } catch (Exception ex) {
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to create file on path:" + extractFile.getAbsolutePath());
+            CrtRuntimeException rex = new CrtRuntimeException(
+                    "Unable to create file on path:" + extractFile.getAbsolutePath());
             rex.initCause(ex);
             throw rex;
         }

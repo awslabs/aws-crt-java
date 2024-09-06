@@ -92,8 +92,8 @@ settings.xml
 
 bin/
 log.txt
-# docs are updated automatically by .github/workflows/docs.yml
-docs/
+# # docs are updated automatically by .github/workflows/docs.yml
+# docs/
 
 # graalvm manually generated config files
 graalvm-configuration

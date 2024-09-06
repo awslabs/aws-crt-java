@@ -159,6 +159,13 @@ Platforms without FIPS compliance are also included in this jar, for compatibili
 > [!WARNING]
 > The classifier, and platforms with FIPS compliance are subject to change in the future.
 
+## GraalVM support
+
+Since version v0.29.20, GraalVM native image was supported. You can compile your application with AWS CRT in a GraalVM native image project without any additional configuration.
+
+Since version v0.30.12, GraalVM support was updated. Instead of packaging the JNI shared lib with native image as resource, the corresponding shared lib will be written to the same directory as the native image.
+In this way, it reduces the native image size around 30%, and avoids the extra loading time needed for extracting the JNI lib to the temporary path for load. No additional configuration needed.
+**Note**: the extracted JNI lib, `libaws-crt-jni.*` , will need to be exist in the directory containing the native image, if you move the native image to different directory.
 
 ## System Properties
 

@@ -5,7 +5,6 @@ software.amazon.awssdk.crt.cal
 software.amazon.awssdk.crt.checksums
 software.amazon.awssdk.crt.eventstream
 software.amazon.awssdk.crt.http
-software.amazon.awssdk.crt.internal
 software.amazon.awssdk.crt.io
 software.amazon.awssdk.crt.mqtt
 software.amazon.awssdk.crt.mqtt5

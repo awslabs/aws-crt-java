@@ -8,6 +8,6 @@ pushd $(dirname $0) >/dev/null
 rm -rf docs/
 
 # build
-mvn clean javadoc:javadoc -Prelease
+javadoc @javadoc.options
 
 popd >/dev/null

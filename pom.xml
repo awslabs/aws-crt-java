@@ -294,7 +294,13 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.4.0</version>
                         <configuration>
+                            <!-- <subpackages>software.amazon.awssdk.crt</subpackages> -->
+                            <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
+                            <doctitle>AWS Common Runtime for Java/JVM</doctitle>
+                            <header>AWS Common Runtime for Java/JVM</header>
+                            <bottom>Copyright © Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
                             <reportOutputDirectory>${project.basedir}/docs</reportOutputDirectory>
+                            <excludePackageNames>software.amazon.awssdk.crt.internal</excludePackageNames>
                             <additionalJOptions>
                                 @${project.basedir}/javadoc.options
                             </additionalJOptions>
@@ -360,7 +366,7 @@
         <dependency>
             <groupId>org.graalvm.sdk</groupId>
             <artifactId>graal-sdk</artifactId>
-            <version>21.3.11</version>          <!-- The latest version supports JDK8 -->
+            <version>21.3.11</version><!-- 21.3.11 is the last version to support JDK8 -->
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>

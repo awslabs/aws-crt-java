@@ -277,7 +277,7 @@ public final class CRT {
             tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
         }
         catch (IOException ex){
-            System.err.println("Unable to create temp file to extract AWS CRT library" + ex);
+            System.err.println("Unable to create temp file to extract AWS CRT library: " + ex);
             ex.printStackTrace();
             CrtRuntimeException rex = new CrtRuntimeException("Unable to create temp file to extract AWS CRT library");
             rex.initCause(ex);

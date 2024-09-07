@@ -36,12 +36,18 @@ public final class CRT {
         // Scan for and invoke any platform specific initialization
         s_platform = findPlatformImpl();
         jvmInit();
+        String graalVMImageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
         try {
             // If the lib is already present/loaded or is in java.library.path, just use it
             System.loadLibrary(CRT_LIB_NAME);
         } catch (UnsatisfiedLinkError e) {
             // otherwise, load from the jar this class is in
-            loadLibraryFromJar();
+            if (graalVMImageCode != null && graalVMImageCode == "runtime") {
+                throw new CrtRuntimeException(
+                        "Unable to load AWS CRT lib for GraalVM runtime: Make sure the libaws-crt-jni exists in the the directory containing the native image");
+            } else {
+                loadLibraryFromJar();
+            }
         }
 
         // Initialize the CRT

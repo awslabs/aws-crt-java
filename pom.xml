@@ -303,7 +303,7 @@
                             <sourcepath>src/main/java</sourcepath>
                             <notimestamp>true</notimestamp>
                             <quiet>true</quiet>
-                            <doclint>all,-missing</doclint>
+                            <doclint>all</doclint>
                             <failOnWarnings>true</failOnWarnings>
                             <excludePackageNames>software.amazon.awssdk.crt.internal</excludePackageNames>
                         </configuration>

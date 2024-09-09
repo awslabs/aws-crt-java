@@ -274,7 +274,7 @@ jobs:
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-22.04 # use same version as docs.yml
     steps:
       - uses: actions/checkout@v3
         with:

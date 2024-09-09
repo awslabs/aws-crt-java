@@ -1,7 +1,0 @@
--d docs
--public
--sourcepath src/main/java
--notimestamp
--quiet
--Xdoclint:all,-missing
--Xwerror

@@ -10,6 +10,6 @@ rm -rf docs/
 # build
 mvn clean javadoc:javadoc -Prelease
 # mvn generates the doc in apidocs/ subfolder, move it out
-mv docs/apidocs/* docs/
+cp -r target/site/apidocs/ docs/
 
 popd >/dev/null

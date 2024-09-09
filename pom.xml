@@ -294,7 +294,6 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.4.0</version>
                         <configuration>
-                            <reportOutputDirectory>${project.basedir}/docs</reportOutputDirectory>
                             <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
                             <doctitle>AWS Common Runtime for Java/JVM</doctitle>
                             <header>AWS Common Runtime for Java/JVM</header>

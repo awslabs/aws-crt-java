@@ -2060,7 +2060,7 @@
       {
         "name": "onResponseBody",
         "parameterTypes": [
-          "byte[]",
+          "java.nio.ByteBuffer",
           "long",
           "long"
         ]

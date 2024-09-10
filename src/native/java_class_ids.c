@@ -711,7 +711,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     AWS_FATAL_ASSERT(cls);
 
     s3_meta_request_response_handler_native_adapter_properties.onResponseBody =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "([BJJ)I");
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished = (*env)->GetMethodID(

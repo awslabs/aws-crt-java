@@ -436,7 +436,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         tls_options = &tls_options_storage;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
     }
-
+printf("xxxxxxxxx NewDirectByteBuffer\n");
     struct aws_s3_client_config client_config = {
         .max_active_connections_override = max_connections,
         .region = region,
@@ -600,7 +600,22 @@ static int s_on_s3_meta_request_body_callback(
         return AWS_OP_ERR;
     }
 
-    jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+    // jobject jni_payload = NULL;
+    struct aws_byte_buf *dest = aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct aws_byte_buf));
+    aws_byte_buf_init_copy_from_cursor(dest, aws_jni_get_allocator(), *body);
+
+    // jobject jni_payload = aws_java_byte_array_new(env, body->len);;
+    //     (*env)->DeleteLocalRef(env, jni_payload);
+    // for (size_t i = 0; i < 8; i++)
+    // {
+    //     jni_payload = aws_java_byte_array_new(env, body->len/8);
+    //     (*env)->DeleteLocalRef(env, jni_payload);
+    // }
+
+    jobject jni_payload = (*env)->NewDirectByteBuffer(env, dest->buffer, dest->len);
+
+    // (*env)->DeleteLocalRef(env, jni_payload);
+    // (*env)->SetByteArrayRegion(env, jni_payload, 0, (jsize)body->len, (jbyte *)body->ptr);
     if (jni_payload == NULL) {
         /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
         aws_jni_check_and_clear_exception(env);
@@ -617,6 +632,7 @@ static int s_on_s3_meta_request_body_callback(
             callback_data->java_s3_meta_request_response_handler_native_adapter,
             s3_meta_request_response_handler_native_adapter_properties.onResponseBody,
             jni_payload,
+            (long)dest,
             range_start,
             range_end);
 
@@ -635,6 +651,7 @@ static int s_on_s3_meta_request_body_callback(
         }
     }
     return_value = AWS_OP_SUCCESS;
+    // aws_byte_buf_clean_up(&dest);
 
 cleanup:
     (*env)->DeleteLocalRef(env, jni_payload);

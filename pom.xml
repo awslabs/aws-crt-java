@@ -162,7 +162,7 @@
                             <!-- cmake configure -->
                             <execution>
                                 <id>cmake-configure</id>
-                                <phase>generate-sources</phase>
+                                <phase>generate-resources</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>
@@ -293,19 +293,6 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.4.0</version>
-                        <configuration>
-                            <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
-                            <doctitle>AWS Common Runtime for Java/JVM</doctitle>
-                            <header>AWS Common Runtime for Java/JVM</header>
-                            <bottom>Copyright © Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
-                            <show>public</show>
-                            <sourcepath>src/main/java</sourcepath>
-                            <notimestamp>true</notimestamp>
-                            <quiet>true</quiet>
-                            <doclint>all</doclint>
-                            <failOnWarnings>true</failOnWarnings>
-                            <excludePackageNames>software.amazon.awssdk.crt.internal</excludePackageNames>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -502,6 +489,23 @@
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
                     <forkCount>0</forkCount>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
+                    <doctitle>AWS Common Runtime for Java/JVM</doctitle>
+                    <header>AWS Common Runtime for Java/JVM</header>
+                    <bottom>Copyright © Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
+                    <show>public</show>
+                    <sourcepath>src/main/java</sourcepath>
+                    <notimestamp>true</notimestamp>
+                    <quiet>true</quiet>
+                    <doclint>all</doclint>
+                    <excludePackageNames>software.amazon.awssdk.crt.internal</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>

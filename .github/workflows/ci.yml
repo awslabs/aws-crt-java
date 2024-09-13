@@ -192,7 +192,7 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  macos: 
+  macos:
     runs-on: macos-14 #latest
     steps:
       - name: Checkout Sources
@@ -204,7 +204,7 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
-          python3 codebuild/macos_compatibility_check.py 
+          python3 codebuild/macos_compatibility_check.py
 
   macos-x64:
     runs-on: macos-14-large #latest
@@ -274,7 +274,7 @@ jobs:
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-22.04 # use same version as docs.yml
     steps:
       - uses: actions/checkout@v3
         with:

@@ -162,7 +162,7 @@
                             <!-- cmake configure -->
                             <execution>
                                 <id>cmake-configure</id>
-                                <phase>generate-sources</phase>
+                                <phase>generate-resources</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>
@@ -292,7 +292,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
+                        <version>3.4.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -350,6 +350,13 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>21.3.11</version><!-- 21.3.11 is the last version to support JDK8 -->
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
     <build>
@@ -482,6 +489,23 @@
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
                     <forkCount>0</forkCount>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
+                    <doctitle>AWS Common Runtime for Java/JVM</doctitle>
+                    <header>AWS Common Runtime for Java/JVM</header>
+                    <bottom>Copyright © Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
+                    <show>public</show>
+                    <sourcepath>src/main/java</sourcepath>
+                    <notimestamp>true</notimestamp>
+                    <quiet>true</quiet>
+                    <doclint>all</doclint>
+                    <excludePackageNames>software.amazon.awssdk.crt.internal</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>

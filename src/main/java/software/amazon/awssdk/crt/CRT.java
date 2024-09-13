@@ -44,7 +44,8 @@ public final class CRT {
             // otherwise, load from the jar this class is in
             if (graalVMImageCode != null && graalVMImageCode == "runtime") {
                 throw new CrtRuntimeException(
-                        "Unable to load AWS CRT lib for GraalVM runtime: Make sure the libaws-crt-jni exists in the the directory containing the native image");
+                        "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
+                        "'. Make sure this file is in the same directory as the GraalVM native image. ");
             } else {
                 loadLibraryFromJar();
             }

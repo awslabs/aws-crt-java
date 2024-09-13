@@ -165,7 +165,7 @@ Since version v0.29.20, GraalVM native image was supported. You can compile your
 
 Since version v0.30.12, GraalVM support was updated. Instead of packaging the JNI shared lib with native image as resource, the corresponding shared lib will be written to the same directory as the native image.
 In this way, it reduces the native image size around 30%, and avoids the extra loading time needed for extracting the JNI lib to the temporary path for load. No additional configuration needed.
-**Note**: the extracted JNI lib, `libaws-crt-jni.*` , will need to be exist in the directory containing the native image, if you move the native image to different directory.
+**Note**: the JNI shared lib must be in the same directory as the GraalVM native image. If you move the native image, you must move this file too. It is `aws-crt-jni.dll` on Windows, `libaws-crt-jni.dylib` on macOS, and `libaws-crt-jni.so` on Unix.
 
 ## System Properties
 

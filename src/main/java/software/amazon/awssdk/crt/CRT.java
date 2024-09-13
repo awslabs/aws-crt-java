@@ -41,12 +41,12 @@ public final class CRT {
             System.loadLibrary(CRT_LIB_NAME);
         } catch (UnsatisfiedLinkError e) {
             String graalVMImageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
-            // otherwise, load from the jar this class is in
             if (graalVMImageCode != null && graalVMImageCode == "runtime") {
                 throw new CrtRuntimeException(
                         "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
                         "'. Make sure this file is in the same directory as the GraalVM native image. ");
             } else {
+                // otherwise, load from the jar this class is in
                 loadLibraryFromJar();
             }
         }

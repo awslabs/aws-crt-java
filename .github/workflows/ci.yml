@@ -133,7 +133,7 @@ jobs:
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-musl-arm:
-    runs-on: ubuntu-24.04 # latest
+    runs-on: macos-14 #latest
     strategy:
       matrix:
         image:

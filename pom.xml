@@ -301,6 +301,9 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <bottom>Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
+                        </configuration>
                     </plugin>
                     <!-- GPG signing -->
                     <plugin>

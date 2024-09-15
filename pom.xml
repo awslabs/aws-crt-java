@@ -499,7 +499,7 @@
                     <windowtitle>AWS Common Runtime for Java/JVM</windowtitle>
                     <doctitle>AWS Common Runtime for Java/JVM</doctitle>
                     <header>AWS Common Runtime for Java/JVM</header>
-                    <bottom>Copyright © Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
+                    <bottom>Copyright &#169; Amazon.com, Inc. or its affiliates. All Rights Reserved.</bottom>
                     <show>public</show>
                     <sourcepath>src/main/java</sourcepath>
                     <notimestamp>true</notimestamp>

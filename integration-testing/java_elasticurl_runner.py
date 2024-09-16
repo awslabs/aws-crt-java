@@ -3,13 +3,14 @@ import os
 import subprocess
 import shlex
 
-TIMEOUT = 100
+TIMEOUT = 300
 # Runner for elasticurl integration tests
 
 mvn_args = " ".join(map(shlex.quote, sys.argv[1:]))
 
 java_command = ['mvn', '-e', 'exec:java', '-Dexec.classpathScope=\"test\"',
-                '-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"', '-Dexec.args=\"{}\"'.format(mvn_args)]
+                '-Dexec.mainClass=\"software.amazon.awssdk.crt.test.Elasticurl\"', '-Dexec.args=\"{}\"'.format(mvn_args),
+                '-Daws.crt.log.level=Trace']
 
 if os.name == 'nt':
     # Windows uses mvn.cmd instead

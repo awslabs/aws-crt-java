@@ -172,8 +172,8 @@ public class CrcTest extends CrtTestFixture {
     public void testCrc64NVMEZeroes() {
         byte[] zeroes = new byte[32];
         software.amazon.awssdk.crt.checksums.CRC64NVME crc64 = new software.amazon.awssdk.crt.checksums.CRC64NVME();
-        crcc.update(zeroes);
+        crc64.update(zeroes);
         long expected = 0xCF3473434D4ECF3B;
-        assertEquals(expected, (int) crcc.getValue());
+        assertEquals(expected, crc64.getValue());
     }
 }

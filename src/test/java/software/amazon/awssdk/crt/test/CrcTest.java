@@ -13,7 +13,7 @@ public class CrcTest extends CrtTestFixture {
     }
 
     @Test
-    public void test Zeroes() {
+    public void testCrc32Zeroes() {
         byte[] zeroes = new byte[32];
         java.util.zip.CRC32 crcj = new java.util.zip.CRC32();
         software.amazon.awssdk.crt.checksums.CRC32 crcc = new software.amazon.awssdk.crt.checksums.CRC32();

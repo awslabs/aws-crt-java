@@ -23,7 +23,7 @@ public class CRC64NVME implements Checksum, Cloneable {
     public CRC64NVME() {
     }
 
-    private CRC64NVME(int value) {
+    private CRC64NVME(long value) {
         this.value = value;
     }
 

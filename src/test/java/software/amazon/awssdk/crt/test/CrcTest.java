@@ -208,9 +208,9 @@ public class CrcTest extends CrtTestFixture {
         }
         software.amazon.awssdk.crt.checksums.CRC64NVME crc64 = new software.amazon.awssdk.crt.checksums.CRC64NVME();
         for (int i = 0; i < 32; i++) {
-            crcc.update(values, i, 1);
+            crc64.update(values, i, 1);
         }
         long expected = 0x46DD794E;
-        assertEquals(expected, crcc.getValue());
+        assertEquals(expected, crc64.getValue());
     }
 }

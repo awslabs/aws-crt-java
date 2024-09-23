@@ -51,11 +51,11 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32C_crc32c(
     return crc32_common(env, input, previous, offset, length, aws_checksums_crc32c_ex);
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC64NVME_crc64nvme(
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_checksums_CRC64NVME_crc64nvme(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray input,
-    jint previous,
+    jlong previous,
     jint offset,
     jint length) {
     (void)jni_class;
@@ -65,7 +65,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC64NVME_crc64
     struct aws_byte_cursor cursor = c_byte_array;
     aws_byte_cursor_advance(&cursor, offset);
     cursor.len = aws_min_size(length, cursor.len);
-    jint res_signed = (jint)aws_checksums_crc64nvme_ex(cursor.ptr, cursor.len, previous);
+    jlong res_signed = (jlong)aws_checksums_crc64nvme_ex(cursor.ptr, cursor.len, previous);
     aws_jni_byte_cursor_from_jbyteArray_release(env, input, c_byte_array);
     return res_signed;
 }

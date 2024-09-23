@@ -15,7 +15,7 @@ public class CRC64NVME implements Checksum, Cloneable {
         new CRT();
     };
 
-    private int value = 0;
+    private long value = 0;
 
     /**
      * Default constructor
@@ -39,7 +39,7 @@ public class CRC64NVME implements Checksum, Cloneable {
      */
     @Override
     public long getValue() {
-        return (long) value & 0xffffffffffffffffL;
+        return value;
     }
 
     /**
@@ -94,5 +94,5 @@ public class CRC64NVME implements Checksum, Cloneable {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native int crc64nvme(byte[] input, int previous, int offset, int length);;
+    private static native long crc64nvme(byte[] input, long previous, int offset, int length);;
 }

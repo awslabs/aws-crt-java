@@ -210,7 +210,7 @@ public class CrcTest extends CrtTestFixture {
         for (int i = 0; i < 32; i++) {
             crc64.update(values, i, 1);
         }
-        long expected = 0xB9D9D4A8492CBD7FL;
+        long expected = 0xB9D9D4A8492CBD7FLv;
         assertEquals(expected, crc64.getValue());
     }
 }

@@ -13,7 +13,7 @@ public class CrcTest extends CrtTestFixture {
     }
 
     @Test
-    public void testCrc32Zeroes() {
+    public void test Zeroes() {
         byte[] zeroes = new byte[32];
         java.util.zip.CRC32 crcj = new java.util.zip.CRC32();
         software.amazon.awssdk.crt.checksums.CRC32 crcc = new software.amazon.awssdk.crt.checksums.CRC32();
@@ -165,6 +165,15 @@ public class CrcTest extends CrtTestFixture {
         software.amazon.awssdk.crt.checksums.CRC32C crcc = new software.amazon.awssdk.crt.checksums.CRC32C();
         crcc.update(zeroes);
         int expected = 0xfb5b991d;
+        assertEquals(expected, (int) crcc.getValue());
+    }
+
+    @Test
+    public void testCrc64NVMEZeroes() {
+        byte[] zeroes = new byte[32];
+        software.amazon.awssdk.crt.checksums.CRC64NVME crc64 = new software.amazon.awssdk.crt.checksums.CRC64NVME();
+        crcc.update(zeroes);
+        long expected = 0xCF3473434D4ECF3B;
         assertEquals(expected, (int) crcc.getValue());
     }
 }

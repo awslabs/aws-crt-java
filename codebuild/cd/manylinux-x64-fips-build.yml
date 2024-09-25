@@ -7,7 +7,7 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
-      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.17.51.zip" -o "awscliv2.zip"
       - unzip awscliv2.zip
       - ./aws/install
   build:

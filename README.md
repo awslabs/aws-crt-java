@@ -16,6 +16,8 @@ This library is licensed under the Apache 2.0 License.
 * [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
 * [Installing](#installing)
 * [Platform-Specific JARs](#platform-specific-jars)
+* [FIPS Compliance](#fips-compliance)
+* [GraalVM support](#graalvm-support)
 * [System Properties](#system-properties)
 * [TLS Behavior](#tls-behavior)
 * [Testing](#testing)
@@ -165,7 +167,8 @@ Since version v0.29.20, GraalVM native image was supported. You can compile your
 
 Since version v0.30.12, GraalVM support was updated. Instead of packaging the JNI shared lib with native image as resource, the corresponding shared lib will be written to the same directory as the native image.
 In this way, it reduces the native image size around 30%, and avoids the extra loading time needed for extracting the JNI lib to the temporary path for load. No additional configuration needed.
-**Note**: the JNI shared lib must be in the same directory as the GraalVM native image. If you move the native image, you must move this file too. It is `aws-crt-jni.dll` on Windows, `libaws-crt-jni.dylib` on macOS, and `libaws-crt-jni.so` on Unix.
+> [!NOTE] 
+> The JNI shared lib must be in the same directory as the GraalVM native image. If you move the native image, you must move this file too. It is `aws-crt-jni.dll` on Windows, `libaws-crt-jni.dylib` on macOS, and `libaws-crt-jni.so` on Unix.
 
 ## System Properties
 

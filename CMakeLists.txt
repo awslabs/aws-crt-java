@@ -87,10 +87,11 @@ if (BUILD_DEPS)
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            set(PERL_EXECUTABLE "perl")
+            # FIXME
+            # set(PERL_EXECUTABLE "perl")
             # Build with Perl to avoid using pre-compiled binary with AVX512
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
+            # list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
             # Disable AVX512 on old GCC that not supports it
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()

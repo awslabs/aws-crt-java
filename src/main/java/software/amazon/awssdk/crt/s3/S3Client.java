@@ -157,6 +157,10 @@ public class S3Client extends CrtResource {
         if (options.getRequestFilePath() != null) {
             requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
         }
+        byte[] responseFilePath = null;
+        if (options.getResponseFilePath() != null) {
+            responseFilePath = options.getResponseFilePath().toString().getBytes(UTF8);
+        }
 
         AwsSigningConfig signingConfig = options.getSigningConfig();
         boolean didCreateSigningConfig = false;
@@ -177,7 +181,9 @@ public class S3Client extends CrtResource {
                 ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
                 httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                options.getResumeToken(), options.getObjectSizeHint());
+                options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
+                options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
+                options.getResponseFileDeleteOnFailure());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -246,5 +252,6 @@ public class S3Client extends CrtResource {
             int[] validateAlgorithms, byte[] httpRequestBytes,
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
             AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
-            byte[] endpoint, ResumeToken resumeToken, Long objectSizeHint);
+            byte[] endpoint, ResumeToken resumeToken, Long objectSizeHint, byte[] responseFilePath,
+            int responseFileOption, long responseFilePosition, boolean responseFileDeleteOnFailure);
 }

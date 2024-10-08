@@ -5,6 +5,7 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpRequest;
+import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
@@ -84,6 +85,10 @@ public class S3MetaRequestOptions {
     private ChecksumConfig checksumConfig;
     private HttpRequest httpRequest;
     private Path requestFilePath;
+    private Path responseFilePath;
+    private ResponseFileOption responseFileOption = ResponseFileOption.CREATE_OR_REPLACE;
+    private long responseFilePosition = 0;
+    private boolean responseFileDeleteOnFailure = false;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
     private AwsSigningConfig signingConfig;
@@ -312,5 +317,135 @@ public class S3MetaRequestOptions {
 
     public Long getObjectSizeHint() {
         return objectSizeHint;
+    }
+
+    public enum ResponseFileOption {
+        /**
+         * Create a new file if it doesn't exist, otherwise replace the existing file.
+         */
+        CREATE_OR_REPLACE(0),
+
+        /**
+         * Always create a new file. If the file already exists,
+         * AWS_ERROR_S3_RECV_FILE_EXISTS will be raised.
+         */
+        CREATE_NEW(1),
+
+        /**
+         * Create a new file if it doesn't exist, otherwise append to the existing file.
+         */
+        CREATE_OR_APPEND(2),
+
+        /**
+         * Write to an existing file at the specified position, defined by the
+         * {@link withHttpRequest}.
+         * If the file does not exist, AWS_ERROR_S3_RECV_FILE_NOT_EXISTS will be raised.
+         * If {@link withHttpRequest} is not configured, start overwriting data at the
+         * beginning of the file (byte 0).
+         */
+        WRITE_TO_POSITION(3);
+
+        ResponseFileOption(int nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public int getNativeValue() {
+            return nativeValue;
+        }
+
+        public static ResponseFileOption getEnumValueFromInteger(int value) {
+            ResponseFileOption enumValue = enumMapping.get(value);
+            if (enumValue != null) {
+                return enumValue;
+            }
+
+            throw new RuntimeException("Invalid S3 ResponseFileOption");
+        }
+
+        private static Map<Integer, ResponseFileOption> buildEnumMapping() {
+            Map<Integer, ResponseFileOption> enumMapping = new HashMap<Integer, ResponseFileOption>();
+            enumMapping.put(CREATE_OR_REPLACE.getNativeValue(), CREATE_OR_REPLACE);
+            enumMapping.put(CREATE_NEW.getNativeValue(), CREATE_NEW);
+            enumMapping.put(CREATE_OR_APPEND.getNativeValue(), CREATE_OR_APPEND);
+            enumMapping.put(WRITE_TO_POSITION.getNativeValue(), WRITE_TO_POSITION);
+            return enumMapping;
+        }
+
+        private int nativeValue;
+
+        private static Map<Integer, ResponseFileOption> enumMapping = buildEnumMapping();
+    }
+
+    /**
+     * If set, this file will be used to write the response body to a file.
+     * And the {@link HttpStreamResponseHandler#onResponseBody} will not be invoked.
+     * {@link withResponseFileOption} configures the write behavior.
+     *
+     * @param responseFilePath path to file to write response body to.
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseFilePath(Path responseFilePath) {
+        this.responseFilePath = responseFilePath;
+        return this;
+    }
+
+    public Path getResponseFilePath() {
+        return responseFilePath;
+    }
+
+    /**
+     * Sets the option for how to handle the response file when downloading an
+     * object from S3.
+     * This option is only applicable when {@link withResponseFilePath} is set.
+     *
+     * By default, the option is set to
+     * {@link ResponseFileOption#CREATE_OR_REPLACE}.
+     *
+     * @param responseFileOption The option for handling the response file.
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseFileOption(ResponseFileOption responseFileOption) {
+        this.responseFileOption = responseFileOption;
+        return this;
+    }
+
+    public ResponseFileOption getResponseFileOption() {
+        return responseFileOption;
+    }
+
+    /**
+     * Sets the position to start writing to the response file.
+     * This option is only applicable when {@link withResponseFileOption} is set
+     * to {@link ResponseFileOption#WRITE_TO_POSITION}.
+     *
+     * @param responseFilePosition The position to start writing to the response
+     *                             file.
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseFilePosition(long responseFilePosition) {
+        this.responseFilePosition = responseFilePosition;
+        return this;
+    }
+
+    public long getResponseFilePosition() {
+        return responseFilePosition;
+    }
+
+    /**
+     * Sets whether to delete the response file on failure when downloading an
+     * object from S3.
+     * This option is only applicable when a response file path is set.
+     *
+     * @param responseFileDeleteOnFailure True to delete the response file on
+     *                                    failure,
+     *                                    False to leave it as-is.
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseFileDeleteOnFailure(boolean responseFileDeleteOnFailure) {
+        this.responseFileDeleteOnFailure = responseFileDeleteOnFailure;
+        return this;
+    }
+    public boolean getResponseFileDeleteOnFailure() {
+        return responseFileDeleteOnFailure;
     }
 }

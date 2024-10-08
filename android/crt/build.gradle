@@ -76,6 +76,7 @@ android {
         main {
             java.srcDir '../../src/main/java'
             java.srcDir 'src/main/java'
+            java.exclude '**/GraalVMNativeFeature.java'
         }
         androidTest {
             setRoot '../../src/test'

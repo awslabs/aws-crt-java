@@ -8,6 +8,9 @@ pushd $(dirname $0) > /dev/null
 rm -rf docs/
 
 # build
-javadoc @javadoc.options
+mvn javadoc:javadoc -Dmaven.javadoc.failOnWarnings=true
+
+# copy to docs/
+cp -r target/site/apidocs/ docs/
 
 popd > /dev/null

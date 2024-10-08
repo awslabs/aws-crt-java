@@ -72,8 +72,9 @@ if (BUILD_DEPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
 
-            set(PERL_EXECUTABLE "perl")
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
+            # FIXME
+            # set(PERL_EXECUTABLE "perl")
+            # list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
 
             if (DEFINED ENV{GO_PATH})
                 set(GO_EXECUTABLE $ENV{GO_PATH}/go)

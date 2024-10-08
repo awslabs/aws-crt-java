@@ -86,6 +86,11 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
+        if (ANDROID)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${CMAKE_BINARY_DIR}/../../../lib")
+        endif()
+
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
             # FIXME
             # set(PERL_EXECUTABLE "perl")

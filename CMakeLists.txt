@@ -155,8 +155,13 @@ if (BUILD_DEPS)
 
         message(WARNING "AWSLC is installed, CMAKE_PREFIX_PATH is ${CMAKE_PREFIX_PATH}")
 
-        set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
+        list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_PREFIX_PATH})
         set(CMAKE_FIND_DEBUG_MODE TRUE)
+        find_package(crypto REQUIRED)
+
+        message(FATAL_ERROR "=== enough for now")
+
+        set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()
     add_subdirectory(crt/aws-c-sdkutils)

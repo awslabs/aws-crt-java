@@ -146,30 +146,14 @@ if (BUILD_DEPS)
             endif()
         endif()
 
-#        -H/home/runner/work/aws-crt-java/aws-crt-java
-#        -DCMAKE_SYSTEM_NAME=Android
-#        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-#        -DCMAKE_SYSTEM_VERSION=24
-#        -DANDROID_PLATFORM=android-24
-#        -DANDROID_ABI=armeabi-v7a
-#        -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a
-#        -DANDROID_NDK=/usr/local/lib/android/sdk/ndk/21.4.7075529
-#        -DCMAKE_ANDROID_NDK=/usr/local/lib/android/sdk/ndk/21.4.7075529
-#        -DCMAKE_TOOLCHAIN_FILE=/usr/local/lib/android/sdk/ndk/21.4.7075529/build/cmake/android.toolchain.cmake
-#        -DCMAKE_MAKE_PROGRAM=/usr/local/lib/android/sdk/cmake/3.10.2.4988404/bin/ninja
-#        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/runner/work/aws-crt-java/aws-crt-java/android/crt/build/intermediates/cxx/Debug/u24h6x2s/obj/armeabi-v7a
-#        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/runner/work/aws-crt-java/aws-crt-java/android/crt/build/intermediates/cxx/Debug/u24h6x2s/obj/armeabi-v7a
-#        -DCMAKE_BUILD_TYPE=Debug
-#        -B/home/runner/work/aws-crt-java/aws-crt-java/target/cmake-build/Debug/u24h6x2s/armeabi-v7a
-#        -GNinja
-#        -DBUILD_DEPS=ON
-
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(
             DEPENDENCY_NAME AWSLC
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/aws-lc
             CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
         )
+
+        message(WARNING "AWSLC is installed, CMAKE_PREFIX_PATH is ${CMAKE_PREFIX_PATH}")
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)

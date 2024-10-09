@@ -154,6 +154,7 @@ if (BUILD_DEPS)
         )
 
         message(WARNING "AWSLC is installed, CMAKE_PREFIX_PATH is ${CMAKE_PREFIX_PATH}")
+        message(WARNING "AWSLC is installed, CMAKE_SYSROOT is ${CMAKE_SYSROOT}")
 
         list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_PREFIX_PATH})
         set(CMAKE_FIND_DEBUG_MODE TRUE)

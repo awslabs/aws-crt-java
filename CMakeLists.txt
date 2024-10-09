@@ -117,6 +117,14 @@ if (BUILD_DEPS)
         list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
         if (ANDROID)
+            if (CMAKE_SYSTEM_NAME)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
+            endif()
+
+            if (CMAKE_SYSTEM_VERSION)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION})
+            endif()
+
             if (ANDROID_PLATFORM)
                 list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_PLATFORM=${ANDROID_PLATFORM})
             endif()

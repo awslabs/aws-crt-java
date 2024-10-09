@@ -116,6 +116,46 @@ if (BUILD_DEPS)
         endif()
         list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
+        if (ANDROID)
+            if (ANDROID_PLATFORM)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_PLATFORM=${ANDROID_PLATFORM})
+            endif()
+
+            if (ANDROID_ABI)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_ABI=${ANDROID_ABI})
+            endif()
+
+            if (CMAKE_ANDROID_ARCH_ABI)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI})
+            endif()
+
+            if (ANDROID_NDK)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_NDK=${ANDROID_NDK})
+            endif()
+
+            if (CMAKE_TOOLCHAIN_FILE)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
+            endif()
+        endif()
+
+#        -H/home/runner/work/aws-crt-java/aws-crt-java
+#        -DCMAKE_SYSTEM_NAME=Android
+#        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+#        -DCMAKE_SYSTEM_VERSION=24
+#        -DANDROID_PLATFORM=android-24
+#        -DANDROID_ABI=armeabi-v7a
+#        -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a
+#        -DANDROID_NDK=/usr/local/lib/android/sdk/ndk/21.4.7075529
+#        -DCMAKE_ANDROID_NDK=/usr/local/lib/android/sdk/ndk/21.4.7075529
+#        -DCMAKE_TOOLCHAIN_FILE=/usr/local/lib/android/sdk/ndk/21.4.7075529/build/cmake/android.toolchain.cmake
+#        -DCMAKE_MAKE_PROGRAM=/usr/local/lib/android/sdk/cmake/3.10.2.4988404/bin/ninja
+#        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/runner/work/aws-crt-java/aws-crt-java/android/crt/build/intermediates/cxx/Debug/u24h6x2s/obj/armeabi-v7a
+#        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/runner/work/aws-crt-java/aws-crt-java/android/crt/build/intermediates/cxx/Debug/u24h6x2s/obj/armeabi-v7a
+#        -DCMAKE_BUILD_TYPE=Debug
+#        -B/home/runner/work/aws-crt-java/aws-crt-java/target/cmake-build/Debug/u24h6x2s/armeabi-v7a
+#        -GNinja
+#        -DBUILD_DEPS=ON
+
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(
             DEPENDENCY_NAME AWSLC

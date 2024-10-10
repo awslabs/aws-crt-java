@@ -71,10 +71,7 @@ if (BUILD_DEPS)
         if (CRT_FIPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
-
-            # FIXME
-            # set(PERL_EXECUTABLE "perl")
-            # list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
 
             if (DEFINED ENV{GO_PATH})
                 set(GO_EXECUTABLE $ENV{GO_PATH}/go)
@@ -86,17 +83,9 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
-        if (ANDROID)
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/target/cmake-build/deps/${ANDROID_ABI})
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${CMAKE_BINARY_DIR}/../../../lib")
-        endif()
-
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            # FIXME
-            # set(PERL_EXECUTABLE "perl")
             # Build with Perl to avoid using pre-compiled binary with AVX512
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
-            # list(APPEND AWSLC_CMAKE_ARGUMENTS -DPERL_EXECUTABLE=perl)
             # Disable AVX512 on old GCC that not supports it
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
@@ -117,6 +106,9 @@ if (BUILD_DEPS)
         list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
         if (ANDROID)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
+
             if (CMAKE_SYSTEM_NAME)
                 list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
             endif()
@@ -153,16 +145,8 @@ if (BUILD_DEPS)
             CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
         )
 
-        message(WARNING "AWSLC is installed, CMAKE_PREFIX_PATH is ${CMAKE_PREFIX_PATH}")
-        message(WARNING "CMAKE_SYSROOT is ${CMAKE_SYSROOT}")
-        message(WARNING "CMAKE_FIND_ROOT_PATH_MODE_PACKAGE is ${CMAKE_FIND_ROOT_PATH_MODE_PACKAGE}")
-        message(WARNING "CMAKE_FIND_ROOT_PATH is ${CMAKE_FIND_ROOT_PATH}")
-
+        # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
         list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
-        set(CMAKE_FIND_DEBUG_MODE TRUE)
-        find_package(crypto REQUIRED)
-
-        message(FATAL_ERROR "=== enough for now")
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)

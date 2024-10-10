@@ -1,5 +1,19 @@
 cmake_minimum_required(VERSION 3.1)
 
+# Get list of variables provided via command line arguments.
+# MUST be done before call to 'project'.
+# Via https://cmake.org/pipermail/cmake/2018-January/067002.html
+if(NOT AWS_CMAKE_CL_ARGS)
+    get_cmake_property(vars CACHE_VARIABLES)
+    foreach(var ${vars})
+        get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
+        if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
+            list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
+        endif()
+    endforeach()
+    set(AWS_CMAKE_CL_ARGS ${AWS_CMAKE_CL_ARGS} CACHE STRING "Command line variables")
+endif()
+
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
@@ -109,33 +123,9 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
 
-            if (CMAKE_SYSTEM_NAME)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})
-            endif()
-
-            if (CMAKE_SYSTEM_VERSION)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_SYSTEM_VERSION=${CMAKE_SYSTEM_VERSION})
-            endif()
-
-            if (ANDROID_PLATFORM)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_PLATFORM=${ANDROID_PLATFORM})
-            endif()
-
-            if (ANDROID_ABI)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_ABI=${ANDROID_ABI})
-            endif()
-
-            if (CMAKE_ANDROID_ARCH_ABI)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI})
-            endif()
-
-            if (ANDROID_NDK)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_NDK=${ANDROID_NDK})
-            endif()
-
-            if (CMAKE_TOOLCHAIN_FILE)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
-            endif()
+            # Cross-compiling mode is used for Android, with some variables set via command line. Instead of adding
+            # these variables one by one explicitly, we pass all cmd variables.
+            list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
         endif()
 
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.

@@ -148,8 +148,6 @@ if (BUILD_DEPS)
         add_subdirectory(crt/s2n)
     endif()
 
-    message(FATAL_ERROR "enough")
-
     add_subdirectory(crt/aws-c-sdkutils)
     add_subdirectory(crt/aws-c-io)
     add_subdirectory(crt/aws-c-cal)

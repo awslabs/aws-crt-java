@@ -157,33 +157,33 @@ if (BUILD_DEPS)
                 list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
             endif()
 
-            if (ANDROID_DEPS_DIR)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
-            endif()
-
-            if (AWS_LIBRARY_OUTPUT_DIR)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR=${AWS_LIBRARY_OUTPUT_DIR})
-            endif()
-
-            if (BUILD_DEPS)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DBUILD_DEPS=${BUILD_DEPS})
-            endif()
-
-            if (CMAKE_ANDROID_NDK)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_NDK=${CMAKE_ANDROID_NDK})
-            endif()
-
-            if (CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-            endif()
-
-            if (CMAKE_MAKE_PROGRAM)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM})
-            endif()
-
-            if (CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-            endif()
+#            if (ANDROID_DEPS_DIR)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+#            endif()
+#
+#            if (AWS_LIBRARY_OUTPUT_DIR)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR=${AWS_LIBRARY_OUTPUT_DIR})
+#            endif()
+#
+#            if (BUILD_DEPS)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DBUILD_DEPS=${BUILD_DEPS})
+#            endif()
+#
+#            if (CMAKE_ANDROID_NDK)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_NDK=${CMAKE_ANDROID_NDK})
+#            endif()
+#
+#            if (CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+#            endif()
+#
+#            if (CMAKE_MAKE_PROGRAM)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM})
+#            endif()
+#
+#            if (CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+#            endif()
         endif()
 
         message(WARNING "=== awslc cmake args: ${AWSLC_CMAKE_ARGUMENTS}")

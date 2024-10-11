@@ -7,9 +7,7 @@ if(NOT AWS_CMAKE_CL_ARGS)
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
         get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-        message(WARNING "=== ${var}=${${var}}: ${currentHelpString}")
         if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
-            message(WARNING "add var ${var}")
             list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
         endif()
     endforeach()
@@ -128,11 +126,11 @@ if (BUILD_DEPS)
             # Cross-compiling mode is used for Android, with some variables set via command line. Instead of adding
             # these variables one by one explicitly, we pass all cmd variables.
             list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
-
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
         endif()
 
-        message(WARNING "=== awslc cmake args: ${AWSLC_CMAKE_ARGUMENTS}")
+        # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
+        # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
+        list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
 
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(

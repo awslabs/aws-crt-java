@@ -169,14 +169,14 @@ if (BUILD_DEPS)
                 list(APPEND AWSLC_CMAKE_ARGUMENTS -DBUILD_DEPS=${BUILD_DEPS})
             endif()
 
-#            if (CMAKE_ANDROID_NDK)
-#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_NDK=${CMAKE_ANDROID_NDK})
-#            endif()
-#
-#            if (CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-#                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-#            endif()
-#
+            if (CMAKE_ANDROID_NDK)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_ANDROID_NDK=${CMAKE_ANDROID_NDK})
+            endif()
+
+            if (CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+            endif()
+
 #            if (CMAKE_MAKE_PROGRAM)
 #                list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM})
 #            endif()

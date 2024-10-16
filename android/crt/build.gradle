@@ -68,6 +68,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DBUILD_DEPS=ON"
+                version "3.13.0+"
             }
         }
     }

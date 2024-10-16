@@ -3,15 +3,23 @@ cmake_minimum_required(VERSION 3.1)
 # Get list of variables provided via command line arguments.
 # MUST be done before call to 'project'.
 # Via https://cmake.org/pipermail/cmake/2018-January/067002.html
+# if(NOT AWS_CMAKE_CL_ARGS)
+#     get_cmake_property(vars CACHE_VARIABLES)
+#     foreach(var ${vars})
+#         get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
+#         if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
+#             list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
+#         endif()
+#     endforeach()
+#     set(AWS_CMAKE_CL_ARGS ${AWS_CMAKE_CL_ARGS} CACHE STRING "Command line variables")
+# endif()
+
 if(NOT AWS_CMAKE_CL_ARGS)
-    get_cmake_property(vars CACHE_VARIABLES)
-    foreach(var ${vars})
-        get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-        if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
-            list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
-        endif()
-    endforeach()
-    set(AWS_CMAKE_CL_ARGS ${AWS_CMAKE_CL_ARGS} CACHE STRING "Command line variables")
+cmake_host_system_information(RESULT _cache_vars QUERY CMAKE_CACHE_VARIABLES)
+
+foreach(var IN LISTS _cache_vars)
+    list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
+endforeach()
 endif()
 
 project(aws-crt-jni C)

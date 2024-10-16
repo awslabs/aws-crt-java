@@ -103,7 +103,7 @@ android {
         cmake {
             path "../../CMakeLists.txt"
             buildStagingDirectory "../../target/cmake-build"
-            version "3.30.5"
+            version "3.30.4"
         }
     }
 

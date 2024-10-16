@@ -68,7 +68,6 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DBUILD_DEPS=ON"
-                version "3.13.0+"
             }
         }
     }
@@ -104,7 +103,7 @@ android {
         cmake {
             path "../../CMakeLists.txt"
             buildStagingDirectory "../../target/cmake-build"
-            version "3.10.2"
+            version "3.13.0+"
         }
     }
 

@@ -1,5 +1,19 @@
 cmake_minimum_required(VERSION 3.1)
 
+# Get list of variables provided via command line arguments.
+# MUST be done before call to 'project'.
+# Via https://cmake.org/pipermail/cmake/2018-January/067002.html
+if(NOT AWS_CMAKE_CL_ARGS)
+    get_cmake_property(vars CACHE_VARIABLES)
+    foreach(var ${vars})
+        get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
+        if("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
+            list(APPEND AWS_CMAKE_CL_ARGS "-D${var}=${${var}}")
+        endif()
+    endforeach()
+    set(AWS_CMAKE_CL_ARGS ${AWS_CMAKE_CL_ARGS} CACHE STRING "Command line variables")
+endif()
+
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
@@ -60,49 +74,78 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
+        include(AwsPrebuildDependency)
+
+        set(AWSLC_CMAKE_ARGUMENTS
+            -DBUILD_LIBSSL=OFF
+            -DBUILD_TESTING=OFF
+        )
+
         message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
-            set(PERL_EXECUTABLE "perl")
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+
             if (DEFINED ENV{GO_PATH})
                 set(GO_EXECUTABLE $ENV{GO_PATH}/go)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
                 message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
         else()
-            set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
-            set(DISABLE_GO ON CACHE BOOL "Disable codegen")
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            set(DISABLE_PERL OFF CACHE BOOL "Build with Perl to avoid using pre-compiled binary with AVX512")
-            set(PERL_EXECUTABLE "perl")
-            set(MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX ON CACHE BOOL "Disable AVX512 on old GCC that not supports it")
+            # Build with Perl to avoid using pre-compiled binary with AVX512
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+            # Disable AVX512 on old GCC that not supports it
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
         # temporarily disable certain warnings as errors for the aws-lc build
-        set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(AWSLC_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
         if (NOT MSVC)
             check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
             if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
+                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-stringop-overflow")
             endif()
 
             check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
             if (HAS_WNO_ARRAY_PARAMETER)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
+                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-array-parameter")
             endif()
         endif()
+        list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
-        add_subdirectory(crt/aws-lc)
+        if (ANDROID)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
 
-        # restore previous build flags
-        set(CMAKE_C_FLAGS "${OLD_CMAKE_C_FLAGS}")
+            # Cross-compiling mode is used for Android, with some variables set via command line. Instead of adding
+            # these variables one by one explicitly, we pass all cmd variables.
+            list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
+        endif()
 
-        set(SEARCH_LIBCRYPTO OFF CACHE BOOL "Let S2N use libcrypto from AWS-LC.")
+        # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
+        # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
+        list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
+
+        # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
+        aws_prebuild_dependency(
+            DEPENDENCY_NAME AWSLC
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/aws-lc
+            CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
+        )
+
+        # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
+        list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
+
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()
+
     add_subdirectory(crt/aws-c-sdkutils)
     add_subdirectory(crt/aws-c-io)
     add_subdirectory(crt/aws-c-cal)

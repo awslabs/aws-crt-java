@@ -151,7 +151,6 @@ jobs:
   raspberry:
     runs-on: ubuntu-22.04 # latest
     strategy:
-      fail-fast: false
       matrix:
         image:
           - raspbian-bullseye

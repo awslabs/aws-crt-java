@@ -72,6 +72,7 @@ jobs:
     name: ARM (${{ matrix.arch }})
     runs-on: ubuntu-22.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [armv6, armv7, arm64]
     steps:

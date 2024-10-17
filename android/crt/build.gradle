@@ -43,7 +43,6 @@ ext {
 }
 
 android {
-    compileSdkVersion 30
     buildToolsVersion "30.0.3"
     ndkVersion "21.4.7075529" // LTS version
 
@@ -53,7 +52,9 @@ android {
 
     defaultConfig {
         minSdkVersion 24  // TODO - dictated by CompletableFuture which is API 24+
-        targetSdkVersion 30
+        targetSdkVersion 33
+        compileSdk 33
+
         versionCode = gitVersionCode()
         versionName = gitVersionName()
 

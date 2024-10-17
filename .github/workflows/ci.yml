@@ -241,7 +241,7 @@ jobs:
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
           sudo apt-get install ninja-build
-          ./gradlew :android:crt:build
+          ./gradlew :android:crt:build -Dorg.gradle.jvmargs=-Xmx4g
           ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
       # Setup files required by test app for Device Farm testing
       - name: Setup Android Test Files

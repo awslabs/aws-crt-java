@@ -43,7 +43,7 @@ ext {
 }
 
 android {
-    compileSdk 35
+    compileSdk 33
     ndkVersion "21.4.7075529" // LTS version
 
     useLibrary 'android.test.runner'
@@ -52,7 +52,7 @@ android {
 
     defaultConfig {
         minSdkVersion 24  // TODO - dictated by CompletableFuture which is API 24+
-        targetSdkVersion 35
+        targetSdkVersion 33
 
         versionCode = gitVersionCode()
         versionName = gitVersionName()

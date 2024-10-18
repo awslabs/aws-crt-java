@@ -4,6 +4,9 @@ project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
+if (POLICY CMP0077)
+    cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables
+endif()
 
 if (DEFINED CMAKE_PREFIX_PATH)
     file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}" CMAKE_PREFIX_PATH)

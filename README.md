@@ -30,7 +30,7 @@ This library is licensed under the Apache 2.0 License.
 ### Linux/Unix
 Requirements:
 * Clang 3.9+ or GCC 4.4+
-* cmake 3.13+
+* cmake 3.9+
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 
@@ -43,7 +43,7 @@ Building:
 
 ### OSX
 Requirements:
-* cmake 3.13+
+* cmake 3.9+
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
@@ -58,7 +58,7 @@ Building:
 ### Windows
 Requirements:
 * Visual Studio 2015 or above
-* CMake 3.13+
+* CMake 3.9+
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 

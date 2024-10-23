@@ -19,7 +19,7 @@ phases:
       - curl -OL https://go.dev/dl/go1.21.6.linux-amd64.tar.gz && mkdir ./go
       - tar -C ./go -xvf go1.21.6.linux-amd64.tar.gz
       - export PATH=$PATH:./go/go/bin
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64-fips -Dcmake.crt_fips=ON
+      - mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64-fips -Dcmake.crt_fips=ON
 
   post_build:
     commands:

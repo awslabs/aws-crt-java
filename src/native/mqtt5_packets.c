@@ -987,7 +987,7 @@ struct aws_mqtt5_packet_disconnect_view_java_jni *aws_mqtt5_packet_disconnect_vi
     /* Needed to track if optionals are set or not */
     bool was_value_set = false;
 
-    uint32_t reason_code_enum;
+    uint32_t reason_code_enum = 0;
     if (aws_get_enum_from_jobject(
             env,
             java_disconnect_packet,

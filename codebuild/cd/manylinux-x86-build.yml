@@ -7,9 +7,6 @@ phases:
   pre_build:
     commands:
       - export CC=gcc
-      # AWSCLI v2 not available on x86, so installing v1
-      - /opt/python/cp37-cp37m/bin/python -m pip install --upgrade awscli
-      - ln -s `find /opt -name aws` /usr/local/bin/aws
   build:
     commands:
       - cd aws-crt-java

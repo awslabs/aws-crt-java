@@ -221,10 +221,9 @@ jobs:
           python3 codebuild/macos_compatibility_check.py
 
   android:
-      # ubuntu-20.04 comes with Android tooling, see:
-      # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
+      # ubuntu-24.04 comes with Android tooling
     name: Android
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4

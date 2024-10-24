@@ -47,7 +47,7 @@ public class CrtPlatformImpl extends CrtPlatform {
                 return "armeabi-v7a";
             } 
         }
-        throw new RuntimeException("AWS CRT: architecture not supported on Android: " + arch);
+        throw new RuntimeException("AWS CRT: architecture not supported on Android: ");
     }
 
     public String getResourcePath(String cRuntime, String libraryName) {

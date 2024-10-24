@@ -302,9 +302,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
+        submodules: true
     - name: Configure local host
       run: |
-        submodules: true
         python3 -m pip install h2
         cd crt/aws-c-http/tests/py_localhost/
         python3 server.py &

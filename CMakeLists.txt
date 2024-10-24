@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 
 # Get list of variables provided via command line arguments.
 # MUST be done before call to 'project'.
@@ -17,10 +17,6 @@ endif()
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
-
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
-endif()
 
 if (POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables

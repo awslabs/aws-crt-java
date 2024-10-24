@@ -239,7 +239,7 @@ jobs:
       # Build and publish locally for the test app to find the SNAPSHOT version
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
-          ./gradlew :android:crt:build --info -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxPermSize=2g"
+          ./gradlew :android:crt:build -Dorg.gradle.jvmargs="-Xmx2g"
           ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
       # Setup files required by test app for Device Farm testing
       - name: Setup Android Test Files

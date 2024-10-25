@@ -43,8 +43,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    compileSdk 33
     ndkVersion "21.4.7075529" // LTS version
 
     useLibrary 'android.test.runner'
@@ -53,7 +52,8 @@ android {
 
     defaultConfig {
         minSdkVersion 24  // TODO - dictated by CompletableFuture which is API 24+
-        targetSdkVersion 30
+        targetSdkVersion 33
+
         versionCode = gitVersionCode()
         versionName = gitVersionName()
 
@@ -76,6 +76,7 @@ android {
         main {
             java.srcDir '../../src/main/java'
             java.srcDir 'src/main/java'
+            java.exclude '**/GraalVMNativeFeature.java'
         }
         androidTest {
             setRoot '../../src/test'
@@ -102,7 +103,6 @@ android {
         cmake {
             path "../../CMakeLists.txt"
             buildStagingDirectory "../../target/cmake-build"
-            version "3.10.2"
         }
     }
 

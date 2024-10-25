@@ -7,7 +7,7 @@ on:
       - 'docs'
 
 env:
-  BUILDER_VERSION: v0.9.62
+  BUILDER_VERSION: v0.9.67
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -34,7 +34,7 @@ jobs:
           #- manylinux2014-x86 until we find 32-bit linux binaries we can use
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -60,7 +60,7 @@ jobs:
           - gcc-8
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }}
@@ -72,6 +72,7 @@ jobs:
     name: ARM (${{ matrix.arch }})
     runs-on: ubuntu-22.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [armv6, armv7, arm64]
     steps:
@@ -150,7 +151,6 @@ jobs:
   raspberry:
     runs-on: ubuntu-22.04 # latest
     strategy:
-      fail-fast: false
       matrix:
         image:
           - raspbian-bullseye
@@ -167,7 +167,7 @@ jobs:
     runs-on: windows-2022 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -182,7 +182,7 @@ jobs:
         arch: [x86, x64]
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -192,11 +192,11 @@ jobs:
           python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
           python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  macos: 
+  macos:
     runs-on: macos-14 #latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -204,13 +204,13 @@ jobs:
           python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
           chmod a+x builder
           ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
-          python3 codebuild/macos_compatibility_check.py 
+          python3 codebuild/macos_compatibility_check.py
 
   macos-x64:
     runs-on: macos-14-large #latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Build ${{ env.PACKAGE_NAME }} + consumers
@@ -221,18 +221,17 @@ jobs:
           python3 codebuild/macos_compatibility_check.py
 
   android:
-      # ubuntu-20.04 comes with Android tooling, see:
-      # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
+      # ubuntu-24.04 comes with Android tooling
     name: Android
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
             submodules: true
       # Setup JDK 11
       - name: set up JDK 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '11'
           distribution: 'temurin'
@@ -274,9 +273,9 @@ jobs:
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-22.04 # use same version as docs.yml
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Check docs
@@ -287,7 +286,7 @@ jobs:
     runs-on: ubuntu-22.04 # latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0
@@ -301,7 +300,7 @@ jobs:
     runs-on: ubuntu-22.04 # latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Configure local host
@@ -319,7 +318,7 @@ jobs:
     runs-on: macos-14 # latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Configure local host
@@ -340,7 +339,7 @@ jobs:
     runs-on: windows-2022 # latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Configure local host
@@ -364,7 +363,7 @@ jobs:
         java-version: ['22', '21', '17']
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Setup GraalVM

@@ -105,11 +105,9 @@ if (BUILD_DEPS)
         if (ANDROID)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
-
-            # Cross-compiling mode is used for Android, with some variables set via command line. Instead of adding
-            # these variables one by one explicitly, we pass all cmd variables.
-            list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
         endif()
+
+        list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
 
         # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
         # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).

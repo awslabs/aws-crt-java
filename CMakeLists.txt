@@ -94,25 +94,12 @@ if (BUILD_DEPS)
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            # Build with Perl to avoid using pre-compiled binary with AVX512
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
             # Disable AVX512 on old GCC that not supports it
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
         # temporarily disable certain warnings as errors for the aws-lc build
         set(AWSLC_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        if (NOT MSVC)
-            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
-            if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-stringop-overflow")
-            endif()
-
-            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
-            if (HAS_WNO_ARRAY_PARAMETER)
-                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-array-parameter")
-            endif()
-        endif()
         list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
         if (ANDROID)

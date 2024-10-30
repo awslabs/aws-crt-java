@@ -14,15 +14,15 @@ public enum ChecksumAlgorithm {
 
     NONE(0),
 
-    CRC64NVME(1),
+    CRC32C(1),
 
-    CRC32C(2),
+    CRC32(2),
 
-    CRC32(3),
+    SHA1(3),
 
-    SHA1(4),
+    SHA256(4),
 
-    SHA256(5);
+    CRC64NVME(5);
 
     ChecksumAlgorithm(int nativeValue) {
         this.nativeValue = nativeValue;

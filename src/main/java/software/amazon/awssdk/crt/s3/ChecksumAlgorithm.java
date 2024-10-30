@@ -44,11 +44,11 @@ public enum ChecksumAlgorithm {
     private static Map<Integer, ChecksumAlgorithm> buildEnumMapping() {
         Map<Integer, ChecksumAlgorithm> enumMapping = new HashMap<Integer, ChecksumAlgorithm>();
         enumMapping.put(NONE.getNativeValue(), NONE);
-        enumMapping.put(CRC64NVME.getNativeValue(), CRC64NVME);
         enumMapping.put(CRC32C.getNativeValue(), CRC32C);
         enumMapping.put(CRC32.getNativeValue(), CRC32);
         enumMapping.put(SHA1.getNativeValue(), SHA1);
         enumMapping.put(SHA256.getNativeValue(), SHA256);
+        enumMapping.put(CRC64NVME.getNativeValue(), CRC64NVME);
         return enumMapping;
     }
 

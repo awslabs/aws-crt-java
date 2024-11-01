@@ -6,6 +6,11 @@ on:
       - 'main'
       - 'docs'
 
+# cancel in-progress builds after a new commit
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   BUILDER_VERSION: v0.9.67
   BUILDER_SOURCE: releases
@@ -235,11 +240,14 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-          cache: 'gradle'
       # Build and publish locally for the test app to find the SNAPSHOT version
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
-          ./gradlew :android:crt:build
+          # Manually set -Xmx (max heap size) to something huge (tested 2g and that works, but why not go bigger).
+          # Only in CI, gradle daemon runs out of memory during "lintAnalyzeDebug" task, unless you specify it this way.
+          # You'd think Java's default of 25% RAM (ubuntu24 runner has 12g, so max 4g) would be sufficient, but no.
+          # You'd think setting -Xmx via gradle.properties would help, but no.
+          ./gradlew :android:crt:build -Dorg.gradle.jvmargs="-Xmx8g"
           ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
       # Setup files required by test app for Device Farm testing
       - name: Setup Android Test Files

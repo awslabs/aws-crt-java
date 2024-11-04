@@ -21,12 +21,10 @@ function(aws_get_cmd_arguments)
     get_cmake_property(vars CACHE_VARIABLES)
     foreach(var ${vars})
         get_property(currentHelpString CACHE "${var}" PROPERTY HELPSTRING)
-        if ("${currentHelpString}" MATCHES "No help, variable specified on the command line." OR "${currentHelpString}" STREQUAL "")
+        if ("${currentHelpString}" MATCHES "No help, variable specified on the command line.")
             if("${var}" IN_LIST AWS_GET_CMD_ARGS_VARS_TO_IGNORE)
-                message(WARNING "Skip ${var}")
                 continue()
             endif()
-            message(WARNING "aws_get_cmd_arguments: ${var}=${${var}}")
             set(escaped_var ${${var}})
             # To store a list within another list, it needs to be escaped first.
             string(REPLACE ";" "\\\\;" escaped_var "${${var}}")
@@ -37,7 +35,9 @@ function(aws_get_cmd_arguments)
     set(AWS_CMAKE_CMD_ARGS ${AWS_CMAKE_CMD_ARGS} CACHE STRING "Command line variables" FORCE)
 endfunction()
 
-aws_get_cmd_arguments()
+# We gather command line arguments to pass them to dependencies that need to be prebuilt.
+# Since these dependencies are supposed to be installed in custom directories, CMAKE_INSTALL_PREFIX should be omit.
+aws_get_cmd_arguments(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
@@ -119,25 +119,11 @@ if (BUILD_DEPS)
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            # Build with Perl to avoid using pre-compiled binary with AVX512
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
             # Disable AVX512 on old GCC that not supports it
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
-        # temporarily disable certain warnings as errors for the aws-lc build
         set(AWSLC_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        if (NOT MSVC)
-            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
-            if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-stringop-overflow")
-            endif()
-
-            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
-            if (HAS_WNO_ARRAY_PARAMETER)
-                set(AWSLC_CMAKE_C_FLAGS "${AWSLC_CMAKE_C_FLAGS} -Wno-array-parameter")
-            endif()
-        endif()
         list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
 
         if (ANDROID)
@@ -150,8 +136,6 @@ if (BUILD_DEPS)
         # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
         # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
         list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
-
-        message(WARNING "=== AWSLC_CMAKE_ARGUMENTS: ${AWSLC_CMAKE_ARGUMENTS}")
 
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(

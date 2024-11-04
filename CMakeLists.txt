@@ -133,7 +133,7 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
         endif()
 
-        list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CL_ARGS})
+        list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CMD_ARGS})
 
         # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
         # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).

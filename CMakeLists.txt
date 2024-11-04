@@ -136,6 +136,8 @@ if (BUILD_DEPS)
         # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
         list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
 
+        message(WARNING "=== AWSLC_CMAKE_ARGUMENTS: ${AWSLC_CMAKE_ARGUMENTS}")
+
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(
             DEPENDENCY_NAME AWSLC

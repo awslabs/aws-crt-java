@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.9)
 
 # We gather command line arguments to pass them to dependencies that need to be prebuilt.
 # Since these dependencies are supposed to be installed in custom directories, CMAKE_INSTALL_PREFIX should be omit.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/crt/aws-c-common/cmake")
+include(AwsGetCmdArguments)
 aws_get_cmd_arguments(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
 
 project(aws-crt-jni C)
@@ -53,7 +55,6 @@ if (ANDROID)
 endif()
 
 if (BUILD_DEPS)
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/crt/aws-c-common/cmake")
     include(AwsFindPackage)
 
     set(IN_SOURCE_BUILD ON)

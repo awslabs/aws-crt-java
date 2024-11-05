@@ -71,25 +71,12 @@ if (BUILD_DEPS)
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            set(DISABLE_PERL OFF CACHE BOOL "Build with Perl to avoid using pre-compiled binary with AVX512")
             set(PERL_EXECUTABLE "perl")
             set(MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX ON CACHE BOOL "Disable AVX512 on old GCC that not supports it")
         endif()
 
         # temporarily disable certain warnings as errors for the aws-lc build
         set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        if (NOT MSVC)
-            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
-            if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
-            endif()
-
-            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
-            if (HAS_WNO_ARRAY_PARAMETER)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
-            endif()
-        endif()
-
         add_subdirectory(crt/aws-lc)
 
         # restore previous build flags

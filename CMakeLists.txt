@@ -64,7 +64,9 @@ if (BUILD_DEPS)
         # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
         list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
 
-        # aws-c-cal supports both in-source and prebuilt aws-lc. Set this variable to expect prebuilt version.
+        # aws-c-cal supports both in-source and prebuilt aws-lc.
+        # Set this variable, so aws-c-cal will expect a prebuilt version.
+        # NOTE: aws-lc prebuilding happens in pom.xml.
         set(AWSLC_PREBUILT TRUE CACHE INTERNAL "Dependency is built and can be used")
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")

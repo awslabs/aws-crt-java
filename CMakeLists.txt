@@ -66,8 +66,8 @@ if (BUILD_DEPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
         endif()
 
-        # TODO CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
-        # list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
+        # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
+        list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
 
         # aws-c-cal supports both in-source and prebuilt aws-lc. Set this variable to expect prebuilt version.
         set(AWSLC_PREBUILT TRUE CACHE INTERNAL "Dependency is built and can be used")

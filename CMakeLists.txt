@@ -61,57 +61,16 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        include(AwsPrebuildDependency)
-
-        set(AWSLC_CMAKE_ARGUMENTS
-            -DBUILD_LIBSSL=OFF
-            -DBUILD_TESTING=OFF
-        )
-
         message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
             set(FIPS ON CACHE BOOL "FIPS compliance")
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
-
-            if (DEFINED ENV{GO_PATH})
-                set(GO_EXECUTABLE $ENV{GO_PATH}/go)
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
-                message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
-            endif()
-        else()
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
-        if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            # Disable AVX512 on old GCC that not supports it
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
-        endif()
+        # TODO CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
+        # list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
 
-        set(AWSLC_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
-
-        if (ANDROID)
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
-        endif()
-
-        list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CMD_ARGS})
-
-        # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
-        # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
-        list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
-
-        # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
-        aws_prebuild_dependency(
-            DEPENDENCY_NAME AWSLC
-            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/aws-lc
-            CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
-        )
-
-        # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
-        list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
+        # aws-c-cal supports both in-source and prebuilt aws-lc. Set this variable to expect prebuilt version.
+        set(AWSLC_PREBUILT TRUE CACHE INTERNAL "Dependency is built and can be used")
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)

@@ -53,16 +53,13 @@
                 "armv7": {
                     "!packages": [],
                     "!build_steps": [
-                        "cmake -S prebuild_configs/aws-lc -B {source_dir}/build/prebuild-aws-lc -DCMAKE_INSTALL_PREFIX={source_dir}/build/prebuild-aws-lc/install",
-                        "cmake --build {source_dir}/build/prebuild-aws-lc --target install",
                         "build"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
-                        "-DCMAKE_PREFIX_PATH={source_dir}/build/prebuild-aws-lc/install"
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "arm64": {
@@ -127,16 +124,13 @@
                 "armv7": {
                     "!packages": [],
                     "!build_steps": [
-                        "cmake -S prebuild_configs/aws-lc -B kokoko -DCMAKE_INSTALL_PREFIX={source_dir}/build/prebuild-aws-lc",
-                        "cmake --build kokoko --target install",
                         "build"
                     ],
                     "!test_steps": [],
                     "!cmake_args": [
                         "-DCMAKE_BUILD_TYPE=Release",
                         "-DBUILD_DEPS=ON",
-                        "-DBUILD_TESTING=OFF",
-                        "-DCMAKE_PREFIX_PATH={source_dir}/build/prebuild-aws-lc"
+                        "-DBUILD_TESTING=OFF"
                     ]
                 },
                 "arm64": {

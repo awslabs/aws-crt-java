@@ -4,9 +4,16 @@ cmake_minimum_required(VERSION 3.9)
 # Since these dependencies are supposed to be installed in custom directories, CMAKE_INSTALL_PREFIX should be omit.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/crt/aws-c-common/cmake")
 include(AwsGetCmdArguments)
-aws_get_cmd_arguments(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
+include(AwsPrebuildDependency)
+
+aws_get_cmd_arguments_for_prebuild_dependency(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
+message(WARNING "==== before project: ${AWS_CMAKE_CMD_ARGS}")
 
 project(aws-crt-jni C)
+
+aws_get_cmd_arguments_for_prebuild_dependency(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
+message(WARNING "==== after project: ${AWS_CMAKE_CMD_ARGS}")
+
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
@@ -61,7 +68,6 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        include(AwsPrebuildDependency)
 
         set(AWSLC_CMAKE_ARGUMENTS
             -DBUILD_LIBSSL=OFF

@@ -84,19 +84,10 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
-        set(AWSLC_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        list(APPEND AWSLC_CMAKE_ARGUMENTS -DCMAKE_C_FLAGS=${AWSLC_CMAKE_C_FLAGS})
-
         if (ANDROID)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
         endif()
-
-        list(APPEND AWSLC_CMAKE_ARGUMENTS ${AWS_CMAKE_CMD_ARGS})
-
-        # In case a custom generator was provided via -G option. If we don't propagate it, the default value might
-        # conflict with other cmake options (e.g. CMAKE_MAKE_PROGRAM).
-        list(APPEND AWSLC_CMAKE_ARGUMENTS -G${CMAKE_GENERATOR})
 
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(

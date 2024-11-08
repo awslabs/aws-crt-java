@@ -1,19 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 
-# We gather command line arguments to pass them to dependencies that need to be prebuilt.
-# Since these dependencies are supposed to be installed in custom directories, CMAKE_INSTALL_PREFIX should be omit.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/crt/aws-c-common/cmake")
-include(AwsGetCmdArguments)
-include(AwsPrebuildDependency)
-
-aws_get_cmd_arguments_for_prebuild_dependency(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
-message(WARNING "==== before project: ${AWS_CMAKE_CMD_ARGS}")
-
 project(aws-crt-jni C)
-
-aws_get_cmd_arguments_for_prebuild_dependency(VARS_TO_IGNORE CMAKE_INSTALL_PREFIX)
-message(WARNING "==== after project: ${AWS_CMAKE_CMD_ARGS}")
-
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
@@ -62,12 +49,14 @@ if (ANDROID)
 endif()
 
 if (BUILD_DEPS)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/crt/aws-c-common/cmake")
     include(AwsFindPackage)
 
     set(IN_SOURCE_BUILD ON)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
+        include(AwsPrebuildDependency)
 
         set(AWSLC_CMAKE_ARGUMENTS
             -DBUILD_LIBSSL=OFF
@@ -122,7 +111,6 @@ if (BUILD_DEPS)
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()
-
     add_subdirectory(crt/aws-c-sdkutils)
     add_subdirectory(crt/aws-c-io)
     add_subdirectory(crt/aws-c-cal)

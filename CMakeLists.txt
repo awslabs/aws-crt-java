@@ -96,9 +96,6 @@ if (BUILD_DEPS)
             CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
         )
 
-        # CMAKE_FIND_ROOT_PATH is used in cross-compiling mode.
-        list(INSERT CMAKE_FIND_ROOT_PATH 0 ${CMAKE_PREFIX_PATH})
-
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()

@@ -120,10 +120,12 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     public void testHttpGet() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
-        testRequest("GET", HOST, "/delete", EMPTY_BODY, false, 404);
-        testRequest("GET", HOST, "/get", EMPTY_BODY, false, 200);
-        testRequest("GET", HOST, "/post", EMPTY_BODY, false, 404);
-        testRequest("GET", HOST, "/put", EMPTY_BODY, false, 404);
+        while(true) {
+            testRequest("GET", HOST, "/delete", EMPTY_BODY, false, 404);
+            testRequest("GET", HOST, "/get", EMPTY_BODY, false, 200);
+            testRequest("GET", HOST, "/post", EMPTY_BODY, false, 404);
+            testRequest("GET", HOST, "/put", EMPTY_BODY, false, 404);
+        }
     }
 
     @Test

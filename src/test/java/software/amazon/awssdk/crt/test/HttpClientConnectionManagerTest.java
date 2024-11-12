@@ -248,6 +248,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     @Test
     public void testMaxParallelRequests() throws Exception {
         skipIfAndroid();
+        Log.initLoggingToStdout(Log.LogLevel.Info);
         while(true) {
            testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
         }

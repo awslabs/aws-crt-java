@@ -145,14 +145,12 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         URI uri = new URI(endpoint);
 
         try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, numThreads, NUM_CONNECTIONS)) {
-            while(true) {
-                HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
-                testParallelConnections(connectionPool, request, 2, numRequests);
-            }
+            HttpRequest request = createHttpRequest("GET", endpoint, path, EMPTY_BODY);
+            testParallelConnections(connectionPool, request, 1, numRequests);
         }
 
-//        CrtResource.logNativeResources();
-//        CrtResource.waitForNoResources();
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -250,9 +248,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
     @Test
     public void testMaxParallelRequests() throws Exception {
         skipIfAndroid();
-        Log.initLoggingToStdout(Log.LogLevel.Info);
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
-
     }
 
     @Test

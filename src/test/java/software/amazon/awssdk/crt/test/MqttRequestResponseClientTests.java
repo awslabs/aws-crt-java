@@ -2,6 +2,7 @@ package software.amazon.awssdk.crt.test;
 
 import org.junit.Assume;
 import org.junit.Test;
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
@@ -24,9 +25,28 @@ import java.util.concurrent.CompletableFuture;
 
 public class MqttRequestResponseClientTests extends CrtTestFixture {
 
+    static final boolean AWS_GRAALVM_CI = System.getProperty("AWS_GRAALVM_CI") != null;
+
     static final String AWS_TEST_MQTT5_IOT_CORE_HOST = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_HOST");
     static final String AWS_TEST_MQTT5_IOT_CORE_RSA_CERT = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
     static final String AWS_TEST_MQTT5_IOT_CORE_RSA_KEY = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
+
+    public MqttRequestResponseClientTests() {
+        /**
+         * Disable test for native image, because:
+         * - On MacOS, when cert and private key used for TLS, it will be imported to KeyChain,
+         *      and KeyChain will restrict other application to use the private key
+         * - For GraalVM test, Java will run the tests firstly, and import the mTLS private key.
+         *      After that, when native test runs, it's a different application than Java,
+         *      which will use the same key, and MacOS blocks the usage and result in hanging.
+         * - Locally, you can either put in your password to allow the usage, or delete the key from the KeyChain,
+         *      But, in CI, it's very complicated, and decided to not support MQTT tests for now.
+         */
+        Assume.assumeFalse(AWS_GRAALVM_CI && CRT.getOSIdentifier() == "osx");
+        Assume.assumeNotNull(
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+    }
 
     static private Mqtt5Client createMqtt5Client() {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
@@ -112,9 +132,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test
     public void CreateDestroyMqtt5() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (Mqtt5Client protocolClient = createMqtt5Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -131,9 +148,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (Mqtt5Client protocolClient = createMqtt5Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -148,9 +162,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (Mqtt5Client protocolClient = createMqtt5Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -165,9 +176,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (Mqtt5Client protocolClient = createMqtt5Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -182,9 +190,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test
     public void CreateDestroyMqtt311() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (MqttClientConnection protocolClient = createMqtt311Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -202,9 +207,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (MqttClientConnection protocolClient = createMqtt311Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -219,9 +221,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (MqttClientConnection protocolClient = createMqtt311Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
@@ -236,9 +235,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(
-                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         try (MqttClientConnection protocolClient = createMqtt311Client()) {
             MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();

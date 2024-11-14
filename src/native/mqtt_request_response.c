@@ -12,6 +12,18 @@
 #include "mqtt5_client_jni.h"
 #include "mqtt_connection.h"
 
+/* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
+#if UINTPTR_MAX == 0xffffffff
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#    else
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#        pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
+#    endif
+#endif
+
 struct aws_crt_mqtt_request_response_client_binding {
     struct aws_allocator *allocator;
     JavaVM *jvm;

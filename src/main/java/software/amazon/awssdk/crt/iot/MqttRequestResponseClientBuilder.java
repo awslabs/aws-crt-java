@@ -74,10 +74,10 @@ public class MqttRequestResponseClientBuilder {
     }
 
     public MqttRequestResponseClient build(Mqtt5Client client) {
-        return null;
+        return new MqttRequestResponseClient(client, options);
     }
 
     public MqttRequestResponseClient build(MqttClientConnection client) {
-        return null;
+        return new MqttRequestResponseClient(client, options);
     }
 }

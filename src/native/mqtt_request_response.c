@@ -31,7 +31,7 @@ static void s_destroy_mqtt_request_response_client_binding(void *context) {
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "??");
+        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "JNI env no longer resolvable; JVM likely shutting down");
         goto done;
     }
 
@@ -58,20 +58,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_MqttRequestResponseC
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    if (max_request_response_subscriptions < 0 || max_streaming_subscriptions < 0 || operation_timeout_seconds < 0) {
-        aws_jni_throw_runtime_exception(env, "??");
+    if (max_request_response_subscriptions < 2 || max_streaming_subscriptions < 0 || operation_timeout_seconds < 0) {
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom5: Invalid configuration value");
         return (jlong)NULL;
     }
 
     struct aws_mqtt5_client_java_jni *mqtt_client_binding = (struct aws_mqtt5_client_java_jni *)protocol_client_binding;
     if (mqtt_client_binding == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom5: null protocol client binding");
         return (jlong)NULL;
     }
 
     struct aws_mqtt5_client *protocol_client = mqtt_client_binding->client;
     if (protocol_client == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom5: null protocol client");
         return (jlong)NULL;
     }
 
@@ -82,13 +82,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_MqttRequestResponseC
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     if (jvmresult != 0) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom5: failed to get JVM");
         goto error;
     }
 
     binding->java_client = (*env)->NewGlobalRef(env, jni_mqtt_request_response_client);
     if (!binding->java_client) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(
+            env, "MqttRequestResponseClientNewFrom5: failed to acquire strong ref to client jobject");
         goto error;
     }
 
@@ -102,7 +103,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_MqttRequestResponseC
 
     binding->client = aws_mqtt_request_response_client_new_from_mqtt5_client(allocator, protocol_client, &options);
     if (binding->client == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom5: failed to create native client");
         goto error;
     }
 
@@ -128,19 +129,19 @@ JNIEXPORT jlong JNICALL
     aws_cache_jni_ids(env);
 
     if (max_request_response_subscriptions < 0 || max_streaming_subscriptions < 0 || operation_timeout_seconds < 0) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom311: Invalid configuration value");
         return (jlong)NULL;
     }
 
     struct mqtt_jni_connection *mqtt_connection_binding = (struct mqtt_jni_connection *)protocol_client_binding;
     if (mqtt_connection_binding == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom311: null protocol client binding");
         return (jlong)NULL;
     }
 
     struct aws_mqtt_client_connection *protocol_client = mqtt_connection_binding->client_connection;
     if (protocol_client == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom311: null protocol client");
         return (jlong)NULL;
     }
 
@@ -151,13 +152,14 @@ JNIEXPORT jlong JNICALL
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     if (jvmresult != 0) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom311: failed to get JVM");
         goto error;
     }
 
     binding->java_client = (*env)->NewGlobalRef(env, jni_mqtt_request_response_client);
     if (!binding->java_client) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(
+            env, "MqttRequestResponseClientNewFrom311: failed to acquire strong ref to client jobject");
         goto error;
     }
 
@@ -171,7 +173,7 @@ JNIEXPORT jlong JNICALL
 
     binding->client = aws_mqtt_request_response_client_new_from_mqtt311_client(allocator, protocol_client, &options);
     if (binding->client == NULL) {
-        aws_jni_throw_runtime_exception(env, "??");
+        aws_jni_throw_runtime_exception(env, "MqttRequestResponseClientNewFrom311: failed to create native client");
         goto error;
     }
 

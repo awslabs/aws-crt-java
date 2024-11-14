@@ -5,7 +5,14 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
-
+/**
+ * A helper class for AWS service clients that use MQTT as the transport protocol.
+ *
+ * The class supports orchestrating request-response operations and creating streaming operations.  Used by the
+ * IoT SDKs to implement higher-level service clients that provide a good user experience.
+ *
+ * Not intended to be constructed or used directly; the service client will create one during its construction.
+ */
 public class MqttRequestResponseClient extends CrtResource {
 
     public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException  {
@@ -48,6 +55,7 @@ public class MqttRequestResponseClient extends CrtResource {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
+
     private static native long mqttRequestResponseClientNewFrom5(
             MqttRequestResponseClient client,
             long protocolClientHandle,

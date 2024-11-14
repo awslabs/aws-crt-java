@@ -3,7 +3,9 @@ package software.amazon.awssdk.crt.iot;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
-
+/**
+ * Class to configure an MQTT-based request response client.
+ */
 public class MqttRequestResponseClientBuilder {
 
     public static class MqttRequestResponseClientOptions {
@@ -73,10 +75,22 @@ public class MqttRequestResponseClientBuilder {
         return this;
     }
 
+    /**
+     * Creates a new MQTT request-response client that uses an MQTT5 client as transport
+     *
+     * @param client MQTT5 client to use
+     * @return a new MQTT request-response client
+     */
     public MqttRequestResponseClient build(Mqtt5Client client) {
         return new MqttRequestResponseClient(client, options);
     }
 
+    /**
+     * Creates a new MQTT request-response client that uses an MQTT311 client as transport
+     *
+     * @param client MQTT311 client to use
+     * @return a new MQTT request-response client
+     */
     public MqttRequestResponseClient build(MqttClientConnection client) {
         return new MqttRequestResponseClient(client, options);
     }

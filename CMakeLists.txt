@@ -69,7 +69,7 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
 
             if (DEFINED ENV{GO_PATH})
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=$ENV{GO_PATH}/go)
                 message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
         else()

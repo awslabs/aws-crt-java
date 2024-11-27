@@ -65,12 +65,10 @@ if (BUILD_DEPS)
 
         message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
-            set(FIPS ON CACHE BOOL "FIPS compliance")
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
 
             if (DEFINED ENV{GO_PATH})
-                set(GO_EXECUTABLE $ENV{GO_PATH}/go)
                 list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=${GO_EXECUTABLE})
                 message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
@@ -120,7 +118,7 @@ include(AwsPlatformDetect)
 include(AwsSharedLibSetup)
 include(AwsCRuntime)
 
-if (CRT_FIPS AND NOT FIPS)
+if (CRT_FIPS AND NOT AWSLC_PREBUILT)
     message(FATAL_ERROR "CRT_FIPS can only be set when build with aws-lc.")
 endif()
 

@@ -56,46 +56,44 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
+        include(AwsPrebuildDependency)
+
+        set(AWSLC_CMAKE_ARGUMENTS
+            -DBUILD_LIBSSL=OFF
+            -DBUILD_TESTING=OFF
+        )
+
         message("Build with FIPS: " ${CRT_FIPS})
         if (CRT_FIPS)
-            set(FIPS ON CACHE BOOL "FIPS compliance")
-            set(PERL_EXECUTABLE "perl")
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+
             if (DEFINED ENV{GO_PATH})
-                set(GO_EXECUTABLE $ENV{GO_PATH}/go)
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=$ENV{GO_PATH}/go)
                 message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
         else()
-            set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
-            set(DISABLE_GO ON CACHE BOOL "Disable codegen")
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
-            set(DISABLE_PERL OFF CACHE BOOL "Build with Perl to avoid using pre-compiled binary with AVX512")
-            set(PERL_EXECUTABLE "perl")
-            set(MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX ON CACHE BOOL "Disable AVX512 on old GCC that not supports it")
+            # Disable AVX512 on old GCC that not supports it
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
-        # temporarily disable certain warnings as errors for the aws-lc build
-        set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        if (NOT MSVC)
-            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
-            if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
-            endif()
-
-            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
-            if (HAS_WNO_ARRAY_PARAMETER)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
-            endif()
+        if (ANDROID)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
         endif()
 
-        add_subdirectory(crt/aws-lc)
+        # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
+        aws_prebuild_dependency(
+            DEPENDENCY_NAME AWSLC
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/aws-lc
+            CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
+        )
 
-        # restore previous build flags
-        set(CMAKE_C_FLAGS "${OLD_CMAKE_C_FLAGS}")
-
-        set(SEARCH_LIBCRYPTO OFF CACHE BOOL "Let S2N use libcrypto from AWS-LC.")
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()
@@ -120,7 +118,7 @@ include(AwsPlatformDetect)
 include(AwsSharedLibSetup)
 include(AwsCRuntime)
 
-if (CRT_FIPS AND NOT FIPS)
+if (CRT_FIPS AND NOT AWSLC_PREBUILT)
     message(FATAL_ERROR "CRT_FIPS can only be set when build with aws-lc.")
 endif()
 

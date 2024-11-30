@@ -67,11 +67,6 @@ if (BUILD_DEPS)
         if (CRT_FIPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
-
-            if (DEFINED ENV{GO_PATH})
-                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=$ENV{GO_PATH}/go)
-                message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
-            endif()
         else()
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen

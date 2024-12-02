@@ -67,6 +67,14 @@ if (BUILD_DEPS)
         if (CRT_FIPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+
+            # Pick up GO_PATH env-var, set by aws-crt-builder when cross-compiling, see:
+            # https://github.com/awslabs/aws-crt-builder/blob/31307c808ed9f2ea1eb16503b25a9b582f886481/builder/imports/golang.py#L84
+            # https://github.com/awslabs/aws-crt-builder/blob/31307c808ed9f2ea1eb16503b25a9b582f886481/builder/actions/cmake.py#L110
+            if (DEFINED ENV{GO_PATH})
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=$ENV{GO_PATH}/go)
+                message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
+            endif()
         else()
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen

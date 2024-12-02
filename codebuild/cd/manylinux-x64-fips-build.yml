@@ -11,10 +11,8 @@ phases:
       - git submodule update --init
       # double check aws-lc is the FIPS approved branch.
       - bash ./codebuild/cd/test-fips-branch.sh
-      # install recent Golang, following these instructions: https://go.dev/doc/install
-      - curl -L -o /tmp/go.tar.gz https://go.dev/dl/go1.21.13.linux-amd64.tar.gz
-      - rm -rf /usr/local/go && tar -C /usr/local -xzf /tmp/go.tar.gz
-      - export PATH=$PATH:/usr/local/go/bin
+      # aws-lc FIPS build requires golang for codegen
+      - yum install -y golang
       - mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64-fips -Dcmake.crt_fips=ON
 
   post_build:

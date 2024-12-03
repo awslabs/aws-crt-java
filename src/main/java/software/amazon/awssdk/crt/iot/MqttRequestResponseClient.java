@@ -35,6 +35,10 @@ public class MqttRequestResponseClient extends CrtResource {
         ));
     }
 
+    public void submitRequest(MqttRequest request) {
+
+    }
+    
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
      */

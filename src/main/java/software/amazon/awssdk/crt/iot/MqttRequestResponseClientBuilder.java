@@ -1,3 +1,8 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
 package software.amazon.awssdk.crt.iot;
 
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
@@ -54,7 +59,7 @@ public class MqttRequestResponseClientBuilder {
     /**
      * Sets the maximum number of subscriptions that the client will concurrently use for streaming operations
      *
-     * @param maxStreamingSubscriptions aximum number of subscriptions that the client will concurrently use for streaming operations
+     * @param maxStreamingSubscriptions maximum number of subscriptions that the client will concurrently use for streaming operations
      * @return the builder instance
      */
     public MqttRequestResponseClientBuilder withMaxStreamingSubscriptions(int maxStreamingSubscriptions) {
@@ -66,7 +71,7 @@ public class MqttRequestResponseClientBuilder {
     /**
      * Sets the Duration, in seconds, that a request-response operation will wait for completion before giving up
      *
-     * @param operationTimeoutSeconds curation, in seconds, that a request-response operation will wait for completion before giving up
+     * @param operationTimeoutSeconds duration, in seconds, that a request-response operation will wait for completion before giving up
      * @return the builder instance
      */
     public MqttRequestResponseClientBuilder withOperationTimeoutSeconds(int operationTimeoutSeconds) {

@@ -2322,6 +2322,51 @@ static void s_cache_s3express_credentials_provider_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(s3express_credentials_provider_properties.destroyProvider);
 }
 
+struct java_response_path_properties response_path_properties;
+
+static void s_cache_response_path_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/ResponsePath");
+    AWS_FATAL_ASSERT(cls);
+
+    response_path_properties.response_path_class = (*env)->NewGlobalRef(env, cls);
+
+    response_path_properties.response_topic_field_id =
+        (*env)->GetFieldID(env, cls, "responseTopic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(response_path_properties.response_topic_field_id);
+
+    response_path_properties.correlation_token_json_path_field_id =
+        (*env)->GetFieldID(env, cls, "correlationTokenJsonPath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(response_path_properties.correlation_token_json_path_field_id);
+}
+
+struct java_request_response_operation_properties request_response_operation_properties;
+
+static void s_cache_request_response_operation_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/RequestResponseOperation");
+    AWS_FATAL_ASSERT(cls);
+
+    request_response_operation_properties.request_response_operation_class = (*env)->NewGlobalRef(env, cls);
+
+    request_response_operation_properties.response_paths_field_id =
+        (*env)->GetFieldID(env, cls, "responsePaths", "Ljava/util/ArrayList;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.response_paths_field_id);
+
+    request_response_operation_properties.subscriptions_field_id =
+        (*env)->GetFieldID(env, cls, "subscriptions", "Ljava/util/ArrayList;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.subscriptions_field_id);
+
+    request_response_operation_properties.publish_topic_field_id =
+        (*env)->GetFieldID(env, cls, "publishTopic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.publish_topic_field_id);
+
+    request_response_operation_properties.payload_field_id = (*env)->GetFieldID(env, cls, "payload", "[B");
+    AWS_FATAL_ASSERT(request_response_operation_properties.payload_field_id);
+
+    request_response_operation_properties.correlation_token_field_id =
+        (*env)->GetFieldID(env, cls, "correlationToken", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.correlation_token_field_id);
+}
+
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
     s_cache_http_request_body_stream(env);
@@ -2427,6 +2472,8 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_mqtt5_outbound_topic_alias_behavior_type(env);
     s_cache_mqtt5_inbound_topic_alias_behavior_type(env);
     s_cache_topic_aliasing_options(env);
+    s_cache_response_path_properties(env);
+    s_cache_request_response_operation_properties(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

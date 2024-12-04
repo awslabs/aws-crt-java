@@ -212,6 +212,22 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_MqttRequestResponseCl
     }
 }
 
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_iot_MqttRequestResponseClient_mqttRequestResponseClientSubmitRequest(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_mqtt_request_response_client_handle,
+        jobject java_request,
+        jobject java_result_future) {
+
+    (void)jni_class;
+
+    (void)env;
+    (void)jni_mqtt_request_response_client_handle;
+    (void)java_request;
+    (void)java_result_future;
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

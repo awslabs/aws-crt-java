@@ -968,6 +968,26 @@ struct java_s3express_credentials_provider_properties {
 };
 extern struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
 
+/* ResponsePath */
+struct java_response_path_properties {
+    jclass response_path_class;
+    jfieldID response_topic_field_id;
+    jfieldID correlation_token_json_path_field_id;
+};
+extern struct java_response_path_properties response_path_properties;
+
+/* RequestResponseOperation */
+struct java_request_response_operation_properties {
+    jclass request_response_operation_class;
+
+    jfieldID response_paths_field_id;
+    jfieldID subscriptions_field_id;
+    jfieldID publish_topic_field_id;
+    jfieldID payload_field_id;
+    jfieldID correlation_token_field_id;
+};
+extern struct java_request_response_operation_properties request_response_operation_properties;
+
 /**
  * All functions bound to JNI MUST call this before doing anything else.
  * This caches all JNI IDs the first time it is called. Any further calls are no-op; it is thread-safe.

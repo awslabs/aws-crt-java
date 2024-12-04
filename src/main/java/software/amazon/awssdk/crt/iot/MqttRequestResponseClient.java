@@ -10,6 +10,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A helper class for AWS service clients that use MQTT as the transport protocol.
  *
@@ -20,6 +22,12 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
  */
 public class MqttRequestResponseClient extends CrtResource {
 
+    /**
+     *
+     * @param client
+     * @param options
+     * @throws CrtRuntimeException
+     */
     public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException  {
         acquireNativeHandle(mqttRequestResponseClientNewFrom5(
                 this,
@@ -30,6 +38,12 @@ public class MqttRequestResponseClient extends CrtResource {
         ));
     }
 
+    /**
+     *
+     * @param client
+     * @param options
+     * @throws CrtRuntimeException
+     */
     public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException {
         acquireNativeHandle(mqttRequestResponseClientNewFrom311(
                 this,
@@ -40,8 +54,17 @@ public class MqttRequestResponseClient extends CrtResource {
         ));
     }
 
-    public void submitRequest(MqttRequest request) {
+    /**
+     *
+     * @param request
+     * @return
+     */
+    public CompletableFuture<MqttRequestResponse> submitRequest(RequestResponseOperation request) {
+        CompletableFuture<MqttRequestResponse> future = new CompletableFuture<>();
 
+        mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+
+        return future;
     }
     
     /**
@@ -82,4 +105,6 @@ public class MqttRequestResponseClient extends CrtResource {
     ) throws CrtRuntimeException;
 
     private static native void mqttRequestResponseClientDestroy(long client);
+
+    private static native void mqttRequestResponseClientSubmitRequest(long client, RequestResponseOperation request, CompletableFuture<MqttRequestResponse> future);
 }

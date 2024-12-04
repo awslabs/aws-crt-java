@@ -50,6 +50,9 @@ public class ExtractLib {
                     libResourcePath = platformLibResourcePath;
                 }
             }
+
+            
+
             try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
                 if (in == null) {
                     throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);

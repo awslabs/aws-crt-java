@@ -957,6 +957,37 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.iot.RequestResponseOperation",
+    "fields": [
+      {
+        "name": "responsePaths"
+      },
+      {
+        "name": "subscriptions"
+      },
+      {
+        "name": "publishTopic"
+      },
+      {
+        "name": "payload"
+      },
+      {
+        "name": "correlationToken"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.ResponsePath",
+    "fields": [
+      {
+        "name": "responseTopic"
+      },
+      {
+        "name": "correlationTokenJsonPath"
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.mqtt.MqttClientConnection",
     "methods": [
       {

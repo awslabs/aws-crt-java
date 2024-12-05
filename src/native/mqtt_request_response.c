@@ -212,6 +212,143 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_MqttRequestResponseCl
     }
 }
 
+struct aws_request_response_operation_binding {
+    struct aws_allocator *allocator;
+
+    jweak operation_future;
+};
+
+/*
+All cursors in these structures are from calls to aws_jni_byte_cursor_from_jstring_acquire and the like which means
+non-null ptrs must be released with the appropriate JNI call, hence the cleanup implementation.
+*/
+
+struct aws_jni_response_path {
+    jstring java_response_topic;
+    struct aws_byte_cursor response_topic;
+
+    jstring java_correlation_token_json_path;
+    struct aws_byte_cursor correlation_token_json_path;
+};
+
+struct aws_jni_subscription {
+    jstring java_topic_filter;
+    struct aws_byte_cursor topic_filter;
+};
+
+struct aws_request_response_operation_jni_owned_parameters {
+    struct aws_array_list response_paths;
+    struct aws_array_list subscriptions;
+
+    jstring java_publish_topic;
+    struct aws_byte_cursor publish_topic;
+
+    jbyteArray java_payload;
+    struct aws_byte_cursor payload;
+
+    jstring java_correlation_token;
+    struct aws_byte_cursor correlation_token;
+};
+
+static int s_aws_request_response_operation_parameters_init(
+    struct aws_request_response_operation_parameters *params,
+    struct aws_allocator *allocator) {
+    AWS_ZERO_STRUCT(*params);
+
+    aws_array_list_init_dynamic(&params->response_paths, allocator, 2, sizeof(struct aws_jni_response_path));
+    aws_array_list_init_dynamic(&params->subscriptions, allocator, 2, sizeof(struct aws_jni_subscription));
+}
+
+static void s_aws_request_response_operation_parameters_clean_up(
+    struct aws_request_response_operation_parameters *params,
+    JNIEnv *env) {
+    if (!params) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < aws_array_list_length(&params->response_paths); ++i) {
+        struct aws_jni_response_path response_path;
+        AWS_ZERO_STRUCT(aws_jni_response_path);
+
+        aws_array_list_get_at(&params->response_paths, &response_path, i);
+
+        aws_jni_byte_cursor_from_jstring_release(env, response_path.java_response_topic, response_path.response_topic);
+        aws_jni_byte_cursor_from_jstring_release(
+            env, response_path.java_correlation_token_json_path, response_path.correlation_token_json_path);
+    }
+    aws_array_list_clean_up(&params->response_paths);
+
+    for (size_t i = 0; i < aws_array_list_length(&params->subscriptions); ++i) {
+        struct aws_jni_subscription subscription;
+        AWS_ZERO_STRUCT(subscription);
+
+        aws_array_list_get_at(&params->subscriptions, &subscription, i);
+        aws_jni_byte_cursor_from_jstring_release(env, subscription.java_topic_filter, subscription.topic_filter);
+    }
+    aws_array_list_clean_up(&params->subscriptions);
+
+    aws_jni_byte_cursor_from_jstring_release(env, params->java_publish_topic, &params->publish_topic);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, params->java_payload, &params->payload);
+    aws_jni_byte_cursor_from_jstring_release(env, params->java_correlation_token, &params->correlation_token);
+}
+
+static int s_aws_request_response_operation_jni_owned_parameters_init_from_jobject(
+    struct aws_request_response_operation_jni_owned_parameters *params,
+    struct aws_allocator *allocator,
+    jobject java_request_response_operation,
+    JNIEnv *env) {
+    s_aws_request_response_operation_parameters_init(params, allocator);
+
+    if (!java_request_response_operations) {
+        aws_jni_throw_runtime_exception(
+            env, "mqttRequestResponseClientSubmitRequest - request response options are null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    // responsePaths
+    ? ? ;
+
+    // subscriptions
+    jobject java_subscriptions = (jobject)(*env)->GetObjectField(
+        env, java_request_response_operation, request_response_operation_properties.subscriptions_field_id);
+    jint subscription_count =
+        (*env)->CallIntMethod(env, java_subscriptions, boxed_array_list_properties.size_method_id);
+    if (subscription_count <= 0) {
+        aws_jni_throw_runtime_exception(env, "mqttRequestResponseClientSubmitRequest - subscriptions is empty");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+
+    for (size_t i = 0; i < (size_t)subscription_count; ++i) {
+    }
+
+    // publishTopic
+    params->java_publish_topic = (jstring)(*env)->GetObjectField(
+        env, java_request_response_operation, request_response_operation_properties.publish_topic_field_id);
+    if (!params->java_publish_topic) {
+        aws_jni_throw_runtime_exception(env, "mqttRequestResponseClientSubmitRequest - publish topic is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    params->publish_topic = aws_jni_byte_cursor_from_jstring_acquire(env, params->java_publish_topic);
+
+    // payload
+    params->java_payload = (jbyteArray)(*env)->GetObjectField(
+        env, java_request_response_operation, request_response_operation_properties.payload_field_id);
+    if (!params->java_payload) {
+        aws_jni_throw_runtime_exception(env, "mqttRequestResponseClientSubmitRequest - payload is null");
+        return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    }
+    params->payload = aws_jni_byte_cursor_from_jbyteArray_acquire(env, params->java_payload);
+
+    // correlationToken (optional)
+    params->java_correlation_token = (jstring)(*env)->GetObjectField(
+        env, java_request_response_operation, request_response_operation_properties.correlation_token_field_id);
+    if (params->java_correlation_token) {
+        params->correlation_token = aws_jni_byte_cursor_from_jstring_acquire(env, params->java_correlation_token);
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT void JNICALL
     Java_software_amazon_awssdk_crt_iot_MqttRequestResponseClient_mqttRequestResponseClientSubmitRequest(
         JNIEnv *env,
@@ -222,10 +359,15 @@ JNIEXPORT void JNICALL
 
     (void)jni_class;
 
+    struct aws_request_response_operation_binding *binding =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_request_response_operation_binding));
+
     (void)env;
     (void)jni_mqtt_request_response_client_handle;
     (void)java_request;
     (void)java_result_future;
+
+error:
 }
 
 #if UINTPTR_MAX == 0xffffffff

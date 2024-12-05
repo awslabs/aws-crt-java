@@ -943,6 +943,9 @@ extern struct java_boxed_list_properties boxed_list_properties;
 struct java_boxed_array_list_properties {
     jclass list_class;
     jmethodID list_constructor_id;
+
+    jmethodID get_method_id;
+    jmethodID size_method_id;
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 

@@ -2269,6 +2269,14 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     boxed_array_list_properties.list_constructor_id =
         (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "<init>", "()V");
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
+
+    boxed_array_list_properties.get_method_id =
+        (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "get", "(I)Ljava/lang/Object;");
+    AWS_FATAL_ASSERT(boxed_array_list_properties.get_method_id);
+
+    boxed_array_list_properties.size_method_id =
+        (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "size", "()I");
+    AWS_FATAL_ASSERT(boxed_array_list_properties.size_method_id);
 }
 
 struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;

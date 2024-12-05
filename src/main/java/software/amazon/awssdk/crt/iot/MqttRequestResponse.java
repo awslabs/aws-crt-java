@@ -10,12 +10,10 @@ package software.amazon.awssdk.crt.iot;
  */
 public class MqttRequestResponse {
 
-    private final String topic;
-    private final byte[] payload;
+    private String topic;
+    private byte[] payload;
 
-    private MqttRequestResponse(String topic, byte []payload) {
-        this.topic = topic;
-        this.payload = payload;
+    private MqttRequestResponse() {
     }
 
     /**

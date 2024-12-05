@@ -135,6 +135,16 @@
       {
         "name": "<init>",
         "parameterTypes": []
+      },
+      {
+        "name": "get",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "size",
+        "parameterTypes": []
       }
     ]
   },
@@ -953,6 +963,23 @@
         "parameterTypes": [
           "software.amazon.awssdk.crt.io.TlsKeyOperation"
         ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.MqttRequestResponse",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ],
+    "fields": [
+      {
+        "name": "topic"
+      },
+      {
+        "name": "payload"
       }
     ]
   },

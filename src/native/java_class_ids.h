@@ -991,6 +991,15 @@ struct java_request_response_operation_properties {
 };
 extern struct java_request_response_operation_properties request_response_operation_properties;
 
+/* MqttRequestResponse */
+struct java_mqtt_request_response_properties {
+    jclass mqtt_request_response_class;
+    jmethodID constructor_method_id;
+    jfieldID topic_field_id;
+    jfieldID payload_field_id;
+};
+extern struct java_mqtt_request_response_properties mqtt_request_response_properties;
+
 /**
  * All functions bound to JNI MUST call this before doing anything else.
  * This caches all JNI IDs the first time it is called. Any further calls are no-op; it is thread-safe.

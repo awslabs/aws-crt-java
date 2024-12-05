@@ -2375,6 +2375,24 @@ static void s_cache_request_response_operation_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(request_response_operation_properties.correlation_token_field_id);
 }
 
+struct java_mqtt_request_response_properties mqtt_request_response_properties;
+
+static void s_cache_mqtt_request_response_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/MqttRequestResponse");
+    AWS_FATAL_ASSERT(cls);
+
+    mqtt_request_response_properties.mqtt_request_response_class = (*env)->NewGlobalRef(env, cls);
+
+    mqtt_request_response_properties.constructor_method_id =
+        (*env)->GetMethodID(env, mqtt_request_response_properties.mqtt_request_response_class, "<init>", "()V");
+
+    mqtt_request_response_properties.topic_field_id = (*env)->GetFieldID(env, cls, "topic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt_request_response_properties.topic_field_id);
+
+    mqtt_request_response_properties.payload_field_id = (*env)->GetFieldID(env, cls, "payload", "[B");
+    AWS_FATAL_ASSERT(mqtt_request_response_properties.payload_field_id);
+}
+
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
     s_cache_http_request_body_stream(env);
@@ -2482,6 +2500,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_topic_aliasing_options(env);
     s_cache_response_path_properties(env);
     s_cache_request_response_operation_properties(env);
+    s_cache_mqtt_request_response_properties(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

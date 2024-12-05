@@ -53,22 +53,15 @@ import java.util.stream.DoubleStream;
 public class S3ClientTest extends CrtTestFixture {
 
     static final String BUCKET_NAME = System.getenv("CRT_S3_TEST_BUCKET_NAME") == null
-            ? "aws-c-s3-test-bucket-730026"
+            ? "aws-c-s3-test-bucket"
             : System.getenv("CRT_S3_TEST_BUCKET_NAME");
 
+
     static final String PUBLIC_BUCKET_NAME = String.format("%s-public", BUCKET_NAME);
-    static final String REGION = "us-east-2";
+    static final String REGION = "us-west-2";
     static final String ENDPOINT = String.format("%s.s3.%s.amazonaws.com", BUCKET_NAME, REGION);
-    // static final String S3EXPRESS_ENDPOINT_USW2_AZ1 =
-    // String.format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com",
-    // BUCKET_NAME);
-    // static final String S3EXPRESS_ENDPOINT_USE1_AZ4 =
-    // String.format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com",
-    // BUCKET_NAME);
-    static final String S3EXPRESS_ENDPOINT_USW2_AZ1 = String
-            .format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com", "aws-c-s3-test-bucket");
-    static final String S3EXPRESS_ENDPOINT_USE1_AZ4 = String
-            .format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com", "aws-c-s3-test-bucket");
+    static final String S3EXPRESS_ENDPOINT_USW2_AZ1 = String.format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com", BUCKET_NAME);
+    static final String S3EXPRESS_ENDPOINT_USE1_AZ4 = String.format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com", BUCKET_NAME);
 
     static final String PRE_EXIST_1MB_PATH = "/pre-existing-1MB";
     static final String PRE_EXIST_10MB_PATH = "/pre-existing-10MB";
@@ -878,9 +871,7 @@ public class S3ClientTest extends CrtTestFixture {
 
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
             int contentLength, boolean contentMD5) throws IOException {
-        // Log.initLoggingToStdout(Log.LogLevel.Trace);
-        String region = s3express ? "us-west-2" : REGION;
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(region).withEnableS3Express(s3express)
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express)
                 .withComputeContentMd5(contentMD5);
         Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
         try (S3Client client = createS3Client(clientOptions)) {
@@ -940,7 +931,7 @@ public class S3ClientTest extends CrtTestFixture {
                 httpRequest.addHeader(
                         new HttpHeader("Content-Length", Integer.valueOf(contentLength).toString()));
             }
-            AwsSigningConfig config = AwsSigningConfig.getDefaultS3SigningConfig(region, null);
+            AwsSigningConfig config = AwsSigningConfig.getDefaultS3SigningConfig(REGION, null);
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
@@ -1200,7 +1191,6 @@ public class S3ClientTest extends CrtTestFixture {
     private void testS3RoundTripWithChecksumHelper(ChecksumAlgorithm algo, ChecksumLocation location, boolean MPU,
             boolean provide_full_object_checksum) throws IOException {
 
-        // Log.initLoggingToFile(Log.LogLevel.Trace, "trace.log");
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         if (MPU) {
             clientOptions.withPartSize(5 * 1024 * 1024);

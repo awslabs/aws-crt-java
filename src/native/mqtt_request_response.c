@@ -511,7 +511,7 @@ JNIEXPORT void JNICALL
     AWS_ZERO_STRUCT(request_options);
 
     size_t subscription_count = aws_array_list_length(&request_params.subscriptions);
-    struct aws_byte_cursor subscriptions[subscription_count];
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_byte_cursor, subscriptions, subscription_count);
     for (size_t i = 0; i < subscription_count; ++i) {
         struct aws_jni_subscription subscription;
         AWS_ZERO_STRUCT(subscription);
@@ -521,7 +521,7 @@ JNIEXPORT void JNICALL
     }
 
     size_t response_path_count = aws_array_list_length(&request_params.response_paths);
-    struct aws_mqtt_request_operation_response_path response_paths[response_path_count];
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_mqtt_request_operation_response_path, response_paths, response_path_count);
     for (size_t i = 0; i < response_path_count; ++i) {
         struct aws_jni_response_path response_path;
         AWS_ZERO_STRUCT(response_path);

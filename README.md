@@ -30,7 +30,7 @@ This library is licensed under the Apache 2.0 License.
 ### Linux/Unix
 Requirements:
 * Clang 3.9+ or GCC 4.4+
-* cmake 3.1+
+* cmake 3.9+
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 
@@ -43,7 +43,7 @@ Building:
 
 ### OSX
 Requirements:
-* cmake 3.1
+* cmake 3.9+
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
@@ -58,7 +58,7 @@ Building:
 ### Windows
 Requirements:
 * Visual Studio 2015 or above
-* CMake 3.1
+* CMake 3.9+
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven
 
@@ -161,13 +161,15 @@ Platforms without FIPS compliance are also included in this jar, for compatibili
 > [!WARNING]
 > The classifier, and platforms with FIPS compliance are subject to change in the future.
 
+Platforms with FIPS compliance use [AWS-LC](https://github.com/aws/aws-lc) as their cryptographic module ([NIST Certificate #4816](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4816)).
+
 ## GraalVM support
 
 Since version v0.29.20, GraalVM native image was supported. You can compile your application with AWS CRT in a GraalVM native image project without any additional configuration.
 
 Since version v0.31.1, GraalVM support was updated. Instead of packaging the JNI shared libraries with native image as resources, the corresponding shared lib will be written to the same directory as the native image.
 In this way, it reduces the native image size around 30% (142 MB to 101 MB for a sample application), and avoids the extra loading time needed for extracting the JNI lib to the temporary path for load. No additional configuration needed.
-> [!NOTE] 
+> [!NOTE]
 > The JNI shared lib must be in the same directory as the GraalVM native image. If you move the native image, you must move this file too. It is `aws-crt-jni.dll` on Windows, `libaws-crt-jni.dylib` on macOS, and `libaws-crt-jni.so` on Unix.
 
 ## System Properties

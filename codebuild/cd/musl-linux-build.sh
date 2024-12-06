@@ -23,5 +23,11 @@ docker container prune -f
 # Upload the artifacts to S3
 export GIT_TAG=$(git describe --tags)
 
-aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+# Double check that shared lib is where we expect
+if ! find target/cmake-build/lib -type f -name "*.so" | grep -q .; then
+  echo "No .so files found"
+  exit 1
+fi
+
+aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

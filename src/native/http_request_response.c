@@ -306,8 +306,9 @@ void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
         return;
     }
     /* Native stream destroyed, release the binding. */
+    JavaVM *jvm = binding->jvm;
     aws_http_stream_binding_release(env, binding);
-    aws_jni_release_thread_env(binding->jvm, env);
+    aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 }
 

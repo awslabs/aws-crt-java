@@ -82,8 +82,9 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
     }
 
     /* We're done with this wrapper, free it. */
+    JavaVM *jvm = binding->jvm;
     s_destroy_manager_binding(binding, env);
-    aws_jni_release_thread_env(binding->jvm, env);
+    aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -340,8 +341,9 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
         }
     }
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+    JavaVM *jvm = callback_data->jvm;
     s_cleanup_sm_acquire_stream_callback_data(callback_data, env);
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 }
 

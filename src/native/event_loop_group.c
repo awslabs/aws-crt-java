@@ -5,6 +5,7 @@
 
 #include <jni.h>
 
+#include <aws/common/shutdown_types.h>
 #include <aws/io/event_loop.h>
 #include <aws/io/logging.h>
 

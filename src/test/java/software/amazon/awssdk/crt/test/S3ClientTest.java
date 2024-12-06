@@ -276,8 +276,8 @@ public class S3ClientTest extends CrtTestFixture {
             proxyOptions.setAuthorizationUsername("username");
             proxyOptions.setAuthorizationPassword("password");
             try (S3Client client = createS3Client(new S3ClientOptions()
-                        .withRegion(REGION)
-                        .withProxyOptions(proxyOptions), elg)) {
+                    .withRegion(REGION)
+                    .withProxyOptions(proxyOptions), elg)) {
             }
         }
     }
@@ -449,7 +449,9 @@ public class S3ClientTest extends CrtTestFixture {
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
 
                 @Override
-                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) { return 0; }
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    return 0;
+                }
 
                 @Override
                 public void onFinished(S3FinishedResponseContext context) {
@@ -864,12 +866,13 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     private String uploadObjectPathInit(String objectPath) {
-        return UPLOAD_DIR+objectPath;
+        return UPLOAD_DIR + objectPath;
     }
 
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
             int contentLength, boolean contentMD5) throws IOException {
-        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express).withComputeContentMd5(contentMD5);
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express)
+                .withComputeContentMd5(contentMD5);
         Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -933,7 +936,7 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
-            if(!contentMD5) {
+            if (!contentMD5) {
                 ChecksumConfig checksumConfig = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.SHA1)
                         .withChecksumLocation(ChecksumLocation.TRAILER).withValidateChecksum(true);
                 metaRequestOptions = metaRequestOptions.withChecksumConfig(checksumConfig);
@@ -1030,7 +1033,8 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Host", ENDPOINT),
                     new HttpHeader("Content-Length", String.valueOf(1024)),
             };
-            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_nonexistent_file"), headers, null);
+            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_nonexistent_file"), headers,
+                    null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
@@ -1112,7 +1116,8 @@ public class S3ClientTest extends CrtTestFixture {
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
                     new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
 
-            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_object_test_128MB"), headers, payloadStream);
+            HttpRequest httpRequest = new HttpRequest("PUT", uploadObjectPathInit("/put_object_test_128MB"), headers,
+                    payloadStream);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT)
@@ -1156,7 +1161,7 @@ public class S3ClientTest extends CrtTestFixture {
                     new HttpHeader("Content-Length", Integer.valueOf(payloadResume.capacity()).toString()), };
 
             HttpRequest httpRequestResume = new HttpRequest("PUT",
-                uploadObjectPathInit("/put_object_test_128MB"), headersResume, payloadStreamResume);
+                    uploadObjectPathInit("/put_object_test_128MB"), headersResume, payloadStreamResume);
 
             CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
             CompletableFuture<Void> onProgressFutureResume = new CompletableFuture<>();
@@ -1183,13 +1188,17 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    @Test
-    public void testS3PutTrailerChecksums() {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        Assume.assumeTrue(hasAwsCredentials());
+    private void testS3RoundTripWithChecksumHelper(ChecksumAlgorithm algo, ChecksumLocation location, boolean MPU,
+            boolean provide_full_object_checksum) throws IOException {
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        if (MPU) {
+            clientOptions.withPartSize(5 * 1024 * 1024);
+            clientOptions.withMultipartUploadThreshold(5 * 1024 * 1024);
+        } else {
+            clientOptions.withPartSize(10 * 1024 * 1024);
+            clientOptions.withMultipartUploadThreshold(20 * 1024 * 1024);
+        }
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onPutFinishedFuture = new CompletableFuture<>();
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -1212,7 +1221,7 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
 
-            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(1024 * 1024));
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(10 * 1024 * 1024));
 
             HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
                 @Override
@@ -1231,14 +1240,36 @@ public class S3ClientTest extends CrtTestFixture {
                     return payload.capacity();
                 }
             };
+            ArrayList<HttpHeader> headers = new ArrayList<HttpHeader>();
+            headers.add(new HttpHeader("Host", ENDPOINT));
+            headers.add(new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()));
+            if (provide_full_object_checksum) {
+                switch (algo) {
+                    case CRC32:
+                        headers.add(new HttpHeader("x-amz-checksum-crc32", "1BObvg=="));
+                        break;
+                    case CRC64NVME:
+                        headers.add(new HttpHeader("x-amz-checksum-crc64nvme", "fIa08UXfyzk="));
+                        break;
 
-            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
-                    new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
+                    default:
+                        Assert.fail("Unsupported checksum algorithm for full object checksum");
+                        break;
+                }
+            }
 
-            String objectPath = uploadObjectPathInit("/prefix/round_trip/java_round_trip_test_fc.txt");
-            HttpRequest httpRequest = new HttpRequest("PUT", objectPath, headers, payloadStream);
-            ChecksumConfig config = new ChecksumConfig().withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
-                    .withChecksumLocation(ChecksumLocation.TRAILER);
+            String objectPath = uploadObjectPathInit(
+                    "/prefix/round_trip/java_round_trip_test_fc_" + location.name() + "_" + algo.name())
+                    + (MPU ? "_mpu" : "") + (provide_full_object_checksum ? "_full_object" : "");
+            HttpRequest httpRequest = new HttpRequest("PUT", objectPath, headers.toArray(new HttpHeader[0]),
+                    payloadStream);
+            ChecksumConfig config = new ChecksumConfig();
+
+            if (!provide_full_object_checksum) {
+                /* If the checksum provided for the full object via header, skip the checksum from client. */
+                config.withChecksumAlgorithm(algo)
+                        .withChecksumLocation(location);
+            }
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.PUT_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler)
@@ -1276,17 +1307,18 @@ public class S3ClientTest extends CrtTestFixture {
                                 new RuntimeException("Checksum was not validated"));
                         return;
                     }
-                    if (context.getChecksumAlgorithm() != ChecksumAlgorithm.CRC32) {
+                    if (context.getChecksumAlgorithm() != algo) {
                         onGetFinishedFuture.completeExceptionally(
-                                new RuntimeException("Checksum was not validated via CRC32"));
+                                new RuntimeException("Checksum was not validated via expected algo: " + algo.name()));
                         return;
                     }
                     onGetFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
                 }
             };
             ArrayList<ChecksumAlgorithm> algorList = new ArrayList<ChecksumAlgorithm>();
-            algorList.add(ChecksumAlgorithm.CRC32);
+            algorList.add(ChecksumAlgorithm.CRC64NVME);
             algorList.add(ChecksumAlgorithm.CRC32C);
+            algorList.add(ChecksumAlgorithm.CRC32);
             algorList.add(ChecksumAlgorithm.SHA1);
             algorList.add(ChecksumAlgorithm.SHA256);
             ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true)
@@ -1302,6 +1334,54 @@ public class S3ClientTest extends CrtTestFixture {
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());
         }
+    }
+
+    @Test
+    public void testS3PutTrailerChecksums() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC64NVME, ChecksumLocation.TRAILER, false, false);
+    }
+
+    @Test
+    public void testS3PutHeaderChecksums() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC64NVME, ChecksumLocation.HEADER, false, false);
+    }
+
+    @Test
+    public void testS3RoundTripWithFullObjectMPU() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC64NVME, ChecksumLocation.NONE, true, true);
+    }
+
+    @Test
+    public void testS3RoundTripWithFullObjectSinglePart() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC64NVME, ChecksumLocation.NONE, false, true);
+    }
+
+    @Test
+    public void testS3RoundTripWithFullObjectMPUCRC32() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC32, ChecksumLocation.NONE, true, true);
+    }
+
+    @Test
+    public void testS3RoundTripWithFullObjectSinglePartCRC32() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC32, ChecksumLocation.NONE, false, true);
     }
 
     @Test
@@ -1396,7 +1476,7 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
-    private void putS3ExpressHelper(String region, S3Client client) throws Exception{
+    private void putS3ExpressHelper(String region, S3Client client) throws Exception {
 
         CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
         S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
@@ -1420,7 +1500,8 @@ public class S3ClientTest extends CrtTestFixture {
         };
 
         HttpHeader[] headers = {
-                new HttpHeader("Host", region.equals("us-east-1")? S3EXPRESS_ENDPOINT_USE1_AZ4 : S3EXPRESS_ENDPOINT_USW2_AZ1),
+                new HttpHeader("Host",
+                        region.equals("us-east-1") ? S3EXPRESS_ENDPOINT_USE1_AZ4 : S3EXPRESS_ENDPOINT_USW2_AZ1),
         };
         HttpRequest httpRequest;
         String path = uploadObjectPathInit("/put_object_test_10MB.txt");
@@ -1506,7 +1587,6 @@ public class S3ClientTest extends CrtTestFixture {
         String COPY_SOURCE_BUCKET = BUCKET_NAME;
         String COPY_SOURCE_KEY = "crt-canary-obj.txt";
         String X_AMZ_COPY_SOURCE_HEADER = "x-amz-copy-source";
-
 
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
         try (S3Client client = createS3Client(clientOptions)) {
@@ -1733,7 +1813,8 @@ public class S3ClientTest extends CrtTestFixture {
                             concurrentSlots.release();
 
                             if (context.getErrorCode() != 0) {
-                                onFinishedFuture.completeExceptionally(makeExceptionFromFinishedResponseContext(context));
+                                onFinishedFuture
+                                        .completeExceptionally(makeExceptionFromFinishedResponseContext(context));
                                 return;
                             }
 
@@ -1862,7 +1943,8 @@ public class S3ClientTest extends CrtTestFixture {
                             concurrentSlots.release();
 
                             if (context.getErrorCode() != 0) {
-                                onFinishedFuture.completeExceptionally(makeExceptionFromFinishedResponseContext(context));
+                                onFinishedFuture
+                                        .completeExceptionally(makeExceptionFromFinishedResponseContext(context));
                                 return;
                             }
 

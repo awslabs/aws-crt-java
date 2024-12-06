@@ -53,7 +53,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-22.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
       matrix:
         compiler:

@@ -34,8 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertEquals;
-
 
 public class MqttRequestResponseClientTests extends CrtTestFixture {
 

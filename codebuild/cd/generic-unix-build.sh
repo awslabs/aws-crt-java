@@ -29,10 +29,20 @@ chmod a+x builder
 GIT_TAG=$(git describe --tags)
 
 ./builder build -p aws-crt-java --target=$AWS_CRT_TARGET run_tests=false
-# Builder corss-compiles the shared lib to `target/cmake-build/aws-crt-java/`, move it to the expected path for mvn to generate the jar.
-mv target/cmake-build/aws-crt-java/* target/cmake-build/
+
+# When cross-compiling with builder, the shared lib gets an extra "/aws-crt-java/" in its path.
+# Move it to expected location.
+if [ -d target/cmake-build/aws-crt-java/lib ]; then
+    mv target/cmake-build/aws-crt-java/lib target/cmake-build/lib
+fi
+
+# Double check that shared lib is where we expect
+if ! find target/cmake-build/lib -type f -name "*.so" | grep -q .; then
+  echo "No .so files found"
+  exit 1
+fi
 
 JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=$CLASSIFIER
 
-aws s3 cp --recursive --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
 aws s3 cp target/ s3://aws-crt-java-pipeline/${GIT_TAG}/jar/ --recursive --exclude "*" --include "aws-crt*.jar"

@@ -358,6 +358,7 @@ jobs:
         cd crt/aws-c-http/tests/py_localhost/
         Start-Process -NoNewWindow python .\server.py
         Start-Process -NoNewWindow python .\non_tls_server.py
+        cd ../../../../
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
 

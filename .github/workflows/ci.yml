@@ -330,7 +330,7 @@ jobs:
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-22.04 # use same version as docs.yml
+    runs-on: ubuntu-24.04 # use same version as docs.yml
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:

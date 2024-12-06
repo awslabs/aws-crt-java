@@ -9,7 +9,7 @@ on:
 
 jobs:
   update-docs-branch:
-    runs-on: ubuntu-22.04 # use same version as ci.yml's check-docs
+    runs-on: ubuntu-24.04 # use same version as ci.yml's check-docs
     permissions:
       contents: write # allow push
     steps:

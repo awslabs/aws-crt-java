@@ -23,12 +23,12 @@ import java.util.concurrent.CompletableFuture;
 public class MqttRequestResponseClient extends CrtResource {
 
     /**
+     * MQTT5-based constructor for request-response service clients
      *
-     * @param client
-     * @param options
-     * @throws CrtRuntimeException
+     * @param client MQTT5 client that the request-response client should use as transport
+     * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException  {
+    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom5(
                 this,
                 client.getNativeHandle(),
@@ -39,12 +39,12 @@ public class MqttRequestResponseClient extends CrtResource {
     }
 
     /**
+     * MQTT311-based constructor for request-response service clients
      *
-     * @param client
-     * @param options
-     * @throws CrtRuntimeException
+     * @param client MQTT311 client that the request-response client should use as transport
+     * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException {
+    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom311(
                 this,
                 client.getNativeHandle(),
@@ -55,9 +55,11 @@ public class MqttRequestResponseClient extends CrtResource {
     }
 
     /**
+     * Submits a request to the request-response client.
      *
-     * @param request
-     * @return
+     * @param request description of the request to perform
+     *                
+     * @return future that completes with the result of performing the request
      */
     public CompletableFuture<MqttRequestResponse> submitRequest(RequestResponseOperation request) {
         CompletableFuture<MqttRequestResponse> future = new CompletableFuture<>();

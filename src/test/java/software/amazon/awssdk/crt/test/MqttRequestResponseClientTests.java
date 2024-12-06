@@ -5,14 +5,18 @@
 
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
+import software.amazon.awssdk.crt.iot.MqttRequestResponse;
 import software.amazon.awssdk.crt.iot.MqttRequestResponseClient;
 import software.amazon.awssdk.crt.iot.MqttRequestResponseClientBuilder;
+import software.amazon.awssdk.crt.iot.RequestResponseOperation;
+import software.amazon.awssdk.crt.iot.ResponsePath;
 import software.amazon.awssdk.crt.mqtt.*;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
@@ -24,8 +28,11 @@ import software.amazon.awssdk.crt.mqtt5.OnStoppedReturn;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class MqttRequestResponseClientTests extends CrtTestFixture {
@@ -248,6 +255,46 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                     .withOperationTimeoutSeconds(-5);
 
             rrBuilder.build(protocolClient);
+        }
+    }
+
+    @Test
+    public void GetNamedShadowFailureNoSuchShadowMqtt5() {
+        skipIfNetworkUnavailable();
+
+        try (Mqtt5Client protocolClient = createMqtt5Client()) {
+            MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
+            rrBuilder.withMaxRequestResponseSubscriptions(4)
+                    .withMaxStreamingSubscriptions(2)
+                    .withOperationTimeoutSeconds(30);
+
+            MqttRequestResponseClient rrClient = rrBuilder.build(protocolClient);
+
+            String correlationToken = (UUID.randomUUID()).toString();
+            String payloadAsString = String.format("{\"clientToken\":\"%s\"}", correlationToken);
+
+            RequestResponseOperation operation = RequestResponseOperation.builder()
+                .withSubscription("$aws/things/NoSuchThing/shadow/name/Derp/get/+")
+                .withResponsePath(ResponsePath.builder().withResponseTopic("$aws/things/NoSuchThing/shadow/name/Derp/get/accepted").withCorrelationTokenJsonPath("clientToken").build())
+                .withResponsePath(ResponsePath.builder().withResponseTopic("$aws/things/NoSuchThing/shadow/name/Derp/get/rejected").withCorrelationTokenJsonPath("clientToken").build())
+                .withPublishTopic("$aws/things/NoSuchThing/shadow/name/Derp/get")
+                .withCorrelationToken(correlationToken)
+                .withPayload(payloadAsString.getBytes(StandardCharsets.UTF_8))
+                .build();
+
+            CompletableFuture<MqttRequestResponse> responseFuture = rrClient.submitRequest(operation);
+            MqttRequestResponse response = null;
+
+            try {
+                response = responseFuture.get();
+            } catch (Exception e) {
+                ;
+            }
+
+            Assert.assertNotNull(response);
+
+            rrClient.close();
+            protocolClient.stop();
         }
     }
 }

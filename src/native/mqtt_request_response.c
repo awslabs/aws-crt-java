@@ -334,7 +334,7 @@ static int s_aws_request_response_operation_jni_owned_parameters_init_from_jobje
     }
 
     for (size_t i = 0; i < (size_t)response_path_count; ++i) {
-        jstring java_response_path =
+        jobject java_response_path =
             (*env)->CallObjectMethod(env, java_response_paths, boxed_array_list_properties.get_method_id, (jint)i);
         if (!java_response_path) {
             aws_jni_throw_runtime_exception(env, "mqttRequestResponseClientSubmitRequest - null response path");
@@ -479,8 +479,9 @@ JNIEXPORT void JNICALL
 
     (void)jni_class;
 
-    struct aws_mqtt_request_response_client *rr_client =
-        (struct aws_mqtt_request_response_client *)jni_mqtt_request_response_client_handle;
+    struct aws_crt_mqtt_request_response_client_binding *rr_client_binding =
+        (struct aws_crt_mqtt_request_response_client_binding *)jni_mqtt_request_response_client_handle;
+    struct aws_mqtt_request_response_client *rr_client = rr_client_binding->client;
     if (!rr_client || !java_request || !java_result_future) {
         aws_jni_throw_runtime_exception(env, "mqttRequestResponseClientSubmitRequest: null parameter");
         return;

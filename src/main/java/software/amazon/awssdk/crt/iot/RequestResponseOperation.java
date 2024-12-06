@@ -118,7 +118,7 @@ public class RequestResponseOperation {
      *
      * @return a new builder instance for RequestResponseOperations objects
      */
-    public RequestResponseOperationBuilder builder() {
+    public static RequestResponseOperationBuilder builder() {
         return new RequestResponseOperationBuilder();
     }
 

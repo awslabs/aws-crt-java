@@ -109,4 +109,5 @@ public class MqttRequestResponseClient extends CrtResource {
     private static native void mqttRequestResponseClientDestroy(long client);
 
     private static native void mqttRequestResponseClientSubmitRequest(long client, RequestResponseOperation request, CompletableFuture<MqttRequestResponse> future);
+
 }

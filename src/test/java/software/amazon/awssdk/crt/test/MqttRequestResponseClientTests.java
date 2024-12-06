@@ -28,7 +28,6 @@ import software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn;
 import software.amazon.awssdk.crt.mqtt5.OnStoppedReturn;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
-
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -235,7 +234,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
-
         MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(-1)

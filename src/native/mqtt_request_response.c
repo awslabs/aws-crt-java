@@ -558,6 +558,43 @@ done:
     s_aws_request_response_operation_jni_owned_parameters_clean_up(&request_params, env);
 }
 
+JNIEXPORT void JNICALL
+Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationNew(
+    JNIEnv *env,
+    jclass jni_class,
+    jobject java_streaming_operation,
+    jlong jni_mqtt_request_response_client_handle,
+    jobject java_options) {
+
+    (void)env;
+    (void)jni_class;
+    (void)java_streaming_operation;
+    (void)jni_mqtt_request_response_client_handle;
+    (void)java_options;
+}
+
+JNIEXPORT void JNICALL
+Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationOpen(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_streaming_operation_handle) {
+
+    (void)env;
+    (void)jni_class;
+    (void)jni_streaming_operation_handle;
+}
+
+JNIEXPORT void JNICALL
+Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationDestroy(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_streaming_operation_handle) {
+
+    (void)env;
+    (void)jni_class;
+    (void)jni_streaming_operation_handle;
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

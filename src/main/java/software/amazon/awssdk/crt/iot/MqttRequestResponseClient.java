@@ -68,7 +68,19 @@ public class MqttRequestResponseClient extends CrtResource {
 
         return future;
     }
-    
+
+    /**
+     * Creates a new streaming operation from a set of configuration options.  A streaming operation provides a
+     * mechanism for listening to a specific event stream from an AWS MQTT-based service.
+     *
+     * @param options configuration options for the streaming operation
+     *
+     * @return a new streaming operation instance
+     */
+    public StreamingOperationBase createStream(StreamingOperationOptions options) {
+        return new StreamingOperationBase(this, options);
+    }
+
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
      */

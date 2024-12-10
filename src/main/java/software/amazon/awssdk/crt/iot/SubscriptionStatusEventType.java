@@ -5,6 +5,11 @@
 
 package software.amazon.awssdk.crt.iot;
 
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * The type of change to the state of a streaming operation subscription
  */
@@ -28,7 +33,35 @@ public enum SubscriptionStatusEventType {
 
     private final int type;
 
-    private SubscriptionStatusEventType(int value) {
+    SubscriptionStatusEventType(int value) {
         type = value;
     }
+
+
+    /**
+     * @return the native enum integer value associated with this Java enum value
+     */
+    public int getValue() {
+        return type;
+    }
+
+    /**
+     * Creates a Java SubscriptionStatusEventType enum value from a native integer value
+     * @param value native integer value to convert to a SubscriptionStatusEventType instance
+     * @return a SubscriptionStatusEventType value
+     */
+    public static SubscriptionStatusEventType getEnumValueFromInteger(int value) {
+        SubscriptionStatusEventType enumValue = enumMapping.get(value);
+        if (enumValue != null) {
+            return enumValue;
+        }
+        throw new RuntimeException("Illegal SubscriptionStatusEventType");
+    }
+
+    private static Map<Integer, SubscriptionStatusEventType> buildEnumMapping() {
+        return Stream.of(SubscriptionStatusEventType.values())
+                .collect(Collectors.toMap(SubscriptionStatusEventType::getValue, Function.identity()));
+    }
+
+    private final static Map<Integer, SubscriptionStatusEventType> enumMapping = buildEnumMapping();
 }

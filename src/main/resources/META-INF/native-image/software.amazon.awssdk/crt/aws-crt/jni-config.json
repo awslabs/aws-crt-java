@@ -1061,7 +1061,7 @@
     "name": "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
     "methods": [
       {
-        "name": "<init>",
+        "name": "getEnumValueFromInteger",
         "parameterTypes": [
           "int"
         ]

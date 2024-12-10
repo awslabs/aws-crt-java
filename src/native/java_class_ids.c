@@ -2414,9 +2414,12 @@ static void s_cache_subscription_status_event_type_properties(JNIEnv *env) {
 
     subscription_status_event_type_properties.subscription_status_event_type_class = (*env)->NewGlobalRef(env, cls);
 
-    subscription_status_event_type_properties.constructor_method_id = (*env)->GetMethodID(
-        env, subscription_status_event_type_properties.subscription_status_event_type_class, "<init>", "(I)V");
-    AWS_FATAL_ASSERT(subscription_status_event_type_properties.constructor_method_id);
+    subscription_status_event_type_properties.get_enum_value_from_integer_method_id = (*env)->GetStaticMethodID(
+        env,
+        subscription_status_event_type_properties.subscription_status_event_type_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/iot/SubscriptionStatusEventType;");
+    AWS_FATAL_ASSERT(subscription_status_event_type_properties.get_enum_value_from_integer_method_id);
 }
 
 struct java_subscription_status_event_properties subscription_status_event_properties;
@@ -2454,11 +2457,11 @@ static void s_cache_streaming_operation_options_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(streaming_operation_options_properties.topic_field_id);
 
     streaming_operation_options_properties.incoming_publish_event_callback_field_id =
-        (*env)->GetFieldID(env, cls, "incomingPublishEventCallback", "Ljava.util.function.Consumer;");
+        (*env)->GetFieldID(env, cls, "incomingPublishEventCallback", "Ljava/util/function/Consumer;");
     AWS_FATAL_ASSERT(streaming_operation_options_properties.incoming_publish_event_callback_field_id);
 
     streaming_operation_options_properties.subscription_status_event_callback_field_id =
-        (*env)->GetFieldID(env, cls, "subscriptionStatusEventCallback", "Ljava.util.function.Consumer;");
+        (*env)->GetFieldID(env, cls, "subscriptionStatusEventCallback", "Ljava/util/function/Consumer;");
     AWS_FATAL_ASSERT(streaming_operation_options_properties.subscription_status_event_callback_field_id);
 }
 

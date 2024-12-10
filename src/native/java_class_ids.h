@@ -1010,7 +1010,7 @@ extern struct java_incoming_publish_event_properties incoming_publish_event_prop
 /* SubscriptionStatusEventType */
 struct java_subscription_status_event_type_properties {
     jclass subscription_status_event_type_class;
-    jmethodID constructor_method_id;
+    jmethodID get_enum_value_from_integer_method_id;
 };
 extern struct java_subscription_status_event_type_properties subscription_status_event_type_properties;
 

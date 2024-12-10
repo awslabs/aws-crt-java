@@ -7,9 +7,10 @@ package software.amazon.awssdk.crt.iot;
 
 public class IncomingPublishEvent {
 
-    private byte[] payload;
+    private final byte[] payload;
 
-    private IncomingPublishEvent() {
+    private IncomingPublishEvent(byte[] payload) {
+        this.payload = payload;
     }
 
     /**

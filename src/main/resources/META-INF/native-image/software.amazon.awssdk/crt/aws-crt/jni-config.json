@@ -967,6 +967,17 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.iot.IncomingPublishEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "byte[]"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.iot.MqttRequestResponse",
     "methods": [
       {
@@ -1011,6 +1022,49 @@
       },
       {
         "name": "correlationTokenJsonPath"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.StreamingOperationOptions",
+    "fields": [
+      {
+        "name": "topic"
+      },
+      {
+        "name": "incomingPublishEventCallback"
+      },
+      {
+        "name": "subscriptionStatusEventCallback"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.SubscriptionStatusEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType"
+        ]
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "int"
+        ]
       }
     ]
   },

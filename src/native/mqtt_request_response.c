@@ -558,8 +558,7 @@ done:
     s_aws_request_response_operation_jni_owned_parameters_clean_up(&request_params, env);
 }
 
-JNIEXPORT void JNICALL
-Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationNew(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationNew(
     JNIEnv *env,
     jclass jni_class,
     jobject java_streaming_operation,
@@ -573,8 +572,7 @@ Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationNew
     (void)java_options;
 }
 
-JNIEXPORT void JNICALL
-Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationOpen(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationOpen(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_streaming_operation_handle) {
@@ -584,8 +582,7 @@ Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationOpe
     (void)jni_streaming_operation_handle;
 }
 
-JNIEXPORT void JNICALL
-Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationDestroy(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_streaming_operation_handle) {

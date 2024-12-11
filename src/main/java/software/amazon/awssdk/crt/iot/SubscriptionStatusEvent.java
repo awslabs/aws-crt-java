@@ -11,17 +11,16 @@ import java.util.Optional;
  * An event that describes a change in subscription status for a streaming operation.
  */
 public class SubscriptionStatusEvent {
-    private SubscriptionStatusEventType type;
-    private Optional<Integer> error;
-
-    private SubscriptionStatusEvent(SubscriptionStatusEventType type) {
-        this.type = type;
-        this.error = Optional.empty();
-    }
+    private final SubscriptionStatusEventType type;
+    private final Optional<Integer> error;
 
     private SubscriptionStatusEvent(SubscriptionStatusEventType type, int errorCode) {
         this.type = type;
-        this.error = Optional.of(errorCode);
+        if (errorCode != 0) {
+            this.error = Optional.of(errorCode);
+        } else {
+            this.error = Optional.empty();
+        }
     }
 
     /**

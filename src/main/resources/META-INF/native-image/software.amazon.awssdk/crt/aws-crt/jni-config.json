@@ -187,6 +187,17 @@
     ]
   },
   {
+    "name": "java.util.function.Consumer",
+    "methods": [
+      {
+        "name": "accept",
+        "parameterTypes": [
+          "java.lang.Object"
+        ]
+      }
+    ]
+  },
+  {
     "name": "java.util.function.Predicate",
     "methods": [
       {

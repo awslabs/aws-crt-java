@@ -1017,8 +1017,7 @@ extern struct java_subscription_status_event_type_properties subscription_status
 /* SubscriptionStatusEvent */
 struct java_subscription_status_event_properties {
     jclass subscription_status_event_class;
-    jmethodID constructor_method_id1; // SubscriptionStatusEvent(SubscriptionStatusEventType type)
-    jmethodID constructor_method_id2; // SubscriptionStatusEvent(SubscriptionStatusEventType type, int errorCode)
+    jmethodID constructor_method_id;
 };
 extern struct java_subscription_status_event_properties subscription_status_event_properties;
 
@@ -1030,6 +1029,13 @@ struct java_streaming_operation_options_properties {
     jfieldID subscription_status_event_callback_field_id;
 };
 extern struct java_streaming_operation_options_properties streaming_operation_options_properties;
+
+/* Consumer */
+struct java_consumer_properties {
+    jclass consumer_class;
+    jmethodID accept_method_id;
+};
+extern struct java_consumer_properties consumer_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

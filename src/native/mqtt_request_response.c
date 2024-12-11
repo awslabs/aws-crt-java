@@ -43,7 +43,7 @@ static void s_destroy_mqtt_request_response_client_binding(void *context) {
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "JNI env no longer resolvable; JVM likely shutting down");
+        AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
         goto done;
     }
 
@@ -426,13 +426,14 @@ static void s_on_request_response_operation_completion(
     int error_code,
     void *user_data) {
 
+    jobject java_result = NULL;
+    jstring java_topic = NULL;
+    jbyteArray java_payload = NULL;
     struct aws_request_response_operation_binding *binding = user_data;
     JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
     if (!env) {
         goto done;
     }
-
-    jobject java_result = NULL;
 
     if (error_code == AWS_ERROR_SUCCESS) {
         java_result = (*env)->NewObject(
@@ -440,10 +441,10 @@ static void s_on_request_response_operation_completion(
             mqtt_request_response_properties.mqtt_request_response_class,
             mqtt_request_response_properties.constructor_method_id);
         if (java_result != NULL) {
-            jstring java_topic = aws_jni_string_from_cursor(env, response_topic);
+            java_topic = aws_jni_string_from_cursor(env, response_topic);
             (*env)->SetObjectField(env, java_result, mqtt_request_response_properties.topic_field_id, java_topic);
 
-            jbyteArray java_payload = aws_jni_byte_array_from_cursor(env, payload);
+            java_payload = aws_jni_byte_array_from_cursor(env, payload);
             (*env)->SetObjectField(env, java_result, mqtt_request_response_properties.payload_field_id, java_payload);
         }
     }
@@ -454,15 +455,32 @@ static void s_on_request_response_operation_completion(
     } else {
         int final_error_code = (error_code == AWS_ERROR_SUCCESS) ? AWS_ERROR_UNKNOWN : error_code;
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, final_error_code);
+        if (crt_exception != NULL) {
+            (*env)->CallBooleanMethod(
+                env,
+                binding->operation_future,
+                completable_future_properties.complete_exceptionally_method_id,
+                crt_exception);
 
-        (*env)->CallBooleanMethod(
-            env,
-            binding->operation_future,
-            completable_future_properties.complete_exceptionally_method_id,
-            crt_exception);
+            (*env)->DeleteLocalRef(env, crt_exception);
+        }
     }
 
+    aws_jni_check_and_clear_exception(env);
+
 done:
+
+    if (java_result != NULL) {
+        (*env)->DeleteLocalRef(env, java_result);
+    }
+
+    if (java_topic != NULL) {
+        (*env)->DeleteLocalRef(env, java_topic);
+    }
+
+    if (java_payload != NULL) {
+        (*env)->DeleteLocalRef(env, java_payload);
+    }
 
     aws_jni_release_thread_env(binding->jvm, env);
 
@@ -582,7 +600,7 @@ static void s_aws_streaming_operation_binding_destroy(struct aws_streaming_opera
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
-        AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "JNI env no longer resolvable; JVM likely shutting down");
+        AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
         goto done;
     }
 
@@ -596,7 +614,7 @@ static void s_aws_streaming_operation_binding_destroy(struct aws_streaming_opera
 
 done:
 
-     aws_mem_release(binding->allocator, binding);
+    aws_mem_release(binding->allocator, binding);
 }
 
 static void s_aws_mqtt_streaming_operation_subscription_status_callback(
@@ -605,11 +623,69 @@ static void s_aws_mqtt_streaming_operation_subscription_status_callback(
     void *user_data) {
 
     struct aws_streaming_operation_binding *binding = user_data;
-    if (!binding->java_incoming_publish_event_callback) {
+    if (!binding->java_subscription_status_event_callback) {
         return;
     }
 
-    ??;
+    /********** JNI ENV ACQUIRE **********/
+    JavaVM *jvm = binding->jvm;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
+        return;
+    }
+
+    jobject java_subscription_status_event_type = NULL;
+    jobject java_subscription_status_event = NULL;
+
+    java_subscription_status_event_type = (*env)->CallStaticObjectMethod(
+        env,
+        subscription_status_event_type_properties.subscription_status_event_type_class,
+        subscription_status_event_type_properties.get_enum_value_from_integer_method_id,
+        (jint)status);
+    if (java_subscription_status_event_type == NULL) {
+        AWS_LOGF_ERROR(
+            AWS_LS_JAVA_CRT_GENERAL,
+            "s_aws_mqtt_streaming_operation_subscription_status_callback - could not create subscription status event "
+            "type");
+        goto done;
+    }
+
+    java_subscription_status_event = (*env)->NewObject(
+        env,
+        subscription_status_event_properties.subscription_status_event_class,
+        subscription_status_event_properties.constructor_method_id,
+        java_subscription_status_event_type,
+        (jint)error_code);
+
+    if (java_subscription_status_event == NULL) {
+        AWS_LOGF_ERROR(
+            AWS_LS_JAVA_CRT_GENERAL,
+            "s_aws_mqtt_streaming_operation_subscription_status_callback - could not create subscription status event");
+        goto done;
+    }
+
+    (*env)->CallVoidMethod(
+        env,
+        binding->java_subscription_status_event_callback,
+        consumer_properties.accept_method_id,
+        java_subscription_status_event);
+
+    aws_jni_check_and_clear_exception(env);
+
+done:
+
+    if (java_subscription_status_event_type != NULL) {
+        (*env)->DeleteLocalRef(env, java_subscription_status_event_type);
+    }
+
+    if (java_subscription_status_event != NULL) {
+        (*env)->DeleteLocalRef(env, java_subscription_status_event);
+    }
+
+    /********** JNI ENV RELEASE **********/
+    aws_jni_release_thread_env(jvm, env);
 }
 
 static void s_aws_mqtt_streaming_operation_incoming_publish_callback(struct aws_byte_cursor payload, void *user_data) {
@@ -619,7 +695,53 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(struct aws_
         return;
     }
 
-    ??;
+    /********** JNI ENV ACQUIRE **********/
+    JavaVM *jvm = binding->jvm;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
+        return;
+    }
+
+    jobject java_payload = NULL;
+    jobject java_incoming_publish_event = NULL;
+
+    java_payload = aws_jni_byte_array_from_cursor(env, &payload);
+
+    java_incoming_publish_event = (*env)->NewObject(
+        env,
+        incoming_publish_event_properties.incoming_publish_event_class,
+        incoming_publish_event_properties.constructor_method_id,
+        java_payload);
+
+    if (java_incoming_publish_event == NULL) {
+        AWS_LOGF_ERROR(
+            AWS_LS_JAVA_CRT_GENERAL,
+            "s_aws_mqtt_streaming_operation_incoming_publish_callback - could not create incoming publish event");
+        goto done;
+    }
+
+    (*env)->CallVoidMethod(
+        env,
+        binding->java_incoming_publish_event_callback,
+        consumer_properties.accept_method_id,
+        java_incoming_publish_event);
+
+    aws_jni_check_and_clear_exception(env);
+
+done:
+
+    if (java_payload != NULL) {
+        (*env)->DeleteLocalRef(env, java_payload);
+    }
+
+    if (java_incoming_publish_event != NULL) {
+        (*env)->DeleteLocalRef(env, java_incoming_publish_event);
+    }
+
+    /********** JNI ENV RELEASE **********/
+    aws_jni_release_thread_env(jvm, env);
 }
 
 static void s_aws_mqtt_streaming_operation_terminated_callback(void *user_data) {
@@ -638,14 +760,16 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBa
 
     aws_cache_jni_ids(env);
 
-    struct aws_crt_mqtt_request_response_client_binding *rr_client_binding = (struct aws_crt_mqtt_request_response_client_binding *)jni_mqtt_request_response_client_handle;
+    struct aws_crt_mqtt_request_response_client_binding *rr_client_binding =
+        (struct aws_crt_mqtt_request_response_client_binding *)jni_mqtt_request_response_client_handle;
     if (rr_client_binding == NULL) {
         aws_jni_throw_runtime_exception(env, "streamingOperationNew: null request-response client binding");
         return (jlong)NULL;
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_streaming_operation_binding *binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_streaming_operation_binding));
+    struct aws_streaming_operation_binding *binding =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_streaming_operation_binding));
     binding->allocator = allocator;
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
@@ -656,13 +780,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBa
 
     struct aws_mqtt_streaming_operation_options stream_options;
     AWS_ZERO_STRUCT(stream_options);
-    stream_options.subscription_status_callback = ??;
-    stream_options.incoming_publish_callback = ??;
-    stream_options.terminated_callback = ??;
+    stream_options.subscription_status_callback = s_aws_mqtt_streaming_operation_subscription_status_callback;
+    stream_options.incoming_publish_callback = s_aws_mqtt_streaming_operation_incoming_publish_callback;
+    stream_options.terminated_callback = s_aws_mqtt_streaming_operation_terminated_callback;
     stream_options.user_data = binding;
 
-    jstring java_topic = (jstring)(*env)->GetObjectField(
-            env, java_options, streaming_operation_options_properties.topic_field_id);
+    jstring java_topic =
+        (jstring)(*env)->GetObjectField(env, java_options, streaming_operation_options_properties.topic_field_id);
     if (!java_topic) {
         aws_jni_throw_runtime_exception(env, "streamingOperationNew - topic is null");
         goto error;
@@ -670,18 +794,20 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBa
     stream_options.topic_filter = aws_jni_byte_cursor_from_jstring_acquire(env, java_topic);
 
     jobject java_incoming_publish_event_callback = (*env)->GetObjectField(
-                                                               env, java_options, streaming_operation_options_properties.incoming_publish_event_callback_field_id);
+        env, java_options, streaming_operation_options_properties.incoming_publish_event_callback_field_id);
     if (java_incoming_publish_event_callback) {
         binding->java_incoming_publish_event_callback = (*env)->NewGlobalRef(env, java_incoming_publish_event_callback);
     }
 
     jobject java_subscription_status_event_callback = (*env)->GetObjectField(
-                                                                                                                     env, java_options, streaming_operation_options_properties.subscription_status_event_callback_field_id);
+        env, java_options, streaming_operation_options_properties.subscription_status_event_callback_field_id);
     if (java_subscription_status_event_callback) {
-      binding->java_subscription_status_event_callback = (*env)->NewGlobalRef(env, java_subscription_status_event_callback);
+        binding->java_subscription_status_event_callback =
+            (*env)->NewGlobalRef(env, java_subscription_status_event_callback);
     }
 
-    binding->stream = aws_mqtt_request_response_client_create_streaming_operation(rr_client_binding->client, &stream_options);
+    binding->stream =
+        aws_mqtt_request_response_client_create_streaming_operation(rr_client_binding->client, &stream_options);
 
     aws_jni_byte_cursor_from_jstring_release(env, java_topic, stream_options.topic_filter);
 
@@ -708,7 +834,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBas
 
     (void)jni_class;
 
-    struct aws_streaming_operation_binding *binding = (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
+    struct aws_streaming_operation_binding *binding =
+        (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
     struct aws_mqtt_rr_client_operation *stream = binding->stream;
 
     if (aws_mqtt_rr_client_operation_activate(stream)) {
@@ -724,7 +851,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBas
     (void)env;
     (void)jni_class;
 
-    struct aws_streaming_operation_binding *binding = (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
+    struct aws_streaming_operation_binding *binding =
+        (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
     struct aws_mqtt_rr_client_operation *stream = binding->stream;
 
     binding->stream = NULL;

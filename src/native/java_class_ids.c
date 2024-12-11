@@ -2430,19 +2430,12 @@ static void s_cache_subscription_status_event_properties(JNIEnv *env) {
 
     subscription_status_event_properties.subscription_status_event_class = (*env)->NewGlobalRef(env, cls);
 
-    subscription_status_event_properties.constructor_method_id1 = (*env)->GetMethodID(
-        env,
-        subscription_status_event_properties.subscription_status_event_class,
-        "<init>",
-        "(Lsoftware/amazon/awssdk/crt/iot/SubscriptionStatusEventType;)V");
-    AWS_FATAL_ASSERT(subscription_status_event_properties.constructor_method_id1);
-
-    subscription_status_event_properties.constructor_method_id2 = (*env)->GetMethodID(
+    subscription_status_event_properties.constructor_method_id = (*env)->GetMethodID(
         env,
         subscription_status_event_properties.subscription_status_event_class,
         "<init>",
         "(Lsoftware/amazon/awssdk/crt/iot/SubscriptionStatusEventType;I)V");
-    AWS_FATAL_ASSERT(subscription_status_event_properties.constructor_method_id2);
+    AWS_FATAL_ASSERT(subscription_status_event_properties.constructor_method_id);
 }
 
 struct java_streaming_operation_options_properties streaming_operation_options_properties;
@@ -2463,6 +2456,19 @@ static void s_cache_streaming_operation_options_properties(JNIEnv *env) {
     streaming_operation_options_properties.subscription_status_event_callback_field_id =
         (*env)->GetFieldID(env, cls, "subscriptionStatusEventCallback", "Ljava/util/function/Consumer;");
     AWS_FATAL_ASSERT(streaming_operation_options_properties.subscription_status_event_callback_field_id);
+}
+
+struct java_consumer_properties consumer_properties;
+
+static void s_cache_consumer_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/util/function/Consumer");
+    AWS_FATAL_ASSERT(cls);
+
+    consumer_properties.consumer_class = (*env)->NewGlobalRef(env, cls);
+
+    consumer_properties.accept_method_id =
+        (*env)->GetMethodID(env, consumer_properties.consumer_class, "accept", "(Ljava/lang/Object;)V");
+    AWS_FATAL_ASSERT(consumer_properties.accept_method_id);
 }
 
 static void s_cache_java_class_ids(void *user_data) {
@@ -2577,6 +2583,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_subscription_status_event_type_properties(env);
     s_cache_subscription_status_event_properties(env);
     s_cache_streaming_operation_options_properties(env);
+    s_cache_consumer_properties(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

@@ -32,7 +32,6 @@ public class StreamingOperationBase extends CrtResource {
 
     StreamingOperationBase(MqttRequestResponseClient rrClient, StreamingOperationOptions options) {
         acquireNativeHandle(streamingOperationNew(
-            this,
             rrClient.getNativeHandle(),
             options
         ));
@@ -82,7 +81,7 @@ public class StreamingOperationBase extends CrtResource {
      * native methods
      ******************************************************************************/
 
-    private static native long streamingOperationNew(StreamingOperationBase streamingOperation, long rrClientHandle, StreamingOperationOptions options);
+    private static native long streamingOperationNew(long rrClientHandle, StreamingOperationOptions options);
 
     private static native void streamingOperationOpen(long streamingOperationHandle);
 

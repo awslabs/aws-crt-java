@@ -612,6 +612,8 @@ static void s_aws_streaming_operation_binding_destroy(struct aws_streaming_opera
         (*env)->DeleteGlobalRef(env, binding->java_subscription_status_event_callback);
     }
 
+    aws_jni_release_thread_env(binding->jvm, env);
+
 done:
 
     aws_mem_release(binding->allocator, binding);
@@ -836,6 +838,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBas
 
     struct aws_streaming_operation_binding *binding =
         (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
+    if (binding == NULL) {
+        aws_jni_throw_runtime_exception(env, "streamingOperationOpen - stream already closed");
+        return;
+    }
+
     struct aws_mqtt_rr_client_operation *stream = binding->stream;
 
     if (aws_mqtt_rr_client_operation_activate(stream)) {
@@ -853,6 +860,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBas
 
     struct aws_streaming_operation_binding *binding =
         (struct aws_streaming_operation_binding *)jni_streaming_operation_handle;
+    if (binding == NULL) {
+        return;
+    }
+
     struct aws_mqtt_rr_client_operation *stream = binding->stream;
 
     binding->stream = NULL;

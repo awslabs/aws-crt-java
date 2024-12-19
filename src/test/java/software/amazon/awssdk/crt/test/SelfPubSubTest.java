@@ -64,8 +64,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                     };
 
                     CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
-                            messageHandler);
-                    subscribed.thenApply(unused -> subsAcked++);
+                            messageHandler).thenApply(unused -> subsAcked++);
                     int packetId = subscribed.get();
 
                     assertNotSame(0, packetId);
@@ -73,15 +72,13 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
                     MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE,
                             false);
-                    CompletableFuture<Integer> published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
+                    CompletableFuture<Integer> published = connection.publish(message).thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
                     assertEquals("Published", 1, pubsAcked);
 
-                    published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
+                    published = connection.publish(message).thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
@@ -93,8 +90,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                     assertEquals("Received", message.getQos(), received.getQos());
                     assertEquals("Received", message.getRetain(), received.getRetain());
 
-                    CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-                    unsubscribed.thenApply(unused -> subsAcked--);
+                    CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC).thenApply(unused -> subsAcked--);
                     packetId = unsubscribed.get();
 
                     assertNotSame(0, packetId);
@@ -141,30 +137,26 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                     null);
 
                 try {
-                    CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);
-                    subscribed.thenApply(unused -> subsAcked++);
+                    CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE).thenApply(unused -> subsAcked++);
                     int packetId = subscribed.get();
 
                     assertNotSame(0, packetId);
                     assertEquals("Single subscription", 1, subsAcked);
 
                     MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
-                    CompletableFuture<Integer> published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
+                    CompletableFuture<Integer> published = connection.publish(message).thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
                     assertEquals("Published", 1, pubsAcked);
 
-                    published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
+                    published = connection.publish(message).thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
                     assertEquals("Published", 2, pubsAcked);
 
-                    CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-                    unsubscribed.thenApply(unused -> subsAcked--);
+                    CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC).thenApply(unused -> subsAcked--);
                     packetId = unsubscribed.get();
 
                     assertNotSame(0, packetId);

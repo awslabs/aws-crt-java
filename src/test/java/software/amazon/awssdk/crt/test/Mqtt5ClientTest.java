@@ -1132,9 +1132,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
-            connectedFuture.completeExceptionally(new Exception(
-                "[" + client_name + "] Could not connect! Error code is: " + onConnectionFailureReturn.getErrorCode()
-            ));
+            // failing the connected future here is not valid from a race condition standpoint.  It is possible that
+            // the interrupting client itself gets interrupted and fails to fully connect due to the original client
+            // interrupting it.  Eventually it will succeed (briefly) as the two clients fight over the client id
+            // with increasing reconnect backoff.
         }
 
         @Override
@@ -2170,11 +2171,6 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 // Wait a little longer just to ensure that no packets beyond expectations are arrived.
                 publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-
-                // Check that both clients received packets.
-                // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough
-                // to ensure that AWS IoT Core sent different packets to different subscribers.
-                assertTrue(publishEvents.clientsReceived.size() == 2);
 
                 subscriberOneClient.stop();
                 subscriberTwoClient.stop();

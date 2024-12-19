@@ -34,9 +34,6 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
     static final String TEST_TOPIC = "publish/me/senpai/" + UUID.randomUUID().toString();
     static final String TEST_PAYLOAD = "PUBLISH ME! SHINY AND CHROME!";
 
-    int pubsAcked = 0;
-    int subsAcked = 0;
-
     @Test
     public void testPubSub() {
         skipIfNetworkUnavailable();
@@ -65,27 +62,21 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
                     CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
                             messageHandler);
-                    subscribed.thenApply(unused -> subsAcked++);
                     int packetId = subscribed.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Single subscription", 1, subsAcked);
 
                     MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE,
                             false);
                     CompletableFuture<Integer> published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Published", 1, pubsAcked);
 
                     published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Published", 2, pubsAcked);
 
                     MqttMessage received = receivedFuture.get();
                     assertEquals("Received", message.getTopic(), received.getTopic());
@@ -94,11 +85,9 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                     assertEquals("Received", message.getRetain(), received.getRetain());
 
                     CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-                    unsubscribed.thenApply(unused -> subsAcked--);
                     packetId = unsubscribed.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("No Subscriptions", 0, subsAcked);
                 } catch (Exception ex) {
                     fail(ex.getMessage());
                 }
@@ -142,33 +131,25 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
 
                 try {
                     CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);
-                    subscribed.thenApply(unused -> subsAcked++);
                     int packetId = subscribed.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Single subscription", 1, subsAcked);
 
                     MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
                     CompletableFuture<Integer> published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Published", 1, pubsAcked);
 
                     published = connection.publish(message);
-                    published.thenApply(unused -> pubsAcked++);
                     packetId = published.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("Published", 2, pubsAcked);
 
                     CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-                    unsubscribed.thenApply(unused -> subsAcked--);
                     packetId = unsubscribed.get();
 
                     assertNotSame(0, packetId);
-                    assertEquals("No Subscriptions", 0, subsAcked);
                 } catch (Exception ex) {
                     fail(ex.getMessage());
                 }

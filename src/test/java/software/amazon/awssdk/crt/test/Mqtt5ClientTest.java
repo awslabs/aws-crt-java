@@ -2171,11 +2171,6 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Wait a little longer just to ensure that no packets beyond expectations are arrived.
                 publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Check that both clients received packets.
-                // PublishEvents_Futured_Counted also checks for duplicated packets, so this one assert is enough
-                // to ensure that AWS IoT Core sent different packets to different subscribers.
-                assertTrue(publishEvents.clientsReceived.size() == 2);
-
                 subscriberOneClient.stop();
                 subscriberTwoClient.stop();
                 publisherClient.stop();

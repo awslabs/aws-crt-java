@@ -6,10 +6,6 @@ option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
 include(GNUInstallDirs)
 
-if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
-    set(FIND_LIBRARY_USE_LIB64_PATHS true)
-endif()
-
 if (NOT WIN32 AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()

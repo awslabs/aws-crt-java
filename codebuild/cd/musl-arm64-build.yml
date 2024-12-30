@@ -2,7 +2,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - sudo yum install -y qemu-user-static binfmt-support
+      - sudo yum install -y qemu-user qemu-user-static binfmt-support
   pre_build:
     commands:
       - export CC=gcc

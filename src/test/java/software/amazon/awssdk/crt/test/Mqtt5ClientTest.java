@@ -2084,6 +2084,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
+                // Paranoid about service-side eventual consistency.  Add a wait to reduce chances of a missed will publish.
+                Thread.sleep(2000);
+
                 publisher.stop(disconnectPacketBuilder.build());
 
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

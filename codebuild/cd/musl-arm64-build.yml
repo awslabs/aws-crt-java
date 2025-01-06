@@ -2,7 +2,6 @@ version: 0.2
 phases:
   install:
     commands:
-      - sudo apt-get install qemu-user-static -y
   pre_build:
     commands:
       - export CC=gcc

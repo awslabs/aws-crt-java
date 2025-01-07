@@ -303,7 +303,7 @@ public class HttpClientConnectionManagerOptions {
      * @param connectionAcquisitionTimeoutInMilliseconds timeout in milliseconds. 
      * @return this
      */
-	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(int connectionAcquisitionTimeoutInMilliseconds) {
+	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(long connectionAcquisitionTimeoutInMilliseconds) {
 		this.connectionAcquisitionTimeoutInMilliseconds = connectionAcquisitionTimeoutInMilliseconds;
         return this;
 	}

@@ -325,7 +325,7 @@ public class HttpClientConnectionManagerOptions {
      * @param maxPendingConnectionAcquisitions maximum pending acquisitions allowed 
      * @return this
      */
-	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(int maxPendingConnectionAcquisitions) {
+	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(long maxPendingConnectionAcquisitions) {
 		this.maxPendingConnectionAcquisitions = maxPendingConnectionAcquisitions;
         return this;
 	}

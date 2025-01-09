@@ -18,6 +18,8 @@ echo "Using builder version ${BUILDER_VERSION}"
 aws ecr get-login-password | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
 export DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${BUILDER_VERSION}
 
+uname -r
+
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 export BRANCH_TAG=$(git describe --tags)

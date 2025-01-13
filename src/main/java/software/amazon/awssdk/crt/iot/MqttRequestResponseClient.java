@@ -44,7 +44,7 @@ public class MqttRequestResponseClient extends CrtResource {
      * @param client MQTT5 client that the request-response client should use as transport
      * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
+    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom5(
                 this,
                 client.getNativeHandle(),
@@ -60,7 +60,7 @@ public class MqttRequestResponseClient extends CrtResource {
      * @param client MQTT311 client that the request-response client should use as transport
      * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
+    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom311(
                 this,
                 client.getNativeHandle(),
@@ -98,10 +98,10 @@ public class MqttRequestResponseClient extends CrtResource {
      *
      * @return a new streaming operation instance
      */
-    public StreamingOperationBase createStream(StreamingOperationOptions options) {
+    public StreamingOperation createStream(StreamingOperationOptions options) {
         this.handleReadLock.lock();
         try {
-            return new StreamingOperationBase(this, options);
+            return new StreamingOperation(this, options);
         } finally {
             this.handleReadLock.unlock();
         }

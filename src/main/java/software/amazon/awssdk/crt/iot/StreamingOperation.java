@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * An AWS MQTT service streaming operation.  A streaming operation listens to messages on
  * a particular topic, deserializes them using a service model, and emits the modeled data by invoking a callback.
  */
-public class StreamingOperationBase extends CrtResource {
+public class StreamingOperation extends CrtResource {
 
     /*
      * Using a read-write lock to protect the native handle on Java -> Native calls is a new approach to handle
@@ -30,7 +30,7 @@ public class StreamingOperationBase extends CrtResource {
     private final Lock handleReadLock = handleLock.readLock();
     private final Lock handleWriteLock = handleLock.writeLock();
 
-    StreamingOperationBase(MqttRequestResponseClient rrClient, StreamingOperationOptions options) {
+    StreamingOperation(MqttRequestResponseClient rrClient, StreamingOperationOptions options) {
         acquireNativeHandle(streamingOperationNew(
             rrClient.getNativeHandle(),
             options

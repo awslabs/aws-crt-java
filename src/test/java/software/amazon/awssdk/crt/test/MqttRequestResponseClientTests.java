@@ -40,14 +40,14 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         public MqttClientConnection mqtt311Client;
         public MqttRequestResponseClient rrClient;
 
-        public TestContext(MqttVersion version, MqttRequestResponseClientBuilder builder) {
-            if (builder == null) {
-                builder = createRequestResponseClientBuilder();
+        public TestContext(MqttVersion version, MqttRequestResponseClientOptions options) {
+            if (options == null) {
+                options = createRequestResponseClientOptions();
             }
 
             if (version == MqttVersion.Mqtt5) {
                 try (Mqtt5Client protocolClient = createMqtt5Client();
-                     MqttRequestResponseClient rrClient = builder.build(protocolClient)) {
+                     MqttRequestResponseClient rrClient = new MqttRequestResponseClient(protocolClient, options)) {
                     this.mqtt5Client = protocolClient;
                     this.rrClient = rrClient;
                     this.mqtt5Client.addRef();
@@ -55,7 +55,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 }
             } else {
                 try (MqttClientConnection protocolClient = createMqtt311Client();
-                     MqttRequestResponseClient rrClient = builder.build(protocolClient)) {
+                     MqttRequestResponseClient rrClient = new MqttRequestResponseClient(protocolClient, options)) {
                     this.mqtt311Client = protocolClient;
                     this.rrClient = rrClient;
                     this.mqtt311Client.addRef();
@@ -187,13 +187,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         }
     }
 
-    static public MqttRequestResponseClientBuilder createRequestResponseClientBuilder() {
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
-        rrBuilder.withMaxRequestResponseSubscriptions(4)
-                .withMaxStreamingSubscriptions(2)
-                .withOperationTimeoutSeconds(30);
-
-        return rrBuilder;
+    static public MqttRequestResponseClientOptions createRequestResponseClientOptions() {
+        return MqttRequestResponseClientOptions.builder()
+            .withMaxRequestResponseSubscriptions(4)
+            .withMaxStreamingSubscriptions(2)
+            .withOperationTimeoutSeconds(30)
+            .build();
     }
 
     @After
@@ -214,35 +213,38 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     public void Mqtt5CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(0)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(-1)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(-5);
+            .withOperationTimeoutSeconds(-5)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test
@@ -256,36 +258,39 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     public void Mqtt311CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(0)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(-1)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
-                .withMaxRequestResponseSubscriptions(4)
-                .withMaxStreamingSubscriptions(2)
-                .withOperationTimeoutSeconds(-5);
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
+            .withMaxRequestResponseSubscriptions(4)
+            .withMaxStreamingSubscriptions(2)
+            .withOperationTimeoutSeconds(-5)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     RequestResponseOperation createGetNamedShadowRequest(String thing, String shadow, boolean withCorrelationToken) {
@@ -597,11 +602,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     }
 
     public void doGetNamedShadowFailureTimeoutTest(MqttVersion version) {
-        MqttRequestResponseClientBuilder clientBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(2);
-        this.context = new TestContext(version, clientBuilder);
+            .withOperationTimeoutSeconds(2)
+            .build();
+        this.context = new TestContext(version, options);
 
         String badAcceptedTopic = "hello/world/accepted";
         String badRejectedTopic = "hello/world/rejected";
@@ -656,7 +662,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 })
             .build();
 
-        StreamingOperationBase stream = this.context.rrClient.createStream(streamingOptions);
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
         stream.open();
 
         try {
@@ -700,7 +706,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 })
                 .build();
 
-        StreamingOperationBase stream = this.context.rrClient.createStream(streamingOptions);
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
         stream.open();
 
         try {
@@ -762,7 +768,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 })
                 .build();
 
-        StreamingOperationBase stream = this.context.rrClient.createStream(streamingOptions);
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
         stream.open();
 
         try {
@@ -800,7 +806,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 .build();
 
         try {
-            StreamingOperationBase stream = this.context.rrClient.createStream(streamingOptions);
+            StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
             Assert.assertTrue(false);
         } finally {
             this.context.rrClient = null;
@@ -827,7 +833,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
                 .build();
 
-        StreamingOperationBase stream = this.context.rrClient.createStream(streamingOptions);
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
     }
 
     @Test(expected = CrtRuntimeException.class)

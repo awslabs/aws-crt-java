@@ -752,7 +752,7 @@ static void s_aws_mqtt_streaming_operation_terminated_callback(void *user_data) 
     s_aws_streaming_operation_binding_destroy(binding);
 }
 
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationNew(
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperation_streamingOperationNew(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_mqtt_request_response_client_handle,
@@ -829,7 +829,7 @@ error:
     return (jlong)NULL;
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationOpen(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperation_streamingOperationOpen(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_streaming_operation_handle) {
@@ -850,7 +850,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBas
     }
 }
 
-JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperationBase_streamingOperationDestroy(
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_iot_StreamingOperation_streamingOperationDestroy(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_streaming_operation_handle) {

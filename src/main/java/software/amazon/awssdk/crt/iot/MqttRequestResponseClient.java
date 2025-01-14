@@ -10,6 +10,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A helper class for AWS service clients that use MQTT as the transport protocol.
  *
@@ -20,7 +22,13 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
  */
 public class MqttRequestResponseClient extends CrtResource {
 
-    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException  {
+    /**
+     * MQTT5-based constructor for request-response service clients
+     *
+     * @param client MQTT5 client that the request-response client should use as transport
+     * @param options request-response client configuration options
+     */
+    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom5(
                 this,
                 client.getNativeHandle(),
@@ -30,7 +38,13 @@ public class MqttRequestResponseClient extends CrtResource {
         ));
     }
 
-    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) throws CrtRuntimeException {
+    /**
+     * MQTT311-based constructor for request-response service clients
+     *
+     * @param client MQTT311 client that the request-response client should use as transport
+     * @param options request-response client configuration options
+     */
+    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom311(
                 this,
                 client.getNativeHandle(),
@@ -40,6 +54,21 @@ public class MqttRequestResponseClient extends CrtResource {
         ));
     }
 
+    /**
+     * Submits a request to the request-response client.
+     *
+     * @param request description of the request to perform
+     *                
+     * @return future that completes with the result of performing the request
+     */
+    public CompletableFuture<MqttRequestResponse> submitRequest(RequestResponseOperation request) {
+        CompletableFuture<MqttRequestResponse> future = new CompletableFuture<>();
+
+        mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+
+        return future;
+    }
+    
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
      */
@@ -78,4 +107,7 @@ public class MqttRequestResponseClient extends CrtResource {
     ) throws CrtRuntimeException;
 
     private static native void mqttRequestResponseClientDestroy(long client);
+
+    private static native void mqttRequestResponseClientSubmitRequest(long client, RequestResponseOperation request, CompletableFuture<MqttRequestResponse> future);
+
 }

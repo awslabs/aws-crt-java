@@ -5,9 +5,6 @@
 
 package software.amazon.awssdk.crt.iot;
 
-import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
-import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
-
 /**
  * Class to configure an MQTT-based request response client.
  */
@@ -46,7 +43,7 @@ public class MqttRequestResponseClientOptions {
         }
 
         /**
-         * Sets the Duration, in seconds, that a request-response operation will wait for completion before giving up
+         * Sets the duration, in seconds, that a request-response operation will wait for completion before giving up
          *
          * @param operationTimeoutSeconds duration, in seconds, that a request-response operation will wait for completion before giving up
          * @return the builder instance
@@ -58,7 +55,7 @@ public class MqttRequestResponseClientOptions {
         }
 
         /**
-         *
+         * Creates a new MqttRequestResponseClientOptions instance based on current builder configuration
          * @return
          */
         public MqttRequestResponseClientOptions build() {
@@ -66,27 +63,41 @@ public class MqttRequestResponseClientOptions {
         }
     }
 
-    MqttRequestResponseClientOptions() {
+    private MqttRequestResponseClientOptions() {
     }
 
-    MqttRequestResponseClientOptions(MqttRequestResponseClientOptions options) {
+    private MqttRequestResponseClientOptions(MqttRequestResponseClientOptions options) {
         this.maxRequestResponseSubscriptions = options.maxRequestResponseSubscriptions;
         this.maxStreamingSubscriptions = options.maxStreamingSubscriptions;
         this.operationTimeoutSeconds = options.operationTimeoutSeconds;
     }
 
+    /**
+     * Creates a new builder for MqttRequestResponseClientOptions instances
+     *
+     * @return a new builder for MqttRequestResponseClientOptions instances
+     */
     public static MqttRequestResponseClientOptions.MqttRequestResponseClientOptionsBuilder builder() {
         return new MqttRequestResponseClientOptions.MqttRequestResponseClientOptionsBuilder();
     }
 
+    /**
+     * @return the maximum number of subscriptions that the client will concurrently use for request-response operations
+     */
     int getMaxRequestResponseSubscriptions() {
         return this.maxRequestResponseSubscriptions;
     }
 
+    /**
+     * @return the maximum number of subscriptions that the client will concurrently use for streaming operations
+     */
     int getMaxStreamingSubscriptions() {
         return this.maxStreamingSubscriptions;
     }
 
+    /**
+     * @return the duration, in seconds, that a request-response operation will wait for completion before giving up
+     */
     int getOperationTimeoutSeconds() {
         return this.operationTimeoutSeconds;
     }

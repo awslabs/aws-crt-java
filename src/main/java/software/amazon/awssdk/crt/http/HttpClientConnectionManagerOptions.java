@@ -303,7 +303,7 @@ public class HttpClientConnectionManagerOptions {
      * @param connectionAcquisitionTimeoutInMilliseconds timeout in milliseconds. 
      * @return this
      */
-	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(int connectionAcquisitionTimeoutInMilliseconds) {
+	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(long connectionAcquisitionTimeoutInMilliseconds) {
 		this.connectionAcquisitionTimeoutInMilliseconds = connectionAcquisitionTimeoutInMilliseconds;
         return this;
 	}
@@ -325,7 +325,7 @@ public class HttpClientConnectionManagerOptions {
      * @param maxPendingConnectionAcquisitions maximum pending acquisitions allowed 
      * @return this
      */
-	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(int maxPendingConnectionAcquisitions) {
+	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(long maxPendingConnectionAcquisitions) {
 		this.maxPendingConnectionAcquisitions = maxPendingConnectionAcquisitions;
         return this;
 	}

@@ -114,7 +114,7 @@ public class ChecksumConfig {
      * The list of algorithms for user to pick up when validate the checksum. Client
      * will pick up the algorithm from the list with the priority based on
      * performance, and the algorithm sent by server. The priority based on
-     * performance is [CRC32C, CRC32, SHA1, SHA256].
+     * performance is [CRC64NVME, CRC32C, CRC32, SHA1, SHA256].
      *
      * If the response checksum was validated by client, the result will indicate
      * which algorithm was picked.

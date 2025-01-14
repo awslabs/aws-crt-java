@@ -56,7 +56,7 @@ public class MqttRequestResponseClientOptions {
 
         /**
          * Creates a new MqttRequestResponseClientOptions instance based on current builder configuration
-         * @return
+         * @return the builder instance
          */
         public MqttRequestResponseClientOptions build() {
             return new MqttRequestResponseClientOptions(this.options);

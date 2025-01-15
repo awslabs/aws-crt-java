@@ -17,10 +17,11 @@ aws ecr get-login-password | docker login 123124136734.dkr.ecr.us-east-1.amazona
 export DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${BUILDER_VERSION}
 
 # on x86-64 and aarch64 we run on native images in codebuild 
-# (note: we still register mapping for those platforms, but in practice they are not used)
 # on other platforms we require emulation which is done through binfmt
-export QEMU_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/multiarch-qemu-user-static:latest
-docker run --rm --privileged ${QEMU_IMAGE} --reset -p yes
+if [ "$ARCH" != "linux/aarch64" ]; then 
+  export QEMU_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/multiarch-qemu-user-static:latest
+  docker run --rm --privileged ${QEMU_IMAGE} --reset -p yes
+fi
 
 export BRANCH_TAG=$(git describe --tags)
 docker run --mount type=bind,src=$(pwd),dst=/root/aws-crt-java --env CXXFLAGS --env AWS_CRT_ARCH --platform ${ARCH} $DOCKER_IMAGE --version=${BUILDER_VERSION} build -p aws-crt-java --classifier ${CLASSIFIER} --branch ${BRANCH_TAG} run_tests=false

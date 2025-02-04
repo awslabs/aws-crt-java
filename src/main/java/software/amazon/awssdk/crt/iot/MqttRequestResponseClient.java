@@ -82,7 +82,12 @@ public class MqttRequestResponseClient extends CrtResource {
 
         this.handleReadLock.lock();
         try {
-            mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+            long handle = getNativeHandle();
+            if (handle != 0) {
+                mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+            } else {
+                future.completeExceptionally(new CrtRuntimeException("Client already closed"));
+            }
         } finally {
             this.handleReadLock.unlock();
         }
@@ -101,7 +106,12 @@ public class MqttRequestResponseClient extends CrtResource {
     public StreamingOperation createStream(StreamingOperationOptions options) {
         this.handleReadLock.lock();
         try {
-            return new StreamingOperation(this, options);
+            long handle = getNativeHandle();
+            if (handle != 0) {
+                return new StreamingOperation(this, options);
+            } else {
+                throw new CrtRuntimeException("Client already closed");
+            }
         } finally {
             this.handleReadLock.unlock();
         }

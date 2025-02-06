@@ -111,7 +111,8 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);) {
-            try (TlsContext tlsContext = new TlsContext(contextOptions);) {
+            try (TlsContext tlsContext = new TlsContext(contextOptions);
+                 SocketOptions socketOptions = new SocketOptions();) {
                 CompletableFuture<Boolean> connected = new CompletableFuture<Boolean>();
 
                 String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
@@ -122,7 +123,6 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                         AWS_TEST_MQTT5_IOT_CORE_HOST,
                         (long) 8883);
 
-                SocketOptions socketOptions = new SocketOptions();
                 socketOptions.connectTimeoutMs = 10000;
                 socketOptions.domain = SocketOptions.SocketDomain.IPv4;
                 builder.withSocketOptions(socketOptions);
@@ -167,7 +167,8 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);) {
-            try (TlsContext tlsContext = new TlsContext(contextOptions);) {
+            try (TlsContext tlsContext = new TlsContext(contextOptions);
+                 SocketOptions socketOptions = new SocketOptions();) {
                 String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
 
                 try (MqttClient client = new MqttClient(tlsContext);
@@ -176,8 +177,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                     config.setClientId(clientId);
                     config.setEndpoint(AWS_TEST_MQTT5_IOT_CORE_HOST);
                     config.setPort(8883);
-
-                    SocketOptions socketOptions = new SocketOptions();
+                    
                     socketOptions.connectTimeoutMs = 10000;
                     socketOptions.domain = SocketOptions.SocketDomain.IPv4;
                     config.setSocketOptions(socketOptions);

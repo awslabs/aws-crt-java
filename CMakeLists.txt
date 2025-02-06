@@ -1,42 +1,16 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.9...3.31)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
 option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables
-endif()
-
-if (DEFINED CMAKE_PREFIX_PATH)
-    file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}" CMAKE_PREFIX_PATH)
-endif()
-
-if (DEFINED CMAKE_INSTALL_PREFIX)
-    file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
-endif()
-
-if (UNIX AND NOT APPLE)
-    include(GNUInstallDirs)
-elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-    set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-
-if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
-    set(FIND_LIBRARY_USE_LIB64_PATHS true)
-endif()
+include(GNUInstallDirs)
 
 if (NOT WIN32 AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-
-# This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
-set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
-string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
-# Append that generated list to the module search path
-list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 
 # Local CMake scripts
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -111,6 +85,9 @@ if (BUILD_DEPS)
     add_subdirectory(crt/aws-c-event-stream)
     add_subdirectory(crt/aws-c-s3)
 else()
+    # this is required so we can use aws-c-common's CMake modules
+    find_package(aws-c-common REQUIRED)
+
     include(AwsFindPackage)
     include(AwsCFlags)
     set(IN_SOURCE_BUILD OFF)

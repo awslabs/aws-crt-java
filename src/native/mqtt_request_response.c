@@ -690,7 +690,10 @@ done:
     aws_jni_release_thread_env(jvm, env);
 }
 
-static void s_aws_mqtt_streaming_operation_incoming_publish_callback(struct aws_byte_cursor payload, void *user_data) {
+static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
+    struct aws_byte_cursor payload,
+    struct aws_byte_cursor topic,
+    void *user_data) {
 
     struct aws_streaming_operation_binding *binding = user_data;
     if (!binding->java_incoming_publish_event_callback) {
@@ -707,15 +710,18 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(struct aws_
     }
 
     jobject java_payload = NULL;
+    jstring java_topic = NULL;
     jobject java_incoming_publish_event = NULL;
 
     java_payload = aws_jni_byte_array_from_cursor(env, &payload);
+    java_topic = aws_jni_string_from_cursor(env, &topic);
 
     java_incoming_publish_event = (*env)->NewObject(
         env,
         incoming_publish_event_properties.incoming_publish_event_class,
         incoming_publish_event_properties.constructor_method_id,
-        java_payload);
+        java_payload,
+        java_topic);
 
     if (java_incoming_publish_event == NULL) {
         AWS_LOGF_ERROR(
@@ -736,6 +742,10 @@ done:
 
     if (java_payload != NULL) {
         (*env)->DeleteLocalRef(env, java_payload);
+    }
+
+    if (java_topic != NULL) {
+        (*env)->DeleteLocalRef(env, java_topic);
     }
 
     if (java_incoming_publish_event != NULL) {

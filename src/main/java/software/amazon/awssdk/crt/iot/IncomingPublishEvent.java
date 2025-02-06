@@ -9,8 +9,11 @@ public class IncomingPublishEvent {
 
     private final byte[] payload;
 
-    private IncomingPublishEvent(byte[] payload) {
+    private final String topic;
+
+    private IncomingPublishEvent(byte[] payload, String topic) {
         this.payload = payload;
+        this.topic = topic;
     }
 
     /**
@@ -20,5 +23,14 @@ public class IncomingPublishEvent {
      */
     public byte[] getPayload() {
         return payload;
+    }
+
+    /**
+     * Gets the topic of the IncomingPublishEvent.
+     *
+     * @return Topic of the IncomingPublishEvent.
+     */
+    public String getTopic() {
+        return topic;
     }
 }

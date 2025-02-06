@@ -2401,8 +2401,8 @@ static void s_cache_incoming_publish_event_properties(JNIEnv *env) {
 
     incoming_publish_event_properties.incoming_publish_event_class = (*env)->NewGlobalRef(env, cls);
 
-    incoming_publish_event_properties.constructor_method_id =
-        (*env)->GetMethodID(env, incoming_publish_event_properties.incoming_publish_event_class, "<init>", "([B)V");
+    incoming_publish_event_properties.constructor_method_id = (*env)->GetMethodID(
+        env, incoming_publish_event_properties.incoming_publish_event_class, "<init>", "([BLjava/lang/String;)V");
     AWS_FATAL_ASSERT(incoming_publish_event_properties.constructor_method_id);
 }
 

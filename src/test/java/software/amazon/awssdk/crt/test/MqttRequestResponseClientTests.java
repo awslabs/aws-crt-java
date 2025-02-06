@@ -11,22 +11,16 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.iot.MqttRequestResponse;
-import software.amazon.awssdk.crt.iot.MqttRequestResponseClient;
-import software.amazon.awssdk.crt.iot.MqttRequestResponseClientBuilder;
-import software.amazon.awssdk.crt.iot.RequestResponseOperation;
-import software.amazon.awssdk.crt.iot.ResponsePath;
+import software.amazon.awssdk.crt.iot.*;
 import software.amazon.awssdk.crt.mqtt.*;
-import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
-import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
-import software.amazon.awssdk.crt.mqtt5.OnAttemptingConnectReturn;
+import software.amazon.awssdk.crt.mqtt5.*;
 import software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn;
 import software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn;
-import software.amazon.awssdk.crt.mqtt5.OnDisconnectionReturn;
-import software.amazon.awssdk.crt.mqtt5.OnStoppedReturn;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
+import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -47,14 +41,14 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         public MqttClientConnection mqtt311Client;
         public MqttRequestResponseClient rrClient;
 
-        public TestContext(MqttVersion version, MqttRequestResponseClientBuilder builder) {
-            if (builder == null) {
-                builder = createRequestResponseClientBuilder();
+        public TestContext(MqttVersion version, MqttRequestResponseClientOptions options) {
+            if (options == null) {
+                options = createRequestResponseClientOptions();
             }
 
             if (version == MqttVersion.Mqtt5) {
                 try (Mqtt5Client protocolClient = createMqtt5Client();
-                     MqttRequestResponseClient rrClient = builder.build(protocolClient)) {
+                     MqttRequestResponseClient rrClient = new MqttRequestResponseClient(protocolClient, options)) {
                     this.mqtt5Client = protocolClient;
                     this.rrClient = rrClient;
                     this.mqtt5Client.addRef();
@@ -62,7 +56,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 }
             } else {
                 try (MqttClientConnection protocolClient = createMqtt311Client();
-                     MqttRequestResponseClient rrClient = builder.build(protocolClient)) {
+                     MqttRequestResponseClient rrClient = new MqttRequestResponseClient(protocolClient, options)) {
                     this.mqtt311Client = protocolClient;
                     this.rrClient = rrClient;
                     this.mqtt311Client.addRef();
@@ -117,7 +111,8 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);) {
-            try (TlsContext tlsContext = new TlsContext(contextOptions);) {
+            try (TlsContext tlsContext = new TlsContext(contextOptions);
+                 SocketOptions socketOptions = new SocketOptions();) {
                 CompletableFuture<Boolean> connected = new CompletableFuture<Boolean>();
 
                 String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
@@ -127,6 +122,10 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                 Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder(
                         AWS_TEST_MQTT5_IOT_CORE_HOST,
                         (long) 8883);
+
+                socketOptions.connectTimeoutMs = 10000;
+                socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+                builder.withSocketOptions(socketOptions);
 
                 builder.withLifecycleEvents(new Mqtt5ClientOptions.LifecycleEvents() {
                     @Override
@@ -168,7 +167,8 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
                 AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);) {
-            try (TlsContext tlsContext = new TlsContext(contextOptions);) {
+            try (TlsContext tlsContext = new TlsContext(contextOptions);
+                 SocketOptions socketOptions = new SocketOptions();) {
                 String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
 
                 try (MqttClient client = new MqttClient(tlsContext);
@@ -177,6 +177,10 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                     config.setClientId(clientId);
                     config.setEndpoint(AWS_TEST_MQTT5_IOT_CORE_HOST);
                     config.setPort(8883);
+                    
+                    socketOptions.connectTimeoutMs = 10000;
+                    socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+                    config.setSocketOptions(socketOptions);
 
                     MqttClientConnection connection = new MqttClientConnection(config);
 
@@ -194,13 +198,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         }
     }
 
-    static public MqttRequestResponseClientBuilder createRequestResponseClientBuilder() {
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder();
-        rrBuilder.withMaxRequestResponseSubscriptions(4)
-                .withMaxStreamingSubscriptions(2)
-                .withOperationTimeoutSeconds(30);
-
-        return rrBuilder;
+    static public MqttRequestResponseClientOptions createRequestResponseClientOptions() {
+        return MqttRequestResponseClientOptions.builder()
+            .withMaxRequestResponseSubscriptions(4)
+            .withMaxStreamingSubscriptions(2)
+            .withOperationTimeoutSeconds(30)
+            .build();
     }
 
     @After
@@ -221,35 +224,38 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     public void Mqtt5CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(0)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(-1)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt5CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(-5);
+            .withOperationTimeoutSeconds(-5)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt5, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt5, options);
     }
 
     @Test
@@ -263,36 +269,39 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     public void Mqtt311CreateFailureBadMaxRequestResponseSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(0)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadMaxStreamingSubscriptions() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(-1)
-            .withOperationTimeoutSeconds(30);
+            .withOperationTimeoutSeconds(30)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     @Test(expected = CrtRuntimeException.class)
     public void Mqtt311CreateFailureBadOperationTimeout() {
         skipIfNetworkUnavailable();
 
-        MqttRequestResponseClientBuilder rrBuilder = new MqttRequestResponseClientBuilder()
-                .withMaxRequestResponseSubscriptions(4)
-                .withMaxStreamingSubscriptions(2)
-                .withOperationTimeoutSeconds(-5);
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
+            .withMaxRequestResponseSubscriptions(4)
+            .withMaxStreamingSubscriptions(2)
+            .withOperationTimeoutSeconds(-5)
+            .build();
 
-        this.context = new TestContext(MqttVersion.Mqtt311, rrBuilder);
+        this.context = new TestContext(MqttVersion.Mqtt311, options);
     }
 
     RequestResponseOperation createGetNamedShadowRequest(String thing, String shadow, boolean withCorrelationToken) {
@@ -604,11 +613,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     }
 
     public void doGetNamedShadowFailureTimeoutTest(MqttVersion version) {
-        MqttRequestResponseClientBuilder clientBuilder = new MqttRequestResponseClientBuilder()
+        MqttRequestResponseClientOptions options = MqttRequestResponseClientOptions.builder()
             .withMaxRequestResponseSubscriptions(4)
             .withMaxStreamingSubscriptions(2)
-            .withOperationTimeoutSeconds(2);
-        this.context = new TestContext(version, clientBuilder);
+            .withOperationTimeoutSeconds(2)
+            .build();
+        this.context = new TestContext(version, options);
 
         String badAcceptedTopic = "hello/world/accepted";
         String badRejectedTopic = "hello/world/rejected";
@@ -648,5 +658,206 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         skipIfNetworkUnavailable();
 
         doGetNamedShadowFailureTimeoutTest(MqttVersion.Mqtt311);
+    }
+
+    void doStreamingOperationOpenClosedTest(MqttVersion version) {
+        this.context = new TestContext(version, null);
+        CompletableFuture<Boolean> subscribed = new CompletableFuture<>();
+
+        StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
+            .withTopic("$aws/things/NoSuchThing/shadow/name/UpdateShadowCITest/update/delta")
+                .withSubscriptionStatusEventCallback((event) -> {
+                    if (event.getType() == SubscriptionStatusEventType.SUBSCRIPTION_ESTABLISHED) {
+                        subscribed.complete(true);
+                    }
+                })
+            .build();
+
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
+        stream.open();
+
+        try {
+            subscribed.get();
+        } catch (Exception ex) {
+            Assert.assertTrue(false);
+        }
+
+        stream.close();
+    }
+
+    @Test
+    public void ShadowUpdatedStreamingOperationOpenCloseMqtt5() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationOpenClosedTest(MqttVersion.Mqtt5);
+    }
+
+    @Test
+    public void ShadowUpdatedStreamingOperationOpenCloseMqtt311() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationOpenClosedTest(MqttVersion.Mqtt311);
+    }
+
+    void doStreamingOperationIncomingPublishTest(MqttVersion version) {
+        this.context = new TestContext(version, null);
+        CompletableFuture<Boolean> subscribed = new CompletableFuture<>();
+        CompletableFuture<IncomingPublishEvent> publishEvent = new CompletableFuture<>();
+
+        String fakeShadowTopic = "not/a/shadow/topic/" + (UUID.randomUUID()).toString();
+        StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
+                .withTopic(fakeShadowTopic)
+                .withSubscriptionStatusEventCallback((event) -> {
+                    if (event.getType() == SubscriptionStatusEventType.SUBSCRIPTION_ESTABLISHED) {
+                        subscribed.complete(true);
+                    }
+                })
+                .withIncomingPublishEventCallback((event) -> {
+                    publishEvent.complete(event);
+                })
+                .build();
+
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
+        stream.open();
+
+        try {
+            subscribed.get();
+        } catch (Exception ex) {
+            Assert.assertTrue(false);
+        }
+
+        String originalPayloadAsString = "IncomingPublishTest";
+        byte[] originalPayload = originalPayloadAsString.getBytes(StandardCharsets.UTF_8);
+
+        if (version == MqttVersion.Mqtt5) {
+            PublishPacket publishPacket = new PublishPacket.PublishPacketBuilder()
+                    .withPayload(originalPayload)
+                    .withTopic(fakeShadowTopic)
+                    .withQOS(QOS.AT_LEAST_ONCE)
+                    .build();
+            this.context.mqtt5Client.publish(publishPacket);
+        } else {
+            this.context.mqtt311Client.publish(new MqttMessage(fakeShadowTopic, originalPayload, QualityOfService.AT_LEAST_ONCE));
+        }
+
+        try {
+            IncomingPublishEvent event = publishEvent.get();
+            Assert.assertNotNull(event);
+            String payloadAsString = new String(event.getPayload(), StandardCharsets.UTF_8);
+            Assert.assertEquals(originalPayloadAsString, payloadAsString);
+        } catch (Exception ex) {
+            Assert.assertTrue(false);
+        }
+
+        stream.close();
+    }
+
+    @Test
+    public void StreamingOperationIncomingPublishMqtt5() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt5);
+    }
+
+    @Test
+    public void StreamingOperationIncomingPublishMqtt311() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt311);
+    }
+
+    void doStreamingOperationReopenFailureTest(MqttVersion version) {
+        this.context = new TestContext(version, null);
+        CompletableFuture<Boolean> subscribed = new CompletableFuture<>();
+
+        StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
+                .withTopic("$aws/things/NoSuchThing/shadow/name/UpdateShadowCITest/update/delta")
+                .withSubscriptionStatusEventCallback((event) -> {
+                    if (event.getType() == SubscriptionStatusEventType.SUBSCRIPTION_ESTABLISHED) {
+                        subscribed.complete(true);
+                    }
+                })
+                .build();
+
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
+        stream.open();
+
+        try {
+            subscribed.get();
+        } catch (Exception ex) {
+            Assert.assertTrue(false);
+        }
+
+        stream.close();
+
+        stream.open();
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationReopenFailureMqtt5() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationReopenFailureTest(MqttVersion.Mqtt5);
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationReopenFailureMqtt311() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationReopenFailureTest(MqttVersion.Mqtt311);
+    }
+
+    void doStreamingOperationCreateFailureClosedClientTest(MqttVersion version) {
+        this.context = new TestContext(version, null);
+
+        this.context.rrClient.close();
+
+        StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
+                .withTopic("$aws/things/NoSuchThing/shadow/name/UpdateShadowCITest/update/delta")
+                .build();
+
+        try {
+            StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
+            Assert.assertTrue(false);
+        } finally {
+            this.context.rrClient = null;
+        }
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationCreateFailureClosedClientMqtt5() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationCreateFailureClosedClientTest(MqttVersion.Mqtt5);
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationCreateFailureClosedClientMqtt311() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationCreateFailureClosedClientTest(MqttVersion.Mqtt311);
+    }
+
+    void doStreamingOperationCreateFailureNullTopicTest(MqttVersion version) {
+        this.context = new TestContext(version, null);
+
+        StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
+                .build();
+
+        StreamingOperation stream = this.context.rrClient.createStream(streamingOptions);
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationCreateFailureNullTopicMqtt5() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationCreateFailureNullTopicTest(MqttVersion.Mqtt5);
+    }
+
+    @Test(expected = CrtRuntimeException.class)
+    public void StreamingOperationCreateFailureNullTopicMqtt311() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationCreateFailureNullTopicTest(MqttVersion.Mqtt311);
     }
 }

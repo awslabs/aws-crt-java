@@ -150,18 +150,15 @@ a classifier-based jar, you must specify the classifier name yourself.
   <dependencies>
 ```
 
-## FIPS Compliance
+## FIPS Cryptography
 
-Currently the classifier `fips-where-available` provides an "uber" jar with FIPS compliance on *some platforms*.
-
-Platforms without FIPS compliance are also included in this jar, for compatibility's sake. Check `CRT.isFIPS()` at runtime to ensure you are on a FIPS compliant platform. The current breakdown is:
-* **FIPS compliant**: linux-aarch_64, linux-x86_64
-* **NOT compliant**: linux-armv6, linux-armv7, linux-armv7-musl, linux-aarch_64-musl, linux-x86_32, linux-x86_64-musl, osx-aarch_64, osx-x86_64, windows-x86_32, windows-x86_64
+Currently the classifier `fips-where-available` provides an "uber" jar with FIPS tested cryptography on *some platforms*.
+Platforms that were not part of the FIPS testing are also included in this jar, for compatibility's sake. Check `CRT.isFIPS()` at runtime to ensure that AWS-LC is being run in FIPS mode, and follow the [security policy of AWS-LC-FIPS 3.0.0 (static)](https://github.com/aws/aws-lc/blob/AWS-LC-FIPS-3.0.0/crypto/fipsmodule/policydocs/DRAFT-140-3-AmazonSecurityPolicy-3.0.0-static.pdf).
 
 > [!WARNING]
-> The classifier, and platforms with FIPS compliance are subject to change in the future.
+> The classifier, and platforms with FIPS testing are subject to change in the future.
 
-Platforms with FIPS compliance use [AWS-LC](https://github.com/aws/aws-lc) as their cryptographic module ([NIST Certificate #4816](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4816)).
+Refer to the [NIST Cryptographic Module Validation Program's Modules In Progress List](https://csrc.nist.gov/Projects/cryptographic-module-validation-program/modules-in-process/modules-in-process-list) for the latest status of the static AWS-LC 3.0 Cryptographic Module. A complete list of supported operating environments will be made available in the vendor security policy once the validation certificate has been issued. We will also update our release notes and documentation to reflect any changes in FIPS certification status. Previous versions of AWS-LC have already received FIPS cryptographic module certificates ([NIST Certificate #4816](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4816) & [NIST Certificate #4631](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4631)).
 
 ## GraalVM support
 

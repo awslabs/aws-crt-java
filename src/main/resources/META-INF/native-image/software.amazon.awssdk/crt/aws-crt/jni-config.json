@@ -983,7 +983,8 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "byte[]"
+          "byte[]",
+          "java.lang.String"
         ]
       }
     ]

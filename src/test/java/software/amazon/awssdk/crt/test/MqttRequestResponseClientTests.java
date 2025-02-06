@@ -11,6 +11,7 @@ import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.iot.*;
@@ -121,6 +122,11 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                         AWS_TEST_MQTT5_IOT_CORE_HOST,
                         (long) 8883);
 
+                SocketOptions socketOptions = new SocketOptions();
+                socketOptions.connectTimeoutMs = 10000;
+                socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+                builder.withSocketOptions(socketOptions);
+
                 builder.withLifecycleEvents(new Mqtt5ClientOptions.LifecycleEvents() {
                     @Override
                     public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
@@ -170,6 +176,11 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                     config.setClientId(clientId);
                     config.setEndpoint(AWS_TEST_MQTT5_IOT_CORE_HOST);
                     config.setPort(8883);
+
+                    SocketOptions socketOptions = new SocketOptions();
+                    socketOptions.connectTimeoutMs = 10000;
+                    socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+                    config.setSocketOptions(socketOptions);
 
                     MqttClientConnection connection = new MqttClientConnection(config);
 

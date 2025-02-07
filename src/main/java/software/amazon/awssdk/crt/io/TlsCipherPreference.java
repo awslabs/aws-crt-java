@@ -18,54 +18,48 @@ public enum TlsCipherPreference {
     TLS_CIPHER_SYSTEM_DEFAULT(0),
 
     /**
-     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05 instead.
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
     @Deprecated
     TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06(1),
 
     /**
-     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05 instead.
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
     @Deprecated
     TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2019_11(2),
 
     /**
-     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05 instead.
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
     @Deprecated
     TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_02(3),
 
     /**
-     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05 instead.
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
     @Deprecated
     TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02(4),
 
     /**
-     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05 instead.
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
     @Deprecated
     TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07(5),
 
     /**
-     * This TlsCipherPreference supports TLS 1.0 through TLS 1.3, and contains Kyber Round 3 as its highest priority
-     * PQ algorithm. PQ algorithms in this preference list will be used in hybrid mode, and will be combined with a
-     * classical ECDHE key exchange.
-     *
-     * NIST has announced that Kyber will be first post-quantum key-agreement algorithm that it will standardize.
-     * However, the NIST standardization process might introduce minor changes that may cause the final Kyber standard
-     * to differ from the Kyber Round 3 implementation available in this preference list.
-     *
-     * Since this TlsCipherPreference contains algorithms that have not yet been officially standardized by NIST, this
-     * preference list, and any of the PQ algorithms in it, may stop being supported at any time.
-     *
-     * For more info see:
-     *   - https://tools.ietf.org/html/draft-campagna-tls-bike-sike-hybrid
-     *   - https://datatracker.ietf.org/doc/html/draft-ietf-tls-hybrid-design
-     *   - https://aws.amazon.com/blogs/security/how-to-tune-tls-for-hybrid-post-quantum-cryptography-with-kyber/
-     *   - https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8413.pdf
+     * @deprecated This TlsCipherPreference is no longer supported. Use TLS_CIPHER_PREF_PQ_TLSv1_2_2023 instead.
      */
-    TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05(6);
+    @Deprecated
+    TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05(6),
+
+    /**
+     * This  TlsCipherPreference is a clone of the "AWS-CRT-SDK-TLSv1.2-2023" s2n TLS Policy, but with the following PQ SupportedGroups added:
+     *  - X25519MLKEM768, P256MLKEM768, SecP256r1Kyber768Draft00, X25519Kyber768Draft00, secp384r1_kyber-768-r3, secp521r1_kyber-1024-r3, secp256r1_kyber-512-r3, x25519_kyber-512-r3
+     *
+     *  Both X25519MLKEM768 and P256MLKEM768 will be standardized by the IETF soon. Hybrid Groups that contain Kyber may be removed in the future.
+     */
+    TLS_CIPHER_PREF_PQ_TLSv1_2_2023(7);
 
     private int val;
 

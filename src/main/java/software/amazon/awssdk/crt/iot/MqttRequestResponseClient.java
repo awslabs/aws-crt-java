@@ -11,6 +11,8 @@ import software.amazon.awssdk.crt.mqtt.MqttClientConnection;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A helper class for AWS service clients that use MQTT as the transport protocol.
@@ -22,13 +24,27 @@ import java.util.concurrent.CompletableFuture;
  */
 public class MqttRequestResponseClient extends CrtResource {
 
+    /*
+     * Using a read-write lock to protect the native handle on Java -> Native calls is a new approach to handle
+     * accidental misuse of CrtResource objects.  The current method (no protection) works as long as the user
+     * follows the rules, but race conditions can lead to crashes or undefined behavior if the user breaks the
+     * rules (uses the CrtResource after or while the final close() call is in progress).
+     *
+     * For this new method to be correct, it must not be possible that Java -> Native calls ever call back
+     * native -> Java in the same call stack.  This is true for both the request response client and streaming
+     * operations, allowing us to add this layer of safety.
+     */
+    private final ReentrantReadWriteLock handleLock = new ReentrantReadWriteLock();
+    private final Lock handleReadLock = handleLock.readLock();
+    private final Lock handleWriteLock = handleLock.writeLock();
+
     /**
      * MQTT5-based constructor for request-response service clients
      *
      * @param client MQTT5 client that the request-response client should use as transport
      * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
+    public MqttRequestResponseClient(Mqtt5Client client, MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom5(
                 this,
                 client.getNativeHandle(),
@@ -44,7 +60,7 @@ public class MqttRequestResponseClient extends CrtResource {
      * @param client MQTT311 client that the request-response client should use as transport
      * @param options request-response client configuration options
      */
-    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientBuilder.MqttRequestResponseClientOptions options) {
+    public MqttRequestResponseClient(MqttClientConnection client, MqttRequestResponseClientOptions options) {
         acquireNativeHandle(mqttRequestResponseClientNewFrom311(
                 this,
                 client.getNativeHandle(),
@@ -64,11 +80,43 @@ public class MqttRequestResponseClient extends CrtResource {
     public CompletableFuture<MqttRequestResponse> submitRequest(RequestResponseOperation request) {
         CompletableFuture<MqttRequestResponse> future = new CompletableFuture<>();
 
-        mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+        this.handleReadLock.lock();
+        try {
+            long handle = getNativeHandle();
+            if (handle != 0) {
+                mqttRequestResponseClientSubmitRequest(getNativeHandle(), request, future);
+            } else {
+                future.completeExceptionally(new CrtRuntimeException("Client already closed"));
+            }
+        } finally {
+            this.handleReadLock.unlock();
+        }
 
         return future;
     }
-    
+
+    /**
+     * Creates a new streaming operation from a set of configuration options.  A streaming operation provides a
+     * mechanism for listening to a specific event stream from an AWS MQTT-based service.
+     *
+     * @param options configuration options for the streaming operation
+     *
+     * @return a new streaming operation instance
+     */
+    public StreamingOperation createStream(StreamingOperationOptions options) {
+        this.handleReadLock.lock();
+        try {
+            long handle = getNativeHandle();
+            if (handle != 0) {
+                return new StreamingOperation(this, options);
+            } else {
+                throw new CrtRuntimeException("Client already closed");
+            }
+        } finally {
+            this.handleReadLock.unlock();
+        }
+    }
+
     /**
      * Cleans up the native resources associated with this client. The client is unusable after this call
      */
@@ -85,6 +133,16 @@ public class MqttRequestResponseClient extends CrtResource {
      */
     @Override
     protected boolean canReleaseReferencesImmediately() { return true; }
+
+    @Override
+    public void close() {
+        this.handleWriteLock.lock();
+        try {
+            super.close();
+        } finally {
+            this.handleWriteLock.unlock();
+        }
+    }
 
     /*******************************************************************************
      * native methods

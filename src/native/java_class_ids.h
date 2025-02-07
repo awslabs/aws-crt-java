@@ -1000,6 +1000,43 @@ struct java_mqtt_request_response_properties {
 };
 extern struct java_mqtt_request_response_properties mqtt_request_response_properties;
 
+/* IncomingPublishEvent */
+struct java_incoming_publish_event_properties {
+    jclass incoming_publish_event_class;
+    jmethodID constructor_method_id;
+};
+extern struct java_incoming_publish_event_properties incoming_publish_event_properties;
+
+/* SubscriptionStatusEventType */
+struct java_subscription_status_event_type_properties {
+    jclass subscription_status_event_type_class;
+    jmethodID get_enum_value_from_integer_method_id;
+};
+extern struct java_subscription_status_event_type_properties subscription_status_event_type_properties;
+
+/* SubscriptionStatusEvent */
+struct java_subscription_status_event_properties {
+    jclass subscription_status_event_class;
+    jmethodID constructor_method_id;
+};
+extern struct java_subscription_status_event_properties subscription_status_event_properties;
+
+/* StreamingOperationOptions */
+struct java_streaming_operation_options_properties {
+    jclass streaming_operation_options_class;
+    jfieldID topic_field_id;
+    jfieldID incoming_publish_event_callback_field_id;
+    jfieldID subscription_status_event_callback_field_id;
+};
+extern struct java_streaming_operation_options_properties streaming_operation_options_properties;
+
+/* Consumer */
+struct java_consumer_properties {
+    jclass consumer_class;
+    jmethodID accept_method_id;
+};
+extern struct java_consumer_properties consumer_properties;
+
 /**
  * All functions bound to JNI MUST call this before doing anything else.
  * This caches all JNI IDs the first time it is called. Any further calls are no-op; it is thread-safe.

@@ -65,6 +65,10 @@ public class CrtRuntimeException extends RuntimeException {
 
     @Override
     public String toString() {
-        return String.format("%s %s(%d)", super.toString(), errorName, errorCode);
+        if (this.errorCode == -1) {
+            return super.toString();
+        } else {
+            return String.format("%s %s(%d)", super.toString(), errorName, errorCode);
+        }
     }
 };

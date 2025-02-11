@@ -59,7 +59,12 @@ public enum TlsCipherPreference {
      *
      *  Both X25519MLKEM768 and P256MLKEM768 will be standardized by the IETF soon. Hybrid Groups that contain Kyber may be removed in the future.
      */
-    TLS_CIPHER_PREF_PQ_TLSv1_2_2023(7);
+    TLS_CIPHER_PREF_PQ_TLSv1_2_2023(7),
+
+    /**
+     * The latest recommended Post-quantum enabled TLS Policy. This policy may change over time.
+     */
+    TLS_CIPHER_PQ_DEFAULT(8);
 
     private int val;
 

@@ -745,6 +745,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
             Assert.assertNotNull(event);
             String payloadAsString = new String(event.getPayload(), StandardCharsets.UTF_8);
             Assert.assertEquals(originalPayloadAsString, payloadAsString);
+            Assert.assertEquals(fakeShadowTopic, event.getTopic());
         } catch (Exception ex) {
             Assert.assertTrue(false);
         }

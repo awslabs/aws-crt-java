@@ -1057,12 +1057,6 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType"
-        ]
-      },
-      {
-        "name": "<init>",
-        "parameterTypes": [
           "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
           "int"
         ]

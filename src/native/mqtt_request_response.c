@@ -455,15 +455,13 @@ static void s_on_request_response_operation_completion(
     } else {
         int final_error_code = (error_code == AWS_ERROR_SUCCESS) ? AWS_ERROR_UNKNOWN : error_code;
         jobject crt_exception = aws_jni_new_crt_exception_from_error_code(env, final_error_code);
-        if (crt_exception != NULL) {
-            (*env)->CallBooleanMethod(
-                env,
-                binding->operation_future,
-                completable_future_properties.complete_exceptionally_method_id,
-                crt_exception);
+        (*env)->CallBooleanMethod(
+            env,
+            binding->operation_future,
+            completable_future_properties.complete_exceptionally_method_id,
+            crt_exception);
 
-            (*env)->DeleteLocalRef(env, crt_exception);
-        }
+        (*env)->DeleteLocalRef(env, crt_exception);
     }
 
     aws_jni_check_and_clear_exception(env);

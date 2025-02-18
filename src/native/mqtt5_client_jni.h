@@ -5,6 +5,12 @@
 #ifndef AWS_JNI_CLIENT_H
 #define AWS_JNI_CLIENT_H
 
+#include <jni.h>
+
+#include <aws/io/tls_channel_handler.h>
+
+struct aws_mqtt5_client;
+
 struct aws_mqtt5_client_java_jni {
     struct aws_mqtt5_client *client;
     jobject jni_client;

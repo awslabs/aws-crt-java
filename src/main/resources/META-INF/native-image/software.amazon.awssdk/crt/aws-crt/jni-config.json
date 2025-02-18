@@ -135,6 +135,16 @@
       {
         "name": "<init>",
         "parameterTypes": []
+      },
+      {
+        "name": "get",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "size",
+        "parameterTypes": []
       }
     ]
   },
@@ -172,6 +182,17 @@
         "name": "completeExceptionally",
         "parameterTypes": [
           "java.lang.Throwable"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.util.function.Consumer",
+    "methods": [
+      {
+        "name": "accept",
+        "parameterTypes": [
+          "java.lang.Object"
         ]
       }
     ]
@@ -952,6 +973,103 @@
         "name": "performOperation",
         "parameterTypes": [
           "software.amazon.awssdk.crt.io.TlsKeyOperation"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.IncomingPublishEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "byte[]",
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.MqttRequestResponse",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ],
+    "fields": [
+      {
+        "name": "topic"
+      },
+      {
+        "name": "payload"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.RequestResponseOperation",
+    "fields": [
+      {
+        "name": "responsePaths"
+      },
+      {
+        "name": "subscriptions"
+      },
+      {
+        "name": "publishTopic"
+      },
+      {
+        "name": "payload"
+      },
+      {
+        "name": "correlationToken"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.ResponsePath",
+    "fields": [
+      {
+        "name": "responseTopic"
+      },
+      {
+        "name": "correlationTokenJsonPath"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.StreamingOperationOptions",
+    "fields": [
+      {
+        "name": "topic"
+      },
+      {
+        "name": "incomingPublishEventCallback"
+      },
+      {
+        "name": "subscriptionStatusEventCallback"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.SubscriptionStatusEvent",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.SubscriptionStatusEventType",
+    "methods": [
+      {
+        "name": "getEnumValueFromInteger",
+        "parameterTypes": [
+          "int"
         ]
       }
     ]

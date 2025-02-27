@@ -45,6 +45,8 @@
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.crt_fips>OFF</cmake.crt_fips>
         <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
+        <!-- Default Windows SDK flag property (empty if not overridden)-->
+        <cmake.windows.sdk.flag></cmake.windows.sdk.flag>
     </properties>
 
     <profiles>
@@ -79,6 +81,18 @@
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
             </properties>
+        </profile>
+        <!-- Profile to set the Windows SDK version if AWS_WINDOWS_SDK_VERSION is defined -->
+        <profile>
+          <id>windows-sdk-version</id>
+          <activation>
+            <property>
+              <name>env.AWS_WINDOWS_SDK_VERSION</name>
+            </property>
+          </activation>
+          <properties>
+            <cmake.windows.sdk.flag>-DCMAKE_SYSTEM_VERSION=${env.AWS_WINDOWS_SDK_VERSION}</cmake.windows.sdk.flag>
+          </properties>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
         <profile>
@@ -187,6 +201,8 @@
                                         <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>
+                                        <!-- Conditionally add the Windows SDK flag -->
+                                        <argument>${cmake.windows.sdk.flag}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>

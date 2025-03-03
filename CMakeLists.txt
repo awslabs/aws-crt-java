@@ -204,7 +204,10 @@ if (NOT ANDROID)
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
 
         set(JNI_ROOT "${OVERRIDE_JAVA_HOME}")
-        message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
+        message(STATUS "Overriding JNI_ROOT to ${OVERRIDE_JAVA_HOME}")
+
+        set(Java_ROOT "${OVERRIDE_JAVA_HOME}")
+        message(STATUS "Overriding Java_ROOT to ${OVERRIDE_JAVA_HOME}")
     endif()
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
     find_package(JNI REQUIRED)

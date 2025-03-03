@@ -213,6 +213,8 @@ if (NOT ANDROID)
 
         set(Java_ROOT "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding Java_ROOT to ${OVERRIDE_JAVA_HOME}")
+
+        list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
     endif()
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
     find_package(JNI REQUIRED)

@@ -203,6 +203,11 @@ if (NOT ANDROID)
         set(JAVA_HOME "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
 
+        if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
+            # Convert to absolute path if it isn't already
+            get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
+        endif()
+
         set(JNI_ROOT "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding JNI_ROOT to ${OVERRIDE_JAVA_HOME}")
 

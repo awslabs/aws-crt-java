@@ -217,7 +217,7 @@ if (NOT ANDROID)
             get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
         endif()
         list(APPEND CMAKE_FIND_ROOT_PATH 
-            OVERRIDE_JAVA_HOME
+            "${OVERRIDE_JAVA_HOME}"
         )
 
         #set(Java_ROOT "${OVERRIDE_JAVA_HOME}")

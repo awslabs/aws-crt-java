@@ -203,6 +203,8 @@ if (NOT ANDROID)
             get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
         endif()
 
+        file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH)
+
         # This override might be set by builder to avoid using the JAVA_HOME modified by gradle
         file(TO_CMAKE_PATH "$ENV{OVERRIDE_JAVA_HOME}" OVERRIDE_JAVA_HOME)
         set(JAVA_HOME "${OVERRIDE_JAVA_HOME}")

@@ -198,14 +198,11 @@ if (NOT ANDROID)
         set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     endif()
     if (DEFINED ENV{OVERRIDE_JAVA_HOME})
-        #if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
-            # Convert to absolute path if it isn't already
-        #    get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
-        #endif()
+
 
         #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH)
         #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH2)
-        list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
+        #list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
 
         # This override might be set by builder to avoid using the JAVA_HOME modified by gradle
         file(TO_CMAKE_PATH "$ENV{OVERRIDE_JAVA_HOME}" OVERRIDE_JAVA_HOME)
@@ -214,6 +211,14 @@ if (NOT ANDROID)
 
         #set(JNI_ROOT "${OVERRIDE_JAVA_HOME}")
         #message(STATUS "Overriding JNI_ROOT to ${OVERRIDE_JAVA_HOME}")
+
+        if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
+            # Convert to absolute path if it isn't already
+            get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
+        endif()
+        list(APPEND CMAKE_FIND_ROOT_PATH 
+            OVERRIDE_JAVA_HOME
+        )
 
         #set(Java_ROOT "${OVERRIDE_JAVA_HOME}")
         #message(STATUS "Overriding Java_ROOT to ${OVERRIDE_JAVA_HOME}")

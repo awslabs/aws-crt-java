@@ -205,6 +205,7 @@ if (NOT ANDROID)
 
         #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH)
         #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH2)
+        list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
 
         # This override might be set by builder to avoid using the JAVA_HOME modified by gradle
         file(TO_CMAKE_PATH "$ENV{OVERRIDE_JAVA_HOME}" OVERRIDE_JAVA_HOME)

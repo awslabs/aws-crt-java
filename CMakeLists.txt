@@ -203,7 +203,6 @@ if (NOT ANDROID)
         set(JAVA_HOME "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
 
-
         if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
             # Convert to absolute path if it isn't already. 
             # CMAKE_FIND_ROOT_PATH seems to require path to be absolute

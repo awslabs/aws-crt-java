@@ -205,19 +205,21 @@ if (NOT ANDROID)
 
 
         if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
-            # Convert to absolute path if it isn't already
+            # Convert to absolute path if it isn't already. 
+            # CMAKE_FIND_ROOT_PATH seems to require path to be absolute
             get_filename_component(ABSOLUTE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
         endif()
+
         # Note: dockcross images come without java installed. 
         # we download java manually for the target architecture, but the since its not an
         # artifact generated within dockcross, it gets ignored during cross compilation 
         # (due to recent changes in which cross compile flags dockcross is passing to cmake)
+        # Specifically, CMAKE_FIND_ROOT_PATH_MODE_LIBRARY/INCLUDE changed from BOTH to ONLY,
+        # which makes CMake only check `CMAKE_FIND_ROOT_PATH` for dependencies. 
         # Add java artifacts as additional cross compile dep.
         list(APPEND CMAKE_FIND_ROOT_PATH "${ABSOLUTE_JAVA_HOME}")
     endif()
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
-    set(CMAKE_FIND_DEBUG_MODE TRUE)
-    #find_package(Java COMPONENTS Development Runtime REQUIRED)
     find_package(JNI REQUIRED)
     target_include_directories(${PROJECT_NAME} PRIVATE ${JNI_INCLUDE_DIRS})
 endif()

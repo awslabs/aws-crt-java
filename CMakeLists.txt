@@ -198,32 +198,22 @@ if (NOT ANDROID)
         set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     endif()
     if (DEFINED ENV{OVERRIDE_JAVA_HOME})
-
-
-        #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH)
-        #file(TO_CMAKE_PATH "${OVERRIDE_JAVA_HOME}/include" JAVA_INCLUDE_PATH2)
-        #list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
-
         # This override might be set by builder to avoid using the JAVA_HOME modified by gradle
         file(TO_CMAKE_PATH "$ENV{OVERRIDE_JAVA_HOME}" OVERRIDE_JAVA_HOME)
         set(JAVA_HOME "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
 
-        #set(JNI_ROOT "${OVERRIDE_JAVA_HOME}")
-        #message(STATUS "Overriding JNI_ROOT to ${OVERRIDE_JAVA_HOME}")
 
         if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
             # Convert to absolute path if it isn't already
-            get_filename_component(OVERRIDE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
+            get_filename_component(ABSOLUTE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
         endif()
-        list(APPEND CMAKE_FIND_ROOT_PATH 
-            "${OVERRIDE_JAVA_HOME}"
-        )
-
-        #set(Java_ROOT "${OVERRIDE_JAVA_HOME}")
-        #message(STATUS "Overriding Java_ROOT to ${OVERRIDE_JAVA_HOME}")
-
-        #list(APPEND CMAKE_PREFIX_PATH "${OVERRIDE_JAVA_HOME}")
+        # Note: dockcross images come without java installed. 
+        # we download java manually for the target architecture, but the since its not an
+        # artifact generated within dockcross, it gets ignored during cross compilation 
+        # (due to recent changes in which cross compile flags dockcross is passing to cmake)
+        # Add java artifacts as additional cross compile dep.
+        list(APPEND CMAKE_FIND_ROOT_PATH "${ABSOLUTE_JAVA_HOME}")
     endif()
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
     set(CMAKE_FIND_DEBUG_MODE TRUE)

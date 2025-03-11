@@ -4,11 +4,11 @@
  */
 package software.amazon.awssdk.crt.http;
 
-import java.net.URI;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import java.net.URI;
 
 /**
  * Contains all the configuration options for a HttpConnectionPoolManager instance
@@ -35,6 +35,7 @@ public class HttpClientConnectionManagerOptions {
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
     private long connectionAcquisitionTimeoutInMilliseconds;
     private long maxPendingConnectionAcquisitions;
+    private long responseFirstByteTimeoutInMilliseconds;
 
 	private static final String HTTP = "http";
     private static final String HTTPS = "https";
@@ -349,6 +350,27 @@ public class HttpClientConnectionManagerOptions {
      * @return the monitoring options for connections in the connection pool
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
+
+    /**
+     * @return the response first byte timeout in milliseconds 
+     */
+    public long getResponseFirstByteTimeoutInMilliseconds() {
+        return responseFirstByteTimeoutInMilliseconds;
+    }
+
+    /**
+     * Sets the responseFirstByteTimeoutInMilliseconds.
+     * After a request is fully sent, if the server does not begin responding within N milliseconds,
+     * then fail with AWS_ERROR_HTTP_RESPONSE_FIRST_BYTE_TIMEOUT.
+     *
+     * @param responseFirstByteTimeoutInMilliseconds first byte timeout in milliseconds
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withResponseFirstByteTimeoutInMilliseconds(long responseFirstByteTimeoutInMilliseconds) {
+        this.responseFirstByteTimeoutInMilliseconds = responseFirstByteTimeoutInMilliseconds;
+        return this;
+    }
+
 
     /**
      * Validate the connection manager options are valid to use. Throw exceptions if not.

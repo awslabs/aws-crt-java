@@ -6,11 +6,7 @@ package software.amazon.awssdk.crt.http;
 
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -138,7 +134,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                             monitoringFailureIntervalInSeconds,
                                             expectedHttpVersion.getValue(),
                                             options.getMaxPendingConnectionAcquisitions(),
-                                            options.getConnectionAcquisitionTimeoutInMilliseconds()));
+                                            options.getConnectionAcquisitionTimeoutInMilliseconds(),
+                                            options.getResponseFirstByteTimeoutInMilliseconds()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -271,7 +268,8 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int monitoringFailureIntervalInSeconds,
                                                         int expectedProtocol,
                                                         long maxPendingConnectionAcquisitions,
-                                                        long connectionAcquisitionTimeoutInMilliseconds) throws CrtRuntimeException;
+                                                        long connectionAcquisitionTimeoutInMilliseconds,
+                                                        long responseFirstByteTimeoutInMilliseconds) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 

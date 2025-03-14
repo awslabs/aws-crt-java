@@ -47,6 +47,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         private String identity;
         private String customRoleArn;
         private ArrayList<CognitoLoginTokenPair> logins = new ArrayList<CognitoLoginTokenPair>();
+        private CognitoLoginTokenSource loginTokenSource;
 
         private TlsContext tlsContext;
         private ClientBootstrap clientBootstrap;
@@ -148,6 +149,23 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
 
         HttpProxyOptions getHttpProxyOptions() { return httpProxyOptions; }
 
+        /**
+         * Sets a login token source for the credentials provider.  The login token source will be used to
+         * gather additional login tokens to submit as part of the HTTP request sent to Cognito.  A login token source
+         * allows you to dynamically add login tokens on a per-request basis.  Using a login token source requires
+         * you to follow certain requirements in order to avoid undesirable behavior.  See the documentation for
+         * `CognitoLoginTokenSource` for further details.
+         *
+         * @param loginTokenSource object to source login tokens from before every HTTP request to Cognito
+         * @return The current builder
+         */
+        public CognitoCredentialsProviderBuilder withLoginTokenSource(CognitoLoginTokenSource loginTokenSource) {
+            this.loginTokenSource = loginTokenSource;
+
+            return this;
+        }
+
+        CognitoLoginTokenSource getLoginTokenSource() { return loginTokenSource; }
 
         /**
          * Creates a new Cognito credentials provider, based on this builder's configuration

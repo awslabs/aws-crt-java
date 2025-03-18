@@ -331,6 +331,8 @@ extern struct java_s3_meta_request_response_handler_native_adapter_properties
 
 /* CompletableFuture */
 struct java_completable_future_properties {
+    jclass completable_future_class;
+    jmethodID constructor_method_id;
     jmethodID complete_method_id;
     jmethodID complete_exceptionally_method_id;
 };
@@ -1036,6 +1038,22 @@ struct java_consumer_properties {
     jmethodID accept_method_id;
 };
 extern struct java_consumer_properties consumer_properties;
+
+/* CognitoLoginTokenSource */
+struct java_cognito_login_token_source_properties {
+    jclass cognito_login_token_source_class;
+    jmethodID start_login_token_fetch_method_id;
+};
+
+extern struct java_cognito_login_token_source_properties cognito_login_token_source_properties;
+
+/* CognitoCredentialsProvider */
+struct java_cognito_credentials_provider_properties {
+    jclass cognito_credentials_provider_class;
+    jmethodID create_chained_future_method_id;
+};
+
+extern struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

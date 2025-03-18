@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 public interface CognitoLoginTokenSource {
 
     /**
-     * Method that a Cognito credentials provider should invoke before sending a fetch credentials
+     * Method that a Cognito credentials provider will invoke before sending a fetch credentials
      * request to Cognito.  The CognitoLoginTokenPairs that the future gets completed with are joined
      * with the (static) CognitoLoginTokenPairs that were specified in the credential provider configuration
      * on construction.  The merged set of CognitoLoginTokenPairs are added to the HTTP request sent
@@ -30,4 +30,5 @@ public interface CognitoLoginTokenSource {
      * to a sourcing task that runs on an external executor.
      */
     void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture);
+
 }

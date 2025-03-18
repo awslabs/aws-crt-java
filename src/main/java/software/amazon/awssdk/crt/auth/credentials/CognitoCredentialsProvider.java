@@ -9,6 +9,8 @@ import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -231,14 +233,15 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                 proxyTlsContextHandle,
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
-                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null);
+                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                builder.loginTokenSource);
 
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);
         addReferenceTo(tlsContext);
     }
 
-    private void writeLengthPrefixedBytesSafe(ByteBuffer buffer, byte[] bytes) {
+    private static void writeLengthPrefixedBytesSafe(ByteBuffer buffer, byte[] bytes) {
         if (bytes != null) {
             buffer.putInt(bytes.length);
             buffer.put(bytes);
@@ -247,7 +250,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         }
     }
 
-    private byte[] marshalLoginsForJni(ArrayList<CognitoLoginTokenPair> logins) {
+    private static byte[] marshalLoginsForJni(List<CognitoLoginTokenPair> logins) {
         int size = 0;
 
         for (CognitoLoginTokenPair login : logins) {
@@ -274,6 +277,16 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         return buffer.array();
     }
 
+    private static CompletableFuture<List<CognitoLoginTokenPair>> createChainedFuture(long invocationHandle, CompletableFuture<List<CognitoLoginTokenPair>> baseFuture) {
+        return baseFuture.whenComplete((token_pairs, ex) -> {
+            if (ex == null) {
+                completeLoginTokenFetch(invocationHandle, marshalLoginsForJni(token_pairs), null);
+            } else {
+                completeLoginTokenFetch(invocationHandle, null, ex);
+            }
+        });
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -291,5 +304,8 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                                                           long proxyTlsContext,
                                                           int proxyAuthorizationType,
                                                           byte[] proxyAuthorizationUsername,
-                                                          byte[] proxyAuthorizationPassword);
+                                                          byte[] proxyAuthorizationPassword,
+                                                         CognitoLoginTokenSource loginTokenSource);
+
+    private static native void completeLoginTokenFetch(long invocationHandle, byte[] marshalledLogins, Throwable ex);
 }

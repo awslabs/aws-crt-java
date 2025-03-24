@@ -281,7 +281,7 @@ static void s_cache_credentials_provider(JNIEnv *env) {
         env,
         provider_class,
         "onGetCredentialsComplete",
-        "(Ljava/util/concurrent/CompletableFuture;Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
+        "(Ljava/util/concurrent/CompletableFuture;ILsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
     AWS_FATAL_ASSERT(credentials_provider_properties.on_get_credentials_complete_method_id);
 }
 

@@ -1090,6 +1090,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
         callback_data->java_crt_credentials_provider,
         credentials_provider_properties.on_get_credentials_complete_method_id,
         callback_data->java_credentials_future,
+        error_code,
         java_credentials);
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));

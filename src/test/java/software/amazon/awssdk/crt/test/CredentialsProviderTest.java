@@ -583,6 +583,45 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Test
+    public void testGetCredentialsCognitoWithDynamicLoginTokensException() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            tokenFuture.completeExceptionally(new RuntimeException("Oh no"));
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with failing login token source resolution should have failed");
+            } catch (ExecutionException ex) {
+                assertTrue(ex.getCause().getMessage().contains("Valid credentials could not be sourced by the cognito provider"));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
     public void testGetCredentialsCognitoProxy() {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(isCIEnvironmentSetUp());

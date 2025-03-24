@@ -37,6 +37,13 @@ struct aws_credentials_provider_callback_data {
     jweak java_crt_credentials_provider;
 
     jobject jni_delegate_credential_handler;
+
+    /**
+     * Right now, all provider bindings share the same basic binding setup, but some providers need some
+     * additional state specific to that provider.  Rather than going a full vtable/base/wrapped solution,
+     * we just let such providers attach this data here.  They are expected to clean it up before the clean up
+     * for this structure is called, hence the fatal assert below.
+     */
     void *aux_data;
 };
 
@@ -652,6 +659,15 @@ static int s_fill_in_logins(struct aws_array_list *logins, struct aws_byte_curso
     return AWS_OP_SUCCESS;
 }
 
+/*
+ * Optional auxiliary provider data used by the Cognito provider binding.  Keeps a reference to the
+ * CognitoLoginTokenSource java object that should be used to query dynamic login tokens before each
+ * HTTP request to Cognito.
+ *
+ * We ref count this just to be safe; every in-progress credentials query (technically there should only be at most 1,
+ * but to be paranoid we ignore that) keeps a reference to this object (in addition to the reference kept by the
+ * generic provider binding via the aux_data field).
+ */
 struct aws_login_token_source_data {
     struct aws_allocator *allocator;
     struct aws_ref_count ref_count;
@@ -722,17 +738,25 @@ static void s_on_cognito_shutdown_complete(void *user_data) {
     struct aws_credentials_provider_callback_data *callback_data = user_data;
     struct aws_login_token_source_data *login_token_source_data = callback_data->aux_data;
 
+    /* safe to invoke on NULL */
     s_aws_login_token_source_data_release(login_token_source_data);
+
+    /* prevent fatal assert in base cleanup */
     callback_data->aux_data = NULL;
 
     s_on_shutdown_complete(user_data);
 }
 
+/* Per-credential-fetch binding data used when there is a cognito login token source configured for the provider */
 struct aws_login_token_source_invocation {
     struct aws_allocator *allocator;
-    struct aws_login_token_source_data *login_token_source_data;
+    struct aws_login_token_source_data *login_token_source_data; /* strong reference */
 
-    jobject completion_future;
+    /*
+     * This hidden/internal future is what transfers the login token pairs from the future completed by the
+     * user to the static callback that continues the cognito credential fetch.  Must be referenced or it might
+     * be GCed before the dynamic login tokens are fetched.
+     */
     jobject chained_future;
 
     aws_credentials_provider_cognito_get_token_pairs_completion_fn *completion_callback;
@@ -763,10 +787,6 @@ static void s_aws_login_token_source_invocation_destroy(
     }
 
     s_aws_login_token_source_data_release(invocation->login_token_source_data);
-
-    if (invocation->completion_future != NULL) {
-        (*env)->DeleteGlobalRef(env, invocation->completion_future);
-    }
 
     if (invocation->chained_future != NULL) {
         (*env)->DeleteGlobalRef(env, invocation->chained_future);
@@ -834,20 +854,20 @@ static int s_cognito_get_token_pairs(
         return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
     }
 
+    int result = AWS_OP_ERR;
     struct aws_login_token_source_invocation *invocation = aws_login_token_source_invocation_new(
         login_token_source_data->allocator, login_token_source_data, completion_callback, completion_user_data);
 
-    // create the base future that the login source must complete with login token pairs
+    // create the base future that the user must complete with login token pairs
     jobject java_base_future = (*env)->NewObject(
         env,
         completable_future_properties.completable_future_class,
         completable_future_properties.constructor_method_id);
     if ((*env)->ExceptionCheck(env) || java_base_future == NULL) {
         aws_jni_check_and_clear_exception(env);
-        goto failure;
+        aws_raise_error(AWS_AUTH_CREDENTIALS_PROVIDER_COGNITO_SOURCE_FAILURE);
+        goto done;
     }
-
-    invocation->completion_future = (*env)->NewGlobalRef(env, java_base_future);
 
     // create the chained future that invokes the completion callback when the base future is completed either
     // normally or exceptionally
@@ -859,7 +879,8 @@ static int s_cognito_get_token_pairs(
         java_base_future);
     if ((*env)->ExceptionCheck(env) || java_chained_future == NULL) {
         aws_jni_check_and_clear_exception(env);
-        goto failure;
+        aws_raise_error(AWS_AUTH_CREDENTIALS_PROVIDER_COGNITO_SOURCE_FAILURE);
+        goto done;
     }
 
     invocation->chained_future = (*env)->NewGlobalRef(env, java_chained_future);
@@ -872,21 +893,22 @@ static int s_cognito_get_token_pairs(
         java_base_future);
     if ((*env)->ExceptionCheck(env)) {
         aws_jni_check_and_clear_exception(env);
-        goto failure;
+        aws_raise_error(AWS_AUTH_CREDENTIALS_PROVIDER_COGNITO_SOURCE_FAILURE);
+        goto done;
+    }
+
+    result = AWS_OP_SUCCESS;
+
+done:
+
+    if (result != AWS_OP_SUCCESS) {
+        s_aws_login_token_source_invocation_destroy(invocation, env);
     }
 
     aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 
-    return AWS_OP_SUCCESS;
-
-failure:
-
-    s_aws_login_token_source_invocation_destroy(invocation, env);
-
-    aws_jni_release_thread_env(jvm, env);
-
-    return aws_raise_error(AWS_AUTH_CREDENTIALS_PROVIDER_COGNITO_SOURCE_FAILURE);
+    return result;
 }
 
 JNIEXPORT
@@ -911,7 +933,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredential
 
     (void)jni_class;
     (void)env;
-    (void)login_token_source;
 
     aws_cache_jni_ids(env);
 
@@ -949,6 +970,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredential
     AWS_FATAL_ASSERT(jvmresult == 0);
     callback_data->java_crt_credentials_provider = (*env)->NewWeakGlobalRef(env, crt_credentials_provider);
 
+    /* If no login token source is provided, this evaluates to NULL */
     callback_data->aux_data = s_aws_login_token_source_data_new(allocator, env, login_token_source);
 
     struct aws_credentials_provider_cognito_options options = {

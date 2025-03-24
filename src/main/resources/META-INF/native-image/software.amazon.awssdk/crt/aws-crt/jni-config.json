@@ -305,6 +305,7 @@
       {
         "name": "createChainedFuture",
         "parameterTypes": [
+          "long",
           "java.util.concurrent.CompletableFuture"
         ]
       }
@@ -351,6 +352,7 @@
         "name": "onGetCredentialsComplete",
         "parameterTypes": [
           "java.util.concurrent.CompletableFuture",
+          "int",
           "software.amazon.awssdk.crt.auth.credentials.Credentials"
         ]
       },

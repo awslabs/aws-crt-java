@@ -875,7 +875,7 @@ static int s_cognito_get_token_pairs(
         env,
         cognito_credentials_provider_properties.cognito_credentials_provider_class,
         cognito_credentials_provider_properties.create_chained_future_method_id,
-        invocation,
+        (jlong)invocation,
         java_base_future);
     if ((*env)->ExceptionCheck(env) || java_chained_future == NULL) {
         aws_jni_check_and_clear_exception(env);

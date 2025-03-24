@@ -37,6 +37,9 @@ public interface CognitoLoginTokenSource {
      * 3. No attempt is made to de-duplicate login keys.  If the final, unioned set of login token pairs contains
      * multiple pairs with the same key, then which one of the duplicates gets used is not well-defined.  For correct
      * behavior, you must ensure there can be no duplicates.
+     *
+     * @param tokenFuture future to complete with dynamically sourced login token pairs in order to continue the
+     *                    credentials fetching process
      */
     void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture);
 

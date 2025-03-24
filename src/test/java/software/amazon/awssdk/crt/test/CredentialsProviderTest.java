@@ -373,10 +373,9 @@ public class CredentialsProviderTest extends CrtTestFixture {
             } catch (CompletionException e) {
                 assertNotNull(e.getCause());
                 Throwable innerException = e.getCause();
-
-                // Check that the right exception type caused the completion error in the future
-                assertTrue(innerException.getMessage().contains("Host name was invalid for dns resolution"));
                 assertEquals(CrtRuntimeException.class, innerException.getClass());
+                // The way that this fails is different per platform, so we can't dig further at the moment.
+
             }
         }
     }

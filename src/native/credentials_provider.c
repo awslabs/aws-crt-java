@@ -718,6 +718,10 @@ static struct aws_login_token_source_data *s_aws_login_token_source_data_new(
     JNIEnv *env,
     jobject login_token_source) {
     if (login_token_source == NULL) {
+        /*
+         * Not an error: if no login token source is provided, returning NULL causes us to skip dynamic token
+         * sourcing during credentials fetch
+         */
         return NULL;
     }
 
@@ -738,11 +742,7 @@ static void s_on_cognito_shutdown_complete(void *user_data) {
     struct aws_credentials_provider_callback_data *callback_data = user_data;
     struct aws_login_token_source_data *login_token_source_data = callback_data->aux_data;
 
-    /* safe to invoke on NULL */
-    s_aws_login_token_source_data_release(login_token_source_data);
-
-    /* prevent fatal assert in base cleanup */
-    callback_data->aux_data = NULL;
+    callback_data->aux_data = s_aws_login_token_source_data_release(login_token_source_data);
 
     s_on_shutdown_complete(user_data);
 }
@@ -786,7 +786,7 @@ static void s_aws_login_token_source_invocation_destroy(
         return;
     }
 
-    s_aws_login_token_source_data_release(invocation->login_token_source_data);
+    invocation->login_token_source_data = s_aws_login_token_source_data_release(invocation->login_token_source_data);
 
     if (invocation->chained_future != NULL) {
         (*env)->DeleteGlobalRef(env, invocation->chained_future);

@@ -281,7 +281,7 @@ static void s_cache_credentials_provider(JNIEnv *env) {
         env,
         provider_class,
         "onGetCredentialsComplete",
-        "(Ljava/util/concurrent/CompletableFuture;Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
+        "(Ljava/util/concurrent/CompletableFuture;ILsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
     AWS_FATAL_ASSERT(credentials_provider_properties.on_get_credentials_complete_method_id);
 }
 
@@ -732,6 +732,10 @@ struct java_completable_future_properties completable_future_properties;
 static void s_cache_completable_future(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "java/util/concurrent/CompletableFuture");
     AWS_FATAL_ASSERT(cls);
+    completable_future_properties.completable_future_class = (*env)->NewGlobalRef(env, cls);
+
+    completable_future_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "()V");
+    AWS_FATAL_ASSERT(completable_future_properties.constructor_method_id);
 
     completable_future_properties.complete_method_id =
         (*env)->GetMethodID(env, cls, "complete", "(Ljava/lang/Object;)Z");
@@ -2471,6 +2475,33 @@ static void s_cache_consumer_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(consumer_properties.accept_method_id);
 }
 
+struct java_cognito_login_token_source_properties cognito_login_token_source_properties;
+
+static void s_cache_cognito_login_token_source(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CognitoLoginTokenSource");
+    AWS_FATAL_ASSERT(cls);
+    cognito_login_token_source_properties.cognito_login_token_source_class = (*env)->NewGlobalRef(env, cls);
+
+    cognito_login_token_source_properties.start_login_token_fetch_method_id =
+        (*env)->GetMethodID(env, cls, "startLoginTokenFetch", "(Ljava/util/concurrent/CompletableFuture;)V");
+    AWS_FATAL_ASSERT(cognito_login_token_source_properties.start_login_token_fetch_method_id != NULL);
+}
+
+struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
+
+static void s_cache_cognito_credentials_provider(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CognitoCredentialsProvider");
+    AWS_FATAL_ASSERT(cls);
+    cognito_credentials_provider_properties.cognito_credentials_provider_class = (*env)->NewGlobalRef(env, cls);
+
+    cognito_credentials_provider_properties.create_chained_future_method_id = (*env)->GetStaticMethodID(
+        env,
+        cls,
+        "createChainedFuture",
+        "(JLjava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;");
+    AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
+}
+
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
     s_cache_http_request_body_stream(env);
@@ -2584,6 +2615,8 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_subscription_status_event_properties(env);
     s_cache_streaming_operation_options_properties(env);
     s_cache_consumer_properties(env);
+    s_cache_cognito_login_token_source(env);
+    s_cache_cognito_credentials_provider(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

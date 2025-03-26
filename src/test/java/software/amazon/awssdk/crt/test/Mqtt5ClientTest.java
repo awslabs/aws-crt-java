@@ -1826,6 +1826,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 events.stopFuture.get();
             }
 
+            /* Avoid accidentally triggering re-connect throttle */
+            Thread.sleep(2000);
+
             builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
             LifecycleEvents_Futured rejoinEvents = new LifecycleEvents_Futured();
             builder.withLifecycleEvents(rejoinEvents);

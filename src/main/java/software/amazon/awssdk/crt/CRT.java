@@ -311,6 +311,10 @@ public final class CRT {
         // load the shared lib from the temp path
         System.load(tempSharedLib.getAbsolutePath());
 
+        if(!tempSharedLib.delete()) {
+            CrtRuntimeException rex = new CrtRuntimeException("Invalid directory: " + path);
+            throw rex;
+        }
     }
 
     private static void loadLibraryFromJar() {

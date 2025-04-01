@@ -11,7 +11,7 @@ def main():
         sys.exit(0)
 
     # Default target macos version setup in pom.xml > ${cmake.min_osx_version}
-    supported_version = "10.9"
+    supported_version = "10.15"
     arch = "x86_64"
 
 

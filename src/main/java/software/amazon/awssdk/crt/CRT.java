@@ -294,9 +294,14 @@ public final class CRT {
         // Ask Java to try and delete it on exit. We call this immediately
         // so that if anything goes wrong writing the file to disk, or
         // loading it as a shared lib, it will still get cleaned up.
+        // Once it is loaded successfully, we can safely delete it and it will keep working in the current process.
         tempSharedLib.deleteOnExit();
 
-        // Unfortunately File.deleteOnExit() won't work on Windows, where
+        ExtractLib.extractLibrary(tempSharedLib);
+        // load the shared lib from the temp path
+        System.load(tempSharedLib.getAbsolutePath());
+
+        // Unfortunately File.deleteOnExit() and File.delete() won't work on Windows, where
         // files cannot be deleted while they're in use. On Windows, once
         // our .dll is loaded, it can't be deleted by this process.
         //
@@ -306,14 +311,9 @@ public final class CRT {
         String os = getOSIdentifier();
         if (os.equals("windows")) {
             tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
-        }
-        ExtractLib.extractLibrary(tempSharedLib);
-        // load the shared lib from the temp path
-        System.load(tempSharedLib.getAbsolutePath());
-
-        if(!tempSharedLib.delete()) {
-            CrtRuntimeException rex = new CrtRuntimeException("Invalid directory: " + path);
-            throw rex;
+        } else {
+            // Once it is loaded successfully, we can safely delete it and it will keep working in the current process.
+            tempSharedLib.delete();
         }
     }
 

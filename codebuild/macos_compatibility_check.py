@@ -47,7 +47,6 @@ def main():
         tr -d '[:space:]'
     """.format(arch)
 
-
     print("Start to validate the build binary for MacOS with architecture {}, expected min os version: {}".format(arch,supported_version))
     result = subprocess.check_output(otool_cmd, shell=True).decode("utf-8")
 
@@ -61,3 +60,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

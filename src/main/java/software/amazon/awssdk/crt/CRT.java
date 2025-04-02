@@ -294,7 +294,6 @@ public final class CRT {
         // Ask Java to try and delete it on exit. We call this immediately
         // so that if anything goes wrong writing the file to disk, or
         // loading it as a shared lib, it will still get cleaned up.
-        // Once it is loaded successfully, we can safely delete it and it will keep working in the current process.
         tempSharedLib.deleteOnExit();
 
         ExtractLib.extractLibrary(tempSharedLib);

@@ -296,7 +296,11 @@ public final class CRT {
         // loading it as a shared lib, it will still get cleaned up.
         tempSharedLib.deleteOnExit();
 
-        // Unfortunately File.deleteOnExit() won't work on Windows, where
+        ExtractLib.extractLibrary(tempSharedLib);
+        // load the shared lib from the temp path
+        System.load(tempSharedLib.getAbsolutePath());
+
+        // Unfortunately File.deleteOnExit() and File.delete() won't work on Windows, where
         // files cannot be deleted while they're in use. On Windows, once
         // our .dll is loaded, it can't be deleted by this process.
         //
@@ -306,11 +310,10 @@ public final class CRT {
         String os = getOSIdentifier();
         if (os.equals("windows")) {
             tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
+        } else {
+            // Once it is loaded successfully, we can safely delete it and it will keep working in the current process.
+            tempSharedLib.delete();
         }
-        ExtractLib.extractLibrary(tempSharedLib);
-        // load the shared lib from the temp path
-        System.load(tempSharedLib.getAbsolutePath());
-
     }
 
     private static void loadLibraryFromJar() {

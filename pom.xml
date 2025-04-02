@@ -102,7 +102,7 @@
             </activation>
             <properties>
                 <cmake.cflags/>
-                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=x86_64</cmake.osx_arch>
             </properties>
         </profile>
@@ -115,7 +115,7 @@
                     </os>
                 </activation>
             <properties>
-                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=arm64</cmake.osx_arch>
             </properties>
         </profile>

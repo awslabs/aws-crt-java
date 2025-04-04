@@ -11,7 +11,6 @@ public class ResumeToken {
         private long totalNumParts;
         private long numPartsCompleted;
         private String uploadId;
-        private String objectLastModified;
 
         /**
          * Default constructor
@@ -54,15 +53,6 @@ public class ResumeToken {
             return this;
         }
 
-        /**
-         * @param objectLastModified objectLastModified time from the server
-         * @return this resume token object
-         */
-        public PutResumeTokenBuilder withObjectLastModified(String objectLastModified) {
-            this.objectLastModified = objectLastModified;
-            return this;
-        }
-
         public ResumeToken build() {
             return new ResumeToken(this);
         }
@@ -81,7 +71,6 @@ public class ResumeToken {
         this.totalNumParts = builder.totalNumParts;
         this.numPartsCompleted = builder.numPartsCompleted;
         this.uploadId = builder.uploadId;
-        this.objectLastModified = builder.objectLastModified;
     }
     /**
      * Default constructor

@@ -47,6 +47,11 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
+ * Throws java OutOfMemoryError
+ ******************************************************************************/
+void aws_jni_throw_out_of_memory_exception(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
  * Throws java IllegalArgumentException
  ******************************************************************************/
 void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...);
@@ -180,10 +185,31 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
 
+/*******************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_critical_acquire - Creates an aws_byte_cursor from the
+ * bytes extracted from the supplied jbyteArray.
+ * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
+ * it's no longer needed, or it will leak.
+ *
+ * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
+ * and a java exception is being thrown.
+ * **** WARNING: Here be dragons ****
+ * This function uses critical jvm functions to access memory, which is faster, but comes
+ * with a litany of limitations, so use at your own risk.
+ * Spending too much time in a critical section will stall gc and mem functionality, so under
+ * no conditions use jni functions while in critical section on current thread (ok, on other threads).
+ ******************************************************************************/
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_critical_acquire(JNIEnv *env, jbyteArray str);
+
 /********************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
+
+/********************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_release - Releases critical array access back to JVM
+ ********************************************************************************/
+void aws_jni_byte_cursor_from_jbyteArray_critical_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
 
 /*******************************************************************************
  * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the

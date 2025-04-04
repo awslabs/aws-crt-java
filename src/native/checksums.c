@@ -9,6 +9,12 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+/**
+ * Note: we use critical mem access in below functions to speed up checksums.
+ * This approach is the same as what OpenJDK uses for their checksum implementation.
+ * Think twice before using similar approach elsewhere as it can lead to stalling.
+ */
+
 jint crc32_common(
     JNIEnv *env,
     jbyteArray input,
@@ -16,12 +22,16 @@ jint crc32_common(
     const size_t start,
     size_t length,
     uint32_t (*checksum_fn)(const uint8_t *, size_t, uint32_t)) {
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
+    if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
+        return previous;
+    }
+
     struct aws_byte_cursor cursor = c_byte_array;
     aws_byte_cursor_advance(&cursor, start);
     cursor.len = aws_min_size(length, cursor.len);
     jint res_signed = (jint)checksum_fn(cursor.ptr, cursor.len, previous);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, input, c_byte_array);
+    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     return res_signed;
 }
 
@@ -61,11 +71,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_checksums_CRC64NVME_crc6
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
+    if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
+        return previous;
+    }
+
     struct aws_byte_cursor cursor = c_byte_array;
     aws_byte_cursor_advance(&cursor, offset);
     cursor.len = aws_min_size(length, cursor.len);
     jlong res_signed = (jlong)aws_checksums_crc64nvme_ex(cursor.ptr, cursor.len, previous);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, input, c_byte_array);
+    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     return res_signed;
 }

@@ -207,7 +207,7 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_critical_acquire(JNIE
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
 
 /********************************************************************************
- * aws_jni_byte_cursor_from_jbyteArray_release - Releases critical array access back to JVM
+ * aws_jni_byte_cursor_from_jbyteArray_critical_release - Releases critical array access back to JVM
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_critical_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
 

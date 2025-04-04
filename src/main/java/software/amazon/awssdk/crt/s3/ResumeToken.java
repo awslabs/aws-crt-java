@@ -63,6 +63,7 @@ public class ResumeToken {
     private long totalNumParts;
     private long numPartsCompleted;
     private String uploadId;
+    private String objectLastModified;
 
     public ResumeToken(PutResumeTokenBuilder builder) {
         this.nativeType = S3MetaRequestOptions.MetaRequestType.PUT_OBJECT.getNativeValue();
@@ -121,5 +122,18 @@ public class ResumeToken {
         }
 
         return uploadId;
+    }
+    /******
+     * Download Specific fields.
+     ******/
+    /**
+     * @return Object last modified time
+     */
+    public String getObjectLastModifiedString() {
+        if (getType() != S3MetaRequestOptions.MetaRequestType.GET_OBJECT) {
+            throw new IllegalArgumentException("ResumeToken - Object last modified time is only defined for Get Object Resume tokens");
+        }
+
+        return objectLastModified;
     }
 }

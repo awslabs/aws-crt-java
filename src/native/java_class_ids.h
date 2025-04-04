@@ -455,6 +455,7 @@ struct java_aws_s3_meta_request_resume_token {
     jfieldID total_num_parts_field_id;
     jfieldID num_parts_completed_field_id;
     jfieldID upload_id_field_id;
+    jfieldID object_last_modified_field_id;
 };
 extern struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
 

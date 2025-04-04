@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.s3;
 
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public class S3MetaRequest extends CrtResource {
 
@@ -75,6 +76,20 @@ public class S3MetaRequest extends CrtResource {
         return s3MetaRequestPause(getNativeHandle());
     }
 
+    public CompletableFuture<ResumeToken> pauseAsync() {
+        CompletableFuture<ResumeToken> future = new CompletableFuture<>();
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
+        }
+        try {
+            s3MetaRequestPauseAsync(getNativeHandle(), future);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+
+        return future;
+    }
+
     /**
      * Increment the flow-control window, so that response data continues downloading.
      * <p>
@@ -113,6 +128,10 @@ public class S3MetaRequest extends CrtResource {
     private static native void s3MetaRequestCancel(long s3MetaRequest);
 
     private static native ResumeToken s3MetaRequestPause(long s3MetaRequest);
+
+    private static native void s3MetaRequestPauseAsync(
+        long s3MetaRequest,
+        CompletableFuture<ResumeToken> future) throws CrtRuntimeException;
 
     private static native void s3MetaRequestIncrementReadWindow(long s3MetaRequest, long bytes);
 }

@@ -988,6 +988,9 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
     s3_meta_request_resume_token_properties.upload_id_field_id =
         (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.upload_id_field_id);
+    s3_meta_request_resume_token_properties.object_last_modified_field_id =
+        (*env)->GetFieldID(env, cls, "objectLastModified", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.object_last_modified_field_id);
 }
 
 struct java_aws_mqtt5_connack_packet_properties mqtt5_connack_packet_properties;

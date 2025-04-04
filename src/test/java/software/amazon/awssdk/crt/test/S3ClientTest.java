@@ -337,14 +337,24 @@ public class S3ClientTest extends CrtTestFixture {
             };
 
             HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
-            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
+            HttpRequest httpRequest = new HttpRequest("GET", "/pre-existing-2GB", headers, null);
 
             S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
                     .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Thread.sleep(3000); // sleep 1 sec to pause
+                CompletableFuture<ResumeToken> pauseFuture = metaRequest.pauseAsync();
+                Assert.assertNotNull(pauseFuture);
+                ResumeToken token = pauseFuture.get();
+                // ResumeToken token = metaRequest.pause();
+                Assert.assertNotNull(token);
+                System.err.println("Resume token getObjectLastModifiedString from Java: " + token.getObjectLastModifiedString());
+                System.err.println("Resume token part size from Java: " + token.getPartSize());
+                System.err.println("Resume token getNumPartsCompleted from Java: " + token.getNumPartsCompleted());
+                System.err.println("Resume token getTotalNumParts from Java: " + token.getTotalNumParts());
+                // Assert.assertEquals(Integer.valueOf(14352), onFinishedFuture.get());
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());

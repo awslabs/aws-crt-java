@@ -1210,6 +1210,72 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     aws_s3_meta_request_cancel(meta_request);
 }
 
+static jobject s_java_resume_token_from_native(JNIEnv *env, struct aws_s3_meta_request_resume_token *resume_token) {
+    jobject resume_token_jni = NULL;
+    if (resume_token != NULL) {
+        resume_token_jni = (*env)->NewObject(
+            env,
+            s3_meta_request_resume_token_properties.s3_meta_request_resume_token_class,
+            s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id);
+        if ((*env)->ExceptionCheck(env) || resume_token_jni == NULL) {
+            aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to create ResumeToken.");
+            goto done;
+        }
+
+        enum aws_s3_meta_request_type type = aws_s3_meta_request_resume_token_type(resume_token);
+        (*env)->SetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id, type);
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.part_size_field_id,
+            aws_s3_meta_request_resume_token_part_size(resume_token));
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.total_num_parts_field_id,
+            aws_s3_meta_request_resume_token_total_num_parts(resume_token));
+        (*env)->SetLongField(
+            env,
+            resume_token_jni,
+            s3_meta_request_resume_token_properties.num_parts_completed_field_id,
+            aws_s3_meta_request_resume_token_num_parts_completed(resume_token));
+
+        struct aws_byte_cursor upload_id_cur = aws_s3_meta_request_resume_token_upload_id(resume_token);
+        if (upload_id_cur.len > 0) {
+            jstring upload_id_jni = aws_jni_string_from_cursor(env, &upload_id_cur);
+            (*env)->SetObjectField(
+                env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id, upload_id_jni);
+
+            (*env)->DeleteLocalRef(env, upload_id_jni);
+        }
+        struct aws_byte_cursor object_last_modified_cur = aws_s3_meta_request_resume_object_last_modified(resume_token);
+        if (object_last_modified_cur.len > 0) {
+            jstring object_last_modified = aws_jni_string_from_cursor(env, &object_last_modified_cur);
+            (*env)->SetObjectField(
+                env,
+                resume_token_jni,
+                s3_meta_request_resume_token_properties.object_last_modified_field_id,
+                object_last_modified);
+
+            (*env)->DeleteLocalRef(env, object_last_modified);
+        }
+        printf("Resume token: %p\n", (void *)resume_token);
+        printf("Java resume token: %p\n", (void *)resume_token_jni);
+        printf("Resume token type: %d\n", type);
+        printf(
+            "Resume token part size: %llu\n",
+            (unsigned long long)aws_s3_meta_request_resume_token_part_size(resume_token));
+        printf(
+            "Resume token total num parts: %llu\n",
+            (unsigned long long)aws_s3_meta_request_resume_token_total_num_parts(resume_token));
+        printf(
+            "Resume token num parts completed: %llu\n",
+            (unsigned long long)aws_s3_meta_request_resume_token_num_parts_completed(resume_token));
+    }
+done:
+    return resume_token_jni;
+}
+
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestPause(
     JNIEnv *env,
     jclass jni_class,
@@ -1232,51 +1298,89 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3Met
         return NULL;
     }
 
-    jobject resume_token_jni = NULL;
-    if (resume_token != NULL) {
-        resume_token_jni = (*env)->NewObject(
-            env,
-            s3_meta_request_resume_token_properties.s3_meta_request_resume_token_class,
-            s3_meta_request_resume_token_properties.s3_meta_request_resume_token_constructor_method_id);
-        if ((*env)->ExceptionCheck(env) || resume_token_jni == NULL) {
-            aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to create ResumeToken.");
-            goto on_done;
-        }
-
-        enum aws_s3_meta_request_type type = aws_s3_meta_request_resume_token_type(resume_token);
-        if (type != AWS_S3_META_REQUEST_TYPE_PUT_OBJECT) {
-            aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPause: Failed to convert resume token.");
-            goto on_done;
-        }
-
-        (*env)->SetIntField(env, resume_token_jni, s3_meta_request_resume_token_properties.native_type_field_id, type);
-        (*env)->SetLongField(
-            env,
-            resume_token_jni,
-            s3_meta_request_resume_token_properties.part_size_field_id,
-            aws_s3_meta_request_resume_token_part_size(resume_token));
-        (*env)->SetLongField(
-            env,
-            resume_token_jni,
-            s3_meta_request_resume_token_properties.total_num_parts_field_id,
-            aws_s3_meta_request_resume_token_total_num_parts(resume_token));
-        (*env)->SetLongField(
-            env,
-            resume_token_jni,
-            s3_meta_request_resume_token_properties.num_parts_completed_field_id,
-            aws_s3_meta_request_resume_token_num_parts_completed(resume_token));
-
-        struct aws_byte_cursor upload_id_cur = aws_s3_meta_request_resume_token_upload_id(resume_token);
-        jstring upload_id_jni = aws_jni_string_from_cursor(env, &upload_id_cur);
-        (*env)->SetObjectField(
-            env, resume_token_jni, s3_meta_request_resume_token_properties.upload_id_field_id, upload_id_jni);
-
-        (*env)->DeleteLocalRef(env, upload_id_jni);
-    }
-
-on_done:
+    jobject resume_token_jni = s_java_resume_token_from_native(env, resume_token);
     aws_s3_meta_request_resume_token_release(resume_token);
     return resume_token_jni;
+}
+struct s_pause_callback_data {
+    JavaVM *jvm;
+    jobject java_pause_future;
+};
+
+static void s_s3_meta_request_pause_complete(
+    struct aws_s3_meta_request *meta_request,
+    struct aws_s3_meta_request_resume_token *resume_token,
+    void *user_data) {
+    (void)meta_request;
+    struct s_pause_callback_data *callback_data = (struct s_pause_callback_data *)user_data;
+    /********** JNI ENV ACQUIRE **********/
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    JavaVM *jvm = callback_data->jvm;
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
+    jobject resume_token_jni = s_java_resume_token_from_native(env, resume_token);
+    if (resume_token_jni == NULL) {
+        jobject exception;
+        if (!aws_jni_get_and_clear_exception(env, &exception)) {
+            /* No exception raised from Java, create our own */
+            exception = aws_jni_new_crt_exception_from_error_code(env, aws_last_error());
+        }
+
+        (*env)->CallBooleanMethod(
+            env,
+            callback_data->java_pause_future,
+            completable_future_properties.complete_exceptionally_method_id,
+            exception);
+
+        goto done;
+    }
+
+    (*env)->CallBooleanMethod(
+        env, callback_data->java_pause_future, completable_future_properties.complete_method_id, resume_token_jni);
+    (*env)->DeleteLocalRef(env, resume_token_jni);
+
+done:
+    (*env)->DeleteGlobalRef(env, callback_data->java_pause_future);
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+    aws_jni_release_thread_env(jvm, env);
+    /********** JNI ENV RELEASE **********/
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestPauseAsync(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_meta_request,
+    jobject java_pause_future) {
+
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_s3_meta_request *meta_request = (struct aws_s3_meta_request *)jni_s3_meta_request;
+    if (!meta_request) {
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+        aws_jni_throw_illegal_argument_exception(
+            env, "S3MetaRequest.s3MetaRequestPauseAsync: Invalid/null meta request");
+        return;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct s_pause_callback_data *callback_data = aws_mem_calloc(allocator, 1, sizeof(struct s_pause_callback_data));
+    jint jvmresult = (*env)->GetJavaVM(env, &callback_data->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    callback_data->java_pause_future = (*env)->NewGlobalRef(env, java_pause_future);
+    AWS_FATAL_ASSERT(callback_data->java_pause_future != NULL);
+
+    if (aws_s3_meta_request_pause_async(meta_request, s_s3_meta_request_pause_complete, callback_data)) {
+        printf("Failed to pause async, last error: %d\n", aws_last_error());
+        (*env)->DeleteGlobalRef(env, callback_data->java_pause_future);
+        aws_mem_release(allocator, callback_data);
+        aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPauseAsync: Failed to pause request");
+        return;
+    }
 }
 
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRequestIncrementReadWindow(

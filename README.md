@@ -43,6 +43,7 @@ Building:
 
 ### OSX
 Requirements:
+* MacOS: 10.15+
 * cmake 3.9+
 * ninja
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set

@@ -689,8 +689,7 @@ done:
 }
 
 static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
-    struct aws_byte_cursor payload,
-    struct aws_byte_cursor topic,
+    const struct aws_mqtt_request_response_publish_event *publish_event,
     void *user_data) {
 
     struct aws_streaming_operation_binding *binding = user_data;
@@ -711,8 +710,8 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
     jstring java_topic = NULL;
     jobject java_incoming_publish_event = NULL;
 
-    java_payload = aws_jni_byte_array_from_cursor(env, &payload);
-    java_topic = aws_jni_string_from_cursor(env, &topic);
+    java_payload = aws_jni_byte_array_from_cursor(env, &publish_event->payload);
+    java_topic = aws_jni_string_from_cursor(env, &publish_event->topic);
 
     java_incoming_publish_event = (*env)->NewObject(
         env,

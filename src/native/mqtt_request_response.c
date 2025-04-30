@@ -421,8 +421,7 @@ static int s_aws_request_response_operation_jni_owned_parameters_init_from_jobje
 }
 
 static void s_on_request_response_operation_completion(
-    const struct aws_byte_cursor *response_topic,
-    const struct aws_byte_cursor *payload,
+    const struct aws_mqtt_rr_incoming_publish_event *publish_event,
     int error_code,
     void *user_data) {
 
@@ -441,10 +440,10 @@ static void s_on_request_response_operation_completion(
             mqtt_request_response_properties.mqtt_request_response_class,
             mqtt_request_response_properties.constructor_method_id);
         if (java_result != NULL) {
-            java_topic = aws_jni_string_from_cursor(env, response_topic);
+            java_topic = aws_jni_string_from_cursor(env, &publish_event->topic);
             (*env)->SetObjectField(env, java_result, mqtt_request_response_properties.topic_field_id, java_topic);
 
-            java_payload = aws_jni_byte_array_from_cursor(env, payload);
+            java_payload = aws_jni_byte_array_from_cursor(env, &publish_event->payload);
             (*env)->SetObjectField(env, java_result, mqtt_request_response_properties.payload_field_id, java_payload);
         }
     }
@@ -689,8 +688,7 @@ done:
 }
 
 static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
-    struct aws_byte_cursor payload,
-    struct aws_byte_cursor topic,
+    const struct aws_mqtt_rr_incoming_publish_event *publish_event,
     void *user_data) {
 
     struct aws_streaming_operation_binding *binding = user_data;
@@ -711,8 +709,8 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
     jstring java_topic = NULL;
     jobject java_incoming_publish_event = NULL;
 
-    java_payload = aws_jni_byte_array_from_cursor(env, &payload);
-    java_topic = aws_jni_string_from_cursor(env, &topic);
+    java_payload = aws_jni_byte_array_from_cursor(env, &publish_event->payload);
+    java_topic = aws_jni_string_from_cursor(env, &publish_event->topic);
 
     java_incoming_publish_event = (*env)->NewObject(
         env,

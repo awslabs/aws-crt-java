@@ -726,6 +726,13 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
         goto done;
     }
 
+    jstring java_content_type = NULL;
+    if (publish_event->content_type != NULL) {
+        java_content_type = aws_jni_string_from_cursor(env, publish_event->content_type);
+        (*env)->CallVoidMethod(
+            env, java_incoming_publish_event, incoming_publish_event_properties.set_content_type_id, java_content_type);
+    }
+
     (*env)->CallVoidMethod(
         env,
         binding->java_incoming_publish_event_callback,

@@ -5,11 +5,23 @@
 
 package software.amazon.awssdk.crt.iot;
 
+import software.amazon.awssdk.crt.mqtt5.packets.UserProperty;
+
+import java.util.List;
+
+/**
+ * An event that describes an incoming publish message received on a streaming operation.
+ */
 public class IncomingPublishEvent {
 
     private final byte[] payload;
 
     private final String topic;
+
+    private String contentType;
+    private List<UserProperty> userProperties;
+    private Long messageExpiryIntervalSeconds;
+
 
     private IncomingPublishEvent(byte[] payload, String topic) {
         this.payload = payload;
@@ -32,5 +44,21 @@ public class IncomingPublishEvent {
      */
     public String getTopic() {
         return topic;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public List<UserProperty> getUserProperties() {
+        return userProperties;
+    }
+
+    public Long getMessageExpiryIntervalSeconds() {
+        return messageExpiryIntervalSeconds;
     }
 }

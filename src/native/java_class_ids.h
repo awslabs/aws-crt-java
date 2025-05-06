@@ -1006,6 +1006,7 @@ extern struct java_mqtt_request_response_properties mqtt_request_response_proper
 struct java_incoming_publish_event_properties {
     jclass incoming_publish_event_class;
     jmethodID constructor_method_id;
+    jmethodID set_content_type_id;
 };
 extern struct java_incoming_publish_event_properties incoming_publish_event_properties;
 

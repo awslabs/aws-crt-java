@@ -21,8 +21,10 @@ import software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn;
 import software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket;
+import software.amazon.awssdk.crt.mqtt5.packets.UserProperty;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -729,11 +731,19 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         String originalPayloadAsString = "IncomingPublishTest";
         byte[] originalPayload = originalPayloadAsString.getBytes(StandardCharsets.UTF_8);
 
+        String contentType = "application/json";
+
+        ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+        userProperties.add(new UserProperty("Hello", "World"));
+
         if (version == MqttVersion.Mqtt5) {
             PublishPacket publishPacket = new PublishPacket.PublishPacketBuilder()
                     .withPayload(originalPayload)
                     .withTopic(fakeShadowTopic)
                     .withQOS(QOS.AT_LEAST_ONCE)
+                    .withContentType(contentType)
+                    .withUserProperties(userProperties)
+                    .withMessageExpiryIntervalSeconds(8L)
                     .build();
             this.context.mqtt5Client.publish(publishPacket);
         } else {
@@ -746,11 +756,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
             String payloadAsString = new String(event.getPayload(), StandardCharsets.UTF_8);
             Assert.assertEquals(originalPayloadAsString, payloadAsString);
             Assert.assertEquals(fakeShadowTopic, event.getTopic());
-        } catch (Exception ex) {
+            Assert.assertEquals(contentType, event.getContentType());
+        } catch (Exception | Error ex) {
             Assert.assertTrue(false);
+        } finally {
+            stream.close();
         }
-
-        stream.close();
     }
 
     @Test

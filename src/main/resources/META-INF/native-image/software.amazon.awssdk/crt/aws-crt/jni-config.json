@@ -1014,6 +1014,12 @@
           "byte[]",
           "java.lang.String"
         ]
+      },
+      {
+        "name": "setContentType",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
       }
     ]
   },

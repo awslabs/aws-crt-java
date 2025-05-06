@@ -5,6 +5,7 @@ echo PATH=%PATH%
 echo JAVA_HOME=%JAVA_HOME%
 
 set AWS_CMAKE_GENERATOR=Visual Studio 14 2015 Win64
+set AWS_WINDOWS_SDK_VERSION=10.0.17763.0
 
 git submodule update --init
 

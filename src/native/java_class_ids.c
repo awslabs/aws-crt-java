@@ -2415,7 +2415,10 @@ static void s_cache_incoming_publish_event_properties(JNIEnv *env) {
         env, incoming_publish_event_properties.incoming_publish_event_class, "userProperties", "Ljava/util/List;");
 
     incoming_publish_event_properties.message_expiry_interval_seconds_id = (*env)->GetFieldID(
-        env, incoming_publish_event_properties.incoming_publish_event_class, "messageExpiryIntervalSeconds", "Ljava/lang/Long;");
+        env,
+        incoming_publish_event_properties.incoming_publish_event_class,
+        "messageExpiryIntervalSeconds",
+        "Ljava/lang/Long;");
 
     AWS_FATAL_ASSERT(incoming_publish_event_properties.constructor_method_id);
 }

@@ -19,9 +19,10 @@ public class IncomingPublishEvent {
     private final String topic;
 
     private String contentType;
-    private List<UserProperty> userProperties;
-    private Long messageExpiryIntervalSeconds;
 
+    private List<UserProperty> userProperties;
+
+    private Long messageExpiryIntervalSeconds;
 
     private IncomingPublishEvent(byte[] payload, String topic) {
         this.payload = payload;

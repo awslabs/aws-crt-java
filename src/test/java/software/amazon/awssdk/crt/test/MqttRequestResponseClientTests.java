@@ -783,6 +783,10 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
             String eventPayload = new String(event.getPayload(), StandardCharsets.UTF_8);
             Assert.assertEquals("payload", payload, eventPayload);
             Assert.assertEquals("topic", topic, event.getTopic());
+
+            Assert.assertNull("content-type", event.getContentType());
+            Assert.assertNull("user-properties", event.getUserProperties());
+            Assert.assertNull("message-expiry-interval-seconds", event.getMessageExpiryIntervalSeconds());
         }
     }
 

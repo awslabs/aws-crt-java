@@ -46,18 +46,29 @@ public class IncomingPublishEvent {
         return topic;
     }
 
+    /**
+     * Gets the content type of the IncomingPublishEvent.
+     *
+     * @return Content type of the IncomingPublishEvent.
+     */
     public String getContentType() {
         return contentType;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
+    /**
+     * Gets the user properties of the IncomingPublishEvent.
+     *
+     * @return User properties of the IncomingPublishEvent.
+     */
     public List<UserProperty> getUserProperties() {
         return userProperties;
     }
 
+    /**
+     * Gets the message expiry interval seconds of the IncomingPublishEvent.
+     *
+     * @return Message expiry interval seconds of the IncomingPublishEvent.
+     */
     public Long getMessageExpiryIntervalSeconds() {
         return messageExpiryIntervalSeconds;
     }

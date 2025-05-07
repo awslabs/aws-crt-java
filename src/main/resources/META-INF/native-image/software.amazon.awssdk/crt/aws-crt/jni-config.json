@@ -1014,12 +1014,17 @@
           "byte[]",
           "java.lang.String"
         ]
+      }
+    ],
+    "fields": [
+      {
+        "name": "contentType"
       },
       {
-        "name": "setContentType",
-        "parameterTypes": [
-          "java.lang.String"
-        ]
+        "name": "userProperties"
+      },
+      {
+        "name": "messageExpiryIntervalSeconds"
       }
     ]
   },

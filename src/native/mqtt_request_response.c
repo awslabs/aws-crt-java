@@ -10,6 +10,7 @@
 
 #include "java_class_ids.h"
 #include "mqtt5_client_jni.h"
+#include "mqtt5_utils.h"
 #include "mqtt_connection.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
@@ -723,6 +724,37 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
         AWS_LOGF_ERROR(
             AWS_LS_JAVA_CRT_GENERAL,
             "s_aws_mqtt_streaming_operation_incoming_publish_callback - could not create incoming publish event");
+        goto done;
+    }
+
+    if (s_set_jni_string_field_in_packet(
+            env,
+            publish_event->content_type,
+            java_incoming_publish_event,
+            incoming_publish_event_properties.content_type_id,
+            "content type",
+            true)) {
+        goto done;
+    }
+
+    if (publish_event->user_properties != NULL && publish_event->user_property_count > 0) {
+        if (s_set_user_properties_field(
+                env,
+                publish_event->user_property_count,
+                publish_event->user_properties,
+                java_incoming_publish_event,
+                incoming_publish_event_properties.user_properties_field_id)) {
+            goto done;
+        }
+    }
+
+    if (s_set_jni_uint32_t_field_in_packet(
+            env,
+            publish_event->message_expiry_interval_seconds,
+            java_incoming_publish_event,
+            incoming_publish_event_properties.message_expiry_interval_seconds_id,
+            "message expiry interval seconds",
+            true)) {
         goto done;
     }
 

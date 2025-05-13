@@ -1015,6 +1015,17 @@
           "java.lang.String"
         ]
       }
+    ],
+    "fields": [
+      {
+        "name": "contentType"
+      },
+      {
+        "name": "userProperties"
+      },
+      {
+        "name": "messageExpiryIntervalSeconds"
+      }
     ]
   },
   {

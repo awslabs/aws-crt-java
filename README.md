@@ -29,7 +29,7 @@ This library is licensed under the Apache 2.0 License.
 
 ### Linux/Unix
 Requirements:
-* Clang 3.9+ or GCC 4.4+
+* Clang 6+ or GCC 4.4+
 * cmake 3.9+
 * Java: Any JDK8 or above, ensure `JAVA_HOME` is set
 * Maven

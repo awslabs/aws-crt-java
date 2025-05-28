@@ -273,6 +273,15 @@ void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/NullPointerException"), buf);
 }
 
+void aws_jni_throw_out_of_memory_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/OutOfMemoryError"), buf);
+}
+
 void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
@@ -441,9 +450,31 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
     return aws_byte_cursor_from_array(bytes, len);
 }
 
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_critical_acquire(JNIEnv *env, jbyteArray array) {
+    if (array == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "byte[] is null");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    jbyte *bytes = (*env)->GetPrimitiveArrayCritical(env, array, NULL);
+    if (bytes == NULL) {
+        aws_jni_throw_out_of_memory_exception(env, "failed to acquire array memory");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetArrayLength(env, array);
+    return aws_byte_cursor_from_array(bytes, len);
+}
+
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
     if (cur.ptr != NULL) {
         (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
+}
+
+void aws_jni_byte_cursor_from_jbyteArray_critical_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
+    if (cur.ptr != NULL) {
+        (*env)->ReleasePrimitiveArrayCritical(env, array, (jbyte *)cur.ptr, JNI_ABORT);
     }
 }
 
@@ -619,7 +650,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
  * AWS-LC always defines FIPS_mode() that you can call and check what the library was built with. It does not define
  * a public OPENSSL_FIPS/AWSLC_FIPS macro that we can (or need to) check here
  *
- * Safeguard with macro's, for example because Libressl dosn't define
+ * Safeguard with macro's, for example because Libressl doesn't define
  * FIPS_mode() by default.
  * */
 #if defined(OPENSSL_FIPS) || defined(OPENSSL_IS_AWSLC)

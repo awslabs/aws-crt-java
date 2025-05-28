@@ -21,8 +21,10 @@ import software.amazon.awssdk.crt.mqtt5.OnConnectionFailureReturn;
 import software.amazon.awssdk.crt.mqtt5.OnConnectionSuccessReturn;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt5.packets.PublishPacket;
+import software.amazon.awssdk.crt.mqtt5.packets.UserProperty;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -699,14 +701,21 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         doStreamingOperationOpenClosedTest(MqttVersion.Mqtt311);
     }
 
-    void doStreamingOperationIncomingPublishTest(MqttVersion version) {
+    public interface StreamOperationPublishHelper {
+        String getTopic();
+        PublishPacket createMqtt5PublishPacket();
+        MqttMessage createMqtt3Message();
+        void assertPublishEvent(IncomingPublishEvent event);
+    }
+
+    void doStreamingOperationIncomingPublishTest(MqttVersion version, StreamOperationPublishHelper helper) {
         this.context = new TestContext(version, null);
         CompletableFuture<Boolean> subscribed = new CompletableFuture<>();
         CompletableFuture<IncomingPublishEvent> publishEvent = new CompletableFuture<>();
 
-        String fakeShadowTopic = "not/a/shadow/topic/" + (UUID.randomUUID()).toString();
+        String topic = helper.getTopic();
         StreamingOperationOptions streamingOptions = StreamingOperationOptions.builder()
-                .withTopic(fakeShadowTopic)
+                .withTopic(topic)
                 .withSubscriptionStatusEventCallback((event) -> {
                     if (event.getType() == SubscriptionStatusEventType.SUBSCRIPTION_ESTABLISHED) {
                         subscribed.complete(true);
@@ -723,48 +732,135 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         try {
             subscribed.get();
         } catch (Exception ex) {
-            Assert.assertTrue(false);
+            Assert.fail(ex.getMessage());
         }
 
-        String originalPayloadAsString = "IncomingPublishTest";
-        byte[] originalPayload = originalPayloadAsString.getBytes(StandardCharsets.UTF_8);
-
         if (version == MqttVersion.Mqtt5) {
-            PublishPacket publishPacket = new PublishPacket.PublishPacketBuilder()
-                    .withPayload(originalPayload)
-                    .withTopic(fakeShadowTopic)
-                    .withQOS(QOS.AT_LEAST_ONCE)
-                    .build();
+            PublishPacket publishPacket = helper.createMqtt5PublishPacket();
             this.context.mqtt5Client.publish(publishPacket);
         } else {
-            this.context.mqtt311Client.publish(new MqttMessage(fakeShadowTopic, originalPayload, QualityOfService.AT_LEAST_ONCE));
+            this.context.mqtt311Client.publish(helper.createMqtt3Message());
         }
 
         try {
             IncomingPublishEvent event = publishEvent.get();
-            Assert.assertNotNull(event);
-            String payloadAsString = new String(event.getPayload(), StandardCharsets.UTF_8);
-            Assert.assertEquals(originalPayloadAsString, payloadAsString);
-            Assert.assertEquals(fakeShadowTopic, event.getTopic());
-        } catch (Exception ex) {
-            Assert.assertTrue(false);
+            helper.assertPublishEvent(event);
+        } catch (Exception | Error ex) {
+            Assert.fail(ex.getMessage());
+        } finally {
+            stream.close();
+        }
+    }
+
+    class StreamOperationPublishHelper_RequiredFieldsOnly implements StreamOperationPublishHelper {
+        private final String payload = "IncomingPublishTest";
+        private final String topic = "not/a/shadow/topic/" + (UUID.randomUUID()).toString();
+
+        @Override
+        public String getTopic() {
+            return topic;
         }
 
-        stream.close();
+        @Override
+        public PublishPacket createMqtt5PublishPacket() {
+            byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+            return new PublishPacket.PublishPacketBuilder()
+                .withPayload(payloadBytes)
+                .withTopic(topic)
+                .withQOS(QOS.AT_LEAST_ONCE)
+                .build();
+        }
+
+        @Override
+        public MqttMessage createMqtt3Message() {
+            byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+            return new MqttMessage(topic, payloadBytes, QualityOfService.AT_LEAST_ONCE);
+        }
+
+        @Override
+        public void assertPublishEvent(IncomingPublishEvent event) {
+            Assert.assertNotNull(event);
+            String eventPayload = new String(event.getPayload(), StandardCharsets.UTF_8);
+            Assert.assertEquals("payload", payload, eventPayload);
+            Assert.assertEquals("topic", topic, event.getTopic());
+
+            Assert.assertNull("content-type", event.getContentType());
+            Assert.assertNull("user-properties", event.getUserProperties());
+            Assert.assertNull("message-expiry-interval-seconds", event.getMessageExpiryIntervalSeconds());
+        }
+    }
+
+    class StreamOperationPublishHelper_AllFields implements StreamOperationPublishHelper {
+        private final String payload = "IncomingPublishTest";
+        private final String topic = "not/a/shadow/topic/" + (UUID.randomUUID()).toString();
+        private final String contentType = "application/json";
+        private ArrayList<UserProperty> userProperties;
+
+        @Override
+        public String getTopic() {
+            return topic;
+        }
+
+        @Override
+        public PublishPacket createMqtt5PublishPacket() {
+            byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+
+            userProperties = new ArrayList<UserProperty>();
+            userProperties.add(new UserProperty("Hello", "World"));
+
+            return new PublishPacket.PublishPacketBuilder()
+                .withPayload(payloadBytes)
+                .withTopic(topic)
+                .withQOS(QOS.AT_LEAST_ONCE)
+                .withContentType(contentType)
+                .withUserProperties(userProperties)
+                .withMessageExpiryIntervalSeconds(100L)
+                .build();
+        }
+
+        @Override
+        public MqttMessage createMqtt3Message() {
+            byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+            return new MqttMessage(topic, payloadBytes, QualityOfService.AT_LEAST_ONCE);
+        }
+
+        @Override
+        public void assertPublishEvent(IncomingPublishEvent event) {
+            Assert.assertNotNull(event);
+            String eventPayload = new String(event.getPayload(), StandardCharsets.UTF_8);
+            Assert.assertEquals("payload", payload, eventPayload);
+            Assert.assertEquals("topic", topic, event.getTopic());
+            Assert.assertEquals("content-type", contentType, event.getContentType());
+            Assert.assertEquals("user-properties size", userProperties.size(), event.getUserProperties().size());
+            for (int i = 0; i < userProperties.size(); i++) {
+                Assert.assertEquals("user-property " + i + " key", userProperties.get(i).key, event.getUserProperties().get(i).key);
+                Assert.assertEquals("user-property " + i + " value", userProperties.get(i).value, event.getUserProperties().get(i).value);
+            }
+            Assert.assertNotNull("message-expiry-interval-seconds should not be null", event.getMessageExpiryIntervalSeconds());
+            // We can't check for the exact value here as it'll be decremented by the server part.
+            Assert.assertTrue("message-expiry-interval-seconds should be a positive number", event.getMessageExpiryIntervalSeconds() > 0);
+        }
     }
 
     @Test
-    public void StreamingOperationIncomingPublishMqtt5() {
+    public void StreamingOperationIncomingPublishMqtt5_RequiredFieldsOnly() {
         skipIfNetworkUnavailable();
 
-        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt5);
+        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt5, new StreamOperationPublishHelper_RequiredFieldsOnly());
+    }
+
+    @Test
+    public void StreamingOperationIncomingPublishMqtt5_AllFields() {
+        skipIfNetworkUnavailable();
+
+        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt5, new StreamOperationPublishHelper_AllFields());
     }
 
     @Test
     public void StreamingOperationIncomingPublishMqtt311() {
         skipIfNetworkUnavailable();
 
-        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt311);
+        doStreamingOperationIncomingPublishTest(MqttVersion.Mqtt311, new StreamOperationPublishHelper_RequiredFieldsOnly());
     }
 
     void doStreamingOperationReopenFailureTest(MqttVersion version) {

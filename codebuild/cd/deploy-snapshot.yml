@@ -35,10 +35,11 @@ phases:
       - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.token.xml $HOME/.m2/settings.xml
       # import gpg key
       - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
-      - gpg --import /tmp/aws-sdk-common-runtime.key.asc
-      - export GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
-      - export ST_USERNAME=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f2 -d":" | cut -f1 -d"," | sed -e 's/[\\\"\}]//g')
-      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token | cut -f3 -d":" | sed -e 's/[\\\"\}]//g')
+      - export GPG_TTY=$(tty)
+      - gpg --batch --import /tmp/aws-sdk-common-runtime.key.asc
+      - export MAVEN_GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password  --region us-east-1 | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      - export ST_USERNAME=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token --region us-east-1 | cut -f2 -d":" | cut -f1 -d"," | sed -e 's/[\\\"\}]//g')
+      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token --region us-east-1 | cut -f3 -d":" | sed -e 's/[\\\"\}]//g')
       # Use the username and password from secret manager to update the settings
       - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
       - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
@@ -49,12 +50,12 @@ phases:
       - export DEPLOY_VERSION=${PKG_VERSION}-SNAPSHOT
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
       - bash ./codebuild/cd/deploy-platform-specific-jars.sh
       # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
       - export DEPLOY_VERSION=${PKG_VERSION}
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -Dgpg.passphrase=$GPG_PASSPHRASE | tee /tmp/deploy.log
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true | tee /tmp/deploy.log
       - export STAGING_REPO_ID=$(cat /tmp/deploy.log | grep "Created staging repository with ID" | cut -d\" -f2 | tee /tmp/repositoryId.txt)
       # upload the platform specific jars to staging repo and close the staging repo.
       - bash ./codebuild/cd/deploy-platform-specific-jars.sh

@@ -15,7 +15,7 @@ GPG_KEY=$(cat /tmp/aws-sdk-common-runtime.key.asc)
 # the release will need to be invoked within the same call.
 # https://github.com/gradle-nexus/publish-plugin/issues/379
 
-if [ "$PROMOTE_RELEASE" == "true" ]; then
+if [ "$PROMOTE_RELEASE" = "true" ]; then
     # close and release the staging repository to promote release
     ../gradlew -PsigningKey=$"$GPG_KEY" -PsigningPassword=$MAVEN_GPG_PASSPHRASE -PsonatypeUsername=$ST_USERNAME -PsonatypePassword=$ST_PASSWORD publishToSonatype closeAndReleaseSonatypeStagingRepository
 else

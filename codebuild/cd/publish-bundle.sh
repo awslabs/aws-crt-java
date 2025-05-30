@@ -23,7 +23,7 @@ fi
 
 echo "Uploading bundle to Sonatype Central..."
 
-# # Upload bundle
+# Upload bundle
 DEPLOY_ID=$(curl \
   --fail \
   --verbose \
@@ -31,15 +31,14 @@ DEPLOY_ID=$(curl \
   --request POST \
   --header "Authorization: Bearer ${AUTH_HEADER_VAL}" \
   --form "bundle=@${BUNDLE_FILE}" \
-  "${SONATYPE_API_UPLOAD_URL}" 2>&1) || {
+  "${SONATYPE_API_UPLOAD_URL}") || {
     echo "Error: Failed to upload bundle to Sonatype Central"
     exit 1
 }
 
 echo "Successfully uploaded. Deployment ID: ${DEPLOY_ID}"
 
-
-if [ "$PROMOTE_RELEASE" == "true" ]; then
+if [ "$PROMOTE_RELEASE" = "true" ]; then
     SONATYPE_API_PUBLISH_URL="https://central.sonatype.com/api/v1/publisher/deployment/${DEPLOY_ID}"
 
     echo "Publishing deployment ${DEPLOY_ID}..."

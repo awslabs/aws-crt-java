@@ -60,15 +60,17 @@ phases:
       - export BUNDLE_DIR=$CODEBUILD_SRC_DIR/aws-crt-java/bundle/
       - mkdir -p $BUNDLE_DIR
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
+      # bundle the JAR to the local bundle directory
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -DstagingDirectory=${BUNDLE_DIR} -DskipPublishing=true
-      - bash ./codebuild/cd/deploy-platform-specific-jars.sh
+      - bash ./codebuild/cd/bundle-platform-specific-jars.sh
       - cd ${BUNDLE_DIR}
+      # create a zip file of the bundle
       - zip -r $CODEBUILD_SRC_DIR/aws-crt-java/bundle.zip .
 
   post_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # Test the publish without promoting the release. You need to manually drop the release.
+      # Publish and promote the release.
       - export PROMOTE_RELEASE=true
       - ./codebuild/cd/publish-bundle.sh
       # deploy android

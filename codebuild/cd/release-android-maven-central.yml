@@ -1,7 +1,6 @@
 version: 0.2
-#this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
-# This job is responsible for artifacting the JAR which will have all of the other shared libs stuffed
-# into it once all platforms are built and artifacted
+# this buildspec assumes the ubuntu image
+# This job is responsible for release aws-crt-android to Maven Central.
 phases:
   install:
     commands:
@@ -22,13 +21,6 @@ phases:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - echo $PKG_VERSION
-      - mkdir -p target/cmake-build/lib
-      # mv all the platform-specific jars to target/
-      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
-      # cp all the shared libs to cmake-build/lib/
-      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
-      # log the downloaded files
-      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
       - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.token.xml $HOME/.m2/settings.xml

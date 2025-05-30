@@ -69,8 +69,8 @@ phases:
   publish:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # publish the bundle to sonatype
-      - export PROMOTE_RELEASE=true
+      # Test the publish without promoting the release. You need to manually drop the release.
+      - export PROMOTE_RELEASE=false
       - ./codebuild/cd/publish-bundle.sh
       # deploy android
       - ./codebuild/cd/publish-android.sh

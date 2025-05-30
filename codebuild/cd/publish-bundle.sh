@@ -1,14 +1,11 @@
 #!/bin/sh
 
+set -ex
 set -euo pipefail
-
-# Send all diagnostic output to stderr
-exec 3>&1  # Save stdout
-exec 1>&2  # Redirect stdout to stderr for messages
 
 # Configuration
 BUNDLE_FILE="bundle.zip"
-SONATYPE_API_URL="https://central.sonatype.com/api/v1/publisher/upload"
+SONATYPE_API_UPLOAD_URL="https://central.sonatype.com/api/v1/publisher/upload"
 
 # Validate prerequisites
 if [ -z "${AUTH_HEADER_VAL:-}" ]; then
@@ -23,7 +20,7 @@ fi
 
 echo "Uploading bundle to Sonatype Central..."
 
-# Upload bundle (verbose output goes to stderr)
+# Upload bundle
 DEPLOY_ID=$(curl \
   --fail \
   --verbose \
@@ -31,12 +28,19 @@ DEPLOY_ID=$(curl \
   --request POST \
   --header "Authorization: Bearer ${AUTH_HEADER_VAL}" \
   --form "bundle=@${BUNDLE_FILE}" \
-  "${SONATYPE_API_URL}" 2>&1) || {
+  "${SONATYPE_API_UPLOAD_URL}" 2>&1) || {
     echo "Error: Failed to upload bundle to Sonatype Central"
     exit 1
 }
 
 echo "Successfully uploaded. Deployment ID: ${DEPLOY_ID}"
 
-# Output only the DEPLOY_ID to original stdout for the caller
-echo "${DEPLOY_ID}" | tee /tmp/deploy-id.txt
+SONATYPE_API_PUBLISH_URL="https://central.sonatype.com/api/v1/publisher/deployment/${DEPLOY_ID}"
+
+# Publish the uploaded bundle
+curl \
+  --fail \
+  --verbose \
+  --request POST \
+  --header "Authorization: Bearer ${AUTH_HEADER_VAL}" \
+  "${SONATYPE_API_URL}"

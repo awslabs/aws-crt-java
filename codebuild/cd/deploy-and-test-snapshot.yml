@@ -35,8 +35,6 @@ phases:
       # Use the username and password from secret manager to update the settings
       - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
       - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
-      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
 
   build:
     commands:
@@ -45,6 +43,8 @@ phases:
       # update the version to match the git tag, make a snapshot version we can test
       - export DEPLOY_VERSION=${PKG_VERSION}-SNAPSHOT
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
+      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
 
   post_build:
     commands:

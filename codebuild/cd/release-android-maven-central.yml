@@ -44,15 +44,6 @@ phases:
       # Use the username and password from secret manager to update the settings
       - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
       - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
-      # --- DEPLOY SNAPSHOT ---
-      - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # update the version to match the git tag, make a snapshot version we can test
-      - export DEPLOY_VERSION=${PKG_VERSION}-SNAPSHOT
-      - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
-      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
-      # --- TEST SNAPSHOT ---
-      - mvn -B dependency:get -DrepoUrl=https://central.sonatype.com/repository/maven-snapshots/ -Dartifact=software.amazon.awssdk.crt:aws-crt:${DEPLOY_VERSION} -Dtransitive=false
 
   build:
     commands:
@@ -62,21 +53,12 @@ phases:
       - export BUNDLE_DIR=$CODEBUILD_SRC_DIR/aws-crt-java/bundle/
       - mkdir -p $BUNDLE_DIR
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
-      # bundle the JAR to the local bundle directory
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -DstagingDirectory=${BUNDLE_DIR} -DskipPublishing=true
-      - bash ./codebuild/cd/bundle-platform-specific-jars.sh
-      - cd ${BUNDLE_DIR}
-      # create a zip file of the bundle
-      - zip -r $CODEBUILD_SRC_DIR/aws-crt-java/bundle.zip .
+      - export PROMOTE_RELEASE=true
+      # deploy android
+      - bash ./codebuild/cd/publish-android.sh
 
   post_build:
     commands:
-      - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # Publish and promote the release.
-      - export PROMOTE_RELEASE=true
-      - bash ./codebuild/cd/publish-bundle.sh
-      # deploy android
-      - bash ./codebuild/cd/publish-android.sh
 
 cache:
   paths:

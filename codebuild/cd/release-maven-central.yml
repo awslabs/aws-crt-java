@@ -8,15 +8,6 @@ phases:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
       - sudo apt-get install openjdk-11-jdk-headless maven wget unzip -y -f
-      # install android sdk
-      - wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
-      - export ANDROID_SDK_ROOT=$CODEBUILD_SRC_DIR/android-sdk
-      - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-      - unzip commandlinetools-linux-7583922_latest.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-      # This weird path needed for cmd tool to work
-      - mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-      # install android build tools
-      - echo y | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-33" "ndk;21.4.7075529"
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
@@ -44,15 +35,6 @@ phases:
       # Use the username and password from secret manager to update the settings
       - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
       - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
-      # --- DEPLOY SNAPSHOT ---
-      - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # update the version to match the git tag, make a snapshot version we can test
-      - export DEPLOY_VERSION=${PKG_VERSION}-SNAPSHOT
-      - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
-      # do a full build/deploy, but skip shared libs and tests, since the shared libs were artifacts above
-      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true
-      # --- TEST SNAPSHOT ---
-      - mvn -B dependency:get -DrepoUrl=https://central.sonatype.com/repository/maven-snapshots/ -Dartifact=software.amazon.awssdk.crt:aws-crt:${DEPLOY_VERSION} -Dtransitive=false
 
   build:
     commands:
@@ -72,11 +54,9 @@ phases:
   post_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
-      # Test the publish without promoting the release. You need to manually drop the release.
-      - export PROMOTE_RELEASE=false
+      # Publish and promote the release.
+      - export PROMOTE_RELEASE=true
       - bash ./codebuild/cd/publish-bundle.sh
-      # deploy android
-      - bash ./codebuild/cd/publish-android.sh
 
 cache:
   paths:

@@ -49,9 +49,6 @@ phases:
     commands:
        # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
       - export DEPLOY_VERSION=${PKG_VERSION}
-      - export AUTH_HEADER_VAL=$(printf "$ST_USERNAME:$ST_PASSWORD" | base64)
-      - export BUNDLE_DIR=$CODEBUILD_SRC_DIR/aws-crt-java/bundle/
-      - mkdir -p $BUNDLE_DIR
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
       - export PROMOTE_RELEASE=true
       # deploy android

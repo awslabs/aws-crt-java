@@ -74,9 +74,9 @@ phases:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       # Publish and promote the release.
       - export PROMOTE_RELEASE=true
-      - ./codebuild/cd/publish-bundle.sh
+      - bash ./codebuild/cd/publish-bundle.sh
       # deploy android
-      - ./codebuild/cd/publish-android.sh
+      - bash ./codebuild/cd/publish-android.sh
 
 cache:
   paths:

@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 set -ex
-set -euo pipefail
+set -o pipefail # Make sure one process in pipe fail gets bubble up
 
 # Configuration
 BUNDLE_FILE="bundle.zip"

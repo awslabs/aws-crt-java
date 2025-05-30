@@ -44,7 +44,10 @@ phases:
       - export BUNDLE_DIR=$CODEBUILD_SRC_DIR/aws-crt-java/bundle/
       - mkdir -p $BUNDLE_DIR
       - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
-      # bundle the JAR to the local bundle directory
+      # bundle the JAR to the local bundle directory and skip publish to maven central.
+      # since the maven plugin will automatically close the staging repository, and we cannot publish our classified JARs anymore.
+      # To work around this, we create a local bundle for the uber jar and platform-specific jars.
+      # Then use the publisher API to upload the bundle to maven central.
       - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -DstagingDirectory=${BUNDLE_DIR} -DskipPublishing=true
       - bash ./codebuild/cd/bundle-platform-specific-jars.sh
       - cd ${BUNDLE_DIR}

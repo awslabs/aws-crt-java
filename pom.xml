@@ -187,7 +187,7 @@
                                         <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>
-                                        <argument>-DCMAKE_SYSTEM_VERSION=${cmake.windows-sdk-version}</argument>
+                                        <argument>${cmake.windows-sdk-version}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -456,7 +456,7 @@
                             <exportAntProperties>true</exportAntProperties>
                             <target>
                                 <property environment="env"/>
-                                <condition property="cmake.windows-sdk-version" value="${env.AWS_CRT_WINDOWS_SDK_VERSION}" else="-DWINDOWS_SDK_VERSION_DUMMY=1">
+                                <condition property="cmake.windows-sdk-version" value="-DCMAKE_SYSTEM_VERSION=${env.AWS_CRT_WINDOWS_SDK_VERSION}" else="-DWINDOWS_SDK_VERSION_DUMMY=1">
                                     <isset property="env.AWS_CRT_WINDOWS_SDK_VERSION" />
                                 </condition>
                                 <echo message="Windows SDK version = ${cmake.windows-sdk-version}"/>

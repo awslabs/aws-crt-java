@@ -92,7 +92,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
+
         /* The first header of response has to be ":status" for HTTP/2 response */
         response.headers.get(0).getName().equals(":status");
 
@@ -100,6 +100,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
         }
         if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
             for (HttpHeader h : response.headers) {
                 if (h.getName().equals("content-length")) {
                     hasContentLengthHeader = true;

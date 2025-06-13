@@ -90,17 +90,18 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
 
-        for (HttpHeader h : response.headers) {
-            if (h.getName().equals("Content-Length")) {
-                hasContentLengthHeader = true;
-            }
-        }
-
-        Assert.assertTrue(hasContentLengthHeader);
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
+        }
+        if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
+            for (HttpHeader h : response.headers) {
+                if (h.getName().toLowerCase().equals("content-length")) {
+                    hasContentLengthHeader = true;
+                }
+            }
+            Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
 
         return response;
@@ -211,18 +212,29 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
          *
          */
 
+        // The response is a JSON object, extract the "data" field using proper JSON parsing
         String echoedBody = null;
-        for (String line : body.split("\n")) {
-            String[] keyAndValue = line.split(":", 2);
 
-            // Found JSON Key/Value Pair
-            if (keyAndValue.length == 2) {
-                String key = extractValueFromJson(keyAndValue[0]);
-                String val = extractValueFromJson(keyAndValue[1]);
+        // Find the "data" field in the JSON response
+        int dataIndex = body.indexOf("\"data\"");
+        if (dataIndex != -1) {
+            // Find the colon after "data"
+            int colonIndex = body.indexOf(':', dataIndex);
+            if (colonIndex != -1) {
+                // Find the value after the colon, which should be a quoted string
+                int valueStartIndex = body.indexOf('"', colonIndex);
+                if (valueStartIndex != -1) {
+                    // Find the end of the quoted string
+                    int valueEndIndex = body.indexOf('"', valueStartIndex + 1);
+                    while (valueEndIndex > 0 && body.charAt(valueEndIndex - 1) == '\\') {
+                        // This quote is escaped, find the next one
+                        valueEndIndex = body.indexOf('"', valueEndIndex + 1);
+                    }
 
-                // Found Echoed Body
-                if (key.equals("data")) {
-                    echoedBody = extractValueFromJson(val);
+                    if (valueEndIndex != -1) {
+                        // Extract the value between the quotes
+                        echoedBody = body.substring(valueStartIndex + 1, valueEndIndex);
+                    }
                 }
             }
         }

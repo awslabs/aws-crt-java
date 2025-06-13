@@ -199,7 +199,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   windows:
-    runs-on: windows-2022 # latest
+    runs-on: windows-2025 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -214,8 +214,8 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  windows-vc14:
-    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
+  windows-vc17:
+    runs-on: windows-2025 # latest
     strategy:
       matrix:
         arch: [x86, x64]
@@ -230,7 +230,7 @@ jobs:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       env:
-        AWS_CMAKE_TOOLSET: v140
+        AWS_CMAKE_TOOLSET: v143 #Visual Studio C++ v143 is Visual Studio 2022 and msvc 17
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
@@ -409,7 +409,7 @@ jobs:
         ./builder localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-test-win:
-    runs-on: windows-2022 # latest
+    runs-on: windows-2025 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:

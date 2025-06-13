@@ -230,7 +230,7 @@ jobs:
         submodules: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       env:
-          AWS_CMAKE_TOOLSET: v170
+        AWS_CMAKE_TOOLSET: v143 #Visual Studio C++ v143 is Visual Studio 2022 and msvc 17
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream

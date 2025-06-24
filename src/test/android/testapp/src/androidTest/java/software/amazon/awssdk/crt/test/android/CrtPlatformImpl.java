@@ -45,6 +45,7 @@
     private void SetPropertyFromProperty(String propertyName, String propertyToCopy){
         if (System.getProperty(propertyToCopy) != null) {
             System.setProperty(propertyName, System.getProperty(propertyToCopy));
+            System.out.println("Android TEST: " + propertyName + " set");
         } else {
             System.out.println("Android TEST: CrtPlatformImpl.SetPropertyFromProperty() Property:" + propertyToCopy + " is null");
         }
@@ -57,6 +58,7 @@
             byte[] contents = new byte[assetStream.available()];
             assetStream.read(contents);
             System.setProperty(propertyName, new String(contents).trim());
+            System.out.println("Android TEST: " + propertyName + " set");
         } catch (IOException ex){
             System.out.println("Android TEST: CrtPlatformImpl.SetPropertyFromFile(" + propertyName + ", " + fileName + ") IOException: " + ex.toString());
         }
@@ -86,6 +88,8 @@
         if(System.getProperty("are.test.properties.setup") != null){
             return;
         }
+
+        System.out.println("Android TEST: Setting up properties");
 
         // Indicate system properties are already set for future tests
         System.setProperty("are.test.properties.setup", "true");

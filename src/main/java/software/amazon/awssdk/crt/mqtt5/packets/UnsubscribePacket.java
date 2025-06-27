@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.mqtt5.packets;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Data model of an <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc384800445">MQTT5 UNSUBSCRIBE</a> packet.

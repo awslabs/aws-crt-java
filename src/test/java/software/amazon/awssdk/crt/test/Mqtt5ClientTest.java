@@ -2213,7 +2213,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             PublishPacket publishPacket = PublishPacket.of(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
             SubscribePacket subscribePacket = SubscribePacket.of(testTopic, QOS.AT_LEAST_ONCE);
-            UnSubscribePacket unsubscribePacket = UnsubscribePacket.of(testTopic);
+            UnsubscribePacket unsubscribePacket = UnsubscribePacket.of(testTopic);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();

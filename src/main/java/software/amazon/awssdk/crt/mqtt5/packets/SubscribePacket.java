@@ -29,6 +29,27 @@ public class SubscribePacket {
     }
 
     /**
+     * Creates a {@link SubscribePacket} containing only a single subscription topic and qos:
+     * <em>topicFilter</em>, <em>QoS</em>.
+     * <p>
+     * Internally this is just syntactic sugar around
+     * {@link SubscribePacketBuilder#SubscribePacketBuilder(String, QOS)}
+     * followed by {@link SubscribePacketBuilder#build()}.
+     * 
+     * @param topicFilter The topic filter to subscribe to.
+     * @param qos The maximum QoS on which the subscriber will accept publish messages.
+     * @return an immutable {@code SubscribePacket} ready for use
+     * 
+     * @throws NullPointerException if {@code topicFilter} or {@code qos} is {@code null}
+     */
+    public static SubscribePacket of(String topicFilter, QOS qos) {
+        Objects.requireNonNull(topicFilter, "topicFilter");
+        Objects.requireNonNull(qos, "qos");
+
+        return new SubscribePacketBuilder(topicFilter, qos).build();
+    }
+
+    /**
      * Returns the list of subscriptions that the client wishes to listen to
      *
      * See <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901168">MQTT5 Subscribe Payload</a>

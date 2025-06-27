@@ -21,6 +21,25 @@ public class UnsubscribePacket {
     }
 
     /**
+     * Creates an {@link UnsubscribePacket} containing only a single subscription topic to unsubscribe from:
+     * <em>topicFilter</em>.
+     * <p>
+     * Internally this is just syntactic sugar around
+     * {@link UnsubscribePacketBuilder#UnsubscribePacketBuilder(String)}
+     * followed by {@link UnsubscribePacketBuilder#build()}.
+     * 
+     * @param topicFilter The topic filter to unsubscribe from.
+     * @return an immutable {@code UnsubscribePacket} ready for use
+     * 
+     * @throws NullPointerException if {@code topicFilter} is {@code null}
+     */
+    public static UnsubscribePacket of(String topicFilter) {
+        Objects.requireNonNull(topicFilter, "topicFilter");
+
+        return new UnsubscribePacketBuilder(topicFilter).build();
+    }
+
+    /**
      * Returns a list of subscriptions that the client wishes to unsubscribe from.
      *
      * @return List of subscriptions that the client wishes to unsubscribe from.

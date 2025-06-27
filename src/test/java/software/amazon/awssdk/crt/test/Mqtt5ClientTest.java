@@ -2191,6 +2191,61 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
+    @Test
+    public void Op_DirectPacketBuilders() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        String testUUID = UUID.randomUUID().toString();
+        String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+        try {
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+
+            TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions);
+            tlsOptions.close();
+            builder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+
+            PublishPacket publishPacket = PublishPacket.of(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            SubscribePacket subscribePacket = SubscribePacket.of(testTopic, QOS.AT_LEAST_ONCE);
+            UnSubscribePacket unsubscribePacket = UnsubscribePacket.of(testTopic);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                client.subscribe(subscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                publishEvents.publishReceivedFuture = new CompletableFuture<>();
+                publishEvents.publishPacket = null;
+                client.unsubscribe(unsubscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                assertEquals(
+                    "Publish after unsubscribe still arrived!",
+                    publishEvents.publishPacket,
+                    null);
+
+                client.stop();
+            }
+
+            if (tlsContext != null) {
+                tlsContext.close();
+            }
+
+        } catch (Exception ex) {
+            fail(ex.getMessage());
+        }
+    }
+
     /**
      * ============================================================
      * Error Operation Tests

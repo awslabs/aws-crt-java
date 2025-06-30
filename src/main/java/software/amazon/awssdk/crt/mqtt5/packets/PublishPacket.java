@@ -195,7 +195,7 @@ public class PublishPacket {
      * @param topic   The topic this message should be published to.
      * @param qos     The MQTT quality of service level the message should be delivered with.
      * @param payload The payload for the publish message.
-     * @return a fully-validated, immutable {@code PublishPacket} ready for use
+     * @return an immutable {@code PublishPacket} ready for use
      *
      * @throws NullPointerException if {@code topic}, {@code qos}, or
      *                              {@code payload} is {@code null}

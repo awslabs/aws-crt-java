@@ -166,6 +166,55 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
     }
 
+    private void doHttp2ResetStreamTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    CompletableFuture<Void> streamComplete = new CompletableFuture<>();
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                                      HttpHeader[] nextHeaders) {
+                            Http2Stream h2Stream = (Http2Stream) stream;
+                            h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            stream.close();
+                            if (errorCode != 0) {
+                                streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
+                            } else {
+                                streamComplete.complete(null);
+                            }
+                        }
+                    };
+                    Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
+                    try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
+                        h2Stream.activate();
+                        streamComplete.get();
+                    } catch (Exception e) {
+                        // ignoring the exception as it might fail that RST_STREAM has been sent.
+                    }
+                }
+            }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
     public void testHttp2ResetStream() throws Exception {
         skipIfAndroid();
@@ -175,51 +224,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
          */
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
-
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                CompletableFuture<Void> streamComplete = new CompletableFuture<>();
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        Http2Stream h2Stream = (Http2Stream) stream;
-                        h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                        stream.close();
-                        if (errorCode != 0) {
-                            streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
-                        } else {
-                            streamComplete.complete(null);
-                        }
-                    }
-                };
-                Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
-                try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
-                    h2Stream.activate();
-                    streamComplete.get();
-                }
-                catch(Exception e) {
-                    // ignoring the exception as it might fail that RST_STREAM has been sent.
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+        doRetryableTest(() -> { this.doHttp2ResetStreamTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
         CrtResource.waitForNoResources();
     }

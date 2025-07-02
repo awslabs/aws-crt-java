@@ -29,30 +29,64 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     private final static String HOST = "https://postman-echo.com";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
+    private void doHttp2ConnectionGetVersionTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                }
+            }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
     public void testHttp2ConnectionGetVersion() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+        doRetryableTest(() -> { this.doHttp2ConnectionGetVersionTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+        CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionUpdateSettingsTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
+                    conn.updateSettings(Http2ConnectionSetting.builder()
+                            .enablePush(false)
+                            .enablePush(false)
+                            .build()).get(5, TimeUnit.SECONDS);
+                }
             }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -60,31 +94,33 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+        doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                List<Http2ConnectionSetting> settings = new ArrayList<Http2ConnectionSetting>();
-                conn.updateSettings(Http2ConnectionSetting.builder()
-                        .enablePush(false)
-                        .enablePush(false)
-                        .build()).get(5, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionUpdateSettingsEmptyTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    conn.updateSettings(Http2ConnectionSetting.builder().build()).get(5, TimeUnit.SECONDS);
+                }
             }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -93,27 +129,36 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+        doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsEmptyTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                conn.updateSettings(Http2ConnectionSetting.builder().build()).get(5, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionPingTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    long time = conn.sendPing("12345678".getBytes()).get(5, TimeUnit.SECONDS);
+                    Assert.assertNotNull(time);
+                    time = conn.sendPing(null).get(5, TimeUnit.SECONDS);
+                    Assert.assertNotNull(time);
+                }
             }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -121,30 +166,43 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+        doRetryableTest(() -> { this.doHttp2ConnectionPingTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                long time = conn.sendPing("12345678".getBytes()).get(5, TimeUnit.SECONDS);
-                Assert.assertNotNull(time);
-                time = conn.sendPing(null).get(5, TimeUnit.SECONDS);
-                Assert.assertNotNull(time);
+        CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionPingExceptionPingDataLengthTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean exception = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    long time = conn.sendPing("123".getBytes()).get(5, TimeUnit.SECONDS);
+                    Assert.assertNotNull(time);
+                }
+            } catch (ExecutionException e) {
+                try {
+                    throw e.getCause();
+                } catch (CrtRuntimeException causeException) {
+                    exception = true;
+                    Assert.assertEquals(causeException.errorName, "AWS_ERROR_INVALID_ARGUMENT");
+                } catch (Throwable throwable) {
+                    /* Unexpected exception */
+                    throwable.printStackTrace();
+                }
             }
+
+            Assert.assertTrue(exception);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -152,35 +210,33 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean exception = false;
-        URI uri = new URI(HOST);
-
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                long time = conn.sendPing("123".getBytes()).get(5, TimeUnit.SECONDS);
-                Assert.assertNotNull(time);
-            }
-        } catch (ExecutionException e) {
-            try {
-                throw e.getCause();
-            } catch (CrtRuntimeException causeException) {
-                exception = true;
-                Assert.assertEquals(causeException.errorName, "AWS_ERROR_INVALID_ARGUMENT");
-            } catch (Throwable throwable) {
-                /* Unexpected exception */
-                throwable.printStackTrace();
-            }
-        }
-
-        Assert.assertTrue(exception);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+        doRetryableTest(() -> { this.doHttp2ConnectionPingExceptionPingDataLengthTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
         CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionSendGoAwayTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    conn.sendGoAway(Http2ErrorCode.INTERNAL_ERROR, false, null);
+                }
+            }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -192,27 +248,33 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
+        doRetryableTest(() -> { this.doHttp2ConnectionSendGoAwayTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                conn.sendGoAway(Http2ErrorCode.INTERNAL_ERROR, false, null);
+        CrtResource.waitForNoResources();
+    }
+
+    private void doHttp2ConnectionUpdateConnectionWindowTest() {
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    conn.updateConnectionWindow(100);
+                }
             }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-
-        CrtResource.waitForNoResources();
     }
 
     @Test
@@ -224,25 +286,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
-
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                conn.updateConnectionWindow(100);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+        doRetryableTest(() -> { this.doHttp2ConnectionUpdateConnectionWindowTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
 
         CrtResource.waitForNoResources();
     }

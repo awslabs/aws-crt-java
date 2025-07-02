@@ -30,6 +30,7 @@ jobs:
   linux-compat:
     runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         image:
           - manylinux2014-x64
@@ -56,6 +57,7 @@ jobs:
   linux-compiler-compat:
     runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         compiler:
           - clang-6
@@ -146,6 +148,7 @@ jobs:
   linux-musl-x64:
     runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         image:
           - alpine-3.16-x64

@@ -224,7 +224,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
          */
         skipIfNetworkUnavailable();
 
-        doRetryableTest(() -> { this.doHttp2ResetStreamTest(); }, (ex) -> { return isSocketTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ResetStreamTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
 
         CrtResource.waitForNoResources();
     }

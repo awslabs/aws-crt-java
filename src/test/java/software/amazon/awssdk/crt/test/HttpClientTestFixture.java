@@ -102,28 +102,4 @@ public class HttpClientTestFixture extends CrtTestFixture {
             CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
         }
     }
-
-    protected void doRetryableTest(Runnable testFunction, Function<Exception, Boolean> shouldRetryPredicate, int maxAttempts, int sleepTimeMillis) throws Exception {
-        int attempt = 0;
-        while (attempt < maxAttempts) {
-            ++attempt;
-
-            try {
-                testFunction.run();
-                return;
-            } catch (Exception ex) {
-                if (!shouldRetryPredicate.apply(ex)) {
-                    throw ex;
-                }
-            }
-
-            Thread.sleep(sleepTimeMillis);
-        }
-
-        throw new Exception("Retryable test exceeded the maximum allowed attempts without succeeding");
-    }
-
-    static protected Boolean isSocketTimeout(Exception ex) {
-        return ex.toString().contains("socket operation timed out");
-    }
 }

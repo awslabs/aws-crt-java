@@ -282,17 +282,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
      * ============================================================
      */
 
-    /* Happy path. Direct connection with minimal configuration */
-    @Test
-    public void ConnDC_UC1() {
-        skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
+    private void doConnDC_UC1Test() {
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
             builder.withLifecycleEvents(events);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -302,8 +298,19 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             }
 
         } catch (Exception ex) {
-            fail(ex.getMessage());
+            throw new RuntimeException(ex);
         }
+    }
+
+    /* Happy path. Direct connection with minimal configuration */
+    @Test
+    public void ConnDC_UC1() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
+
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+
+        CrtResource.waitForNoResources();
     }
 
     /* Direct connection with basic authentication */

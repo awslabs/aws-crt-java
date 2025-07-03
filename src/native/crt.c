@@ -100,7 +100,26 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
 #else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
 #endif
+        JNIEnv *jenv = aws_jni_acquire_thread_env(jvm);
+        // In your JNI code, after AttachCurrentThread:
+        jclass threadClass = (*jenv)->FindClass(jenv, "java/lang/Thread");
+        jclass classLoaderClass = (*jenv)->FindClass(jenv, "java/lang/ClassLoader");
 
+        // Get current thread
+        jmethodID currentThreadMethod =
+            (*jenv)->GetStaticMethodID(jenv, threadClass, "currentThread", "()Ljava/lang/Thread;");
+        jobject thread = (*jenv)->CallStaticObjectMethod(jenv, threadClass, currentThreadMethod);
+
+        // Get system ClassLoader
+        jmethodID getSystemClassLoaderMethod =
+            (*jenv)->GetStaticMethodID(jenv, classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+        jobject systemClassLoader = (*jenv)->CallStaticObjectMethod(jenv, classLoaderClass, getSystemClassLoaderMethod);
+
+        // Set it as context ClassLoader
+        jmethodID setContextClassLoaderMethod =
+            (*jenv)->GetMethodID(jenv, threadClass, "setContextClassLoader", "(Ljava/lang/ClassLoader;)V");
+        (*jenv)->CallVoidMethod(jenv, thread, setContextClassLoaderMethod, systemClassLoader);
+        aws_jni_release_thread_env(jvm, jenv);
         aws_string_destroy(thread_name);
 
         /* Ran out of memory, don't log in this case */

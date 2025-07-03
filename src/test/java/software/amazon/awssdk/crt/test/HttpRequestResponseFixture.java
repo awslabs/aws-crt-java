@@ -5,6 +5,8 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.mockito.internal.matchers.Null;
+
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
@@ -106,6 +108,19 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     @Override
                     public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
                             HttpHeader[] nextHeaders) {
+
+                        // Print out the thread context class loader to verify it's being used
+                        if (Thread.currentThread() != null) {
+                            System.out.println("Current thread is: " + Thread.currentThread().toString());
+                            ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
+                        if (threadClassLoader != null) {
+                             System.out.println("Current thread context class loader: " + threadClassLoader.toString());
+                        } else {
+                            System.out.println("Current thread context class loader is null ");
+                        }
+                        } else {
+                            System.out.println("Thread is none");
+                        }
                         response.statusCode = responseStatusCode;
                         Assert.assertEquals(responseStatusCode, stream.getResponseStatusCode());
                         response.headers.addAll(Arrays.asList(nextHeaders));

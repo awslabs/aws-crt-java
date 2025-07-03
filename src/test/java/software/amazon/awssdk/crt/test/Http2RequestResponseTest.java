@@ -66,15 +66,42 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         return request;
     }
 
+    /**
+     * Custom ClassLoader implementation that delegates to the parent class loader
+     * but has a custom name for identification purposes.
+     */
+    private static class CustomClassLoader extends ClassLoader {
+        private final String name;
+
+        public CustomClassLoader(String name) {
+            super(Thread.currentThread().getContextClassLoader());
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
     public TestHttpResponse testHttp2Request(String method, String endpoint, String path, String requestBody,
             int expectedStatus) throws Exception {
+        // Create a customized class loader for the main thread
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        CustomClassLoader customClassLoader = new CustomClassLoader("Http2TestCustomClassLoader");
+
+        // Set the custom class loader as the thread context class loader
+        Thread.currentThread().setContextClassLoader(customClassLoader);
+
+        // Print out the thread context class loader to verify it's being used
+        System.out.println("Current thread is: " + Thread.currentThread().toString()+  " context class loader: " + Thread.currentThread().getContextClassLoader().toString());
+
         URI uri = new URI(endpoint);
         Http2Request request = getHttp2Request(method, endpoint, path, requestBody);
 
         TestHttpResponse response = null;
         int numAttempts = 0;
         do {
-
             if (request.getBodyStream() != null) {
                 request.getBodyStream().resetPosition();
             }
@@ -91,8 +118,6 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         } while ((response == null || shouldRetry(response)) && numAttempts < 3);
 
         Assert.assertNotEquals(-1, response.blockType);
-
-
         /* The first header of response has to be ":status" for HTTP/2 response */
         response.headers.get(0).getName().equals(":status");
 
@@ -108,6 +133,9 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
             }
             Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
+
+        // Restore the original class loader
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
 
         return response;
     }

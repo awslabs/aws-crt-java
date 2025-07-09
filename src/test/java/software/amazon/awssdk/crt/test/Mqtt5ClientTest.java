@@ -47,13 +47,14 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
+
+    private final int MAX_TEST_RETRIES = 3;
+    private final int TEST_RETRY_SLEEP_MILLIS = 3000;
 
     public Mqtt5ClientTest() {
     }
@@ -316,7 +317,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -352,7 +353,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
             AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -384,7 +385,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -414,7 +415,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -459,7 +460,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT,
             AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC5Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC5Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -531,7 +532,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
             AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_UC6Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_UC6Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -578,7 +579,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST, AWS_TEST_MQTT5_WS_MQTT_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnWS_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnWS_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -623,7 +624,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
             AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnWS_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnWS_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -668,7 +669,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnWS_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnWS_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -721,7 +722,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
             AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
 
-        TestUtils.doRetryableTest(() -> { this.doConnWS_UC5Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnWS_UC5Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -800,7 +801,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
             AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnWS_UC6Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 4, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnWS_UC6Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1230,7 +1231,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doConnNegativeID_UC7Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnNegativeID_UC7Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1443,7 +1444,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
         disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1457,7 +1458,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
         disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1505,7 +1506,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
         publishBuilder.withMessageExpiryIntervalSeconds(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1519,7 +1520,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
         publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1565,7 +1566,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
         subscribeBuilder.withSubscriptionIdentifier(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1579,7 +1580,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
         subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1627,7 +1628,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doNegotiated_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNegotiated_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1683,7 +1684,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doNegotiated_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNegotiated_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1759,7 +1760,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doNegotiated_Rejoin_AlwaysTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doNegotiated_Rejoin_AlwaysTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1822,7 +1823,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOp_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOp_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1884,7 +1885,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOp_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOp_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1938,7 +1939,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOp_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOp_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2007,7 +2008,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOp_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOp_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2093,7 +2094,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOp_SharedSubscriptionTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOp_SharedSubscriptionTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2141,7 +2142,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2153,7 +2154,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         PublishPacket publish = new PublishPacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(publish); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(publish); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2194,7 +2195,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2206,7 +2207,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         SubscribePacket subscribe = new SubscribePacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(subscribe); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(subscribe); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2248,7 +2249,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(null); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2260,7 +2261,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         UnsubscribePacket unsubscribe = new UnsubscribePacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(unsubscribe); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(unsubscribe); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2371,7 +2372,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doQoS1_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doQoS1_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2491,7 +2492,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doRetain_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doRetain_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2545,7 +2546,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doInterrupt_Sub_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doInterrupt_Sub_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2594,7 +2595,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doInterrupt_Unsub_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doInterrupt_Unsub_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2643,7 +2644,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doInterrupt_Publish_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doInterrupt_Publish_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2720,7 +2721,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doOperationStatistics_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doOperationStatistics_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2769,7 +2770,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD,
             AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC1Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2802,7 +2803,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC2Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2835,7 +2836,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS,
             AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC3Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2878,7 +2879,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN,
             AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
 
-        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doConnDC_Cred_UC4Test(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2942,7 +2943,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 return credentialsBuilder.build();
             }
-        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2961,7 +2962,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 return credentialsBuilder.build();
             }
-        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2989,7 +2990,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         return credentialsBuilder.build();
                     }
                 }
-        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -3019,7 +3020,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         return credentialsBuilder.build();
                     }
                 }
-        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        ); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

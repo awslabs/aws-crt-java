@@ -18,16 +18,15 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.Http2ConnectionSetting;
-import software.amazon.awssdk.crt.http.Http2ConnectionSettingListBuilder;
 import software.amazon.awssdk.crt.http.Http2ClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.Http2ClientConnection.Http2ErrorCode;
 import software.amazon.awssdk.crt.CrtResource;
 
-import software.amazon.awssdk.crt.test.TestUtils;
-
 public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
+    private final static int MAX_TEST_RETRIES = 5;
+    private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
     private final static String HOST = "https://postman-echo.com";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
@@ -58,7 +57,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionGetVersionTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionGetVersionTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -96,7 +95,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -131,7 +130,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsEmptyTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsEmptyTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -168,7 +167,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -212,7 +211,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingExceptionPingDataLengthTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingExceptionPingDataLengthTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -250,7 +249,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionSendGoAwayTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionSendGoAwayTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -288,7 +287,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateConnectionWindowTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, 5, 2000);
+        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateConnectionWindowTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

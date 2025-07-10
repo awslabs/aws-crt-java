@@ -2069,6 +2069,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
+                Thread.sleep(4000);
+                
                 for (int i = 0; i < messageCount; ++i) {
                     publishPacketBuilder.withPayload(String.valueOf(i).getBytes());
                     publisherClient.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

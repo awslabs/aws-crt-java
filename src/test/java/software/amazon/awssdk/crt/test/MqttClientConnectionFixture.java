@@ -26,12 +26,6 @@ import org.junit.After;
 
 import org.junit.Assume;
 
- class MissingCredentialsException extends RuntimeException {
-     MissingCredentialsException(String message) {
-         super(message);
-     }
- }
-
  public class MqttClientConnectionFixture extends CrtTestFixture {
 
     MqttClientConnection connection = null;
@@ -167,21 +161,28 @@ import org.junit.Assume;
         Assume.assumeFalse(AWS_GRAALVM_CI && CRT.getOSIdentifier() == "osx");
     }
 
-    boolean connectDirectWithConfig(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions)
-    {
-        try {
-            return connectDirectWithConfigThrows(tlsContext, endpoint, port, username, password, httpProxyOptions);
-        } catch (Exception ex) {
-            fail("Exception during connect: " + ex.toString());
-        }
-        return false;
+    /*
+     * We keep mutable state in the fixture.  In order to support retryable (connection) tests, we need a way to reset
+     * those fields to their original state.
+     */
+    void reset() {
+        connection = null;
+        disconnecting = false;
+
+        onConnectionSuccessFuture = new CompletableFuture<OnConnectionSuccessReturn>();
+        onConnectionFailureFuture = new CompletableFuture<OnConnectionFailureReturn>();
+        onConnectionClosedFuture = new CompletableFuture<OnConnectionClosedReturn>();
+
+        connectionEventsStatistics = new ConnectionEventsStatistics();
     }
 
-    boolean connectDirectWithConfigThrows(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
+    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
     {
+        reset();
+
         try(EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
 
             // Connection callback events
             MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -222,31 +223,18 @@ import org.junit.Assume;
                 }
             };
 
-            // Default settings
-            boolean cleanSession = true; // only true is supported right now
-            int keepAliveSecs = 0;
-            int protocolOperationTimeout = 60000;
             String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
-            try (MqttConnectionConfig config = new MqttConnectionConfig()) {
-
-                MqttClient client = null;
-                if (tlsContext != null)
-                {
-                    client = new MqttClient(bootstrap, tlsContext);
-                }
-                else
-                {
-                    client = new MqttClient(bootstrap);
-                }
+            try (MqttConnectionConfig config = new MqttConnectionConfig();
+                MqttClient client = (tlsContext != null) ? new MqttClient(bootstrap, tlsContext) : new MqttClient(bootstrap)) {
 
                 config.setMqttClient(client);
                 config.setClientId(clientId);
                 config.setEndpoint(endpoint);
                 config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
+                config.setCleanSession(true);
+                config.setKeepAliveSecs(0);
+                config.setProtocolOperationTimeoutMs(60000);
                 config.setConnectionCallbacks(events);
 
                 if (httpProxyOptions != null) {
@@ -264,29 +252,18 @@ import org.junit.Assume;
                     connectionConfigTransformer.accept(config);
                 }
 
-                try {
-                    connection = new MqttClientConnection(config);
-                    if (connectionMessageTransfomer != null) {
-                        connection.onMessage(connectionMessageTransfomer);
-                    }
-                    CompletableFuture<Boolean> connected = connection.connect();
-                    connected.get();
-                } finally {
-                    client.close();
+                connection = new MqttClientConnection(config);
+                if (connectionMessageTransfomer != null) {
+                    connection.onMessage(connectionMessageTransfomer);
                 }
-                return true;
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
             }
         }
     }
 
-    boolean connectWebsocketsWithCredentialsProvider(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions)
+    void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
     {
-        // Return result
-        boolean result = false;
-        // Default settings
-        boolean cleanSession = true; // only true is supported right now
-        int keepAliveSecs = 0;
-        int protocolOperationTimeout = 60000;
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
         // Connection callback events
@@ -325,75 +302,52 @@ import org.junit.Assume;
 
         try (EventLoopGroup elg = new EventLoopGroup(1);
             HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);)
-        {
-            try (MqttConnectionConfig config = new MqttConnectionConfig();
-                 AwsSigningConfig signingConfig = new AwsSigningConfig();) {
+            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+            MqttConnectionConfig config = new MqttConnectionConfig();
+            AwsSigningConfig signingConfig = new AwsSigningConfig();
+            MqttClient client = (tlsContext != null) ? new MqttClient(bootstrap, tlsContext) : new MqttClient(bootstrap)) {
 
-                MqttClient client = null;
-                if (tlsContext != null)
-                {
-                    client = new MqttClient(bootstrap, tlsContext);
-                }
-                else
-                {
-                    client = new MqttClient(bootstrap);
-                }
+            config.setMqttClient(client);
+            config.setClientId(clientId);
+            config.setEndpoint(endpoint);
+            config.setPort(port);
+            config.setUseWebsockets(true);
+            config.setConnectionCallbacks(events);
 
-                config.setMqttClient(client);
-                config.setClientId(clientId);
-                config.setEndpoint(endpoint);
-                config.setPort(port);
-                config.setCleanSession(cleanSession);
-                config.setKeepAliveSecs(keepAliveSecs);
-                config.setProtocolOperationTimeoutMs(protocolOperationTimeout);
-                config.setUseWebsockets(true);
-                config.setConnectionCallbacks(events);
+            if (username != null) {
+                config.setUsername(username);
+            }
+            if (password != null) {
+                config.setPassword(password);
+            }
+            if (httpProxyOptions != null) {
+                config.setHttpProxyOptions(httpProxyOptions);
+            }
 
-                if (username != null) {
-                    config.setUsername(username);
-                }
-                if (password != null) {
-                    config.setPassword(password);
-                }
-                if (httpProxyOptions != null) {
-                    config.setHttpProxyOptions(httpProxyOptions);
-                }
+            if (connectionConfigTransformer != null) {
+                connectionConfigTransformer.accept(config);
+            }
 
-                if (connectionConfigTransformer != null) {
-                    connectionConfigTransformer.accept(config);
+            // Make the websocket transformer
+            if (credentialsProvider != null) {
+                signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
+                // NOTE: Missing a credentials provider gives a non-helpful error. This needs to be changed in Java V2...
+                signingConfig.setCredentialsProvider(credentialsProvider);
+            }
+            signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
+            signingConfig.setRegion(TEST_REGION);
+            signingConfig.setService("iotdevicegateway");
+            signingConfig.setOmitSessionToken(true);
+            try (MqttClientConnectionSigv4HandshakeTransformer transformer = new MqttClientConnectionSigv4HandshakeTransformer(signingConfig)) {
+                config.setWebsocketHandshakeTransform(transformer);
+                connection = new MqttClientConnection(config);
+                if (connectionMessageTransfomer != null) {
+                    connection.onMessage(connectionMessageTransfomer);
                 }
-
-                // Make the websocket transformer
-                if (credentialsProvider != null) {
-                    signingConfig.setAlgorithm(AwsSigningConfig.AwsSigningAlgorithm.SIGV4);
-                    // NOTE: Missing a credentials provider gives a non-helpful error. This needs to be changed in Java V2...
-                    signingConfig.setCredentialsProvider(credentialsProvider);
-                }
-                signingConfig.setSignatureType(AwsSigningConfig.AwsSignatureType.HTTP_REQUEST_VIA_QUERY_PARAMS);
-                signingConfig.setRegion(TEST_REGION);
-                signingConfig.setService("iotdevicegateway");
-                signingConfig.setOmitSessionToken(true);
-                try (MqttClientConnectionSigv4HandshakeTransformer transformer = new MqttClientConnectionSigv4HandshakeTransformer(signingConfig);)
-                {
-                    config.setWebsocketHandshakeTransform(transformer);
-                    connection = new MqttClientConnection(config);
-                    if (connectionMessageTransfomer != null) {
-                        connection.onMessage(connectionMessageTransfomer);
-                    }
-                    CompletableFuture<Boolean> connected = connection.connect();
-                    connected.get();
-                    result = true;
-                }
-                finally {
-                    client.close();
-                }
-
-            } catch (Exception ex) {
-                fail("Exception during connect: " + ex.toString());
+                CompletableFuture<Boolean> connected = connection.connect();
+                connected.get();
             }
         }
-        return result;
     }
 
     void disconnect() {

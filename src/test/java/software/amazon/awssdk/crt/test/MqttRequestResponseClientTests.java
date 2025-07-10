@@ -92,6 +92,9 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     static final String AWS_TEST_MQTT5_IOT_CORE_RSA_CERT = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_CERT");
     static final String AWS_TEST_MQTT5_IOT_CORE_RSA_KEY = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_RSA_KEY");
 
+    static final int MAX_CONNECT_ATTEMPTS = 4;
+    static final int RETRY_DELAY_MILLIS = 3000;
+
     public MqttRequestResponseClientTests() {
         /**
          * Disable test for native image, because:
@@ -168,34 +171,46 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
     static private MqttClientConnection createMqtt311Client() {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
-                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);) {
-            try (TlsContext tlsContext = new TlsContext(contextOptions);
-                 SocketOptions socketOptions = new SocketOptions();) {
-                String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(contextOptions);
+             SocketOptions socketOptions = new SocketOptions()) {
+            String clientId = "aws-crt-java-" + (UUID.randomUUID()).toString();
 
-                try (MqttClient client = new MqttClient(tlsContext);
-                    MqttConnectionConfig config = new MqttConnectionConfig()) {
-                    config.setMqttClient(client);
-                    config.setClientId(clientId);
-                    config.setEndpoint(AWS_TEST_MQTT5_IOT_CORE_HOST);
-                    config.setPort(8883);
-                    
-                    socketOptions.connectTimeoutMs = 10000;
-                    socketOptions.domain = SocketOptions.SocketDomain.IPv4;
-                    config.setSocketOptions(socketOptions);
+            try (MqttClient client = new MqttClient(tlsContext);
+                MqttConnectionConfig config = new MqttConnectionConfig()) {
+                config.setMqttClient(client);
+                config.setClientId(clientId);
+                config.setEndpoint(AWS_TEST_MQTT5_IOT_CORE_HOST);
+                config.setPort(8883);
 
-                    MqttClientConnection connection = new MqttClientConnection(config);
+                socketOptions.connectTimeoutMs = 10000;
+                socketOptions.domain = SocketOptions.SocketDomain.IPv4;
+                config.setSocketOptions(socketOptions);
 
-                    CompletableFuture<Boolean> connected = connection.connect();
-                    try {
-                        connected.get();
-                    } catch (Exception e) {
-                        connection.close();
-                        return null;
+                try (MqttClientConnection connection = new MqttClientConnection(config)) {
+                    int attempts = 0;
+                    while (attempts < MAX_CONNECT_ATTEMPTS) {
+                        attempts++;
+                        try {
+                            CompletableFuture<Boolean> connected = connection.connect();
+                            connected.get();
+                            connection.addRef();
+                            return connection;
+                        } catch (Exception e) {
+                            if (!TestUtils.isRetryableTimeout(e)) {
+                                return null;
+                            }
+                        }
+
+                        try {
+                            Thread.sleep(RETRY_DELAY_MILLIS);
+                        } catch (Exception e) {
+                            ; // don't care
+                        }
                     }
-
-                    return connection;
                 }
+
+                return null;
             }
         }
     }

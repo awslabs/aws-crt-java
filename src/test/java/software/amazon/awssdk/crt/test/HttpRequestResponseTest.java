@@ -314,7 +314,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttpRequestUnActivatedTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

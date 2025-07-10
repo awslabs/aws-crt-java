@@ -57,7 +57,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionGetVersionTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionGetVersionTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -95,7 +95,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateSettingsTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -130,7 +130,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateSettingsEmptyTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateSettingsEmptyTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -167,7 +167,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionPingTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -211,7 +211,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionPingExceptionPingDataLengthTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionPingExceptionPingDataLengthTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -249,7 +249,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionSendGoAwayTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionSendGoAwayTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -287,7 +287,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          */
         skipIfNetworkUnavailable();
 
-        TestUtils.doRetryableTest(() -> { this.doHttp2ConnectionUpdateConnectionWindowTest(); }, (ex) -> { return TestUtils.isRetryableTimeout(ex); }, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateConnectionWindowTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

@@ -27,7 +27,7 @@ public class TestUtils {
             Thread.sleep(sleepTimeMillis);
         }
 
-        throw new Exception("Retryable MQTT test exceeded the maximum allowed attempts without succeeding");
+        throw new Exception("Retryable network test exceeded the maximum allowed attempts without succeeding");
     }
 
     static public Boolean isRetryableTimeout(Exception ex) {

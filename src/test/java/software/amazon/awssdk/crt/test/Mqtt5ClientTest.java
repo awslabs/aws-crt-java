@@ -2118,9 +2118,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builder.withPublishEvents(publishEvents);
 
-            PublishPacket publishPacket = PublishPacket.new(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
-            SubscribePacket subscribePacket = SubscribePacket.new(testTopic, QOS.AT_LEAST_ONCE);
-            UnsubscribePacket unsubscribePacket = UnsubscribePacket.new(testTopic);
+            PublishPacket publishPacket = PublishPacket.of(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            SubscribePacket subscribePacket = SubscribePacket.of(testTopic, QOS.AT_LEAST_ONCE);
+            UnsubscribePacket unsubscribePacket = UnsubscribePacket.of(testTopic);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();

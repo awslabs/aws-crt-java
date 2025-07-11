@@ -2101,10 +2101,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
-    @Test
-    public void Op_DirectPacketBuilders() {
-        skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+    public void doOp_DirectPacketBuilders() {
         String testUUID = UUID.randomUUID().toString();
         String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
         try {
@@ -2154,6 +2151,16 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
+    }
+
+    @Test
+    public void Op_DirectPacketBuilders() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+    
+        TestUtils.doRetryableTest(this::doOp_DirectPacketBuilders, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
     }
 
     /**

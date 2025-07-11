@@ -43,7 +43,7 @@ public class SubscribePacket {
      * 
      * @throws NullPointerException if {@code topicFilter} or {@code qos} is {@code null}
      */
-    public static SubscribePacket of(String topicFilter, QOS qos) {
+    public static SubscribePacket new(String topicFilter, QOS qos) {
         Objects.requireNonNull(topicFilter, "topicFilter");
         Objects.requireNonNull(qos, "qos");
 

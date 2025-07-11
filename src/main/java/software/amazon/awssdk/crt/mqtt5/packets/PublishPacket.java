@@ -200,7 +200,7 @@ public class PublishPacket {
      * @throws NullPointerException if {@code topic}, {@code qos}, or
      *                              {@code payload} is {@code null}
      */
-    public static PublishPacket of(String topic, QOS qos, byte[] payload) {
+    public static PublishPacket new(String topic, QOS qos, byte[] payload) {
         Objects.requireNonNull(topic, "topic");
         Objects.requireNonNull(qos, "qos");
         Objects.requireNonNull(payload, "payload");

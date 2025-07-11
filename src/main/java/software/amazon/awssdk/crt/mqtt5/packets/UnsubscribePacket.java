@@ -34,7 +34,7 @@ public class UnsubscribePacket {
      * 
      * @throws NullPointerException if {@code topicFilter} is {@code null}
      */
-    public static UnsubscribePacket of(String topicFilter) {
+    public static UnsubscribePacket new(String topicFilter) {
         Objects.requireNonNull(topicFilter, "topicFilter");
 
         return new UnsubscribePacketBuilder(topicFilter).build();

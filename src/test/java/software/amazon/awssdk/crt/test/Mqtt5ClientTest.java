@@ -2090,6 +2090,17 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
+    /* Shared subscriptions test */
+    @Test
+    public void Op_SharedSubscription() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doOp_SharedSubscriptionTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
     @Test
     public void Op_DirectPacketBuilders() {
         skipIfNetworkUnavailable();

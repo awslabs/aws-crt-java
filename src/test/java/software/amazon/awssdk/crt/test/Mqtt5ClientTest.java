@@ -2154,7 +2154,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     }
 
     @Test
-    public void Op_DirectPacketBuilders() {
+    public void Op_DirectPacketBuilders()  throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
     

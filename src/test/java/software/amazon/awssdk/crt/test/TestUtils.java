@@ -32,6 +32,8 @@ public class TestUtils {
 
     static public Boolean isRetryableTimeout(Exception ex) {
         String exceptionMsg = ex.toString();
-        return exceptionMsg.contains("socket operation timed out") || exceptionMsg.contains("tls negotiation timeout");
+        return exceptionMsg.contains("socket operation timed out") ||
+                exceptionMsg.contains("tls negotiation timeout") ||
+                exceptionMsg.contains("socket connection refused");
     }
 }

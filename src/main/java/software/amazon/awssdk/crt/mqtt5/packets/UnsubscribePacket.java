@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.mqtt5.packets;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Data model of an <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc384800445">MQTT5 UNSUBSCRIBE</a> packet.
@@ -18,6 +19,25 @@ public class UnsubscribePacket {
     private UnsubscribePacket(UnsubscribePacketBuilder builder) {
         this.userProperties = builder.userProperties;
         this.subscriptions = builder.subscriptions;
+    }
+
+    /**
+     * Creates an {@link UnsubscribePacket} containing only a single subscription topic to unsubscribe from:
+     * <em>topicFilter</em>.
+     * <p>
+     * Internally this is just syntactic sugar around
+     * {@link UnsubscribePacketBuilder#UnsubscribePacketBuilder(String)}
+     * followed by {@link UnsubscribePacketBuilder#build()}.
+     * 
+     * @param topicFilter The topic filter to unsubscribe from.
+     * @return an immutable {@code UnsubscribePacket} ready for use
+     * 
+     * @throws NullPointerException if {@code topicFilter} is {@code null}
+     */
+    public static UnsubscribePacket of(String topicFilter) {
+        Objects.requireNonNull(topicFilter, "topicFilter");
+
+        return new UnsubscribePacketBuilder(topicFilter).build();
     }
 
     /**

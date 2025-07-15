@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Objects;
 
 /**
  * Data model of an <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901100">MQTT5 PUBLISH</a> packet
@@ -179,6 +180,32 @@ public class PublishPacket {
      */
     public List<Long> getSubscriptionIdentifiers() {
         return this.subscriptionIdentifiers;
+    }
+
+    /**
+     * Creates a {@link PublishPacket} containing only the most common fields:
+     * <em>topic</em>, <em>QoS</em>, and <em>payload</em>.
+     * <p>
+     * Internally this is just syntactic sugar around
+     * {@link PublishPacketBuilder#PublishPacketBuilder(String, QOS, byte[])}
+     * followed by {@link PublishPacketBuilder#build()}.
+     * All optional MQTT 5 properties (retain flag, user properties, etc.)
+     * are left {@code null} / unset.
+     *
+     * @param topic   The topic this message should be published to.
+     * @param qos     The MQTT quality of service level the message should be delivered with.
+     * @param payload The payload for the publish message.
+     * @return an immutable {@code PublishPacket} ready for use
+     *
+     * @throws NullPointerException if {@code topic}, {@code qos}, or
+     *                              {@code payload} is {@code null}
+     */
+    public static PublishPacket of(String topic, QOS qos, byte[] payload) {
+        Objects.requireNonNull(topic, "topic");
+        Objects.requireNonNull(qos, "qos");
+        Objects.requireNonNull(payload, "payload");
+
+        return new PublishPacketBuilder(topic, qos, payload).build();
     }
 
     /**

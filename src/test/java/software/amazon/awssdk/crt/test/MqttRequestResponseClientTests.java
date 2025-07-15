@@ -203,7 +203,7 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
                         }
 
                         try {
-                            Thread.sleep(RETRY_DELAY_MILLIS);
+                            TestUtils.sleepForAtLeastMilliseconds(RETRY_DELAY_MILLIS);
                         } catch (Exception e) {
                             ; // don't care
                         }

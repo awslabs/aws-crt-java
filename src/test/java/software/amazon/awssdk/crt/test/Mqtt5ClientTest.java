@@ -1207,7 +1207,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 clientOne.start();
                 eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                Thread.sleep(2000); // Sleep for 2 seconds to not hit IoT Core limits
+                TestUtils.sleepForAtLeastMilliseconds(2000); // Sleep for 2 seconds to not hit IoT Core limits
 
                 clientTwo.start();
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1732,7 +1732,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             }
 
             /* Avoid accidentally triggering re-connect throttle */
-            Thread.sleep(2000);
+            TestUtils.sleepForAtLeastMilliseconds(2000);
 
             builder.withSessionBehavior(ClientSessionBehavior.REJOIN_ALWAYS);
             LifecycleEvents_Futured rejoinEvents = new LifecycleEvents_Futured();
@@ -1990,7 +1990,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Paranoid about service-side eventual consistency.  Add a wait to reduce chances of a missed will publish.
-                Thread.sleep(2000);
+                TestUtils.sleepForAtLeastMilliseconds(2000);
 
                 publisher.stop(disconnectPacketBuilder.build());
 
@@ -2069,7 +2069,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                Thread.sleep(4000);
+                TestUtils.sleepForAtLeastMilliseconds(4000);
 
                 for (int i = 0; i < messageCount; ++i) {
                     publishPacketBuilder.withPayload(String.valueOf(i).getBytes());
@@ -2457,7 +2457,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 // Wait 15 seconds to give the server time to clear everything out
-                Thread.sleep(15000);
+                TestUtils.sleepForAtLeastMilliseconds(15000);
 
                 // Connect the unsuccessful subscriber
                 unsuccessfulSubscriber.start();

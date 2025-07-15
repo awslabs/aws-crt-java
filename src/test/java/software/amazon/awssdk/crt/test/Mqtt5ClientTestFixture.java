@@ -134,7 +134,8 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             connectFailureCode = onConnectionFailureReturn.getErrorCode();
             connectFailurePacket = onConnectionFailureReturn.getConnAckPacket();
-            connectedFuture.completeExceptionally(new Exception("Could not connect! Error name: " + CRT.awsErrorName(connectFailureCode)));
+            connectedFuture.completeExceptionally(new Exception("Could not connect! Error name: "
+                    + CRT.awsErrorName(connectFailureCode) + " (" + CRT.awsErrorString(connectFailureCode) + ")"));
         }
 
         @Override

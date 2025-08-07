@@ -34,6 +34,7 @@ import java.util.function.Consumer;
  * MqttClientConnection represents a single connection from one MqttClient to an
  * MQTT service endpoint
  */
+@Deprecated
 public class MqttClientConnection extends CrtResource {
 
     private static final int MAX_PORT = 65535;

@@ -11,12 +11,19 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
 /**
+ * <p><b>Deprecated.</b> Use {@link software.amazon.awssdk.crt.mqtt5.Mqtt5Client} instead.</p>
+ * 
+ * <p>The MQTT 3.1.1 client remains fully supported, but migrating to
+ * MQTT 5 gives you a richer feature set, clearer error handling, and
+ * improved lifetime management.</p>
+ * 
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionalities
  * via the AWS Common Runtime
  * 
  * One MqttClient class is needed per application. It can create any number of connections to
  * any number of MQTT endpoints
  */
+@Deprecated
 public class MqttClient extends CrtResource {
 
     private TlsContext tlsContext;

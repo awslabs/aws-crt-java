@@ -22,11 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * <p><b>Deprecated.</b> Use {@link software.amazon.awssdk.crt.mqtt5.Mqtt5Client} instead.</p>
- * 
- * <p>The MQTT 3.1.1 client remains fully supported, but migrating to
- * MQTT 5 gives you a richer feature set, clearer error handling, and
- * improved lifetime management.</p>
+ * <p><b>Deprecated.</b> We strongly recommend using {@link software.amazon.awssdk.crt.mqtt5.Mqtt5Client}.</p>
+ *
+ * <p>There are no current plans to fully deprecate the MQTT 3.1.1 client but it is highly recommended
+ * customers migrate to the MQTT5 client to access a more robust feature set, clearer error handling,
+ * and lifetime management. More details can be found in the GitHub Repo FAQ</p>
  * 
  * This class wraps aws-c-mqtt to provide the basic MQTT pub/sub functionality
  * via the AWS Common Runtime

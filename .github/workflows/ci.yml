@@ -330,8 +330,8 @@ jobs:
           "ndk;28.0.12433566" \
           "cmake;3.22.1"
 
-        echo "Accepting licenses…"
-        yes | sudo "$SDKMANAGER" --licenses
+        yes | "$SDKMANAGER" --licenses
+        set -o pipefail
 
         # Quick sanity prints (non-fatal)
         "$SDKROOT/ndk/28.0.12433566/ndk-build" -v >/dev/null 2>&1 || true

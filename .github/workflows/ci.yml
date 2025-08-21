@@ -354,6 +354,22 @@ jobs:
         cd src/test/android/testapp/src/main/assets
         python3 -m pip install boto3
         python3 ./android_file_creation.py
+
+    - name: Set Android keystore home
+      run: |
+        echo "ANDROID_SDK_HOME=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
+        echo "ANDROID_PREFS_ROOT=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
+        mkdir -p "$GITHUB_WORKSPACE/.android-home/.android"
+
+    - name: Create debug keystore
+      run: |
+        keytool -genkeypair \
+          -keystore "$ANDROID_SDK_HOME/.android/debug.keystore" \
+          -storepass android -keypass android \
+          -alias androiddebugkey \
+          -dname "CN=Android Debug,O=Android,C=US" \
+          -keyalg RSA -keysize 2048 -validity 14000
+
     - name: Build Test App
       run: |
         cd src/test/android/testapp

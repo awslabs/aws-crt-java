@@ -43,8 +43,11 @@ ext {
 }
 
 android {
-    compileSdk 33
-    ndkVersion "21.4.7075529" // LTS version
+    namespace "software.amazon.awssdk.crt"
+
+    compileSdk 35
+    // Pin NDK r28+ (16KB alignment & removal of PAGE_SIZE macro are default)
+    ndkVersion "28.0.12433566"
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
@@ -67,8 +70,27 @@ android {
 
         externalNativeBuild {
             cmake {
+                // If built on NDK r27 you need `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON`
                 arguments "-DBUILD_DEPS=ON"
             }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // Make sure JNI libs are packaged UNCOMPRESSED (so AGP can align them)
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+
+    publishing {
+        // Creates the 'release' SoftwareComponent used by maven-publish
+        singleVariant("release") {
+            withSourcesJar()
         }
     }
 
@@ -163,8 +185,10 @@ afterEvaluate {
 
         publications {
             release(MavenPublication) {
-                from components.release
-
+                def comp = components.findByName("release")
+                if (comp != null) {
+                    from comp
+                }
                 groupId = 'software.amazon.awssdk.crt'
                 artifactId = 'aws-crt-android'
                 version = project.hasProperty('newVersion') ? project.property('newVersion') : android.defaultConfig.versionName

@@ -77,12 +77,14 @@ android {
     }
 
     buildFeatures {
+        // AGP 8 disables buildConfig generation by default. We set this to true
+        // to resstore BuildConfig.VERSION_NAME for both debug and release build types.
         buildConfig true
     }
 
-    // Make sure JNI libs are packaged UNCOMPRESSED (so AGP can align them)
     packagingOptions {
         jniLibs {
+            // Make sure JNI libs are packaged UNCOMPRESSED (so AGP can align them)
             useLegacyPackaging false
         }
     }

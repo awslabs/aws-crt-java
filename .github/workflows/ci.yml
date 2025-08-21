@@ -323,6 +323,8 @@ jobs:
         fi
 
         echo "Installing platform-tools, Build-Tools 35, platform android-35, NDK r28, and CMake…"
+        # Avoid 'yes' SIGPIPE killing the step: turn off pipefail just for these lines
+        set +o pipefail
         yes | sudo "$SDKMANAGER" --install \
           "platform-tools" \
           "build-tools;35.0.0" \

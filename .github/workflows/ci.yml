@@ -290,12 +290,54 @@ jobs:
       uses: actions/checkout@v4
       with:
           submodules: true
-    # Setup JDK 11
-    - name: set up JDK 11
+    # Setup JDK 17
+    - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
+    # Ensure Gradle uses this JDK (important when toolchains are present)
+    - name: Point Gradle at JDK 17
+      run: echo "ORG_GRADLE_JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+    
+    - name: Mirror ANDROID_HOME → ANDROID_SDK_ROOT
+      run: echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+    
+    # Install required Android components & accept licenses (NDK r28 + compileSdk 35)
+    - name: Install Android SDK packages
+      shell: bash
+      run: |
+        set -euo pipefail
+        SDKROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+        SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
+
+        # Some images have cmdline-tools already; ensure path exists
+        if [[ ! -x "$SDKMANAGER" ]]; then
+          echo "cmdline-tools not found; installing…"
+          mkdir -p "$SDKROOT/cmdline-tools"
+          curl -sSL -o /tmp/clt.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          sudo unzip -q /tmp/clt.zip -d "$SDKROOT/cmdline-tools"
+          sudo mv "$SDKROOT/cmdline-tools/cmdline-tools" "$SDKROOT/cmdline-tools/latest"
+          SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
+        fi
+
+        echo "Installing platform-tools, Build-Tools 35, platform android-35, NDK r28, and CMake…"
+        # Avoid 'yes' SIGPIPE killing the step: turn off pipefail just for these lines
+        set +o pipefail
+        yes | sudo "$SDKMANAGER" --install \
+          "platform-tools" \
+          "build-tools;35.0.0" \
+          "platforms;android-35" \
+          "ndk;28.0.12433566" \
+          "cmake;3.22.1"
+
+        yes | "$SDKMANAGER" --licenses
+        set -o pipefail
+
+        # Quick sanity prints (non-fatal)
+        "$SDKROOT/ndk/28.0.12433566/ndk-build" -v >/dev/null 2>&1 || true
+        "$SDKMANAGER" --list | sed -n '1,80p' || true
+
     # Build and publish locally for the test app to find the SNAPSHOT version
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
@@ -311,6 +353,22 @@ jobs:
         cd src/test/android/testapp/src/main/assets
         python3 -m pip install boto3
         python3 ./android_file_creation.py
+
+    - name: Set Android keystore home
+      run: |
+        echo "ANDROID_SDK_HOME=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
+        echo "ANDROID_PREFS_ROOT=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
+        mkdir -p "$GITHUB_WORKSPACE/.android-home/.android"
+
+    - name: Create debug keystore
+      run: |
+        keytool -genkeypair \
+          -keystore "$ANDROID_SDK_HOME/.android/debug.keystore" \
+          -storepass android -keypass android \
+          -alias androiddebugkey \
+          -dname "CN=Android Debug,O=Android,C=US" \
+          -keyalg RSA -keysize 2048 -validity 14000
+
     - name: Build Test App
       run: |
         cd src/test/android/testapp

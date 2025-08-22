@@ -1,11 +1,11 @@
 buildscript {
-    ext.kotlin_version = '1.5.0'
+    ext.kotlin_version = '1.9.24'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:7.1.2"
+        classpath "com.android.tools.build:gradle:8.5.1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -22,8 +22,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    namespace "software.amazon.awssdk.crttest"
+
+    compileSdk 35
+    buildToolsVersion "35.0.0"
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
@@ -32,12 +34,16 @@ android {
     defaultConfig {
         applicationId "software.amazon.awssdk.crttest"
         minSdkVersion 26
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
-        ndkVersion "23.1.7779620"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Ensure JNI libs from dependencies stay UNCOMPRESSED so AGP can 16KB-zip-align them
+    packagingOptions {
+        jniLibs { useLegacyPackaging false }
     }
 
     sourceSets {
@@ -62,6 +68,11 @@ android {
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
@@ -73,6 +84,7 @@ dependencies {
     implementation 'androidx.core:core:1.2.0'
     implementation 'androidx.core:core-ktx:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
 
     testImplementation 'junit:junit:4.13'
 
@@ -81,8 +93,8 @@ dependencies {
     implementation 'junit:junit:4.13'
     androidTestImplementation "junit:junit:4.13"
 
-    androidTestImplementation "androidx.test:core:1.2.0"
+    androidTestImplementation "androidx.test:core:1.5.0"
     androidTestImplementation "androidx.test:runner:1.5.2"
     androidTestImplementation "androidx.test:rules:1.5.0"
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
 }

@@ -74,6 +74,11 @@ android {
                 arguments "-DBUILD_DEPS=ON"
             }
         }
+
+        aarMetadata {
+        // Keeps from referencing newer resources/manifest attributes introduced after 30
+        minCompileSdk = 30
+        }
     }
 
     buildFeatures {

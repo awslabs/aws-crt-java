@@ -871,8 +871,10 @@ public class S3ClientTest extends CrtTestFixture {
 
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
             int contentLength, boolean contentMD5) throws IOException {
+        /* Give a default file options, which should have no affect on non-file path tests and also works for every file-based tests. */
+        FileIoOptions fIoOptions = new FileIoOptions(true, 10.0, true);
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express)
-                .withComputeContentMd5(contentMD5);
+                .withComputeContentMd5(contentMD5).withFileIoOptions(fIoOptions);
         Path uploadFilePath = Files.createTempFile("testS3PutFilePath", ".txt");
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();

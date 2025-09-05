@@ -8,8 +8,12 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 
-import java.time.Instant;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
@@ -96,7 +100,7 @@ public abstract class CrtResource implements AutoCloseable {
     private long nativeHandle;
     private AtomicInteger refCount = new AtomicInteger(1);
     private long id = nextId.getAndAdd(1);
-    private Instant creationTime = Instant.now();
+    private String creationTime;
     private String description;
 
     static {
@@ -108,6 +112,13 @@ public abstract class CrtResource implements AutoCloseable {
      * Default constructor
      */
     public CrtResource() {
+        // Format the current time without java.time to support old Android versions
+        // without requiring API desugaring.
+        // See: https://developer.android.com/studio/write/java8-support#library-desugaring
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        creationTime = sdf.format(new Date());
+
         if (debugNativeObjects) {
             String canonicalName = this.getClass().getCanonicalName();
 
@@ -332,7 +343,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     public String getResourceLogDescription() {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime.toString(), description != null ? description : "<null>"));
+        builder.append(String.format("[Id %d, Class %s, Refs %d](%s) - %s", id, getClass().getSimpleName(), refCount.get(), creationTime, description != null ? description : "<null>"));
         synchronized(this) {
             if (referencedResources.size() > 0) {
                 builder.append("\n   Forward references by Id: ");

@@ -345,7 +345,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jint jni_monitoring_failure_interval_in_seconds,
     jboolean enable_s3express,
     jobject java_s3express_provider_factory,
-    jlong jni_memory_limit_bytes_jlong) {
+    jlong jni_memory_limit_bytes_jlong,
+    jboolean fio_options_set,
+    jboolean should_stream,
+    jdouble disk_throughput_gbps,
+    jboolean direct_io) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -436,6 +440,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         tls_options = &tls_options_storage;
         aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
     }
+    struct aws_s3_file_io_options fio_opts = {
+        .should_stream = should_stream,
+        .disk_throughput_gbps = disk_throughput_gbps,
+        .direct_io = direct_io,
+    };
 
     struct aws_s3_client_config client_config = {
         .max_active_connections_override = max_connections,
@@ -459,6 +468,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
             java_s3express_provider_factory ? s_s3express_provider_jni_factory : NULL,
         .factory_user_data = callback_data,
         .memory_limit_in_bytes = memory_limit_in_bytes,
+        /* If fio options not set, let native code to decide the default instead */
+        .fio_opts = fio_options_set ? &fio_opts : NULL,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;
@@ -979,7 +990,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jbyteArray jni_response_filepath,
     jint jni_response_file_option,
     jlong jni_response_file_position,
-    jboolean jni_response_file_delete_on_failure) {
+    jboolean jni_response_file_delete_on_failure,
+    jboolean fio_options_set,
+    jboolean should_stream,
+    jdouble disk_throughput_gbps,
+    jboolean direct_io) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1097,6 +1112,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
             goto done;
         }
     }
+    struct aws_s3_file_io_options fio_opts = {
+        .should_stream = should_stream,
+        .disk_throughput_gbps = disk_throughput_gbps,
+        .direct_io = direct_io,
+    };
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
@@ -1118,6 +1138,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .recv_file_option = jni_response_file_option,
         .recv_file_position = jni_response_file_position,
         .recv_file_delete_on_failure = jni_response_file_delete_on_failure,
+        /* If fio options not set, let native code to decide the default instead */
+        .fio_opts = fio_options_set ? &fio_opts : NULL,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);

@@ -75,6 +75,12 @@ public class S3ClientOptions {
 
     private HttpMonitoringOptions monitoringOptions;
 
+    /**
+     * Optional.
+     * Controls how client performs file I/O operations. Only applies to file-based workloads.
+     */
+    private FileIoOptions fileIoOptions;
+
     public S3ClientOptions() {
         this.computeContentMd5 = false;
     }
@@ -369,5 +375,27 @@ public class S3ClientOptions {
      */
     public long getMemoryLimitInBytes() {
         return memoryLimitInBytes;
+    }
+
+    /**
+     * Sets the file I/O options for controlling how client performs file I/O operations.
+     *
+     *  Notes: This only applies to the requests that `withRequestFilePath` was set.
+     *
+     * @param fileIoOptions the file I/O options to use
+     * @return this
+     */
+    public S3ClientOptions withFileIoOptions(FileIoOptions fileIoOptions) {
+        this.fileIoOptions = fileIoOptions;
+        return this;
+    }
+
+    /**
+     * Gets the file I/O options for controlling how client performs file I/O operations.
+     *
+     * @return the file I/O options, or null if not set
+     */
+    public FileIoOptions getFileIoOptions() {
+        return fileIoOptions;
     }
 }

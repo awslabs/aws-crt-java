@@ -28,12 +28,12 @@ cross-platform, high-performance, secure, and reliable.
 ## Installation
 
 ### Minimum requirements
-* Java 11+ ([Download and Install Java](https://www.java.com/en/download/help/download_options.html))
+* Java 17+ ([Download and Install Java](https://www.java.com/en/download/help/download_options.html))
   * [Set JAVA_HOME](#set-java_home)
-* Gradle 7.4.2 ([Download and Install Gradle](https://gradle.org/install/))
+* Gradle 8.5.1+ ([Download and Install Gradle](https://gradle.org/install/))
 * Android SDK 24 ([Doanload SDK Manager](https://developer.android.com/tools/releases/platform-tools#downloads))
   * [Set ANDROID_HOME](#set-android_home)
-* Android NDK ([Download and install Android NDK](https://developer.android.com/ndk/downloads))
+* Android NDK 28+ ([Download and install Android NDK](https://developer.android.com/ndk/downloads))
 
 ### Build and install CRT from source
 Supports API 24 or newer.

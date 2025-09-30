@@ -6,21 +6,33 @@ phases:
     commands:
       - sudo add-apt-repository ppa:openjdk-r/ppa
       - sudo apt-get update -y
-      - sudo apt-get install openjdk-11-jdk-headless maven wget unzip -y -f
+
+      # Java 17 for AGP 8.x
+      - sudo apt-get install -y openjdk-17-jdk-headless maven wget unzip gnupg
+      - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - export PATH="$JAVA_HOME/bin:$PATH"
+      - export ORG_GRADLE_JAVA_HOME="$JAVA_HOME"
+
       # install android sdk
-      - wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
       - export ANDROID_SDK_ROOT=$CODEBUILD_SRC_DIR/android-sdk
+      - export ANDROID_HOME="$ANDROID_SDK_ROOT"   # settings.gradle checks ANDROID_HOME
       - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-      - unzip commandlinetools-linux-7583922_latest.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+      - wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+      - unzip -q commandlinetools-linux-11076708_latest.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
       # This weird path needed for cmd tool to work
-      - mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-      # install android build tools
-      - echo y | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;30.0.3" "platforms;android-33" "ndk;21.4.7075529"
+      - mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+      - export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+
+      # Platform/Build-Tools for compileSdk 35, NDK r28, and CMake
+      - yes | sdkmanager --install "platform-tools" "build-tools;35.0.0" "platforms;android-35" "ndk;28.0.12433566" "cmake;3.22.1"
+      - yes | sdkmanager --licenses
+
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-java
       - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
       - echo $PKG_VERSION
+
       # install settings.xml to ~/.m2/settings.xml
       - mkdir -p $HOME/.m2
       - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.token.xml $HOME/.m2/settings.xml
@@ -37,6 +49,10 @@ phases:
       - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
       - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
 
+      # Sanity prints
+      - java -version
+      - ./gradlew -v
+
   build:
     commands:
        # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
@@ -48,6 +64,7 @@ phases:
 
   post_build:
     commands:
+      - echo "Build & publish steps completed."
 
 cache:
   paths:

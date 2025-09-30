@@ -4,7 +4,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        // AGP 8.5.1+ aligns uncompressed .so at 16KB automatically
+        // Requires JDK 17+
+        classpath 'com.android.tools.build:gradle:8.5.1'
     }
 }
 

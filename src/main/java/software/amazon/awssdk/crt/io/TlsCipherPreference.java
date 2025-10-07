@@ -70,7 +70,12 @@ public enum TlsCipherPreference {
      * This security policy is based on AWS-CRT-SDK-TLSv1.2-2023 s2n TLS policy, with tightened security.
      * It is FIPS-complaint.
      */
-    TLS_CIPHER_PREF_TLSv1_2_2025(9);
+    TLS_CIPHER_PREF_TLSv1_2_2025(9),
+
+    /**
+     * This security policy was the system default before PQ was enabled by default.
+     */
+    AWS_IO_TLS_CIPHER_PREF_TLSV1_0_2023_06(10);
 
     private int val;
 

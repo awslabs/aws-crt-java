@@ -4,8 +4,6 @@
  */
 package software.amazon.awssdk.crt.s3;
 
-import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
-
 /**
  * WARNING: experimental/unstable, the default behavior is subjected to change in the future.
  * Controls how client performs file I/O operations. Only applies to file-based workloads.

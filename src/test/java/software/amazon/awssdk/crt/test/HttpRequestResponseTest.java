@@ -267,6 +267,11 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     }
 
     private void doHttpRequestUnActivatedTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
         try {
             URI uri = new URI(HOST);
 

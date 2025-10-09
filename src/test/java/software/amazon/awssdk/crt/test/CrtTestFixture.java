@@ -309,4 +309,14 @@ public class CrtTestFixture {
             Assume.assumeFalse(platform.getOSIdentifier().contains("android"));
         }
     }
+
+    protected void skipIfMac() {
+        CrtPlatform platform = CRT.getPlatformImpl();
+        if (platform != null) {
+            Assume.assumeFalse(platform.getOSIdentifier().contains("osx"));
+        } else {
+            // Fallback to direct OS detection if platform is null
+            Assume.assumeFalse(CRT.getOSIdentifier().equals("osx"));
+        }
+    }
 }

@@ -34,6 +34,13 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
+        if(endpoint.equals(HOST)) {
+            // postman-echo.com in now requires TLS1.3,
+            // but our Mac implementation doesn't support TLS1.3 yet.
+            // The work has been planned to Dec. 2025 to support TLS1.3,
+            // so disable the test for now. And reenable it afterward
+            skipIfMac();
+        }
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -167,6 +174,11 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     }
 
     private void doHttp2ResetStreamTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
         try {
             CompletableFuture<Void> shutdownComplete = null;
             boolean actuallyConnected = false;

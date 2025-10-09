@@ -5,15 +5,14 @@
 package software.amazon.awssdk.crt.s3;
 
 /**
+ * WARNING: experimental/unstable, the default behavior is subjected to change in the future.
  * Controls how client performs file I/O operations. Only applies to file-based workloads.
  */
 public class FileIoOptions {
 
     /**
      * Skip buffering the part in memory before sending the request.
-     * If set, set the {@code diskThroughputGbps} to reasonably align with the available disk throughput.
-     * Otherwise, the transfer may fail with connection starvation.
-     * Defaults to false.
+     * Default to false on small objects, and true when the object size exceed a certain threshold.
      */
     private boolean shouldStream;
 
@@ -21,10 +20,11 @@ public class FileIoOptions {
      * The estimated disk throughput in gigabits per second (Gbps).
      * Only applied when {@code shouldStream} is true.
      *
-     * When doing upload with streaming, it's important to set the disk throughput to prevent connection starvation.
      * Note: There are possibilities that cannot reach all available disk throughput:
      * 1. Disk is busy with other applications
      * 2. OS Cache may cap the throughput, use {@code directIo} to get around this.
+     *
+     * Default to throughputTargetGbps set in {@link S3ClientOptions}.
      */
     private double diskThroughputGbps;
 

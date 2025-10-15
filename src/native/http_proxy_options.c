@@ -33,6 +33,7 @@ void aws_http_proxy_options_jni_init(
     jint proxy_port,
     jbyteArray proxy_authorization_username,
     jbyteArray proxy_authorization_password,
+    jbyteArray no_proxy_hosts,
     int proxy_authorization_type,
     struct aws_tls_ctx *proxy_tls_ctx) {
 
@@ -54,6 +55,10 @@ void aws_http_proxy_options_jni_init(
         options->auth_password = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_authorization_password);
     }
 
+    if (no_proxy_hosts != NULL) {
+        options->no_proxy_hosts = aws_jni_byte_cursor_from_jbyteArray_acquire(env, no_proxy_hosts);
+    }
+
     if (proxy_tls_ctx != NULL) {
         aws_tls_connection_options_init_from_ctx(tls_options, proxy_tls_ctx);
         aws_tls_connection_options_set_server_name(tls_options, allocator, &options->host);
@@ -66,7 +71,8 @@ void aws_http_proxy_options_jni_clean_up(
     struct aws_http_proxy_options *options,
     jbyteArray proxy_host,
     jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password) {
+    jbyteArray proxy_authorization_password,
+    jbyteArray no_proxy_hosts) {
 
     if (options->host.ptr != NULL) {
         aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_host, options->host);
@@ -78,6 +84,10 @@ void aws_http_proxy_options_jni_clean_up(
 
     if (options->auth_password.ptr != NULL) {
         aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_authorization_password, options->auth_password);
+    }
+
+    if (options->no_proxy_hosts.ptr != NULL) {
+        aws_jni_byte_cursor_from_jbyteArray_release(env, no_proxy_hosts, options->no_proxy_hosts);
     }
 
     if (options->tls_options != NULL) {

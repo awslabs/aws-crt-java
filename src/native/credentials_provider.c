@@ -460,6 +460,7 @@ JNIEXPORT jlong JNICALL
         jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
+        NULL, // TODO
         jni_proxy_authorization_type,
         (struct aws_tls_ctx *)jni_proxy_tls_context);
 
@@ -480,7 +481,7 @@ JNIEXPORT jlong JNICALL
     aws_jni_byte_cursor_from_jbyteArray_release(env, endpoint, options.endpoint);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password, NULL);
 
     aws_tls_connection_options_clean_up(&tls_connection_options);
 
@@ -742,6 +743,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_auth_credentials_CognitoCredential
             proxy_port,
             proxy_authorization_username,
             proxy_authorization_password,
+            NULL, // TODO
             proxy_authorization_type,
             (struct aws_tls_ctx *)native_proxy_tls_context);
 
@@ -761,7 +763,7 @@ done:
     aws_jni_byte_cursor_from_jbyteArray_release(env, marshalled_logins, logins_cursor);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, proxy_host, proxy_authorization_username, proxy_authorization_password);
+        env, &proxy_options, proxy_host, proxy_authorization_username, proxy_authorization_password, NULL);
 
     aws_array_list_clean_up(&logins);
 

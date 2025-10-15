@@ -19,6 +19,7 @@ public class HttpProxyOptions {
     private TlsContext tlsContext;
     private HttpProxyAuthorizationType authorizationType;
     private HttpProxyConnectionType connectionType;
+    private String noProxyHosts;
 
     /**
      * what kind of authentication, if any, to use when connecting to a proxy server
@@ -182,4 +183,18 @@ public class HttpProxyOptions {
      */
     public TlsContext getTlsContext() { return tlsContext; }
 
+    /**
+     * @return the nonProxyHosts setting for the proxy connection.
+     */
+    public String getNoProxyHosts() {
+        return noProxyHosts;
+    }
+
+    /**
+     * Sets the list of hosts for which not to use a proxy.
+     * @param noProxyHosts comma seperated list of hosts to skip proxy for.
+     */
+    public void setNoProxyHosts(String noProxyHosts) {
+        this.noProxyHosts = noProxyHosts;
+    }
 }

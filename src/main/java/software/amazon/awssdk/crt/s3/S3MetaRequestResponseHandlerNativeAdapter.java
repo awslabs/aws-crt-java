@@ -32,4 +32,6 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     void onProgress(final S3MetaRequestProgress progress) {
         responseHandler.onProgress(progress);
     }
+
+    void onTelemetry(final S3RequestMetrics requestMetrics) { responseHandler.onTelemetry(requestMetrics);}
 }

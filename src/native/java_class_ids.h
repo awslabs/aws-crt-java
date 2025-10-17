@@ -325,6 +325,7 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onFinished;
     jmethodID onResponseHeaders;
     jmethodID onProgress;
+    jmethodID onTelemetry;
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
@@ -435,6 +436,49 @@ struct java_aws_s3_meta_request_progress {
     jfieldID content_length_field_id;
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
+
+/* S3RequestMetrics */
+struct java_aws_s3_request_metrics {
+    jclass s3_request_metrics_class;
+    jmethodID s3_request_metrics_constructor_method_id;
+    // Timestamp fields (long = J)
+    jfieldID start_timestamp_ns_field_id;
+    jfieldID end_timestamp_ns_field_id;
+    jfieldID total_duration_ns_field_id;
+    jfieldID send_start_timestamp_ns_field_id;
+    jfieldID send_end_timestamp_ns_field_id;
+    jfieldID sending_duration_ns_field_id;
+    jfieldID receive_start_timestamp_ns_field_id;
+    jfieldID receive_end_timestamp_ns_field_id;
+    jfieldID receiving_duration_ns_field_id;
+    jfieldID sign_start_timestamp_ns_field_id;
+    jfieldID sign_end_timestamp_ns_field_id;
+    jfieldID signing_duration_ns_field_id;
+    jfieldID mem_acquire_start_timestamp_ns_field_id;
+    jfieldID mem_acquire_end_timestamp_ns_field_id;
+    jfieldID mem_acquire_duration_ns_field_id;
+    jfieldID deliver_start_timestamp_ns_field_id;
+    jfieldID deliver_end_timestamp_ns_field_id;
+    jfieldID deliver_duration_ns_field_id;
+    // Request/Response info
+    jfieldID response_status_field_id;
+    jfieldID request_id_field_id;
+    jfieldID extended_request_id_field_id;
+    jfieldID operation_name_field_id;
+    jfieldID request_path_query_field_id;
+    jfieldID host_address_field_id;
+    jfieldID request_type_field_id;
+    // CRT info
+    jfieldID ip_address_field_id;
+    jfieldID connection_id_field_id;
+    jfieldID thread_id_field_id;
+    jfieldID stream_id_field_id;
+    jfieldID error_code_field_id;
+    jfieldID retry_attempt_field_id;
+
+    jfieldID error_type_field_id;
+};
+extern struct java_aws_s3_request_metrics s3_request_metrics_properties;
 
 /* S3TcpKeepAliveOptions */
 struct java_aws_s3_tcp_keep_alive_options_properties {

@@ -729,15 +729,7 @@ static jobject s_get_error_type_enum(JNIEnv *env, int error_code) {
             break;
     }
 
-    jclass error_type_class = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/ErrorType");
-    jmethodID values_method =
-        (*env)->GetStaticMethodID(env, error_type_class, "values", "()[Lsoftware/amazon/awssdk/crt/s3/ErrorType;");
-    jobjectArray error_type_values = (*env)->CallStaticObjectMethod(env, error_type_class, values_method);
-    jobject error_type_enum = (*env)->GetObjectArrayElement(env, error_type_values, ordinal);
-
-    (*env)->DeleteLocalRef(env, error_type_class);
-    (*env)->DeleteLocalRef(env, error_type_values);
-
+    jobject error_type_enum = (*env)->GetObjectArrayElement(env, s3_error_type_properties.error_type_values, ordinal);
     return error_type_enum;
 }
 

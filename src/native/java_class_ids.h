@@ -437,6 +437,13 @@ struct java_aws_s3_meta_request_progress {
 };
 extern struct java_aws_s3_meta_request_progress s3_meta_request_progress_properties;
 
+/* ErrorType */
+struct java_s3_error_type_properties {
+    jclass error_type_class;
+    jobjectArray error_type_values;
+};
+extern struct java_s3_error_type_properties s3_error_type_properties;
+
 /* S3RequestMetrics */
 struct java_aws_s3_request_metrics {
     jclass s3_request_metrics_class;

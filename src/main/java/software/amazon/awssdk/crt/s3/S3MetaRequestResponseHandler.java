@@ -68,4 +68,13 @@ public interface S3MetaRequestResponseHandler {
      */
     default void onProgress(final S3MetaRequestProgress progress) {
     }
+
+    /**
+     * Invoked to report telemetry of partial execution of meta request.
+     * This reports back details irrespective of success or failure of partial request.
+     * More details on the specific metrics collected is provided on {@link S3RequestMetrics}
+     * @param requestMetrics telemetry data for an individual http request attempt within the meta request
+     */
+    default void onTelemetry(S3RequestMetrics requestMetrics) {
+    }
 }

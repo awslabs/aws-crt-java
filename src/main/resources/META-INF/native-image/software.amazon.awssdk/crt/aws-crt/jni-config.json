@@ -2184,6 +2184,119 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.s3.ErrorType",
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3RequestMetrics",
+    "fields": [
+      {
+        "name": "startTimestampNs"
+      },
+      {
+        "name": "endTimestampNs"
+      },
+      {
+        "name": "totalDurationNs"
+      },
+      {
+        "name": "sendStartTimestampNs"
+      },
+      {
+        "name": "sendEndTimestampNs"
+      },
+      {
+        "name": "sendingDurationNs"
+      },
+      {
+        "name": "receiveStartTimestampNs"
+      },
+      {
+        "name": "receiveEndTimestampNs"
+      },
+      {
+        "name": "receivingDurationNs"
+      },
+      {
+        "name": "signStartTimestampNs"
+      },
+      {
+        "name": "signEndTimestampNs"
+      },
+      {
+        "name": "signingDurationNs"
+      },
+      {
+        "name": "memAcquireStartTimestampNs"
+      },
+      {
+        "name": "memAcquireEndTimestampNs"
+      },
+      {
+        "name": "memAcquireDurationNs"
+      },
+      {
+        "name": "deliverStartTimestampNs"
+      },
+      {
+        "name": "deliverEndTimestampNs"
+      },
+      {
+        "name": "deliverDurationNs"
+      },
+      {
+        "name": "responseStatus"
+      },
+      {
+        "name": "requestId"
+      },
+      {
+        "name": "operationName"
+      },
+      {
+        "name": "requestPathQuery"
+      },
+      {
+        "name": "hostAddress"
+      },
+      {
+        "name": "requestType"
+      },
+      {
+        "name": "ipAddress"
+      },
+      {
+        "name": "connectionId"
+      },
+      {
+        "name": "threadId"
+      },
+      {
+        "name": "streamId"
+      },
+      {
+        "name": "errorCode"
+      },
+      {
+        "name": "retryAttempt"
+      },
+      {
+        "name": "errorType"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.http.HttpProxyOptions$HttpProxyAuthorizationType",
     "methods": [
       {
@@ -2227,6 +2340,12 @@
         "parameterTypes": [
           "int",
           "java.nio.ByteBuffer"
+        ]
+      },
+      {
+        "name": "onTelemetry",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3RequestMetrics"
         ]
       }
     ]

@@ -2631,6 +2631,8 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
     AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
 
+
+// Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
     s_cache_http_request_body_stream(env);

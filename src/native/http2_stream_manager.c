@@ -248,7 +248,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     }
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password, jni_no_proxy_hosts);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_no_proxy_hosts);
 
     if (new_tls_conn_opts) {
         aws_tls_connection_options_clean_up(&tls_conn_options);

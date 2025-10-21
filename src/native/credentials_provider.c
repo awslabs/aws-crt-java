@@ -493,7 +493,12 @@ JNIEXPORT jlong JNICALL
     aws_jni_byte_cursor_from_jbyteArray_release(env, endpoint, options.endpoint);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password, jni_no_proxy_hosts);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_no_proxy_hosts);
 
     aws_tls_connection_options_clean_up(&tls_connection_options);
 

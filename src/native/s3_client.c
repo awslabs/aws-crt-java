@@ -531,7 +531,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password, jni_proxy_no_proxy_hosts);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_no_proxy_hosts);
 
     aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
     if (tls_options) {

@@ -187,7 +187,8 @@ public class MqttClientConnection extends CrtResource {
                         proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                         options.getAuthorizationType().getValue(),
                         options.getAuthorizationUsername(),
-                        options.getAuthorizationPassword());
+                        options.getAuthorizationPassword(),
+                        options.getNoProxyHosts());
             }
 
             addReferenceTo(config);
@@ -518,7 +519,8 @@ public class MqttClientConnection extends CrtResource {
             long proxyTlsContext,
             int proxyAuthorizationType,
             String proxyAuthorizationUsername,
-            String proxyAuthorizationPassword) throws CrtRuntimeException;
+            String proxyAuthorizationPassword,
+            String noProxyHosts) throws CrtRuntimeException;
 
     private static native MqttClientConnectionOperationStatistics mqttClientConnectionGetOperationStatistics(
             long connection);

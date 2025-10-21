@@ -78,7 +78,7 @@
                 <cmake.buildtype></cmake.buildtype>
                 <cmake.buildconfig>RelWithDebInfo</cmake.buildconfig>
                 <cmake.cflags/>
-            </properties>
+          </properties>
         </profile>
         <!-- Unix/Linux/OSX profiles: use makefiles and the "all" compile target -->
         <profile>
@@ -102,7 +102,7 @@
             </activation>
             <properties>
                 <cmake.cflags/>
-                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=x86_64</cmake.osx_arch>
             </properties>
         </profile>
@@ -115,7 +115,7 @@
                     </os>
                 </activation>
             <properties>
-                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9</cmake.min_osx_version>
+                <cmake.min_osx_version>-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15</cmake.min_osx_version>
                 <cmake.osx_arch>-DCMAKE_OSX_ARCHITECTURES=arm64</cmake.osx_arch>
             </properties>
         </profile>
@@ -187,6 +187,7 @@
                                         <argument>--no-warn-unused-cli</argument>
                                         <argument>${cmake.generator}</argument>
                                         <argument>${cmake.toolset}</argument>
+                                        <argument>${cmake.windows-sdk-version}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -253,25 +254,16 @@
         </profile>
         <profile>
             <id>release</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://aws.oss.sonatype.org/content/repositories/snapshots</url>
-                </snapshotRepository>
-            </distributionManagement>
             <build>
                 <plugins>
-                    <!-- staging/release to Sonatype -->
+                    <!-- staging/release to Sonatype Central -->
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://aws.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                            <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
+                            <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
                     <!-- source jar -->
@@ -309,7 +301,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>3.2.7</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -442,6 +434,23 @@
                                     <isset property="env.AWS_CMAKE_GENERATOR" />
                                 </condition>
                                 <echo message="Generator = ${cmake.generator}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>windows-sdk-version</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <property environment="env"/>
+                                <condition property="cmake.windows-sdk-version" value="-DCMAKE_SYSTEM_VERSION=${env.AWS_CRT_WINDOWS_SDK_VERSION}" else="-DWINDOWS_SDK_VERSION_DUMMY=1">
+                                    <isset property="env.AWS_CRT_WINDOWS_SDK_VERSION" />
+                                </condition>
+                                <echo message="Windows SDK version = ${cmake.windows-sdk-version}"/>
                             </target>
                         </configuration>
                     </execution>

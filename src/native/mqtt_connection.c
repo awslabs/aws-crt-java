@@ -30,33 +30,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "mqtt5_client_jni.h"
-
-/*******************************************************************************
- * mqtt_jni_async_callback - carries an AsyncCallback around as user data to mqtt
- * async ops, and is used to deliver callbacks. Also hangs on to JNI references
- * to buffers and strings that need to outlive the request
- ******************************************************************************/
-struct mqtt_jni_async_callback {
-    struct mqtt_jni_connection *connection;
-    jobject async_callback;
-    struct aws_byte_buf buffer; /* payloads or other pinned resources go in here, freed when callback is delivered */
-};
-
-/*******************************************************************************
- * mqtt_jni_connection - represents an aws_mqtt_client_connection to Java
- ******************************************************************************/
-struct mqtt_jni_connection {
-    struct aws_mqtt_client *client; /* Provided to mqtt_connect */
-    struct aws_mqtt_client_connection *client_connection;
-    struct aws_socket_options socket_options;
-    struct aws_tls_connection_options tls_options;
-
-    JavaVM *jvm;
-    jweak java_mqtt_connection; /* MqttClientConnection instance */
-    struct mqtt_jni_async_callback *on_message;
-
-    struct aws_atomic_var ref_count;
-};
+#include "mqtt_connection.h"
 
 /*******************************************************************************
  * mqtt_jni_ws_handshake - Data needed to perform the async websocket handshake

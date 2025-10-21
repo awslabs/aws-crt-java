@@ -39,6 +39,19 @@ public class S3Client extends CrtResource {
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
         String noProxyHosts = null;
+        // Handle FileIoOptions from S3ClientOptions
+        boolean fioOptionsSet = false;
+        boolean shouldStream = false;
+        double diskThroughputGbps = 0.0;
+        boolean directIo = false;
+
+        FileIoOptions fileIoOptions = options.getFileIoOptions();
+        if (fileIoOptions != null) {
+            fioOptionsSet = true;
+            shouldStream = fileIoOptions.getShouldStream();
+            diskThroughputGbps = fileIoOptions.getDiskThroughputGbps();
+            directIo = fileIoOptions.getDirectIo();
+        }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
         if (proxyOptions != null) {
@@ -109,7 +122,11 @@ public class S3Client extends CrtResource {
                 monitoringFailureIntervalInSeconds,
                 options.getEnableS3Express(),
                 options.getS3ExpressCredentialsProviderFactory(),
-                options.getMemoryLimitInBytes()));
+                options.getMemoryLimitInBytes(),
+                fioOptionsSet,
+                shouldStream,
+                diskThroughputGbps,
+                directIo));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -175,6 +192,19 @@ public class S3Client extends CrtResource {
 
         ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
                 : new ChecksumConfig();
+        // Handle FileIoOptions from S3MetaRequestOptions
+        boolean fioOptionsSet = false;
+        boolean shouldStream = false;
+        double diskThroughputGbps = 0.0;
+        boolean directIo = false;
+
+        FileIoOptions fileIoOptions = options.getFileIoOptions();
+        if (fileIoOptions != null) {
+            fioOptionsSet = true;
+            shouldStream = fileIoOptions.getShouldStream();
+            diskThroughputGbps = fileIoOptions.getDiskThroughputGbps();
+            directIo = fileIoOptions.getDirectIo();
+        }
 
         long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
                 options.getMetaRequestType().getNativeValue(),
@@ -186,7 +216,11 @@ public class S3Client extends CrtResource {
                 responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
                 options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
                 options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
-                options.getResponseFileDeleteOnFailure());
+                options.getResponseFileDeleteOnFailure(),
+                fioOptionsSet,
+                shouldStream,
+                diskThroughputGbps,
+                directIo);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -246,7 +280,11 @@ public class S3Client extends CrtResource {
             int monitoringFailureIntervalInSeconds,
             boolean enableS3Express,
             S3ExpressCredentialsProviderFactory s3expressCredentialsProviderFactory,
-            long memoryLimitInBytes) throws CrtRuntimeException;
+            long memoryLimitInBytes,
+            boolean fioOptionsSet,
+            boolean shouldStream,
+            double diskThroughputGbps,
+            boolean directIo) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
@@ -257,5 +295,9 @@ public class S3Client extends CrtResource {
             HttpRequestBodyStream httpRequestBodyStream, byte[] requestFilePath,
             AwsSigningConfig signingConfig, S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter,
             byte[] endpoint, ResumeToken resumeToken, Long objectSizeHint, byte[] responseFilePath,
-            int responseFileOption, long responseFilePosition, boolean responseFileDeleteOnFailure);
+            int responseFileOption, long responseFilePosition, boolean responseFileDeleteOnFailure,
+            boolean fioOptionsSet,
+            boolean shouldStream,
+            double diskThroughputGbps,
+            boolean directIo);
 }

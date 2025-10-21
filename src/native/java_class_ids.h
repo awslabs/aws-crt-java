@@ -331,6 +331,8 @@ extern struct java_s3_meta_request_response_handler_native_adapter_properties
 
 /* CompletableFuture */
 struct java_completable_future_properties {
+    jclass completable_future_class;
+    jmethodID constructor_method_id;
     jmethodID complete_method_id;
     jmethodID complete_exceptionally_method_id;
 };
@@ -943,6 +945,9 @@ extern struct java_boxed_list_properties boxed_list_properties;
 struct java_boxed_array_list_properties {
     jclass list_class;
     jmethodID list_constructor_id;
+
+    jmethodID get_method_id;
+    jmethodID size_method_id;
 };
 extern struct java_boxed_array_list_properties boxed_array_list_properties;
 
@@ -967,6 +972,91 @@ struct java_s3express_credentials_provider_properties {
     jmethodID destroyProvider;
 };
 extern struct java_s3express_credentials_provider_properties s3express_credentials_provider_properties;
+
+/* ResponsePath */
+struct java_response_path_properties {
+    jclass response_path_class;
+    jfieldID response_topic_field_id;
+    jfieldID correlation_token_json_path_field_id;
+};
+extern struct java_response_path_properties response_path_properties;
+
+/* RequestResponseOperation */
+struct java_request_response_operation_properties {
+    jclass request_response_operation_class;
+
+    jfieldID response_paths_field_id;
+    jfieldID subscriptions_field_id;
+    jfieldID publish_topic_field_id;
+    jfieldID payload_field_id;
+    jfieldID correlation_token_field_id;
+};
+extern struct java_request_response_operation_properties request_response_operation_properties;
+
+/* MqttRequestResponse */
+struct java_mqtt_request_response_properties {
+    jclass mqtt_request_response_class;
+    jmethodID constructor_method_id;
+    jfieldID topic_field_id;
+    jfieldID payload_field_id;
+};
+extern struct java_mqtt_request_response_properties mqtt_request_response_properties;
+
+/* IncomingPublishEvent */
+struct java_incoming_publish_event_properties {
+    jclass incoming_publish_event_class;
+    jmethodID constructor_method_id;
+    jfieldID content_type_id;
+    jfieldID user_properties_field_id;
+    jfieldID message_expiry_interval_seconds_id;
+};
+extern struct java_incoming_publish_event_properties incoming_publish_event_properties;
+
+/* SubscriptionStatusEventType */
+struct java_subscription_status_event_type_properties {
+    jclass subscription_status_event_type_class;
+    jmethodID get_enum_value_from_integer_method_id;
+};
+extern struct java_subscription_status_event_type_properties subscription_status_event_type_properties;
+
+/* SubscriptionStatusEvent */
+struct java_subscription_status_event_properties {
+    jclass subscription_status_event_class;
+    jmethodID constructor_method_id;
+};
+extern struct java_subscription_status_event_properties subscription_status_event_properties;
+
+/* StreamingOperationOptions */
+struct java_streaming_operation_options_properties {
+    jclass streaming_operation_options_class;
+    jfieldID topic_field_id;
+    jfieldID incoming_publish_event_callback_field_id;
+    jfieldID subscription_status_event_callback_field_id;
+};
+extern struct java_streaming_operation_options_properties streaming_operation_options_properties;
+
+/* Consumer */
+struct java_consumer_properties {
+    jclass consumer_class;
+    jmethodID accept_method_id;
+};
+extern struct java_consumer_properties consumer_properties;
+
+/* CognitoLoginTokenSource */
+struct java_cognito_login_token_source_properties {
+    jclass cognito_login_token_source_class;
+    jmethodID start_login_token_fetch_method_id;
+};
+
+extern struct java_cognito_login_token_source_properties cognito_login_token_source_properties;
+
+/* CognitoCredentialsProvider */
+struct java_cognito_credentials_provider_properties {
+    jclass cognito_credentials_provider_class;
+    jmethodID create_chained_future_method_id;
+};
+
+extern struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

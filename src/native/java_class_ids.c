@@ -281,7 +281,7 @@ static void s_cache_credentials_provider(JNIEnv *env) {
         env,
         provider_class,
         "onGetCredentialsComplete",
-        "(Ljava/util/concurrent/CompletableFuture;Lsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
+        "(Ljava/util/concurrent/CompletableFuture;ILsoftware/amazon/awssdk/crt/auth/credentials/Credentials;)V");
     AWS_FATAL_ASSERT(credentials_provider_properties.on_get_credentials_complete_method_id);
 }
 
@@ -732,6 +732,10 @@ struct java_completable_future_properties completable_future_properties;
 static void s_cache_completable_future(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "java/util/concurrent/CompletableFuture");
     AWS_FATAL_ASSERT(cls);
+    completable_future_properties.completable_future_class = (*env)->NewGlobalRef(env, cls);
+
+    completable_future_properties.constructor_method_id = (*env)->GetMethodID(env, cls, "<init>", "()V");
+    AWS_FATAL_ASSERT(completable_future_properties.constructor_method_id);
 
     completable_future_properties.complete_method_id =
         (*env)->GetMethodID(env, cls, "complete", "(Ljava/lang/Object;)Z");
@@ -2269,6 +2273,14 @@ static void s_cache_boxed_array_list(JNIEnv *env) {
     boxed_array_list_properties.list_constructor_id =
         (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "<init>", "()V");
     AWS_FATAL_ASSERT(boxed_array_list_properties.list_constructor_id);
+
+    boxed_array_list_properties.get_method_id =
+        (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "get", "(I)Ljava/lang/Object;");
+    AWS_FATAL_ASSERT(boxed_array_list_properties.get_method_id);
+
+    boxed_array_list_properties.size_method_id =
+        (*env)->GetMethodID(env, boxed_array_list_properties.list_class, "size", "()I");
+    AWS_FATAL_ASSERT(boxed_array_list_properties.size_method_id);
 }
 
 struct java_s3express_credentials_provider_factory_properties s3express_credentials_provider_factory_properties;
@@ -2320,6 +2332,187 @@ static void s_cache_s3express_credentials_provider_properties(JNIEnv *env) {
 
     s3express_credentials_provider_properties.destroyProvider = (*env)->GetMethodID(env, cls, "destroyProvider", "()V");
     AWS_FATAL_ASSERT(s3express_credentials_provider_properties.destroyProvider);
+}
+
+struct java_response_path_properties response_path_properties;
+
+static void s_cache_response_path_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/ResponsePath");
+    AWS_FATAL_ASSERT(cls);
+
+    response_path_properties.response_path_class = (*env)->NewGlobalRef(env, cls);
+
+    response_path_properties.response_topic_field_id =
+        (*env)->GetFieldID(env, cls, "responseTopic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(response_path_properties.response_topic_field_id);
+
+    response_path_properties.correlation_token_json_path_field_id =
+        (*env)->GetFieldID(env, cls, "correlationTokenJsonPath", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(response_path_properties.correlation_token_json_path_field_id);
+}
+
+struct java_request_response_operation_properties request_response_operation_properties;
+
+static void s_cache_request_response_operation_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/RequestResponseOperation");
+    AWS_FATAL_ASSERT(cls);
+
+    request_response_operation_properties.request_response_operation_class = (*env)->NewGlobalRef(env, cls);
+
+    request_response_operation_properties.response_paths_field_id =
+        (*env)->GetFieldID(env, cls, "responsePaths", "Ljava/util/ArrayList;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.response_paths_field_id);
+
+    request_response_operation_properties.subscriptions_field_id =
+        (*env)->GetFieldID(env, cls, "subscriptions", "Ljava/util/ArrayList;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.subscriptions_field_id);
+
+    request_response_operation_properties.publish_topic_field_id =
+        (*env)->GetFieldID(env, cls, "publishTopic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.publish_topic_field_id);
+
+    request_response_operation_properties.payload_field_id = (*env)->GetFieldID(env, cls, "payload", "[B");
+    AWS_FATAL_ASSERT(request_response_operation_properties.payload_field_id);
+
+    request_response_operation_properties.correlation_token_field_id =
+        (*env)->GetFieldID(env, cls, "correlationToken", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(request_response_operation_properties.correlation_token_field_id);
+}
+
+struct java_mqtt_request_response_properties mqtt_request_response_properties;
+
+static void s_cache_mqtt_request_response_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/MqttRequestResponse");
+    AWS_FATAL_ASSERT(cls);
+
+    mqtt_request_response_properties.mqtt_request_response_class = (*env)->NewGlobalRef(env, cls);
+
+    mqtt_request_response_properties.constructor_method_id =
+        (*env)->GetMethodID(env, mqtt_request_response_properties.mqtt_request_response_class, "<init>", "()V");
+
+    mqtt_request_response_properties.topic_field_id = (*env)->GetFieldID(env, cls, "topic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(mqtt_request_response_properties.topic_field_id);
+
+    mqtt_request_response_properties.payload_field_id = (*env)->GetFieldID(env, cls, "payload", "[B");
+    AWS_FATAL_ASSERT(mqtt_request_response_properties.payload_field_id);
+}
+
+struct java_incoming_publish_event_properties incoming_publish_event_properties;
+
+static void s_cache_incoming_publish_event_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/IncomingPublishEvent");
+    AWS_FATAL_ASSERT(cls);
+
+    incoming_publish_event_properties.incoming_publish_event_class = (*env)->NewGlobalRef(env, cls);
+
+    incoming_publish_event_properties.constructor_method_id = (*env)->GetMethodID(
+        env, incoming_publish_event_properties.incoming_publish_event_class, "<init>", "([BLjava/lang/String;)V");
+
+    incoming_publish_event_properties.content_type_id = (*env)->GetFieldID(
+        env, incoming_publish_event_properties.incoming_publish_event_class, "contentType", "Ljava/lang/String;");
+
+    incoming_publish_event_properties.user_properties_field_id = (*env)->GetFieldID(
+        env, incoming_publish_event_properties.incoming_publish_event_class, "userProperties", "Ljava/util/List;");
+
+    incoming_publish_event_properties.message_expiry_interval_seconds_id = (*env)->GetFieldID(
+        env,
+        incoming_publish_event_properties.incoming_publish_event_class,
+        "messageExpiryIntervalSeconds",
+        "Ljava/lang/Long;");
+
+    AWS_FATAL_ASSERT(incoming_publish_event_properties.constructor_method_id);
+}
+
+struct java_subscription_status_event_type_properties subscription_status_event_type_properties;
+
+static void s_cache_subscription_status_event_type_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/SubscriptionStatusEventType");
+    AWS_FATAL_ASSERT(cls);
+
+    subscription_status_event_type_properties.subscription_status_event_type_class = (*env)->NewGlobalRef(env, cls);
+
+    subscription_status_event_type_properties.get_enum_value_from_integer_method_id = (*env)->GetStaticMethodID(
+        env,
+        subscription_status_event_type_properties.subscription_status_event_type_class,
+        "getEnumValueFromInteger",
+        "(I)Lsoftware/amazon/awssdk/crt/iot/SubscriptionStatusEventType;");
+    AWS_FATAL_ASSERT(subscription_status_event_type_properties.get_enum_value_from_integer_method_id);
+}
+
+struct java_subscription_status_event_properties subscription_status_event_properties;
+
+static void s_cache_subscription_status_event_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/SubscriptionStatusEvent");
+    AWS_FATAL_ASSERT(cls);
+
+    subscription_status_event_properties.subscription_status_event_class = (*env)->NewGlobalRef(env, cls);
+
+    subscription_status_event_properties.constructor_method_id = (*env)->GetMethodID(
+        env,
+        subscription_status_event_properties.subscription_status_event_class,
+        "<init>",
+        "(Lsoftware/amazon/awssdk/crt/iot/SubscriptionStatusEventType;I)V");
+    AWS_FATAL_ASSERT(subscription_status_event_properties.constructor_method_id);
+}
+
+struct java_streaming_operation_options_properties streaming_operation_options_properties;
+
+static void s_cache_streaming_operation_options_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/StreamingOperationOptions");
+    AWS_FATAL_ASSERT(cls);
+
+    streaming_operation_options_properties.streaming_operation_options_class = (*env)->NewGlobalRef(env, cls);
+
+    streaming_operation_options_properties.topic_field_id = (*env)->GetFieldID(env, cls, "topic", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(streaming_operation_options_properties.topic_field_id);
+
+    streaming_operation_options_properties.incoming_publish_event_callback_field_id =
+        (*env)->GetFieldID(env, cls, "incomingPublishEventCallback", "Ljava/util/function/Consumer;");
+    AWS_FATAL_ASSERT(streaming_operation_options_properties.incoming_publish_event_callback_field_id);
+
+    streaming_operation_options_properties.subscription_status_event_callback_field_id =
+        (*env)->GetFieldID(env, cls, "subscriptionStatusEventCallback", "Ljava/util/function/Consumer;");
+    AWS_FATAL_ASSERT(streaming_operation_options_properties.subscription_status_event_callback_field_id);
+}
+
+struct java_consumer_properties consumer_properties;
+
+static void s_cache_consumer_properties(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "java/util/function/Consumer");
+    AWS_FATAL_ASSERT(cls);
+
+    consumer_properties.consumer_class = (*env)->NewGlobalRef(env, cls);
+
+    consumer_properties.accept_method_id =
+        (*env)->GetMethodID(env, consumer_properties.consumer_class, "accept", "(Ljava/lang/Object;)V");
+    AWS_FATAL_ASSERT(consumer_properties.accept_method_id);
+}
+
+struct java_cognito_login_token_source_properties cognito_login_token_source_properties;
+
+static void s_cache_cognito_login_token_source(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CognitoLoginTokenSource");
+    AWS_FATAL_ASSERT(cls);
+    cognito_login_token_source_properties.cognito_login_token_source_class = (*env)->NewGlobalRef(env, cls);
+
+    cognito_login_token_source_properties.start_login_token_fetch_method_id =
+        (*env)->GetMethodID(env, cls, "startLoginTokenFetch", "(Ljava/util/concurrent/CompletableFuture;)V");
+    AWS_FATAL_ASSERT(cognito_login_token_source_properties.start_login_token_fetch_method_id != NULL);
+}
+
+struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
+
+static void s_cache_cognito_credentials_provider(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/auth/credentials/CognitoCredentialsProvider");
+    AWS_FATAL_ASSERT(cls);
+    cognito_credentials_provider_properties.cognito_credentials_provider_class = (*env)->NewGlobalRef(env, cls);
+
+    cognito_credentials_provider_properties.create_chained_future_method_id = (*env)->GetStaticMethodID(
+        env,
+        cls,
+        "createChainedFuture",
+        "(JLjava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;");
+    AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
 
 static void s_cache_java_class_ids(void *user_data) {
@@ -2427,6 +2620,16 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_mqtt5_outbound_topic_alias_behavior_type(env);
     s_cache_mqtt5_inbound_topic_alias_behavior_type(env);
     s_cache_topic_aliasing_options(env);
+    s_cache_response_path_properties(env);
+    s_cache_request_response_operation_properties(env);
+    s_cache_mqtt_request_response_properties(env);
+    s_cache_incoming_publish_event_properties(env);
+    s_cache_subscription_status_event_type_properties(env);
+    s_cache_subscription_status_event_properties(env);
+    s_cache_streaming_operation_options_properties(env);
+    s_cache_consumer_properties(env);
+    s_cache_cognito_login_token_source(env);
+    s_cache_cognito_credentials_provider(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

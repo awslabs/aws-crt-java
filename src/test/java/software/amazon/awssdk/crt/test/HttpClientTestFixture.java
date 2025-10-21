@@ -18,6 +18,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 public class HttpClientTestFixture extends CrtTestFixture {
     private final static int NUM_ITERATIONS = 10;
@@ -101,5 +102,4 @@ public class HttpClientTestFixture extends CrtTestFixture {
             CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
         }
     }
-
 }

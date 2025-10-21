@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
@@ -307,8 +308,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 Throwable innerException = e.getCause();
 
                 // Check that the right exception type caused the completion error in the future
-                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-                assertEquals(RuntimeException.class, innerException.getClass());
+                assertTrue(innerException.getMessage().contains("Parser encountered an error"));
+                assertEquals(CrtRuntimeException.class, innerException.getClass());
             }
         } finally {
             Files.deleteIfExists(credsPath);
@@ -372,10 +373,9 @@ public class CredentialsProviderTest extends CrtTestFixture {
             } catch (CompletionException e) {
                 assertNotNull(e.getCause());
                 Throwable innerException = e.getCause();
+                assertEquals(CrtRuntimeException.class, innerException.getClass());
+                // The way that this fails is different per platform, so we can't dig further at the moment.
 
-                // Check that the right exception type caused the completion error in the future
-                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-                assertEquals(RuntimeException.class, innerException.getClass());
             }
         }
     }
@@ -430,8 +430,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
             Throwable innerException = e.getCause();
 
             // Check that the right exception type caused the completion error in the future
-            assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-            assertEquals(RuntimeException.class, innerException.getClass());
+            assertEquals("Unsuccessful status code returned from credentials-fetching http request", innerException.getMessage());
+            assertEquals(CrtRuntimeException.class, innerException.getClass());
         }
     }
 
@@ -455,6 +455,165 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 assertNotNull(credentials.getAccessKeyId());
                 assertNotNull(credentials.getSecretAccessKey());
                 assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithSyncDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+                    tokens.add(new CognitoCredentialsProvider.CognitoLoginTokenPair("token", "value"));
+
+                    tokenFuture.complete(tokens);
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with fake login tokens should have failed");
+            } catch (ExecutionException ex) {
+                // passing in fake tokens causes Cognito to reject the request
+                assertTrue(ex.getCause().getMessage().contains("Unsuccessful status code returned from credentials-fetching http request"));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithAsyncDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+                            tokens.add(new CognitoCredentialsProvider.CognitoLoginTokenPair("token", "value"));
+
+                            tokenFuture.complete(tokens);
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with fake login tokens should have failed");
+            } catch (ExecutionException ex) {
+                // passing in fake tokens causes Cognito to reject the request
+                assertTrue(ex.getCause().getMessage().contains("Unsuccessful status code returned from credentials-fetching http request"));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithEmptyDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+
+                            tokenFuture.complete(tokens);
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                Credentials credentials = future.get();
+
+                assertNotNull(credentials.getAccessKeyId());
+                assertNotNull(credentials.getSecretAccessKey());
+                assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithDynamicLoginTokensException() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            tokenFuture.completeExceptionally(new RuntimeException("Oh no"));
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with failing login token source resolution should have failed");
+            } catch (ExecutionException ex) {
+                assertTrue(ex.getCause().getMessage().contains("Valid credentials could not be sourced by the cognito provider"));
             } catch (Exception ex) {
                 fail(ex.getMessage());
             }

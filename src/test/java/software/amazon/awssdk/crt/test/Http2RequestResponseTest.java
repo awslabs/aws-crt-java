@@ -34,6 +34,13 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
+        if(endpoint.equals(HOST)) {
+            // postman-echo.com in now requires TLS1.3,
+            // but our Mac implementation doesn't support TLS1.3 yet.
+            // The work has been planned to Dec. 2025 to support TLS1.3,
+            // so disable the test for now. And reenable it afterward
+            skipIfMac();
+        }
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -92,19 +99,21 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
 
         /* The first header of response has to be ":status" for HTTP/2 response */
         response.headers.get(0).getName().equals(":status");
-        for (HttpHeader h : response.headers) {
-            if (h.getName().equals("content-length")) {
-                hasContentLengthHeader = true;
-            }
-        }
 
-        Assert.assertTrue(hasContentLengthHeader);
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
+        }
+        if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
+            for (HttpHeader h : response.headers) {
+                if (h.getName().equals("content-length")) {
+                    hasContentLengthHeader = true;
+                }
+            }
+            Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
 
         return response;
@@ -164,6 +173,60 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
     }
 
+    private void doHttp2ResetStreamTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    CompletableFuture<Void> streamComplete = new CompletableFuture<>();
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                                      HttpHeader[] nextHeaders) {
+                            Http2Stream h2Stream = (Http2Stream) stream;
+                            h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            stream.close();
+                            if (errorCode != 0) {
+                                streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
+                            } else {
+                                streamComplete.complete(null);
+                            }
+                        }
+                    };
+                    Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
+                    try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
+                        h2Stream.activate();
+                        streamComplete.get();
+                    } catch (Exception e) {
+                        // ignoring the exception as it might fail that RST_STREAM has been sent.
+                    }
+                }
+            }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
     public void testHttp2ResetStream() throws Exception {
         skipIfAndroid();
@@ -173,51 +236,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
          */
         skipIfNetworkUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
-
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                CompletableFuture<Void> streamComplete = new CompletableFuture<>();
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        Http2Stream h2Stream = (Http2Stream) stream;
-                        h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                        stream.close();
-                        if (errorCode != 0) {
-                            streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
-                        } else {
-                            streamComplete.complete(null);
-                        }
-                    }
-                };
-                Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
-                try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
-                    h2Stream.activate();
-                    streamComplete.get();
-                }
-                catch(Exception e) {
-                    // ignoring the exception as it might fail that RST_STREAM has been sent.
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+        TestUtils.doRetryableTest(this::doHttp2ResetStreamTest, TestUtils::isRetryableTimeout, 5, 2000);
 
         CrtResource.waitForNoResources();
     }

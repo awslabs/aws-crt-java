@@ -12,6 +12,7 @@ import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
+import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.MqttMessage;
@@ -24,6 +25,9 @@ import java.util.function.Consumer;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class SubscribeTest extends MqttClientConnectionFixture {
+    private final static int MAX_TEST_RETRIES = 3;
+    private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
+
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
 
@@ -34,43 +38,48 @@ public class SubscribeTest extends MqttClientConnectionFixture {
 
     int subsAcked = 0;
 
-    @Test
-    public void testSubscribeUnsubscribe() {
-        skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+    private void doSubscribeUnsubscribeTest() {
         try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
-            AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
-            AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
-                TlsContext context = new TlsContext(contextOptions);)
-            {
-                connectDirectWithConfig(
+                AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+             TlsContext context = new TlsContext(contextOptions)) {
+            connectDirect(
                     context,
                     AWS_TEST_MQTT311_IOT_CORE_HOST,
                     8883,
                     null,
                     null,
                     null);
-                Consumer<MqttMessage> messageHandler = (message) -> {};
+            Consumer<MqttMessage> messageHandler = (message) -> {};
 
-                try {
-                    CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
-                            messageHandler);
-                    subscribed.thenAccept(packetId -> subsAcked++);
-                    subscribed.get();
+            CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,
+                    messageHandler);
+            subscribed.thenAccept(packetId -> subsAcked++);
+            subscribed.get();
 
-                    assertEquals("Single subscription", 1, subsAcked);
+            assertEquals("Single subscription", 1, subsAcked);
 
-                    CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
-                    unsubscribed.thenAccept(packetId -> subsAcked--);
-                    unsubscribed.get();
+            CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
+            unsubscribed.thenAccept(packetId -> subsAcked--);
+            unsubscribed.get();
 
-                    assertEquals("No Subscriptions", 0, subsAcked);
-                } catch (Exception ex) {
-                    fail(ex.getMessage());
-                }
+            assertEquals("No Subscriptions", 0, subsAcked);
 
-                disconnect();
-                close();
-            }
+            disconnect();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            close();
+        }
+    }
+
+    @Test
+    public void testSubscribeUnsubscribe() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+
+        TestUtils.doRetryableTest(this::doSubscribeUnsubscribeTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
     }
 };

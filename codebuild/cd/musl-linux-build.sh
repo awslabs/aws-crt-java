@@ -13,12 +13,12 @@ shift
 BUILDER_VERSION=$(cat .github/workflows/ci.yml | grep 'BUILDER_VERSION:' | sed 's/\s*BUILDER_VERSION:\s*\(.*\)/\1/')
 echo "Using builder version ${BUILDER_VERSION}"
 
-aws ecr get-login-password | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
+aws ecr get-login-password --region us-east-1 | docker login 123124136734.dkr.ecr.us-east-1.amazonaws.com -u AWS --password-stdin
 export DOCKER_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${BUILDER_VERSION}
 
-# on x86-64 and aarch64 we run on native images in codebuild 
+# on x86-64 and aarch64 we run on native images in codebuild
 # on other platforms we require emulation which is done through binfmt
-if [ "$ARCH" != "linux/aarch64" ]; then 
+if [ "$ARCH" != "linux/aarch64" ]; then
   export QEMU_IMAGE=123124136734.dkr.ecr.us-east-1.amazonaws.com/multiarch-qemu-user-static:latest
   docker run --rm --privileged ${QEMU_IMAGE} --reset -p yes
 fi

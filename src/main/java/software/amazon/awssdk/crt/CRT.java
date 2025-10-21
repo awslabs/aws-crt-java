@@ -296,21 +296,27 @@ public final class CRT {
         // loading it as a shared lib, it will still get cleaned up.
         tempSharedLib.deleteOnExit();
 
-        // Unfortunately File.deleteOnExit() won't work on Windows, where
-        // files cannot be deleted while they're in use. On Windows, once
-        // our .dll is loaded, it can't be deleted by this process.
-        //
-        // The Windows-only solution to this problem is to scan on startup
-        // for old instances of the .dll and try to delete them. If another
-        // process is still using the .dll, the delete will fail, which is fine.
-        String os = getOSIdentifier();
-        if (os.equals("windows")) {
-            tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
-        }
         ExtractLib.extractLibrary(tempSharedLib);
         // load the shared lib from the temp path
         System.load(tempSharedLib.getAbsolutePath());
 
+        // Unfortunately, we can't rely solely on File.deleteOnExit() to clean things up, so we also try to clean up manually.
+        String os = getOSIdentifier();
+        if (os.equals("windows")) {
+            // File.deleteOnExit() and File.delete() won't work on Windows, where
+            // files cannot be deleted while they're in use. On Windows, once
+            // our .dll is loaded, it can't be deleted by this process.
+            //
+            // The Windows-only solution to this problem is to scan on startup
+            // for old instances of the .dll and try to delete them. If another
+            // process is still using the .dll, the delete will fail, which is fine.
+            tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
+        } else {
+            // In some edge cases, File.deleteOnExit() might not run in cases like Lambda SnapStart or abnormal termination of the JVM. 
+            // Therefore, we delete the library file immediately after it has been successfully loaded.
+            // This is safe to do on non-Windows platforms; everything will keep working in the current process.
+            tempSharedLib.delete();
+        }
     }
 
     private static void loadLibraryFromJar() {

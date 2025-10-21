@@ -95,6 +95,7 @@ public class S3MetaRequestOptions {
     private URI endpoint;
     private ResumeToken resumeToken;
     private Long objectSizeHint;
+    private FileIoOptions fileIoOptions;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -447,5 +448,28 @@ public class S3MetaRequestOptions {
     }
     public boolean getResponseFileDeleteOnFailure() {
         return responseFileDeleteOnFailure;
+    }
+
+    /**
+     * Sets the file I/O options for controlling how client performs file I/O operations.
+     * It overrides the client-level settings if provided.
+     *
+     * Notes: This only applies to the workloads that `withRequestFilePath` was set.
+     *
+     * @param fileIoOptions the file I/O options to use
+     * @return this
+     */
+    public S3MetaRequestOptions withFileIoOptions(FileIoOptions fileIoOptions) {
+        this.fileIoOptions = fileIoOptions;
+        return this;
+    }
+
+    /**
+     * Gets the file I/O options for controlling how client performs file I/O operations.
+     *
+     * @return the file I/O options, or null if not set
+     */
+    public FileIoOptions getFileIoOptions() {
+        return fileIoOptions;
     }
 }

@@ -9,6 +9,8 @@ import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
@@ -47,6 +49,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         private String identity;
         private String customRoleArn;
         private ArrayList<CognitoLoginTokenPair> logins = new ArrayList<CognitoLoginTokenPair>();
+        private CognitoLoginTokenSource loginTokenSource;
 
         private TlsContext tlsContext;
         private ClientBootstrap clientBootstrap;
@@ -148,6 +151,23 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
 
         HttpProxyOptions getHttpProxyOptions() { return httpProxyOptions; }
 
+        /**
+         * Sets a login token source for the credentials provider.  The login token source will be used to
+         * gather additional login tokens to submit as part of the HTTP request sent to Cognito.  A login token source
+         * allows you to dynamically add login tokens on a per-request basis.  Using a login token source requires
+         * you to follow certain requirements in order to avoid undesirable behavior.  See the documentation for
+         * `CognitoLoginTokenSource` for further details.
+         *
+         * @param loginTokenSource object to source login tokens from before every HTTP request to Cognito
+         * @return The current builder
+         */
+        public CognitoCredentialsProviderBuilder withLoginTokenSource(CognitoLoginTokenSource loginTokenSource) {
+            this.loginTokenSource = loginTokenSource;
+
+            return this;
+        }
+
+        CognitoLoginTokenSource getLoginTokenSource() { return loginTokenSource; }
 
         /**
          * Creates a new Cognito credentials provider, based on this builder's configuration
@@ -218,14 +238,15 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
-                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null);
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
+                builder.loginTokenSource);
 
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);
         addReferenceTo(tlsContext);
     }
 
-    private void writeLengthPrefixedBytesSafe(ByteBuffer buffer, byte[] bytes) {
+    private static void writeLengthPrefixedBytesSafe(ByteBuffer buffer, byte[] bytes) {
         if (bytes != null) {
             buffer.putInt(bytes.length);
             buffer.put(bytes);
@@ -234,7 +255,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         }
     }
 
-    private byte[] marshalLoginsForJni(ArrayList<CognitoLoginTokenPair> logins) {
+    private static byte[] marshalLoginsForJni(List<CognitoLoginTokenPair> logins) {
         int size = 0;
 
         for (CognitoLoginTokenPair login : logins) {
@@ -261,6 +282,16 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         return buffer.array();
     }
 
+    private static CompletableFuture<List<CognitoLoginTokenPair>> createChainedFuture(long invocationHandle, CompletableFuture<List<CognitoLoginTokenPair>> baseFuture) {
+        return baseFuture.whenComplete((token_pairs, ex) -> {
+            if (ex == null) {
+                completeLoginTokenFetch(invocationHandle, marshalLoginsForJni(token_pairs), null);
+            } else {
+                completeLoginTokenFetch(invocationHandle, null, ex);
+            }
+        });
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -279,5 +310,8 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                                                           int proxyAuthorizationType,
                                                           byte[] proxyAuthorizationUsername,
                                                           byte[] proxyAuthorizationPassword,
-                                                          byte[] noProxyHosts);
+                                                          byte[] noProxyHosts,
+                                                          CognitoLoginTokenSource loginTokenSource);
+
+    private static native void completeLoginTokenFetch(long invocationHandle, byte[] marshalledLogins, Throwable ex);
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Objects;
 
 import software.amazon.awssdk.crt.mqtt5.QOS;
 
@@ -26,6 +27,27 @@ public class SubscribePacket {
         this.subscriptions = builder.subscriptions;
         this.subscriptionIdentifier = builder.subscriptionIdentifier;
         this.userProperties = builder.userProperties;
+    }
+
+    /**
+     * Creates a {@link SubscribePacket} containing only a single subscription topic and qos:
+     * <em>topicFilter</em>, <em>QoS</em>.
+     * <p>
+     * Internally this is just syntactic sugar around
+     * {@link SubscribePacketBuilder#SubscribePacketBuilder(String, QOS)}
+     * followed by {@link SubscribePacketBuilder#build()}.
+     * 
+     * @param topicFilter The topic filter to subscribe to.
+     * @param qos The maximum QoS on which the subscriber will accept publish messages.
+     * @return an immutable {@code SubscribePacket} ready for use
+     * 
+     * @throws NullPointerException if {@code topicFilter} or {@code qos} is {@code null}
+     */
+    public static SubscribePacket of(String topicFilter, QOS qos) {
+        Objects.requireNonNull(topicFilter, "topicFilter");
+        Objects.requireNonNull(qos, "qos");
+
+        return new SubscribePacketBuilder(topicFilter, qos).build();
     }
 
     /**

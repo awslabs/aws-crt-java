@@ -26,9 +26,18 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     private final static String HOST = "https://postman-echo.com";
+    private final int MAX_TEST_RETRIES = 5;
+    private final int TEST_RETRY_SLEEP_MILLIS = 2000;
 
     public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody,
             boolean useChunkedEncoding, int expectedStatus) throws Exception {
+        if(endpoint.equals(HOST)) {
+            // postman-echo.com in now requires TLS1.3,
+            // but our Mac implementation doesn't support TLS1.3 yet.
+            // The work has been planned to Dec. 2025 to support TLS1.3,
+            // so disable the test for now. And reenable it afterward
+            skipIfMac();
+        }
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -90,17 +99,18 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
 
-        for (HttpHeader h : response.headers) {
-            if (h.getName().equals("Content-Length")) {
-                hasContentLengthHeader = true;
-            }
-        }
-
-        Assert.assertTrue(hasContentLengthHeader);
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
+        }
+        if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
+            for (HttpHeader h : response.headers) {
+                if (h.getName().toLowerCase().equals("content-length")) {
+                    hasContentLengthHeader = true;
+                }
+            }
+            Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
 
         return response;
@@ -211,18 +221,29 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
          *
          */
 
+        // The response is a JSON object, extract the "data" field using proper JSON parsing
         String echoedBody = null;
-        for (String line : body.split("\n")) {
-            String[] keyAndValue = line.split(":", 2);
 
-            // Found JSON Key/Value Pair
-            if (keyAndValue.length == 2) {
-                String key = extractValueFromJson(keyAndValue[0]);
-                String val = extractValueFromJson(keyAndValue[1]);
+        // Find the "data" field in the JSON response
+        int dataIndex = body.indexOf("\"data\"");
+        if (dataIndex != -1) {
+            // Find the colon after "data"
+            int colonIndex = body.indexOf(':', dataIndex);
+            if (colonIndex != -1) {
+                // Find the value after the colon, which should be a quoted string
+                int valueStartIndex = body.indexOf('"', colonIndex);
+                if (valueStartIndex != -1) {
+                    // Find the end of the quoted string
+                    int valueEndIndex = body.indexOf('"', valueStartIndex + 1);
+                    while (valueEndIndex > 0 && body.charAt(valueEndIndex - 1) == '\\') {
+                        // This quote is escaped, find the next one
+                        valueEndIndex = body.indexOf('"', valueEndIndex + 1);
+                    }
 
-                // Found Echoed Body
-                if (key.equals("data")) {
-                    echoedBody = extractValueFromJson(val);
+                    if (valueEndIndex != -1) {
+                        // Extract the value between the quotes
+                        echoedBody = body.substring(valueStartIndex + 1, valueEndIndex);
+                    }
                 }
             }
         }
@@ -245,56 +266,67 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         testHttpUpload(true);
     }
 
+    private void doHttpRequestUnActivatedTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
+        try {
+            URI uri = new URI(HOST);
+
+            HttpHeader[] requestHeaders = new HttpHeader[]{new HttpHeader("Host", uri.getHost())};
+
+            HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
+
+            CompletableFuture<Void> shutdownComplete = null;
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
+                    HttpVersion.HTTP_1_1)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                                                      HttpHeader[] nextHeaders) {
+                            // do nothing
+                        }
+
+                        @Override
+                        public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                            // do nothing
+                        }
+
+                        @Override
+                        public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                            // do nothing
+                            return bodyBytesIn.length;
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStream stream, int errorCode) {
+                            // do nothing.
+                        }
+                    };
+
+                    HttpStream stream = conn.makeRequest(request, streamHandler);
+                    stream.close();
+                }
+            }
+
+            if (shutdownComplete != null) {
+                shutdownComplete.get();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
     public void testHttpRequestUnActivated() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        URI uri = new URI(HOST);
-
-        HttpHeader[] requestHeaders = new HttpHeader[] { new HttpHeader("Host", uri.getHost()) };
-
-        HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
-
-        CompletableFuture<Void> shutdownComplete = null;
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
-                HttpVersion.HTTP_1_1)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        // do nothing
-                    }
-
-                    @Override
-                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
-                        // do nothing
-                    }
-
-                    @Override
-                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                        // do nothing
-                        return bodyBytesIn.length;
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
-                        // do nothing.
-                    }
-                };
-
-                HttpStream stream = conn.makeRequest(request, streamHandler);
-                stream.close();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        if (shutdownComplete != null) {
-            shutdownComplete.get();
-        }
+        TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

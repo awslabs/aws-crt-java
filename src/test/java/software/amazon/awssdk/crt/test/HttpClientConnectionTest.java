@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.test;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -196,7 +197,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                         Assert.fail("Expected an exception");
                     }
                 }
-            } catch (HttpException e) {
+            } catch (ExecutionException e) {
+                Assert.assertTrue(e.getCause().getCause() instanceof HttpException);
                 Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
             }
         }

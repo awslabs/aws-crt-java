@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -366,8 +367,9 @@ public class ProxyTest extends CrtTestFixture  {
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS, ProxyAuthType.None)) {
             doHttpConnectionManagerProxyTest(manager);
             Assert.fail("Expected exception");
-        } catch (HttpException e) {
+        } catch (Exception e) {
             // unable to connect to the non-proxy host, expect dns failure
+            Assert.assertTrue(e.getCause().getCause() instanceof HttpException);
             Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
         }
     }

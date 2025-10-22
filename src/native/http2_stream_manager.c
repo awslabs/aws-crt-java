@@ -106,6 +106,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
+    jbyteArray jni_no_proxy_hosts,
     jboolean jni_manual_window_management,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
@@ -233,6 +234,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
+        jni_no_proxy_hosts,
         jni_proxy_authorization_type,
         (struct aws_tls_ctx *)jni_proxy_tls_context);
 
@@ -246,7 +248,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     }
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_no_proxy_hosts);
 
     if (new_tls_conn_opts) {
         aws_tls_connection_options_clean_up(&tls_conn_options);

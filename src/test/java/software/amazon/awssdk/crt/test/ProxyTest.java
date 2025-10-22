@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
+import software.amazon.awssdk.crt.http.HttpException;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
@@ -40,6 +42,8 @@ import java.util.concurrent.CompletableFuture;
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class ProxyTest extends CrtTestFixture  {
 
+    public static final int CRT_ERROR_CODE_DNS_INVALID_NAME = 1059;
+
     enum ProxyTestType {
         FORWARDING,
         TUNNELING_HTTP,
@@ -47,6 +51,7 @@ public class ProxyTest extends CrtTestFixture  {
         TUNNELING_DOUBLE_TLS,
         LEGACY_HTTP,
         LEGACY_HTTPS,
+        PROXY_DISABLED_NO_PROXY_HOSTS
     }
 
     enum ProxyAuthType {
@@ -138,6 +143,8 @@ public class ProxyTest extends CrtTestFixture  {
                 case TUNNELING_DOUBLE_TLS:
                 case LEGACY_HTTPS:
                     return new URI("https://s3.amazonaws.com");
+                case PROXY_DISABLED_NO_PROXY_HOSTS:
+                    return new URI("https://host-does-not-exist.invalid");
                 default:
                     return new URI("http://www.example.com");
 
@@ -172,6 +179,9 @@ public class ProxyTest extends CrtTestFixture  {
             proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
             proxyOptions.setAuthorizationUsername(HTTP_PROXY_BASIC_AUTH_USERNAME);
             proxyOptions.setAuthorizationPassword(HTTP_PROXY_BASIC_AUTH_PASSWORD);
+        }
+        if (testType == ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS) {
+            proxyOptions.setNoProxyHosts("host-does-not-exist.invalid");
         }
 
         return proxyOptions;
@@ -346,6 +356,21 @@ public class ProxyTest extends CrtTestFixture  {
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
             doHttpConnectionManagerProxyTest(manager);
+        }
+    }
+
+    @Test
+    public void testConnectionManager_noProxyHosts() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS, ProxyAuthType.None)) {
+            doHttpConnectionManagerProxyTest(manager);
+            Assert.fail("Expected exception");
+        } catch (Exception e) {
+            // unable to connect to the non-proxy host, expect dns failure
+            Assert.assertTrue(e.getCause() instanceof HttpException);
+            Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
         }
     }
 

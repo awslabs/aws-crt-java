@@ -1284,7 +1284,8 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     jlong jni_proxy_tls_context,
     jint jni_proxy_authorization_type,
     jstring jni_proxy_authorization_username,
-    jstring jni_proxy_authorization_password) {
+    jstring jni_proxy_authorization_password,
+    jstring jni_no_proxy_hosts) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -1314,6 +1315,10 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
         proxy_options.auth_password = aws_jni_byte_cursor_from_jstring_acquire(env, jni_proxy_authorization_password);
     }
 
+    if (jni_no_proxy_hosts) {
+        proxy_options.no_proxy_hosts = aws_jni_byte_cursor_from_jstring_acquire(env, jni_no_proxy_hosts);
+    }
+
     struct aws_tls_connection_options proxy_tls_conn_options;
     AWS_ZERO_STRUCT(proxy_tls_conn_options);
 
@@ -1335,6 +1340,10 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
 
     if (jni_proxy_authorization_username) {
         aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_authorization_username, proxy_options.auth_username);
+    }
+
+    if (jni_no_proxy_hosts) {
+        aws_jni_byte_cursor_from_jstring_release(env, jni_no_proxy_hosts, proxy_options.no_proxy_hosts);
     }
 
     aws_jni_byte_cursor_from_jstring_release(env, jni_proxy_host, proxy_options.host);

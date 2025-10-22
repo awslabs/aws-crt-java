@@ -155,6 +155,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         HttpProxyOptions proxyOptions = builder.getProxyOptions();
         if (proxyOptions != null) {
             proxyConnectionType = proxyOptions.getConnectionType().getValue();
@@ -168,6 +169,7 @@ public class X509CredentialsProvider extends CredentialsProvider {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
         }
 
         long nativeHandle = x509CredentialsProviderNew(
@@ -183,7 +185,8 @@ public class X509CredentialsProvider extends CredentialsProvider {
                 proxyTlsContextHandle,
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
-                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null);
+                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null);
 
         acquireNativeHandle(nativeHandle);
         addReferenceTo(clientBootstrap);
@@ -206,5 +209,6 @@ public class X509CredentialsProvider extends CredentialsProvider {
                                                           long proxyTlsContext,
                                                           int proxyAuthorizationType,
                                                           byte[] proxyAuthorizationUsername,
-                                                          byte[] proxyAuthorizationPassword);
+                                                          byte[] proxyAuthorizationPassword,
+                                                          byte[] noProxyHosts);
 }

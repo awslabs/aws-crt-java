@@ -336,6 +336,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
+    jbyteArray jni_proxy_no_proxy_hosts,
     jint jni_environment_variable_proxy_connection_type,
     jlong jni_environment_variable_proxy_tls_connection_options,
     jint jni_environment_variable_type,
@@ -497,6 +498,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
+        jni_proxy_no_proxy_hosts,
         jni_proxy_authorization_type,
         (struct aws_tls_ctx *)jni_proxy_tls_context);
 
@@ -529,7 +531,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_no_proxy_hosts);
 
     aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
     if (tls_options) {

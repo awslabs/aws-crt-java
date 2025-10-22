@@ -78,6 +78,7 @@ public class Http2StreamManager extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         HttpProxyOptions proxyOptions = connectionManagerOptions.getProxyOptions();
 
         if (proxyOptions != null) {
@@ -88,6 +89,7 @@ public class Http2StreamManager extends CrtResource {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
         }
 
         HttpMonitoringOptions monitoringOptions = connectionManagerOptions.getMonitoringOptions();
@@ -113,6 +115,7 @@ public class Http2StreamManager extends CrtResource {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 connectionManagerOptions.isManualWindowManagement(),
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
@@ -254,6 +257,7 @@ public class Http2StreamManager extends CrtResource {
             int proxyAuthorizationType,
             byte[] proxyAuthorizationUsername,
             byte[] proxyAuthorizationPassword,
+            byte[] noProxyHosts,
             boolean isManualWindowManagement,
             long monitoringThroughputThresholdInBytesPerSecond,
             int monitoringFailureIntervalInSeconds,

@@ -5,7 +5,9 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -15,6 +17,7 @@ import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpException;
+import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -148,5 +151,56 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         // AWS_ERROR_HTTP_CONNECTION_CLOSED should be retryable
         exception = new HttpException(0x080a);
         assertTrue(HttpClientConnection.isErrorRetryable(exception));
+    }
+
+
+    /**
+     * This test exercises the noProxyHosts configuration.  It is included here
+     * rather than in ProxyTests because a successful test connects to the configured
+     * endpoint and NOT the proxy host as expected in ProxyTests.
+     */
+    @Test
+    public void testProxyOptionsNoProxyHosts() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        URI uriMatchesNoProxyHost = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+        URI uriDoesNotMatchNoProxyHost = new URI("https://non-matching.amazon.com");
+        try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
+             SocketOptions socketOptions = new SocketOptions();
+             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
+             TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions();
+            HttpProxyOptions proxyOptions = new HttpProxyOptions();
+            // test will fail if noProxyHosts isn't applied and we try to connect with the proxy.
+            proxyOptions.setHost("unused-proxy-host.invalid");
+            proxyOptions.setPort(443);
+            proxyOptions.setNoProxyHosts("s3.amazonaws.com");
+            options.withProxyOptions(proxyOptions);
+
+            // test connecting to a uri that matches, expect successful connection
+            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uriMatchesNoProxyHost);
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    ;
+                    // connection succeeds, expect no errors
+                }
+            }
+
+            // test connecting to a host that does not match the noProxyHosts
+            // expect failure to connect to invalid proxy
+            try {
+                options.withUri(uriDoesNotMatchNoProxyHost);
+                try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                    try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                        Assert.fail("Expected an exception");
+                    }
+                }
+            } catch (ExecutionException e) {
+                Assert.assertTrue(e.getCause() instanceof HttpException);
+                Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
+            }
+        }
     }
 }

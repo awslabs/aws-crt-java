@@ -16,6 +16,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.credentials.X509CredentialsProvider;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
+import software.amazon.awssdk.crt.http.HttpException;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
@@ -39,6 +40,8 @@ import java.util.concurrent.CompletableFuture;
 
 /* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class ProxyTest extends CrtTestFixture  {
+
+    public static final int CRT_ERROR_CODE_DNS_INVALID_NAME = 1059;
 
     enum ProxyTestType {
         FORWARDING,
@@ -178,7 +181,6 @@ public class ProxyTest extends CrtTestFixture  {
         }
         if (testType == ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS) {
             proxyOptions.setNoProxyHosts("host-does-not-exist.invalid");
-            System.out.println("Set noProxHosts to host-does-not-exist.invalid");
         }
 
         return proxyOptions;
@@ -231,7 +233,6 @@ public class ProxyTest extends CrtTestFixture  {
                             manager.releaseConnection(conn);
                             stream.close();
                             if (errorCode != CRT.AWS_CRT_SUCCESS) {
-                                System.out.println("CRT ErrorCode: " + errorCode);
                                 requestCompleteFuture.completeExceptionally(new CrtRuntimeException(errorCode));
                             } else {
                                 requestCompleteFuture.complete(null);
@@ -364,6 +365,10 @@ public class ProxyTest extends CrtTestFixture  {
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS, ProxyAuthType.None)) {
             doHttpConnectionManagerProxyTest(manager);
+            Assert.fail("Expected exception");
+        } catch (HttpException e) {
+            // unable to connect to the non-proxy host, expect dns failure
+            Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
         }
     }
 

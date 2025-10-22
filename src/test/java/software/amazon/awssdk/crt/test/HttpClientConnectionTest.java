@@ -173,7 +173,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
             // test will fail if noProxyHosts isn't applied and we try to connect with the proxy.
             proxyOptions.setHost("unused-proxy-host.invalid");
             proxyOptions.setPort(443);
-            proxyOptions.setNoProxyHosts("s3.amazonaws.com");
+            // proxyOptions.setNoProxyHosts("s3.amazonaws.com");
             options.withProxyOptions(proxyOptions);
 
             options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);

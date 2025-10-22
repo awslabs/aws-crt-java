@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -162,7 +163,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
-        URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+        URI uriMatchesNoProxyHost = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+        URI uriDoesNotMatchNoProxyHost = new URI("https://non-matching.amazon.com");
         try (ClientBootstrap bootstrap = new ClientBootstrap(null, null);
              SocketOptions socketOptions = new SocketOptions();
              TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient();
@@ -173,14 +175,29 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
             // test will fail if noProxyHosts isn't applied and we try to connect with the proxy.
             proxyOptions.setHost("unused-proxy-host.invalid");
             proxyOptions.setPort(443);
-            // proxyOptions.setNoProxyHosts("s3.amazonaws.com");
+            proxyOptions.setNoProxyHosts("s3.amazonaws.com");
             options.withProxyOptions(proxyOptions);
 
-            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uri);
+            // test connecting to a uri that matches, expect successful connection
+            options.withClientBootstrap(bootstrap).withSocketOptions(socketOptions).withTlsContext(tlsCtx).withUri(uriMatchesNoProxyHost);
             try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
                 try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                     ;
+                    // connection succeeds, expect no errors
                 }
+            }
+
+            // test connecting to a host that does not match the noProxyHosts
+            // expect failure to connect to invalid proxy
+            try {
+                options.withUri(uriDoesNotMatchNoProxyHost);
+                try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                    try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                        Assert.fail("Expected an exception");
+                    }
+                }
+            } catch (HttpException e) {
+                Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
             }
         }
     }

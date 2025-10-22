@@ -198,7 +198,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                     }
                 }
             } catch (ExecutionException e) {
-                Assert.assertTrue(e.getCause().getCause() instanceof HttpException);
+                Assert.assertTrue(e.getCause() instanceof HttpException);
                 Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
             }
         }

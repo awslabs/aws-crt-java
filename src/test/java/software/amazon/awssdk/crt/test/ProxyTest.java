@@ -369,7 +369,7 @@ public class ProxyTest extends CrtTestFixture  {
             Assert.fail("Expected exception");
         } catch (Exception e) {
             // unable to connect to the non-proxy host, expect dns failure
-            Assert.assertTrue(e.getCause().getCause() instanceof HttpException);
+            Assert.assertTrue(e.getCause() instanceof HttpException);
             Assert.assertTrue(e.getMessage().contains("Host name was invalid"));
         }
     }

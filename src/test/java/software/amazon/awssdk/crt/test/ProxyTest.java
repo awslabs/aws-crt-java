@@ -47,6 +47,7 @@ public class ProxyTest extends CrtTestFixture  {
         TUNNELING_DOUBLE_TLS,
         LEGACY_HTTP,
         LEGACY_HTTPS,
+        PROXY_DISABLED_NO_PROXY_HOSTS
     }
 
     enum ProxyAuthType {
@@ -138,6 +139,8 @@ public class ProxyTest extends CrtTestFixture  {
                 case TUNNELING_DOUBLE_TLS:
                 case LEGACY_HTTPS:
                     return new URI("https://s3.amazonaws.com");
+                case PROXY_DISABLED_NO_PROXY_HOSTS:
+                    return new URI("https://host-does-not-exist.invalid");
                 default:
                     return new URI("http://www.example.com");
 
@@ -172,6 +175,10 @@ public class ProxyTest extends CrtTestFixture  {
             proxyOptions.setAuthorizationType(HttpProxyOptions.HttpProxyAuthorizationType.Basic);
             proxyOptions.setAuthorizationUsername(HTTP_PROXY_BASIC_AUTH_USERNAME);
             proxyOptions.setAuthorizationPassword(HTTP_PROXY_BASIC_AUTH_PASSWORD);
+        }
+        if (testType == ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS) {
+            proxyOptions.setNoProxyHosts("host-does-not-exist.invalid");
+            System.out.println("Set noProxHosts to host-does-not-exist.invalid");
         }
 
         return proxyOptions;
@@ -224,6 +231,7 @@ public class ProxyTest extends CrtTestFixture  {
                             manager.releaseConnection(conn);
                             stream.close();
                             if (errorCode != CRT.AWS_CRT_SUCCESS) {
+                                System.out.println("CRT ErrorCode: " + errorCode);
                                 requestCompleteFuture.completeExceptionally(new CrtRuntimeException(errorCode));
                             } else {
                                 requestCompleteFuture.complete(null);
@@ -345,6 +353,16 @@ public class ProxyTest extends CrtTestFixture  {
         Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
 
         try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.TUNNELING_HTTPS, ProxyAuthType.Basic)) {
+            doHttpConnectionManagerProxyTest(manager);
+        }
+    }
+
+    @Test
+    public void testConnectionManager_noProxyHosts() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isEnvironmentSetUpForProxyTests());
+
+        try (HttpClientConnectionManager manager = buildProxiedConnectionManager(ProxyTestType.PROXY_DISABLED_NO_PROXY_HOSTS, ProxyAuthType.None)) {
             doHttpConnectionManagerProxyTest(manager);
         }
     }

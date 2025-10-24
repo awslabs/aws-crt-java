@@ -280,17 +280,16 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
-     * @param decRefInstigator Canonical Name of instigating CrtResource
-     * @param decRefInstigatorId id of instigating CrtResource
+     * @param decRefInstigator Instigating CrtResource
      */
-    public void decRef(String decRefInstigator, long decRefInstigatorId) {
+    public void decRef(CrtResource decRefInstigator) {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
             if (decRefInstigator != null) {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format(
-                    "DecRef instance of class %s(%d) called by %s(%d). %d remaining refs", this.getClass().getCanonicalName(), 
-                    id, decRefInstigator, decRefInstigatorId, remainingRefs));
+                    "DecRef instance of class %s(%d) called by %s(%d). %d remaining refs", this.getClass().getCanonicalName(), id, 
+                    decRefInstigator.getClass().getCanonicalName(), decRefInstigator.id, remainingRefs));
             } else {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("DecRef instance of class %s(%d) via self.close(). %d remaining refs", 
                     this.getClass().getCanonicalName(), id, remainingRefs));
@@ -311,7 +310,7 @@ public abstract class CrtResource implements AutoCloseable {
      * Decrements the reference count to this resource.
      */
     public void decRef() {        
-        decRef(null, -1);
+        decRef(null);
     }
 
     /**

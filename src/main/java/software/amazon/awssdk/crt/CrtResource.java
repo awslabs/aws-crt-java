@@ -274,7 +274,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     @Override
     public void close() {
-        decRef(null, -1);
+        decRef();
     }
 
     /**
@@ -287,10 +287,10 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             if (decRefInstigator != null) {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format(
-                    "DecRef instance of class %s(%d) by %s(%d). %d remaining refs", this.getClass().getCanonicalName(), 
+                    "DecRef instance of class %s(%d) called by %s(%d). %d remaining refs", this.getClass().getCanonicalName(), 
                     id, decRefInstigator, decRefInstigatorId, remainingRefs));
             } else {
-                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("DecRef instance of class %s(%d). %d remaining refs", 
+                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("DecRef instance of class %s(%d) via self.close(). %d remaining refs", 
                     this.getClass().getCanonicalName(), id, remainingRefs));
             }
         }
@@ -304,6 +304,10 @@ public abstract class CrtResource implements AutoCloseable {
         if (canReleaseReferencesImmediately()) {
             releaseReferences();
         }
+    }
+
+    public void decRef() {        
+        decRef(null, -1);
     }
 
     /**

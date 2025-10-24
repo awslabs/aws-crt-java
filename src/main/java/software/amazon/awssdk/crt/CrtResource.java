@@ -156,7 +156,7 @@ public abstract class CrtResource implements AutoCloseable {
             return;
         }
 
-        resource.decRef();
+        resource.decRef(this);
     }
 
     /**
@@ -280,12 +280,20 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
+     * @param decRefInstigator Instigating CrtResource
      */
-    public void decRef() {
+    public void decRef(CrtResource decRefInstigator) {
         int remainingRefs = refCount.decrementAndGet();
 
         if (debugNativeObjects) {
-            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Closing instance of class %s(%d) with %d remaining refs", this.getClass().getCanonicalName(), id, remainingRefs));
+            if (decRefInstigator != null) {
+                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format(
+                    "DecRef instance of class %s(%d) called by %s(%d). %d remaining refs", this.getClass().getCanonicalName(), id, 
+                    decRefInstigator.getClass().getCanonicalName(), decRefInstigator.id, remainingRefs));
+            } else {
+                Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("DecRef instance of class %s(%d) via self.close(). %d remaining refs", 
+                    this.getClass().getCanonicalName(), id, remainingRefs));
+            }
         }
 
         if (remainingRefs != 0) {
@@ -297,6 +305,12 @@ public abstract class CrtResource implements AutoCloseable {
         if (canReleaseReferencesImmediately()) {
             releaseReferences();
         }
+    }
+    /**
+     * Decrements the reference count to this resource.
+     */
+    public void decRef() {        
+        decRef(null);
     }
 
     /**
@@ -311,7 +325,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         synchronized(this) {
             for (CrtResource resource : referencedResources) {
-                resource.decRef();
+                resource.decRef(this);
             }
 
             referencedResources.clear();

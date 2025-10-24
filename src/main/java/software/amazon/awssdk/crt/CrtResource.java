@@ -156,7 +156,7 @@ public abstract class CrtResource implements AutoCloseable {
             return;
         }
 
-        resource.decRef(this.getClass().getCanonicalName(), id);
+        resource.decRef(this);
     }
 
     /**
@@ -325,7 +325,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         synchronized(this) {
             for (CrtResource resource : referencedResources) {
-                resource.decRef(this.getClass().getCanonicalName(), id);
+                resource.decRef(this);
             }
 
             referencedResources.clear();

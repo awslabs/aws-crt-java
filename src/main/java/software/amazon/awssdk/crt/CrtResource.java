@@ -280,6 +280,8 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
+     * @param decRefInstigator Canonical Name of instigating CrtResource
+     * @param decRefInstigatorId id of instigating CrtResource
      */
     public void decRef(String decRefInstigator, long decRefInstigatorId) {
         int remainingRefs = refCount.decrementAndGet();

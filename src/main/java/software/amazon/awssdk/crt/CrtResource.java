@@ -305,7 +305,9 @@ public abstract class CrtResource implements AutoCloseable {
             releaseReferences();
         }
     }
-
+    /**
+     * Decrements the reference count to this resource.
+     */
     public void decRef() {        
         decRef(null, -1);
     }

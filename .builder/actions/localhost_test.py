@@ -7,6 +7,10 @@ class LocalhostTest(Builder.Action):
 
     def run(self, env):
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
+
+        if not os.getenv('ENABLE_LOCALHOST_TESTS'):
+            return
+
         actions = []
         if os.system("mvn -Dtest=Http2ClientLocalHostTest test -DredirectTestOutputToFile=true -DforkCount=0 \
             -Daws.crt.memory.tracing=2 \

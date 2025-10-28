@@ -7,7 +7,14 @@ class LocalhostSetup(Builder.Action):
 
     def run(self, env):
         python = sys.executable
-        env.shell.exec(python, '-m', 'pip', 'install', 'h11', 'h2', 'trio', check=True)
+        
+        result = env.shell.exec(python,
+                                     '-m', 'pip', 'install', 'h11', 'h2', 'trio')
+        if result.returncode != 0:
+            print(
+                "Could not install python HTTP/2 server." +
+                " The localhost integration tests will fail if you run them.", file=sys.stderr)
+            return
         
         server_dir = f"{env.root_dir}/crt/aws-c-http/tests/mock_server"
         

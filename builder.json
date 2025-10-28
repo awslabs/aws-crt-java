@@ -171,7 +171,9 @@
         "localhost": {
             "+build_steps": ["localhost-setup"],
             "!test_steps": ["localhost-test"],
-            "+cmake_args": ["-DENABLE_LOCALHOST_TESTS=ON"]
+            "+test_env": {
+                "ENABLE_LOCALHOST_TESTS": "ON"
+            }
         }
     }
 }

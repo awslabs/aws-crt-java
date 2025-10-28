@@ -170,10 +170,7 @@
         },
         "localhost": {
             "+build_steps": ["localhost-setup"],
-            "!test_steps": ["localhost-test"],
-            "+test_env": {
-                "ENABLE_LOCALHOST_TESTS": "ON"
-            }
+            "!test_steps": ["localhost-test"]
         }
     }
 }

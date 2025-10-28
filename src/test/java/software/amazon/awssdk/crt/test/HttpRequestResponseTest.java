@@ -31,14 +31,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody,
             boolean useChunkedEncoding, int expectedStatus) throws Exception {
-//        if(endpoint.equals(HOST)) {
-//            // postman-echo.com in now requires TLS1.3,
-//            // but our Mac implementation doesn't support TLS1.3 yet.
-//            // The work has been planned to Dec. 2025 to support TLS1.3,
-//            // so disable the test for now. And reenable it afterward
-//            skipIfMac();
-//        }
-        skipIfLocalhostUnavailable();
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -120,7 +112,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpEcho() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         String bodyToSend = "test echo body";
         TestHttpResponse response = testRequest("POST", HOST, "/echo", bodyToSend, false, 200);
 
@@ -132,7 +124,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpDownload() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com",
                 "/http_test_doc.txt", EMPTY_BODY, false, 200);
 
@@ -156,7 +148,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     private void testHttpUpload(boolean chunked) throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", HOST, "/put", bodyToSend, chunked, 200);
 
@@ -218,14 +209,14 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpUpload() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttpUpload(false);
     }
 
     @Test
     public void testHttpUploadChunked() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttpUpload(true);
     }
 
@@ -287,7 +278,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpRequestUnActivated() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 

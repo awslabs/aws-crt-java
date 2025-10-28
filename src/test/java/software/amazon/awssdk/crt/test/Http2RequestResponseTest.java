@@ -34,14 +34,6 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
-        // if(endpoint.equals(HOST)) {
-        //     // postman-echo.com in now requires TLS1.3,
-        //     // but our Mac implementation doesn't support TLS1.3 yet.
-        //     // The work has been planned to Dec. 2025 to support TLS1.3,
-        //     // so disable the test for now. And reenable it afterward
-        //     skipIfMac();
-        // }
-        skipIfLocalhostUnavailable();
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -124,7 +116,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Get() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
@@ -134,28 +126,28 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Post() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttp2Request("POST", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2Put() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttp2Request("PUT", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2ResponseStatusCodes() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2Download() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
                 "/http_test_doc.txt", EMPTY_BODY, 200);
@@ -228,6 +220,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
          * for functionality
          */
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ResetStreamTest, TestUtils::isRetryableTimeout, 5, 2000);
 

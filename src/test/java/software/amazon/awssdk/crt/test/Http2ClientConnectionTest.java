@@ -38,6 +38,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         // // The work has been planned to Dec. 2025 to support TLS1.3,
         // // so disable the test for now. And reenable it afterward
         // skipIfMac();
+        skipIfLocalhostUnavailable();
     }
 
     private void doHttp2ConnectionGetVersionTest() {

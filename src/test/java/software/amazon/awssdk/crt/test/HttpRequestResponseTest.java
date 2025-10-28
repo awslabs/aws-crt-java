@@ -38,6 +38,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 //            // so disable the test for now. And reenable it afterward
 //            skipIfMac();
 //        }
+        skipIfLocalhostUnavailable();
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;

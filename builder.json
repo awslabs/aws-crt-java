@@ -162,12 +162,16 @@
     "variants":{
         "graalvm": {
             "!packages": [],
-            "!imports": [
-            ],
+            "!imports": [],
             "!test_env": {
                 "AWS_GRAALVM_CI": true
             },
             "!build_env": {}
+        },
+        "localhost": {
+            "+build_steps": ["localhost-setup"],
+            "!test_steps": ["localhost-test"],
+            "+cmake_args": ["-DENABLE_LOCALHOST_TESTS=ON"]
         }
     }
 }

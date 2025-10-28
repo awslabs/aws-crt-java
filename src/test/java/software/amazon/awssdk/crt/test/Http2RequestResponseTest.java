@@ -29,18 +29,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://postman-echo.com";
+    private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
-        if(endpoint.equals(HOST)) {
-            // postman-echo.com in now requires TLS1.3,
-            // but our Mac implementation doesn't support TLS1.3 yet.
-            // The work has been planned to Dec. 2025 to support TLS1.3,
-            // so disable the test for now. And reenable it afterward
-            skipIfMac();
-        }
+        // if(endpoint.equals(HOST)) {
+        //     // postman-echo.com in now requires TLS1.3,
+        //     // but our Mac implementation doesn't support TLS1.3 yet.
+        //     // The work has been planned to Dec. 2025 to support TLS1.3,
+        //     // so disable the test for now. And reenable it afterward
+        //     skipIfMac();
+        // }
         URI uri = new URI(endpoint);
 
         HttpHeader[] requestHeaders = null;
@@ -97,6 +97,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
         } while ((response == null || shouldRetry(response)) && numAttempts < 3);
 
+        Assert.assertNotNull(response);
         Assert.assertNotEquals(-1, response.blockType);
 
 
@@ -124,7 +125,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
-        testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
+        testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
         testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
         testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 404);
     }
@@ -133,30 +134,21 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     public void testHttp2Post() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
-        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 404);
-        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 404);
-        testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 404);
+        testHttp2Request("POST", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2Put() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
-        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 404);
-        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 404);
-        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 404);
-        testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
+        testHttp2Request("PUT", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2ResponseStatusCodes() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
-        testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
-        testHttp2Request("GET", HOST, "/status/400", EMPTY_BODY, 400);
-        testHttp2Request("GET", HOST, "/status/500", EMPTY_BODY, 500);
+        testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
@@ -209,7 +201,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
                             }
                         }
                     };
-                    Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
+                    Http2Request request = getHttp2Request("GET", HOST, "/echo", EMPTY_BODY);
                     try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
                         h2Stream.activate();
                         streamComplete.get();

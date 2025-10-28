@@ -28,16 +28,16 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     private final static int MAX_TEST_RETRIES = 5;
     private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
-    private final static String HOST = "https://postman-echo.com";
+    private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     @Before
     public void setUp() {
-        // postman-echo.com in now requires TLS1.3,
-        // but our Mac implementation doesn't support TLS1.3 yet.
-        // The work has been planned to Dec. 2025 to support TLS1.3,
-        // so disable the test for now. And reenable it afterward
-        skipIfMac();
+        // // postman-echo.com in now requires TLS1.3,
+        // // but our Mac implementation doesn't support TLS1.3 yet.
+        // // The work has been planned to Dec. 2025 to support TLS1.3,
+        // // so disable the test for now. And reenable it afterward
+        // skipIfMac();
     }
 
     private void doHttp2ConnectionGetVersionTest() {

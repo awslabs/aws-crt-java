@@ -993,6 +993,16 @@ static void s_on_s3_meta_request_telemetry_callback(
     (*env)->SetLongField(
         env,
         metrics_object,
+        s3_request_metrics_properties.s3_request_first_attempt_start_timestamp_ns_field_id,
+        metrics->time_metrics.s3_request_first_attempt_start_timestamp_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.s3_request_last_attempt_end_timestamp_ns_field_id,
+        metrics->time_metrics.s3_request_last_attempt_end_timestamp_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
         s3_request_metrics_properties.start_timestamp_ns_field_id,
         metrics->time_metrics.start_timestamp_ns);
     (*env)->SetLongField(
@@ -1080,6 +1090,26 @@ static void s_on_s3_meta_request_telemetry_callback(
         metrics_object,
         s3_request_metrics_properties.deliver_duration_ns_field_id,
         metrics->time_metrics.deliver_duration_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.retry_delay_start_timestamp_ns_field_id,
+        metrics->time_metrics.retry_delay_start_timestamp_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.retry_delay_end_timestamp_ns_field_id,
+        metrics->time_metrics.retry_delay_end_timestamp_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.retry_delay_duration_ns_field_id,
+        metrics->time_metrics.retry_delay_duration_ns);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.service_call_duration_ns_field_id,
+        metrics->time_metrics.service_call_duration_ns);
 
     // Request/Response info (int) - from req_resp_info_metrics
     (*env)->SetIntField(
@@ -1098,6 +1128,13 @@ static void s_on_s3_meta_request_telemetry_callback(
     jstring request_id = aws_jni_string_from_cursor(env, &request_id_cursor);
     (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.request_id_field_id, request_id);
     (*env)->DeleteLocalRef(env, request_id);
+
+    struct aws_byte_cursor extended_request_id_cursor =
+        aws_byte_cursor_from_string(metrics->req_resp_info_metrics.extended_request_id);
+    jstring extended_request_id = aws_jni_string_from_cursor(env, &extended_request_id_cursor);
+    (*env)->SetObjectField(
+        env, metrics_object, s3_request_metrics_properties.extended_request_id_field_id, extended_request_id);
+    (*env)->DeleteLocalRef(env, extended_request_id);
 
     struct aws_byte_cursor operation_name_cursor =
         aws_byte_cursor_from_string(metrics->req_resp_info_metrics.operation_name);
@@ -1129,7 +1166,12 @@ static void s_on_s3_meta_request_telemetry_callback(
         env,
         metrics_object,
         s3_request_metrics_properties.connection_id_field_id,
-        (jlong)metrics->crt_info_metrics.connection_id);
+        (jlong)metrics->crt_info_metrics.connection_ptr);
+    (*env)->SetLongField(
+        env,
+        metrics_object,
+        s3_request_metrics_properties.request_ptr_field_id,
+        (jlong)metrics->crt_info_metrics.request_ptr);
     (*env)->SetLongField(
         env,
         metrics_object,

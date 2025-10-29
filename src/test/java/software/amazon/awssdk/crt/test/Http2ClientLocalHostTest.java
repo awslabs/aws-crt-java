@@ -44,7 +44,7 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
-
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
     private static final int LOCAL_HTTPS_PORT = 3443;
     private static final int LOCAL_HTTP_PORT = 3280;
 

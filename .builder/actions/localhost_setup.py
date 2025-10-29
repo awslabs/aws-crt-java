@@ -12,7 +12,7 @@ class LocalhostSetup(Builder.Action):
                                      '-m', 'pip', 'install', 'h11', 'h2', 'trio')
         if result.returncode != 0:
             print(
-                "Could not install python HTTP/2 server." +
+                "Could not install dependencies for the python http server." +
                 " The localhost integration tests will fail if you run them.", file=sys.stderr)
             return
         

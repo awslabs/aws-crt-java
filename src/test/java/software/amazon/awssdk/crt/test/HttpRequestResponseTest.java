@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
     private final static String HOST = "https://localhost:8082";
     private final int MAX_TEST_RETRIES = 5;
     private final int TEST_RETRY_SLEEP_MILLIS = 2000;

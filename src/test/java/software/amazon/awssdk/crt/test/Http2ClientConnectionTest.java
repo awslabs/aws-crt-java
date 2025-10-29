@@ -28,6 +28,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     private final static int MAX_TEST_RETRIES = 5;
     private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
     private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 

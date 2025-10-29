@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
     private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
@@ -147,7 +148,7 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttp2Download() throws Exception {
         skipIfAndroid();
-        skipIfLocalhostUnavailable();
+        skipIfNetworkUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
                 "/http_test_doc.txt", EMPTY_BODY, 200);

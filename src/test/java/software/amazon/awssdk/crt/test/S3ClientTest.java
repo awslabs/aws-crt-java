@@ -1721,6 +1721,9 @@ public class S3ClientTest extends CrtTestFixture {
                 public void onTelemetry(S3RequestMetrics metrics) {
                     telemetryCallbackCount.incrementAndGet();
 
+                    // Validate api call duration
+                    Assert.assertTrue("API Call duration should be >= 0", metrics.getApiCallDurationNs() >= 0);
+
                     // Validate basic success
                     Assert.assertTrue("API call should be successful", metrics.isApiCallSuccessful());
 
@@ -1734,6 +1737,7 @@ public class S3ClientTest extends CrtTestFixture {
 
                     // Validate request ID
                     Assert.assertNotNull("Request ID should not be null", metrics.getAwsRequestId());
+                    Assert.assertNotNull("Extended Request ID should not be null", metrics.getAwsExtendedRequestId());
 
                     // Validate Error Type
                     Assert.assertSame("Error type should be SUCCESS", ErrorType.SUCCESS, metrics.getErrorType());
@@ -1746,6 +1750,12 @@ public class S3ClientTest extends CrtTestFixture {
 
                     // Validate signing duration
                     Assert.assertTrue("Signing duration should be >= 0", metrics.getSigningDurationNs() >= 0);
+
+                    // Validate delay duration
+                    Assert.assertTrue("Delay duration should be >= 0", metrics.getBackoffDelayDurationNs() >= 0);
+
+                    // Validate service call duration
+                    Assert.assertTrue("Service call duration should be >= 0", metrics.getServiceCallDurationNs() >= 0);
 
                     // Validate retry count
                     Assert.assertTrue("Retry count should be >= 0", metrics.getRetryCount() >= 0);

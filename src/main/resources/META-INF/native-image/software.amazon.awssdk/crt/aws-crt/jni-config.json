@@ -2196,6 +2196,12 @@
     "name": "software.amazon.awssdk.crt.s3.S3RequestMetrics",
     "fields": [
       {
+        "name": "s3RequestFirstAttemptStartTimestampNs"
+      },
+      {
+        "name": "s3RequestLastAttemptEndTimestampNs"
+      },
+      {
         "name": "startTimestampNs"
       },
       {
@@ -2250,10 +2256,25 @@
         "name": "deliverDurationNs"
       },
       {
+        "name": "retryDelayStartTimestampNs"
+      },
+      {
+        "name": "retryDelayEndTimestampNs"
+      },
+      {
+        "name": "retryDelayDurationNs"
+      },
+      {
+        "name": "serviceCallDurationNs"
+      },
+      {
         "name": "responseStatus"
       },
       {
         "name": "requestId"
+      },
+      {
+        "name": "extendedRequestId"
       },
       {
         "name": "operationName"
@@ -2272,6 +2293,9 @@
       },
       {
         "name": "connectionId"
+      },
+      {
+        "name": "requestPtr"
       },
       {
         "name": "threadId"

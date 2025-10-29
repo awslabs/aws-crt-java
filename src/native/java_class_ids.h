@@ -449,6 +449,8 @@ struct java_aws_s3_request_metrics {
     jclass s3_request_metrics_class;
     jmethodID s3_request_metrics_constructor_method_id;
     // Timestamp fields (long = J)
+    jfieldID s3_request_first_attempt_start_timestamp_ns_field_id;
+    jfieldID s3_request_last_attempt_end_timestamp_ns_field_id;
     jfieldID start_timestamp_ns_field_id;
     jfieldID end_timestamp_ns_field_id;
     jfieldID total_duration_ns_field_id;
@@ -467,6 +469,10 @@ struct java_aws_s3_request_metrics {
     jfieldID deliver_start_timestamp_ns_field_id;
     jfieldID deliver_end_timestamp_ns_field_id;
     jfieldID deliver_duration_ns_field_id;
+    jfieldID retry_delay_start_timestamp_ns_field_id;
+    jfieldID retry_delay_end_timestamp_ns_field_id;
+    jfieldID retry_delay_duration_ns_field_id;
+    jfieldID service_call_duration_ns_field_id;
     // Request/Response info
     jfieldID response_status_field_id;
     jfieldID request_id_field_id;
@@ -478,6 +484,7 @@ struct java_aws_s3_request_metrics {
     // CRT info
     jfieldID ip_address_field_id;
     jfieldID connection_id_field_id;
+    jfieldID request_ptr_field_id;
     jfieldID thread_id_field_id;
     jfieldID stream_id_field_id;
     jfieldID error_code_field_id;

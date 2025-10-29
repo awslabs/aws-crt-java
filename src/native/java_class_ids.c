@@ -952,14 +952,15 @@ static void s_cache_s3_error_type(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/ErrorType");
     AWS_FATAL_ASSERT(cls);
     s3_error_type_properties.error_type_class = (*env)->NewGlobalRef(env, cls);
-    
-    jmethodID values_method = (*env)->GetStaticMethodID(env, cls, "values", "()[Lsoftware/amazon/awssdk/crt/s3/ErrorType;");
+
+    jmethodID values_method =
+        (*env)->GetStaticMethodID(env, cls, "values", "()[Lsoftware/amazon/awssdk/crt/s3/ErrorType;");
     AWS_FATAL_ASSERT(values_method);
-    
+
     jobjectArray values = (*env)->CallStaticObjectMethod(env, cls, values_method);
     AWS_FATAL_ASSERT(values);
     s3_error_type_properties.error_type_values = (*env)->NewGlobalRef(env, values);
-    
+
     (*env)->DeleteLocalRef(env, values);
     (*env)->DeleteLocalRef(env, cls);
 }
@@ -979,6 +980,12 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "<init>", "()V");
 
     // Get field IDs (signature: "J" means long, "I" means int, "L<classname>" means object of a java class)
+    s3_request_metrics_properties.s3_request_first_attempt_start_timestamp_ns_field_id =
+        (*env)->GetFieldID(env, cls, "s3RequestFirstAttemptStartTimestampNs", "J");
+
+    s3_request_metrics_properties.s3_request_last_attempt_end_timestamp_ns_field_id =
+        (*env)->GetFieldID(env, cls, "s3RequestLastAttemptEndTimestampNs", "J");
+
     s3_request_metrics_properties.start_timestamp_ns_field_id = (*env)->GetFieldID(env, cls, "startTimestampNs", "J");
 
     s3_request_metrics_properties.end_timestamp_ns_field_id = (*env)->GetFieldID(env, cls, "endTimestampNs", "J");
@@ -1027,9 +1034,24 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
 
     s3_request_metrics_properties.deliver_duration_ns_field_id = (*env)->GetFieldID(env, cls, "deliverDurationNs", "J");
 
+    s3_request_metrics_properties.retry_delay_start_timestamp_ns_field_id =
+        (*env)->GetFieldID(env, cls, "retryDelayStartTimestampNs", "J");
+
+    s3_request_metrics_properties.retry_delay_end_timestamp_ns_field_id =
+        (*env)->GetFieldID(env, cls, "retryDelayEndTimestampNs", "J");
+
+    s3_request_metrics_properties.retry_delay_duration_ns_field_id =
+        (*env)->GetFieldID(env, cls, "retryDelayDurationNs", "J");
+
+    s3_request_metrics_properties.service_call_duration_ns_field_id =
+        (*env)->GetFieldID(env, cls, "serviceCallDurationNs", "J");
+
     s3_request_metrics_properties.response_status_field_id = (*env)->GetFieldID(env, cls, "responseStatus", "I");
 
     s3_request_metrics_properties.request_id_field_id = (*env)->GetFieldID(env, cls, "requestId", "Ljava/lang/String;");
+
+    s3_request_metrics_properties.extended_request_id_field_id =
+        (*env)->GetFieldID(env, cls, "extendedRequestId", "Ljava/lang/String;");
 
     s3_request_metrics_properties.operation_name_field_id =
         (*env)->GetFieldID(env, cls, "operationName", "Ljava/lang/String;");
@@ -1045,6 +1067,8 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
     s3_request_metrics_properties.ip_address_field_id = (*env)->GetFieldID(env, cls, "ipAddress", "Ljava/lang/String;");
 
     s3_request_metrics_properties.connection_id_field_id = (*env)->GetFieldID(env, cls, "connectionId", "J");
+
+    s3_request_metrics_properties.request_ptr_field_id = (*env)->GetFieldID(env, cls, "requestPtr", "J");
 
     s3_request_metrics_properties.thread_id_field_id = (*env)->GetFieldID(env, cls, "threadId", "J");
 
@@ -2630,7 +2654,6 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
         "(JLjava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;");
     AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
-
 
 // Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {

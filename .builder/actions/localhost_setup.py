@@ -4,6 +4,7 @@ import subprocess
 import atexit
 import socket
 import time
+import os
 
 class LocalhostSetup(Builder.Action):
 
@@ -22,7 +23,7 @@ class LocalhostSetup(Builder.Action):
             print("Could not install python HTTP/2 server. The localhost integration tests will fail.", file=sys.stderr)
             return
         
-        server_dir = f"{env.root_dir}/crt/aws-c-http/tests/mock_server"
+        server_dir = os.path.join(env.root_dir,'crt','aws-c-http','tests','mock_server')
         
         p1 = subprocess.Popen([python, "h2tls_mock_server.py"], cwd=server_dir)
         p2 = subprocess.Popen([python, "h2non_tls_server.py"], cwd=server_dir)

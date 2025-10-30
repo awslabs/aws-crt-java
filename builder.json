@@ -169,7 +169,7 @@
             "!build_env": {}
         },
         "localhost": {
-            "!test_steps": ["localhost-setup", "localhost-test"]
+            "!test_steps": ["localhost-test"]
         }
     }
 }

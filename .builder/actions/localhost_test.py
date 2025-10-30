@@ -50,7 +50,7 @@ class LocalhostTest(Builder.Action):
         if os.system("mvn test -DredirectTestOutputToFile=true -DforkCount=0 \
             -Daws.crt.memory.tracing=2 \
             -Daws.crt.debugnative=true \
-            -Daws.crt.log.level=Warn \
+            -Daws.crt.aws_trace_log_per_test \
             -Daws.crt.localhost=true"):
             # Failed
             actions.append("exit 1")

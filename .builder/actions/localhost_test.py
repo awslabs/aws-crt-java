@@ -47,10 +47,10 @@ class LocalhostTest(Builder.Action):
         self.start(env)
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
 
-        if os.system("mvn test -DredirectTestOutputToFile=true -DforkCount=0 \
+        if os.system("mvn -Dtest=Http2ClientConnectionTest,Http2ClientLocalHostTest,Http2RequestResponseTest,HttpRequestResponseTest test -DredirectTestOutputToFile=true -DforkCount=0 \
             -Daws.crt.memory.tracing=2 \
             -Daws.crt.debugnative=true \
             -Daws.crt.log.level=Debug \
             -Daws.crt.localhost=true"):
             # Failed
-            exit(1)
+            actions.append("exit 1")

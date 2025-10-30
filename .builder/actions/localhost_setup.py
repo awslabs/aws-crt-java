@@ -15,7 +15,7 @@ class LocalhostSetup(Builder.Action):
             print("Could not start a virtual environment. The localhost integration tests will fail.", file=sys.stderr)
             return
         
-        python = ".venv/bin/python"
+        python = os.path.join(os.getcwd(), ".venv", "bin", "python")
         
         result = env.shell.exec(python, '-m', 'pip', 'install', 'h11', 'h2', 'trio')
         if result.returncode != 0:

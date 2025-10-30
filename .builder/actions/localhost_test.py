@@ -21,7 +21,7 @@ class LocalhostTest(Builder.Action):
         
         result = env.shell.exec(python, '-m', 'pip', 'install', 'h11', 'h2', 'trio')
         if result.returncode != 0:
-            print("Could not install python HTTP/2 server. The localhost integration tests will fail.", file=sys.stderr)
+            print("Could not install python HTTP dependencies. The localhost integration tests will fail.", file=sys.stderr)
             return
         
         server_dir = os.path.join(env.root_dir,'crt','aws-c-http','tests','mock_server')

@@ -10,13 +10,14 @@ class LocalhostSetup(Builder.Action):
 
     def run(self, env):
         python = sys.executable
+        venv_path = os.path.join(env.root_dir,'crt','aws-c-http','tests','mock_server', '.venv')
 
-        result = env.shell.exec(python, '-m', 'venv', '.venv')
+        result = env.shell.exec(python, '-m', 'venv', venv_path)
         if result.returncode != 0:
             print("Could not start a virtual environment. The localhost integration tests will fail.", file=sys.stderr)
             return
         
-        python = os.path.join(os.getcwd(), ".venv", "bin", "python")
+        python = os.path.join(venv_path, "bin", "python")
         
         result = env.shell.exec(python, '-m', 'pip', 'install', 'h11', 'h2', 'trio')
         if result.returncode != 0:

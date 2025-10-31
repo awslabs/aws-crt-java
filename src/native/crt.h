@@ -240,6 +240,11 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
 void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
 
 /*******************************************************************************
+ * aws_jni_set_dispatch_queue_threads - Sets whether the current event loop group uses dispatch queue threads
+ ******************************************************************************/
+void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue);
+
+/*******************************************************************************
  * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws
  * error code, which is the type of software/amazon/awssdk/crt/CrtRuntimeException.
  * Reference of the jobject needed to be cleaned up after use.

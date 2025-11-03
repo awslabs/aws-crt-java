@@ -2308,9 +2308,6 @@
       },
       {
         "name": "retryAttempt"
-      },
-      {
-        "name": "errorType"
       }
     ],
     "methods": [

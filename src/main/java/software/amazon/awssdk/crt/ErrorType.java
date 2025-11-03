@@ -1,4 +1,4 @@
-package software.amazon.awssdk.crt.s3;
+package software.amazon.awssdk.crt;
 
 public enum ErrorType {
     SUCCESS,

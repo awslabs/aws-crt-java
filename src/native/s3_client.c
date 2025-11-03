@@ -693,46 +693,6 @@ static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers,
     return AWS_OP_SUCCESS;
 }
 
-static jobject s_get_error_type_enum(JNIEnv *env, int error_code) {
-    int ordinal;
-    switch (error_code) {
-        case AWS_ERROR_SUCCESS:
-            ordinal = 0; // SUCCESS
-            break;
-        case AWS_ERROR_S3_SLOW_DOWN:
-            ordinal = 1; // THROTTLING
-            break;
-        case AWS_ERROR_S3_INTERNAL_ERROR:
-        case AWS_ERROR_S3_INVALID_RESPONSE_STATUS:
-        case AWS_ERROR_S3_REQUEST_TIME_TOO_SKEWED:
-        case AWS_ERROR_S3_NON_RECOVERABLE_ASYNC_ERROR:
-            ordinal = 2; // SERVER_ERROR
-            break;
-        case AWS_ERROR_HTTP_RESPONSE_FIRST_BYTE_TIMEOUT:
-        case AWS_ERROR_HTTP_CONNECTION_MANAGER_ACQUISITION_TIMEOUT:
-        case AWS_ERROR_S3_REQUEST_TIMEOUT:
-        case AWS_IO_SOCKET_TIMEOUT:
-        case AWS_IO_TLS_NEGOTIATION_TIMEOUT:
-            ordinal = 3; // CONFIGURED_TIMEOUT
-            break;
-        case AWS_ERROR_HTTP_CONNECTION_CLOSED:
-        case AWS_ERROR_HTTP_CONNECTION_MANAGER_SHUTTING_DOWN:
-        case AWS_ERROR_HTTP_CHANNEL_THROUGHPUT_FAILURE:
-        case AWS_ERROR_HTTP_PROXY_CONNECT_FAILED:
-        case AWS_ERROR_HTTP_SERVER_CLOSED:
-        case AWS_ERROR_HTTP_GOAWAY_RECEIVED:
-        case AWS_ERROR_HTTP_RST_STREAM_RECEIVED:
-            ordinal = 4; // IO
-            break;
-        default:
-            ordinal = 5; // OTHER
-            break;
-    }
-
-    jobject error_type_enum = (*env)->GetObjectArrayElement(env, s3_error_type_properties.error_type_values, ordinal);
-    return error_type_enum;
-}
-
 static int s_on_s3_meta_request_headers_callback(
     struct aws_s3_meta_request *meta_request,
     const struct aws_http_headers *headers,
@@ -1191,11 +1151,6 @@ static void s_on_s3_meta_request_telemetry_callback(
         metrics_object,
         s3_request_metrics_properties.retry_attempt_field_id,
         (jint)metrics->crt_info_metrics.retry_attempt);
-
-    // Custom ErrorType Field
-    jobject error_type = s_get_error_type_enum(env, metrics->crt_info_metrics.error_code);
-    (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.error_type_field_id, error_type);
-    (*env)->DeleteLocalRef(env, error_type);
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
 

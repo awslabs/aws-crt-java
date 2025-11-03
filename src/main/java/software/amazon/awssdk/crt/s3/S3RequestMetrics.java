@@ -92,7 +92,7 @@ public class S3RequestMetrics {
     }
 
     public ErrorType getErrorType() {
-        return CRT.awsGetSdkErrorType(this.errorCode);
+        return CRT.awsGetErrorType(this.errorCode);
     }
 
     public long getServiceCallDurationNs() {

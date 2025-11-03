@@ -649,20 +649,20 @@ static jobject s_get_error_type_enum(JNIEnv *env, int error_code) {
             ordinal = 0; // SUCCESS
             break;
         case AWS_ERROR_S3_SLOW_DOWN:
-            ordinal = 1; // THROTTLING
+            ordinal = 2; // THROTTLING
             break;
         case AWS_ERROR_S3_INTERNAL_ERROR:
         case AWS_ERROR_S3_INVALID_RESPONSE_STATUS:
         case AWS_ERROR_S3_REQUEST_TIME_TOO_SKEWED:
         case AWS_ERROR_S3_NON_RECOVERABLE_ASYNC_ERROR:
-            ordinal = 2; // SERVER_ERROR
+            ordinal = 3; // SERVER_ERROR
             break;
         case AWS_ERROR_HTTP_RESPONSE_FIRST_BYTE_TIMEOUT:
         case AWS_ERROR_HTTP_CONNECTION_MANAGER_ACQUISITION_TIMEOUT:
         case AWS_ERROR_S3_REQUEST_TIMEOUT:
         case AWS_IO_SOCKET_TIMEOUT:
         case AWS_IO_TLS_NEGOTIATION_TIMEOUT:
-            ordinal = 3; // CONFIGURED_TIMEOUT
+            ordinal = 4; // CONFIGURED_TIMEOUT
             break;
         case AWS_ERROR_HTTP_CONNECTION_CLOSED:
         case AWS_ERROR_HTTP_CONNECTION_MANAGER_SHUTTING_DOWN:
@@ -671,10 +671,10 @@ static jobject s_get_error_type_enum(JNIEnv *env, int error_code) {
         case AWS_ERROR_HTTP_SERVER_CLOSED:
         case AWS_ERROR_HTTP_GOAWAY_RECEIVED:
         case AWS_ERROR_HTTP_RST_STREAM_RECEIVED:
-            ordinal = 4; // IO
+            ordinal = 5; // IO
             break;
         default:
-            ordinal = 5; // OTHER
+            ordinal = 1; // OTHER
             break;
     }
 
@@ -779,7 +779,7 @@ jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorName(JNIEnv *env, jc
 
 JNIEXPORT
 jobject JNICALL
-    Java_software_amazon_awssdk_crt_CRT_awsGetSdkErrorType(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    Java_software_amazon_awssdk_crt_CRT_awsGetErrorType(JNIEnv *env, jclass jni_crt_class, jint error_code) {
     (void)jni_crt_class;
     jobject error_type = s_get_error_type_enum(env, error_code);
     return error_type;

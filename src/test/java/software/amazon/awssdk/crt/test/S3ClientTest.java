@@ -5,6 +5,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.ErrorType;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;

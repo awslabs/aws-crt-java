@@ -495,7 +495,7 @@ public final class CRT {
      *                  function call
      * @return The corresponding SdkErrorType for the error code
      */
-    public static native ErrorType awsGetSdkErrorType(int errorCode);
+    public static native ErrorType awsGetErrorType(int errorCode);
 
     /**
      * @return The number of bytes allocated in native resources. If

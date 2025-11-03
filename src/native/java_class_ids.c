@@ -949,12 +949,12 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
 struct java_s3_error_type_properties s3_error_type_properties;
 
 static void s_cache_s3_error_type(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/ErrorType");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/ErrorType");
     AWS_FATAL_ASSERT(cls);
     s3_error_type_properties.error_type_class = (*env)->NewGlobalRef(env, cls);
 
     jmethodID values_method =
-        (*env)->GetStaticMethodID(env, cls, "values", "()[Lsoftware/amazon/awssdk/crt/s3/ErrorType;");
+        (*env)->GetStaticMethodID(env, cls, "values", "()[Lsoftware/amazon/awssdk/crt/ErrorType;");
     AWS_FATAL_ASSERT(values_method);
 
     jobjectArray values = (*env)->CallStaticObjectMethod(env, cls, values_method);
@@ -1077,9 +1077,6 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
     s3_request_metrics_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");
 
     s3_request_metrics_properties.retry_attempt_field_id = (*env)->GetFieldID(env, cls, "retryAttempt", "I");
-
-    s3_request_metrics_properties.error_type_field_id =
-        (*env)->GetFieldID(env, cls, "errorType", "Lsoftware/amazon/awssdk/crt/s3/ErrorType;");
 }
 
 struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;

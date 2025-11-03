@@ -1,5 +1,8 @@
 package software.amazon.awssdk.crt.s3;
 
+import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.ErrorType;
+
 /**
  * Metrics collected upon completion of an S3 Request
  */
@@ -52,9 +55,6 @@ public class S3RequestMetrics {
     private int errorCode;
     private int retryAttempt;
 
-    // Native Adapted members
-    private ErrorType errorType;
-
     public long getApiCallDurationNs() {
         return this.s3RequestLastAttemptEndTimestampNs - this.s3RequestFirstAttemptStartTimestampNs;
     }
@@ -92,7 +92,7 @@ public class S3RequestMetrics {
     }
 
     public ErrorType getErrorType() {
-        return this.errorType;
+        return CRT.awsGetSdkErrorType(this.errorCode);
     }
 
     public long getServiceCallDurationNs() {

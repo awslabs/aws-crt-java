@@ -245,6 +245,10 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.ErrorType",
+    "methods": []
+  },
+  {
     "name": "software.amazon.awssdk.crt.CrtResource",
     "methods": [
       {

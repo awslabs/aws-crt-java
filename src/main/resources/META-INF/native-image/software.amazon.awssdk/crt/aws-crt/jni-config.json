@@ -246,7 +246,12 @@
   },
   {
     "name": "software.amazon.awssdk.crt.ErrorType",
-    "methods": []
+    "methods": [
+      {
+        "name": "values",
+        "parameterTypes": []
+      }
+    ]
   },
   {
     "name": "software.amazon.awssdk.crt.CrtResource",
@@ -2183,15 +2188,6 @@
     "methods": [
       {
         "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "software.amazon.awssdk.crt.s3.ErrorType",
-    "methods": [
-      {
-        "name": "values",
         "parameterTypes": []
       }
     ]

@@ -778,7 +778,8 @@ jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorName(JNIEnv *env, jc
 }
 
 JNIEXPORT
-jobject JNICALL Java_software_amazon_awssdk_crt_CRT_awsGetSdkErrorType(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+jobject JNICALL
+    Java_software_amazon_awssdk_crt_CRT_awsGetSdkErrorType(JNIEnv *env, jclass jni_crt_class, jint error_code) {
     (void)jni_crt_class;
     jobject error_type = s_get_error_type_enum(env, error_code);
     return error_type;

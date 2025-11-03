@@ -162,12 +162,14 @@
     "variants":{
         "graalvm": {
             "!packages": [],
-            "!imports": [
-            ],
+            "!imports": [],
             "!test_env": {
                 "AWS_GRAALVM_CI": true
             },
             "!build_env": {}
+        },
+        "localhost": {
+            "!test_steps": ["localhost-test"]
         }
     }
 }

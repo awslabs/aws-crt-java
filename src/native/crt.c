@@ -64,12 +64,14 @@ void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue) {
 }
 
 static void s_detach_jvm_from_thread(void *user_data) {
+    AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
     JavaVM *jvm = user_data;
 
     /* we don't need this JNIEnv, but this is an easy way to verify the JVM is still valid to use */
     /********** JNI ENV ACQUIRE **********/
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env != NULL) {
+        (*jvm)->DetachCurrentThread(jvm);
         aws_jni_release_thread_env(jvm, env);
         /********** JNI ENV RELEASE **********/
     }

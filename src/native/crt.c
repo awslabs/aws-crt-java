@@ -58,9 +58,9 @@ struct aws_allocator *aws_jni_get_allocator(void) {
 Dispatch queue threads are handled differently than other types as we do not create and manage them. This is set during
 creation of an Event Loop Group to control attach/detach to/from JVM behavior of threads.
 */
-static bool s_disptach_queue_threads = false;
+static bool s_dispatch_queue_threads = false;
 void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue) {
-    s_disptach_queue_threads = is_dispatch_queue;
+    s_dispatch_queue_threads = is_dispatch_queue;
 }
 
 static void s_detach_jvm_from_thread(void *user_data) {
@@ -84,7 +84,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
     void *env = NULL;
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        if (!s_disptach_queue_threads) {
+        if (!s_dispatch_queue_threads) {
             AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
         }
 
@@ -124,7 +124,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
         Dispatch Queue threads are managed by Apple's GCD and thus can't have an at_exit callback assigned. We manually
         detatch dispatch queue threads from the JVM during `aws_jni_release_thread_env()` to insure cleanup.
         */
-        if (!s_disptach_queue_threads) {
+        if (!s_dispatch_queue_threads) {
             /* This should only happen in event loop threads, the JVM main thread attachment is
              * managed by the JVM, so we only need to clean up event loop thread attachments */
             AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
@@ -261,7 +261,7 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
         on a thread exit callback due to the threads not being managed by the CRT and thus, their
         lifetimes not trackable outside the context of their immediate use.
         */
-        if (s_disptach_queue_threads) {
+        if (s_dispatch_queue_threads) {
             (*jvm)->DetachCurrentThread(jvm);
         }
 

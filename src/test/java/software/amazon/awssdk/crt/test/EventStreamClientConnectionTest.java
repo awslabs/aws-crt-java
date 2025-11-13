@@ -23,7 +23,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
     @Test
     public void testConnectionHandling() throws ExecutionException, InterruptedException, IOException, TimeoutException {
-        SocketOptions socketOptions = new SocketOptions(); 
+        SocketOptions socketOptions = new SocketOptions();
         socketOptions.connectTimeoutMs = 3000;
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
@@ -203,7 +203,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();

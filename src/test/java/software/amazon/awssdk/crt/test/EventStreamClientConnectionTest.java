@@ -29,8 +29,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
+        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
         final ServerConnection[] serverConnections = {null};
@@ -108,8 +109,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
+        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
         final List<Header>[] receivedMessageHeaders = new List[]{null};
         final byte[][] receivedPayload = {null};
         final MessageType[] receivedMessageType = {null};
@@ -216,8 +218,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
+        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
         final boolean[] connectionShutdown = {false};
         final List<Header>[] receivedMessageHeaders = new List[]{null};
         final byte[][] receivedPayload = {null};
@@ -351,8 +354,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
+        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
 
         final boolean[] connectionShutdown = {false};
         final String[] receivedOperationName = new String[]{null};
@@ -498,8 +502,9 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
+        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
 
         final boolean[] connectionShutdown = {false};
 

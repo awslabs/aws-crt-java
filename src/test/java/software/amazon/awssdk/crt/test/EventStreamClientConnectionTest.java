@@ -97,6 +97,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -206,6 +207,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -342,6 +344,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -490,6 +493,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -660,6 +664,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();

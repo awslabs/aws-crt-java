@@ -6,7 +6,6 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.ServerBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.HostResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,9 +29,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
-        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
         final boolean[] connectionReceived = {false};
         final boolean[] connectionShutdown = {false};
         final ServerConnection[] serverConnections = {null};
@@ -97,7 +95,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -111,9 +108,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
-        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
         final List<Header>[] receivedMessageHeaders = new List[]{null};
         final byte[][] receivedPayload = {null};
         final MessageType[] receivedMessageType = {null};
@@ -221,9 +217,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
-        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
         final boolean[] connectionShutdown = {false};
         final List<Header>[] receivedMessageHeaders = new List[]{null};
         final byte[][] receivedPayload = {null};
@@ -344,7 +339,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -358,9 +352,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
-        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
 
         final boolean[] connectionShutdown = {false};
         final String[] receivedOperationName = new String[]{null};
@@ -493,7 +486,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();
@@ -507,9 +499,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
         EventLoopGroup elGroup = new EventLoopGroup(1);
-        HostResolver hr = new HostResolver(elGroup);
         ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, hr);
+        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
 
         final boolean[] connectionShutdown = {false};
 
@@ -664,7 +655,6 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         bootstrap.close();
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        hr.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         socketOptions.close();

@@ -36,33 +36,38 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final ServerConnection[] serverConnections = {null};
         final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        ServerListener listener;
+        try {
+            listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                private ServerConnectionHandler connectionHandler = null;
 
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                serverConnections[0] = serverConnection;
-                connectionReceived[0] = true;
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    serverConnections[0] = serverConnection;
+                    connectionReceived[0] = true;
 
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                    connectionHandler = new ServerConnectionHandler(serverConnection) {
 
-                    @Override
-                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                    }
+                        @Override
+                        protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                        }
 
-                    @Override
-                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        return null;
-                    }
-                };
+                        @Override
+                        protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                            return null;
+                        }
+                    };
 
-                serverConnectionAccepted.complete(serverConnection);
-                return connectionHandler;
-            }
+                    serverConnectionAccepted.complete(serverConnection);
+                    return connectionHandler;
+                }
 
-            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                connectionShutdown[0] = true;
-            }
-        });
+                public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                    connectionShutdown[0] = true;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ServerListener on port 8033. Port may be in use.", e);
+        }
 
         final boolean[] clientConnected = {false};
         final ClientConnection[] clientConnectionArray = {null};
@@ -121,40 +126,45 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
         final CompletableFuture<ServerConnection> serverMessageSent = new CompletableFuture<>();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        ServerListener listener;
+        try {
+            listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                private ServerConnectionHandler connectionHandler = null;
 
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                serverConnectionArray[0] = serverConnection;
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    serverConnectionArray[0] = serverConnection;
 
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                    connectionHandler = new ServerConnectionHandler(serverConnection) {
 
-                    @Override
-                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                        receivedMessageHeaders[0] = headers;
-                        receivedPayload[0] = payload;
-                        receivedMessageType[0] = messageType;
-                        receivedMessageFlags[0] = messageFlags;
-                        serverConnection.sendProtocolMessage(null, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue())
-                            .whenComplete((res, ex) -> {
-                                serverMessageSent.complete(serverConnection);
-                            });
-                    }
+                        @Override
+                        protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                            receivedMessageHeaders[0] = headers;
+                            receivedPayload[0] = payload;
+                            receivedMessageType[0] = messageType;
+                            receivedMessageFlags[0] = messageFlags;
+                            serverConnection.sendProtocolMessage(null, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue())
+                                .whenComplete((res, ex) -> {
+                                    serverMessageSent.complete(serverConnection);
+                                });
+                        }
 
-                    @Override
-                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        return null;
-                    }
-                };
-                serverConnectionAccepted.complete(serverConnection);
-                return connectionHandler;
-            }
+                        @Override
+                        protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                            return null;
+                        }
+                    };
+                    serverConnectionAccepted.complete(serverConnection);
+                    return connectionHandler;
+                }
 
-            @Override
-            protected void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                serverConnShutdown[0] = true;
-            }
-        });
+                @Override
+                protected void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                    serverConnShutdown[0] = true;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ServerListener on port 8034. Port may be in use.", e);
+        }
 
         final ClientConnection[] clientConnectionArray = {null};
         final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
@@ -233,42 +243,47 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         Lock semaphoreLock = new ReentrantLock();
         Condition semaphore = semaphoreLock.newCondition();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8035, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        ServerListener listener;
+        try {
+            listener = new ServerListener("127.0.0.1", (short)8035, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                private ServerConnectionHandler connectionHandler = null;
 
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                serverConnections[0] = serverConnection;
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    serverConnections[0] = serverConnection;
+                    connectionHandler = new ServerConnectionHandler(serverConnection) {
 
-                    @Override
-                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                        receivedMessageHeaders[0] = headers;
-                        receivedPayload[0] = payload;
-                        receivedMessageType[0] = messageType;
-                        receivedMessageFlags[0] = messageFlags;
+                        @Override
+                        protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                            receivedMessageHeaders[0] = headers;
+                            receivedPayload[0] = payload;
+                            receivedMessageType[0] = messageType;
+                            receivedMessageFlags[0] = messageFlags;
 
-                        List<Header> respHeaders = new ArrayList<>();
-                        respHeaders.add(serverStrHeader);
-                        respHeaders.add(serverIntHeader);
-                        serverConnection.sendProtocolMessage(respHeaders, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue());
-                    }
+                            List<Header> respHeaders = new ArrayList<>();
+                            respHeaders.add(serverStrHeader);
+                            respHeaders.add(serverIntHeader);
+                            serverConnection.sendProtocolMessage(respHeaders, responseMessage, MessageType.ConnectAck, MessageFlags.ConnectionAccepted.getByteValue());
+                        }
 
-                    @Override
-                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        return null;
-                    }
-                };
+                        @Override
+                        protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                            return null;
+                        }
+                    };
 
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
-                return connectionHandler;
-            }
+                    semaphoreLock.lock();
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                    return connectionHandler;
+                }
 
-            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                connectionShutdown[0] = true;
-            }
-        });
+                public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                    connectionShutdown[0] = true;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ServerListener on port 8035. Port may be in use.", e);
+        }
 
         final boolean[] clientConnected = {false};
         final ClientConnection[] clientConnectionArray = {null};
@@ -363,52 +378,57 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         Lock semaphoreLock = new ReentrantLock();
         Condition semaphore = semaphoreLock.newCondition();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8036, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        ServerListener listener;
+        try {
+            listener = new ServerListener("127.0.0.1", (short)8036, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                private ServerConnectionHandler connectionHandler = null;
 
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                serverConnections[0] = serverConnection;
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    serverConnections[0] = serverConnection;
+                    connectionHandler = new ServerConnectionHandler(serverConnection) {
 
-                    @Override
-                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                        int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
-                        MessageType acceptResponseType = MessageType.ConnectAck;
+                        @Override
+                        protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                            int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
+                            MessageType acceptResponseType = MessageType.ConnectAck;
 
-                        connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
-                    }
+                            connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
+                        }
 
-                    @Override
-                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        receivedOperationName[0] = operationName;
+                        @Override
+                        protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                            receivedOperationName[0] = operationName;
 
-                        return new ServerConnectionContinuationHandler(continuation) {
-                            @Override
-                            protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                                receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
+                            return new ServerConnectionContinuationHandler(continuation) {
+                                @Override
+                                protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                                    receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
 
-                                continuation.sendMessage(null, responsePayload,
-                                        MessageType.ApplicationError,
-                                        MessageFlags.TerminateStream.getByteValue())
-                                        .whenComplete((res, ex) ->  {
-                                            connection.closeConnection(0);
-                                            this.close();
-                                        });
-                            }
-                        };
-                    }
-                };
+                                    continuation.sendMessage(null, responsePayload,
+                                            MessageType.ApplicationError,
+                                            MessageFlags.TerminateStream.getByteValue())
+                                            .whenComplete((res, ex) ->  {
+                                                connection.closeConnection(0);
+                                                this.close();
+                                            });
+                                }
+                            };
+                        }
+                    };
 
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
-                return connectionHandler;
-            }
+                    semaphoreLock.lock();
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                    return connectionHandler;
+                }
 
-            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                connectionShutdown[0] = true;
-            }
-        });
+                public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                    connectionShutdown[0] = true;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ServerListener on port 8036. Port may be in use.", e);
+        }
 
         final ClientConnection[] clientConnectionArray = {null};
         final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
@@ -515,56 +535,61 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         Lock semaphoreLock = new ReentrantLock();
         Condition semaphore = semaphoreLock.newCondition();
 
-        ServerListener listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            private ServerConnectionHandler connectionHandler = null;
+        ServerListener listener;
+        try {
+            listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                private ServerConnectionHandler connectionHandler = null;
 
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                serverConnections[0] = serverConnection;
-                connectionHandler = new ServerConnectionHandler(serverConnection) {
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    serverConnections[0] = serverConnection;
+                    connectionHandler = new ServerConnectionHandler(serverConnection) {
 
-                    @Override
-                    protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                        int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
-                        MessageType acceptResponseType = MessageType.ConnectAck;
+                        @Override
+                        protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                            int responseMessageFlag = MessageFlags.ConnectionAccepted.getByteValue();
+                            MessageType acceptResponseType = MessageType.ConnectAck;
 
-                        connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
-                    }
+                            connection.sendProtocolMessage(null, null, acceptResponseType, responseMessageFlag);
+                        }
 
-                    @Override
-                    protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
-                        receivedOperationName[0] = operationName;
+                        @Override
+                        protected ServerConnectionContinuationHandler onIncomingStream(ServerConnectionContinuation continuation, String operationName) {
+                            receivedOperationName[0] = operationName;
 
-                        return new ServerConnectionContinuationHandler(continuation) {
-                            @Override
-                            protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                                receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
-                                receivedHeadersServer[0] = headers;
-                                List<Header> responseHeaders = new ArrayList<>();
-                                responseHeaders.add(serverStrHeader);
-                                responseHeaders.add(serverIntHeader);
+                            return new ServerConnectionContinuationHandler(continuation) {
+                                @Override
+                                protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                                    receivedContinuationPayload[0] = new String(payload, StandardCharsets.UTF_8);
+                                    receivedHeadersServer[0] = headers;
+                                    List<Header> responseHeaders = new ArrayList<>();
+                                    responseHeaders.add(serverStrHeader);
+                                    responseHeaders.add(serverIntHeader);
 
-                                continuation.sendMessage(responseHeaders, responsePayload,
-                                        MessageType.ApplicationError,
-                                        MessageFlags.TerminateStream.getByteValue())
-                                        .whenComplete((res, ex) ->  {
-                                            connection.closeConnection(0);
-                                            this.close();
-                                        });
-                            }
-                        };
-                    }
-                };
+                                    continuation.sendMessage(responseHeaders, responsePayload,
+                                            MessageType.ApplicationError,
+                                            MessageFlags.TerminateStream.getByteValue())
+                                            .whenComplete((res, ex) ->  {
+                                                connection.closeConnection(0);
+                                                this.close();
+                                            });
+                                }
+                            };
+                        }
+                    };
 
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
-                return connectionHandler;
-            }
+                    semaphoreLock.lock();
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                    return connectionHandler;
+                }
 
-            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-                connectionShutdown[0] = true;
-            }
-        });
+                public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                    connectionShutdown[0] = true;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ServerListener on port 8037. Port may be in use.", e);
+        }
 
         final ClientConnection[] clientConnectionArray = {null};
         final List<Header>[] clientReceivedMessageHeaders = new List[]{null};

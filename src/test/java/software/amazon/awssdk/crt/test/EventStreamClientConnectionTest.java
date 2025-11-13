@@ -28,17 +28,16 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
-        EventLoopGroup elGroup = new EventLoopGroup(1);
-        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
-        final boolean[] connectionReceived = {false};
-        final boolean[] connectionShutdown = {false};
-        final ServerConnection[] serverConnections = {null};
-        final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
-
-        ServerListener listener;
         try {
-            listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            EventLoopGroup elGroup = new EventLoopGroup(1);
+            ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+            final boolean[] connectionReceived = {false};
+            final boolean[] connectionShutdown = {false};
+            final ServerConnection[] serverConnections = {null};
+            final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
+
+            ServerListener listener = new ServerListener("127.0.0.1", (short)8033, socketOptions, null, bootstrap, new ServerListenerHandler() {
                 private ServerConnectionHandler connectionHandler = null;
 
                 public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -65,44 +64,43 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     connectionShutdown[0] = true;
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create ServerListener on port 8033. Port may be in use.", e);
+
+            final boolean[] clientConnected = {false};
+            final ClientConnection[] clientConnectionArray = {null};
+
+            CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+                @Override
+                protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                    clientConnected[0] = true;
+                    clientConnectionArray[0] = connection;
+                }
+
+                @Override
+                protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+
+                }
+            });
+
+            connectFuture.get(1, TimeUnit.SECONDS);
+            assertNotNull(clientConnectionArray[0]);
+            serverConnectionAccepted.get(1, TimeUnit.SECONDS);
+            assertNotNull(serverConnections[0]);
+            clientConnectionArray[0].closeConnection(0);
+            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            assertTrue(connectionReceived[0]);
+            assertTrue(connectionShutdown[0]);
+            assertTrue(clientConnected[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            clientBootstrap.close();
+            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        } finally {
+            socketOptions.close();
         }
-
-        final boolean[] clientConnected = {false};
-        final ClientConnection[] clientConnectionArray = {null};
-
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8033, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
-            @Override
-            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
-                clientConnected[0] = true;
-                clientConnectionArray[0] = connection;
-            }
-
-            @Override
-            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-
-            }
-        });
-
-        connectFuture.get(1, TimeUnit.SECONDS);
-        assertNotNull(clientConnectionArray[0]);
-        serverConnectionAccepted.get(1, TimeUnit.SECONDS);
-        assertNotNull(serverConnections[0]);
-        clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        assertTrue(connectionReceived[0]);
-        assertTrue(connectionShutdown[0]);
-        assertTrue(clientConnected[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        socketOptions.close();
     }
 
     @Test
@@ -112,23 +110,22 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
-        EventLoopGroup elGroup = new EventLoopGroup(1);
-        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
-        final List<Header>[] receivedMessageHeaders = new List[]{null};
-        final byte[][] receivedPayload = {null};
-        final MessageType[] receivedMessageType = {null};
-        final int[] receivedMessageFlags = {-1};
-        final ServerConnection[] serverConnectionArray = {null};
-        final boolean[] serverConnShutdown = {false};
-
-        final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
-        final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
-        final CompletableFuture<ServerConnection> serverMessageSent = new CompletableFuture<>();
-
-        ServerListener listener;
         try {
-            listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            EventLoopGroup elGroup = new EventLoopGroup(1);
+            ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+            final List<Header>[] receivedMessageHeaders = new List[]{null};
+            final byte[][] receivedPayload = {null};
+            final MessageType[] receivedMessageType = {null};
+            final int[] receivedMessageFlags = {-1};
+            final ServerConnection[] serverConnectionArray = {null};
+            final boolean[] serverConnShutdown = {false};
+
+            final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
+            final CompletableFuture<ServerConnection> serverConnectionAccepted = new CompletableFuture<>();
+            final CompletableFuture<ServerConnection> serverMessageSent = new CompletableFuture<>();
+
+            ServerListener listener = new ServerListener("127.0.0.1", (short)8034, socketOptions, null, bootstrap, new ServerListenerHandler() {
                 private ServerConnectionHandler connectionHandler = null;
 
                 public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -162,60 +159,59 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     serverConnShutdown[0] = true;
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create ServerListener on port 8034. Port may be in use.", e);
+
+            final ClientConnection[] clientConnectionArray = {null};
+            final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
+            final byte[][] clientReceivedPayload = {null};
+            final MessageType[] clientReceivedMessageType = {null};
+            final int[] clientReceivedMessageFlags = {-1};
+            final CompletableFuture<Void> clientMessageReceived = new CompletableFuture<>();
+
+            CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+                @Override
+                protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                    clientConnectionArray[0] = connection;
+                }
+
+                @Override
+                protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    clientReceivedMessageHeaders[0] = headers;
+                    clientReceivedPayload[0] = payload;
+                    clientReceivedMessageType[0] = messageType;
+                    clientReceivedMessageFlags[0] = messageFlags;
+                    clientMessageReceived.complete(null);
+                }
+            });
+
+            final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
+            connectFuture.get(1, TimeUnit.SECONDS);
+            assertNotNull(clientConnectionArray[0]);
+            serverConnectionAccepted.get(1, TimeUnit.SECONDS);
+            assertNotNull(serverConnectionArray[0]);
+
+            clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
+
+            clientMessageReceived.get(1, TimeUnit.SECONDS);
+            assertEquals(MessageType.Connect, receivedMessageType[0]);
+            assertArrayEquals(connectPayload, receivedPayload[0]);
+            assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
+            assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
+            assertArrayEquals(responseMessage, clientReceivedPayload[0]);
+            clientConnectionArray[0].closeConnection(0);
+            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            serverConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+
+            assertTrue(serverConnShutdown[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            clientBootstrap.close();
+            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        } finally {
+            socketOptions.close();
         }
-
-        final ClientConnection[] clientConnectionArray = {null};
-        final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
-        final byte[][] clientReceivedPayload = {null};
-        final MessageType[] clientReceivedMessageType = {null};
-        final int[] clientReceivedMessageFlags = {-1};
-        final CompletableFuture<Void> clientMessageReceived = new CompletableFuture<>();
-
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8034, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
-            @Override
-            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
-                clientConnectionArray[0] = connection;
-            }
-
-            @Override
-            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                clientReceivedMessageHeaders[0] = headers;
-                clientReceivedPayload[0] = payload;
-                clientReceivedMessageType[0] = messageType;
-                clientReceivedMessageFlags[0] = messageFlags;
-                clientMessageReceived.complete(null);
-            }
-        });
-
-        final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-        connectFuture.get(1, TimeUnit.SECONDS);
-        assertNotNull(clientConnectionArray[0]);
-        serverConnectionAccepted.get(1, TimeUnit.SECONDS);
-        assertNotNull(serverConnectionArray[0]);
-
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
-
-        clientMessageReceived.get(1, TimeUnit.SECONDS);
-        assertEquals(MessageType.Connect, receivedMessageType[0]);
-        assertArrayEquals(connectPayload, receivedPayload[0]);
-        assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
-        assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
-        assertArrayEquals(responseMessage, clientReceivedPayload[0]);
-        clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-
-        assertTrue(serverConnShutdown[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        socketOptions.close();
     }
 
     @Test
@@ -225,27 +221,26 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
-        EventLoopGroup elGroup = new EventLoopGroup(1);
-        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
-        final boolean[] connectionShutdown = {false};
-        final List<Header>[] receivedMessageHeaders = new List[]{null};
-        final byte[][] receivedPayload = {null};
-        final MessageType[] receivedMessageType = {null};
-        final int[] receivedMessageFlags = {-1};
-        final ServerConnection[] serverConnections = {null};
-
-        final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
-
-        Header serverStrHeader = Header.createHeader("serverStrHeaderName", "serverStrHeaderValue");
-        Header serverIntHeader = Header.createHeader("serverIntHeaderName", 25);
-
-        Lock semaphoreLock = new ReentrantLock();
-        Condition semaphore = semaphoreLock.newCondition();
-
-        ServerListener listener;
         try {
-            listener = new ServerListener("127.0.0.1", (short)8035, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            EventLoopGroup elGroup = new EventLoopGroup(1);
+            ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+            final boolean[] connectionShutdown = {false};
+            final List<Header>[] receivedMessageHeaders = new List[]{null};
+            final byte[][] receivedPayload = {null};
+            final MessageType[] receivedMessageType = {null};
+            final int[] receivedMessageFlags = {-1};
+            final ServerConnection[] serverConnections = {null};
+
+            final byte[] responseMessage = "{ \"message\": \"connect ack\" }".getBytes(StandardCharsets.UTF_8);
+
+            Header serverStrHeader = Header.createHeader("serverStrHeaderName", "serverStrHeaderValue");
+            Header serverIntHeader = Header.createHeader("serverIntHeaderName", 25);
+
+            Lock semaphoreLock = new ReentrantLock();
+            Condition semaphore = semaphoreLock.newCondition();
+
+            ServerListener listener = new ServerListener("127.0.0.1", (short)8035, socketOptions, null, bootstrap, new ServerListenerHandler() {
                 private ServerConnectionHandler connectionHandler = null;
 
                 public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -281,81 +276,80 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     connectionShutdown[0] = true;
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create ServerListener on port 8035. Port may be in use.", e);
+
+            final boolean[] clientConnected = {false};
+            final ClientConnection[] clientConnectionArray = {null};
+            final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
+            final byte[][] clientReceivedPayload = {null};
+            final MessageType[] clientReceivedMessageType = {null};
+            final int[] clientReceivedMessageFlags = {-1};
+
+            CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8035, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+                @Override
+                protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                    clientConnected[0] = true;
+                    clientConnectionArray[0] = connection;
+                }
+
+                @Override
+                protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    semaphoreLock.lock();
+                    clientReceivedMessageHeaders[0] = headers;
+                    clientReceivedPayload[0] = payload;
+                    clientReceivedMessageType[0] = messageType;
+                    clientReceivedMessageFlags[0] = messageFlags;
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                }
+            });
+
+            final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
+            connectFuture.get(1, TimeUnit.SECONDS);
+            assertNotNull(clientConnectionArray[0]);
+            semaphoreLock.lock();
+            semaphore.await(1, TimeUnit.SECONDS);
+            assertNotNull(serverConnections[0]);
+
+            Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
+            Header clientIntHeader = Header.createHeader("clientIntHeaderName", 35);
+            List<Header> clientHeaders = new ArrayList<>();
+            clientHeaders.add(clientStrHeader);
+            clientHeaders.add(clientIntHeader);
+
+            clientConnectionArray[0].sendProtocolMessage(clientHeaders, connectPayload, MessageType.Connect, 0);
+
+            semaphore.await(1, TimeUnit.SECONDS);
+            semaphoreLock.unlock();
+            assertEquals(MessageType.Connect, receivedMessageType[0]);
+            assertArrayEquals(connectPayload, receivedPayload[0]);
+            assertNotNull(receivedMessageHeaders[0]);
+            assertEquals(clientStrHeader.getName(), receivedMessageHeaders[0].get(0).getName());
+            assertEquals(clientStrHeader.getValueAsString(), receivedMessageHeaders[0].get(0).getValueAsString());
+            assertEquals(clientIntHeader.getName(), receivedMessageHeaders[0].get(1).getName());
+            assertEquals(clientIntHeader.getValueAsInt(), receivedMessageHeaders[0].get(1).getValueAsInt());
+            assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
+            assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
+            assertArrayEquals(responseMessage, clientReceivedPayload[0]);
+            assertEquals(serverStrHeader.getName(), clientReceivedMessageHeaders[0].get(0).getName());
+            assertEquals(serverStrHeader.getValueAsString(), clientReceivedMessageHeaders[0].get(0).getValueAsString());
+            assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
+            assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
+            clientConnectionArray[0].closeConnection(0);
+            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+
+            assertTrue(connectionShutdown[0]);
+            assertTrue(clientConnected[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            clientBootstrap.close();
+            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        } finally {
+            socketOptions.close();
         }
-
-        final boolean[] clientConnected = {false};
-        final ClientConnection[] clientConnectionArray = {null};
-        final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
-        final byte[][] clientReceivedPayload = {null};
-        final MessageType[] clientReceivedMessageType = {null};
-        final int[] clientReceivedMessageFlags = {-1};
-
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8035, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
-            @Override
-            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
-                clientConnected[0] = true;
-                clientConnectionArray[0] = connection;
-            }
-
-            @Override
-            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
-                clientReceivedMessageHeaders[0] = headers;
-                clientReceivedPayload[0] = payload;
-                clientReceivedMessageType[0] = messageType;
-                clientReceivedMessageFlags[0] = messageFlags;
-                semaphore.signal();
-                semaphoreLock.unlock();
-            }
-        });
-
-        final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-        connectFuture.get(1, TimeUnit.SECONDS);
-        assertNotNull(clientConnectionArray[0]);
-        semaphoreLock.lock();
-        semaphore.await(1, TimeUnit.SECONDS);
-        assertNotNull(serverConnections[0]);
-
-        Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
-        Header clientIntHeader = Header.createHeader("clientIntHeaderName", 35);
-        List<Header> clientHeaders = new ArrayList<>();
-        clientHeaders.add(clientStrHeader);
-        clientHeaders.add(clientIntHeader);
-
-        clientConnectionArray[0].sendProtocolMessage(clientHeaders, connectPayload, MessageType.Connect, 0);
-
-        semaphore.await(1, TimeUnit.SECONDS);
-        semaphoreLock.unlock();
-        assertEquals(MessageType.Connect, receivedMessageType[0]);
-        assertArrayEquals(connectPayload, receivedPayload[0]);
-        assertNotNull(receivedMessageHeaders[0]);
-        assertEquals(clientStrHeader.getName(), receivedMessageHeaders[0].get(0).getName());
-        assertEquals(clientStrHeader.getValueAsString(), receivedMessageHeaders[0].get(0).getValueAsString());
-        assertEquals(clientIntHeader.getName(), receivedMessageHeaders[0].get(1).getName());
-        assertEquals(clientIntHeader.getValueAsInt(), receivedMessageHeaders[0].get(1).getValueAsInt());
-        assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
-        assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
-        assertArrayEquals(responseMessage, clientReceivedPayload[0]);
-        assertEquals(serverStrHeader.getName(), clientReceivedMessageHeaders[0].get(0).getName());
-        assertEquals(serverStrHeader.getValueAsString(), clientReceivedMessageHeaders[0].get(0).getValueAsString());
-        assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
-        assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
-        clientConnectionArray[0].closeConnection(0);
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-
-        assertTrue(connectionShutdown[0]);
-        assertTrue(clientConnected[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        socketOptions.close();
     }
 
     @Test
@@ -365,22 +359,21 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
-        EventLoopGroup elGroup = new EventLoopGroup(1);
-        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
-
-        final boolean[] connectionShutdown = {false};
-        final String[] receivedOperationName = new String[]{null};
-        final String[] receivedContinuationPayload = new String[]{null};
-
-        final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
-        final ServerConnection[] serverConnections = {null};
-        Lock semaphoreLock = new ReentrantLock();
-        Condition semaphore = semaphoreLock.newCondition();
-
-        ServerListener listener;
         try {
-            listener = new ServerListener("127.0.0.1", (short)8036, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            EventLoopGroup elGroup = new EventLoopGroup(1);
+            ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+
+            final boolean[] connectionShutdown = {false};
+            final String[] receivedOperationName = new String[]{null};
+            final String[] receivedContinuationPayload = new String[]{null};
+
+            final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
+            final ServerConnection[] serverConnections = {null};
+            Lock semaphoreLock = new ReentrantLock();
+            Condition semaphore = semaphoreLock.newCondition();
+
+            ServerListener listener = new ServerListener("127.0.0.1", (short)8036, socketOptions, null, bootstrap, new ServerListenerHandler() {
                 private ServerConnectionHandler connectionHandler = null;
 
                 public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -426,88 +419,87 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     connectionShutdown[0] = true;
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create ServerListener on port 8036. Port may be in use.", e);
+
+            final ClientConnection[] clientConnectionArray = {null};
+            final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
+            final byte[][] clientReceivedPayload = {null};
+            final MessageType[] clientReceivedMessageType = {null};
+            final int[] clientReceivedMessageFlags = {-1};
+            final boolean[] clientContinuationClosed = {false};
+
+            CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8036, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+                @Override
+                protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                    clientConnectionArray[0] = connection;
+                }
+
+                @Override
+                protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    semaphoreLock.lock();
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                }
+            });
+
+            final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
+            connectFuture.get(1, TimeUnit.SECONDS);
+            assertNotNull(clientConnectionArray[0]);
+            semaphoreLock.lock();
+            semaphore.await(1, TimeUnit.SECONDS);
+            assertNotNull(serverConnections[0]);
+            clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
+            semaphore.await(1, TimeUnit.SECONDS);
+            String operationName = "testOperation";
+
+            ClientConnectionContinuation continuation = clientConnectionArray[0].newStream(new ClientConnectionContinuationHandler() {
+                @Override
+                protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    semaphoreLock.lock();
+                    clientReceivedMessageHeaders[0] = headers;
+                    clientReceivedMessageType[0] = messageType;
+                    clientReceivedMessageFlags[0] = messageFlags;
+                    clientReceivedPayload[0] = payload;
+                    semaphoreLock.unlock();
+                }
+
+                @Override
+                protected void onContinuationClosed() {
+                    semaphoreLock.lock();
+                    clientContinuationClosed[0] = true;
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                    super.onContinuationClosed();
+                }
+            });
+            assertNotNull(continuation);
+
+            final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
+            continuation.activate(operationName, null, operationPayload, MessageType.ApplicationMessage, 0);
+            semaphore.await(1, TimeUnit.SECONDS);
+
+            assertArrayEquals(responsePayload, clientReceivedPayload[0]);
+            assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
+            assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
+            assertTrue(clientContinuationClosed[0]);
+
+            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            semaphoreLock.unlock();
+
+            assertTrue(connectionShutdown[0]);
+            assertNotNull(receivedOperationName[0]);
+            assertEquals(operationName, receivedOperationName[0]);
+            assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            clientBootstrap.close();
+            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        } finally {
+            socketOptions.close();
         }
-
-        final ClientConnection[] clientConnectionArray = {null};
-        final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
-        final byte[][] clientReceivedPayload = {null};
-        final MessageType[] clientReceivedMessageType = {null};
-        final int[] clientReceivedMessageFlags = {-1};
-        final boolean[] clientContinuationClosed = {false};
-
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8036, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
-            @Override
-            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
-                clientConnectionArray[0] = connection;
-            }
-
-            @Override
-            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
-            }
-        });
-
-        final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-        connectFuture.get(1, TimeUnit.SECONDS);
-        assertNotNull(clientConnectionArray[0]);
-        semaphoreLock.lock();
-        semaphore.await(1, TimeUnit.SECONDS);
-        assertNotNull(serverConnections[0]);
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
-        semaphore.await(1, TimeUnit.SECONDS);
-        String operationName = "testOperation";
-
-        ClientConnectionContinuation continuation = clientConnectionArray[0].newStream(new ClientConnectionContinuationHandler() {
-            @Override
-            protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
-                clientReceivedMessageHeaders[0] = headers;
-                clientReceivedMessageType[0] = messageType;
-                clientReceivedMessageFlags[0] = messageFlags;
-                clientReceivedPayload[0] = payload;
-                semaphoreLock.unlock();
-            }
-
-            @Override
-            protected void onContinuationClosed() {
-                semaphoreLock.lock();
-                clientContinuationClosed[0] = true;
-                semaphore.signal();
-                semaphoreLock.unlock();
-                super.onContinuationClosed();
-            }
-        });
-        assertNotNull(continuation);
-
-        final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
-        continuation.activate(operationName, null, operationPayload, MessageType.ApplicationMessage, 0);
-        semaphore.await(1, TimeUnit.SECONDS);
-
-        assertArrayEquals(responsePayload, clientReceivedPayload[0]);
-        assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
-        assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
-        assertTrue(clientContinuationClosed[0]);
-
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        semaphoreLock.unlock();
-
-        assertTrue(connectionShutdown[0]);
-        assertNotNull(receivedOperationName[0]);
-        assertEquals(operationName, receivedOperationName[0]);
-        assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        socketOptions.close();
     }
 
     @Test
@@ -517,27 +509,26 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         socketOptions.domain = SocketOptions.SocketDomain.IPv4;
         socketOptions.type = SocketOptions.SocketType.STREAM;
 
-        EventLoopGroup elGroup = new EventLoopGroup(1);
-        ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
-        ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
-
-        final boolean[] connectionShutdown = {false};
-
-        final String[] receivedOperationName = new String[]{null};
-        final String[] receivedContinuationPayload = new String[]{null};
-        final List<Header>[] receivedHeadersServer = new List[]{null};
-
-        Header serverStrHeader = Header.createHeader("serverStrHeaderName", "serverStrHeaderValue");
-        Header serverIntHeader = Header.createHeader("serverIntHeaderName", 25);
-
-        final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
-        final ServerConnection[] serverConnections = {null};
-        Lock semaphoreLock = new ReentrantLock();
-        Condition semaphore = semaphoreLock.newCondition();
-
-        ServerListener listener;
         try {
-            listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
+            EventLoopGroup elGroup = new EventLoopGroup(1);
+            ServerBootstrap bootstrap = new ServerBootstrap(elGroup);
+            ClientBootstrap clientBootstrap = new ClientBootstrap(elGroup, null);
+
+            final boolean[] connectionShutdown = {false};
+
+            final String[] receivedOperationName = new String[]{null};
+            final String[] receivedContinuationPayload = new String[]{null};
+            final List<Header>[] receivedHeadersServer = new List[]{null};
+
+            Header serverStrHeader = Header.createHeader("serverStrHeaderName", "serverStrHeaderValue");
+            Header serverIntHeader = Header.createHeader("serverIntHeaderName", 25);
+
+            final byte[] responsePayload = "{ \"message\": \"this is a response message\" }".getBytes(StandardCharsets.UTF_8);
+            final ServerConnection[] serverConnections = {null};
+            Lock semaphoreLock = new ReentrantLock();
+            Condition semaphore = semaphoreLock.newCondition();
+
+            ServerListener listener = new ServerListener("127.0.0.1", (short)8037, socketOptions, null, bootstrap, new ServerListenerHandler() {
                 private ServerConnectionHandler connectionHandler = null;
 
                 public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
@@ -587,100 +578,99 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                     connectionShutdown[0] = true;
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create ServerListener on port 8037. Port may be in use.", e);
+
+            final ClientConnection[] clientConnectionArray = {null};
+            final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
+            final byte[][] clientReceivedPayload = {null};
+            final MessageType[] clientReceivedMessageType = {null};
+            final int[] clientReceivedMessageFlags = {-1};
+            final boolean[] clientContinuationClosed = {false};
+
+            CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8037, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
+                @Override
+                protected void onConnectionSetup(ClientConnection connection, int errorCode) {
+                    clientConnectionArray[0] = connection;
+                }
+
+                @Override
+                protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    semaphoreLock.lock();
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                }
+            });
+
+            final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
+            connectFuture.get(1, TimeUnit.SECONDS);
+            assertNotNull(clientConnectionArray[0]);
+            semaphoreLock.lock();
+            semaphore.await(1, TimeUnit.SECONDS);
+            assertNotNull(serverConnections[0]);
+            clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
+            semaphore.await(1, TimeUnit.SECONDS);
+            String operationName = "testOperation";
+
+            ClientConnectionContinuation continuation = clientConnectionArray[0].newStream(new ClientConnectionContinuationHandler() {
+                @Override
+                protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
+                    semaphoreLock.lock();
+                    clientReceivedMessageHeaders[0] = headers;
+                    clientReceivedMessageType[0] = messageType;
+                    clientReceivedMessageFlags[0] = messageFlags;
+                    clientReceivedPayload[0] = payload;
+                    semaphoreLock.unlock();
+                }
+
+                @Override
+                protected void onContinuationClosed() {
+                    semaphoreLock.lock();
+                    clientContinuationClosed[0] = true;
+                    semaphore.signal();
+                    semaphoreLock.unlock();
+                    super.onContinuationClosed();
+                }
+            });
+            assertNotNull(continuation);
+
+            final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
+            Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
+            Header clientIntHeader = Header.createHeader("clientIntHeaderName", 35);
+            List<Header> clientHeaders = new ArrayList<>();
+            clientHeaders.add(clientStrHeader);
+            clientHeaders.add(clientIntHeader);
+            continuation.activate(operationName, clientHeaders, operationPayload, MessageType.ApplicationMessage, 0).get(1, TimeUnit.SECONDS);
+            semaphore.await(1, TimeUnit.SECONDS);
+
+            assertArrayEquals(responsePayload, clientReceivedPayload[0]);
+            assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
+            assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
+            assertNotNull(receivedHeadersServer[0]);
+            assertEquals(clientStrHeader.getName(), receivedHeadersServer[0].get(0).getName());
+            assertEquals(clientStrHeader.getValueAsString(), receivedHeadersServer[0].get(0).getValueAsString());
+            assertEquals(clientIntHeader.getName(), receivedHeadersServer[0].get(1).getName());
+            assertEquals(clientIntHeader.getValueAsInt(), receivedHeadersServer[0].get(1).getValueAsInt());
+            assertEquals(serverStrHeader.getName(), clientReceivedMessageHeaders[0].get(0).getName());
+            assertEquals(serverStrHeader.getValueAsString(), clientReceivedMessageHeaders[0].get(0).getValueAsString());
+            assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
+            assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
+            assertTrue(clientContinuationClosed[0]);
+
+            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            semaphoreLock.unlock();
+            assertTrue(connectionShutdown[0]);
+            assertNotNull(receivedOperationName[0]);
+            assertEquals(operationName, receivedOperationName[0]);
+            assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            clientBootstrap.close();
+            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        } finally {
+            socketOptions.close();
         }
-
-        final ClientConnection[] clientConnectionArray = {null};
-        final List<Header>[] clientReceivedMessageHeaders = new List[]{null};
-        final byte[][] clientReceivedPayload = {null};
-        final MessageType[] clientReceivedMessageType = {null};
-        final int[] clientReceivedMessageFlags = {-1};
-        final boolean[] clientContinuationClosed = {false};
-
-        CompletableFuture<Void> connectFuture = ClientConnection.connect("127.0.0.1", (short)8037, socketOptions, null, clientBootstrap, new ClientConnectionHandler() {
-            @Override
-            protected void onConnectionSetup(ClientConnection connection, int errorCode) {
-                clientConnectionArray[0] = connection;
-            }
-
-            @Override
-            protected void onProtocolMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
-                semaphore.signal();
-                semaphoreLock.unlock();
-            }
-        });
-
-        final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-        connectFuture.get(1, TimeUnit.SECONDS);
-        assertNotNull(clientConnectionArray[0]);
-        semaphoreLock.lock();
-        semaphore.await(1, TimeUnit.SECONDS);
-        assertNotNull(serverConnections[0]);
-        clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
-        semaphore.await(1, TimeUnit.SECONDS);
-        String operationName = "testOperation";
-
-        ClientConnectionContinuation continuation = clientConnectionArray[0].newStream(new ClientConnectionContinuationHandler() {
-            @Override
-            protected void onContinuationMessage(List<Header> headers, byte[] payload, MessageType messageType, int messageFlags) {
-                semaphoreLock.lock();
-                clientReceivedMessageHeaders[0] = headers;
-                clientReceivedMessageType[0] = messageType;
-                clientReceivedMessageFlags[0] = messageFlags;
-                clientReceivedPayload[0] = payload;
-                semaphoreLock.unlock();
-            }
-
-            @Override
-            protected void onContinuationClosed() {
-                semaphoreLock.lock();
-                clientContinuationClosed[0] = true;
-                semaphore.signal();
-                semaphoreLock.unlock();
-                super.onContinuationClosed();
-            }
-        });
-        assertNotNull(continuation);
-
-        final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
-        Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
-        Header clientIntHeader = Header.createHeader("clientIntHeaderName", 35);
-        List<Header> clientHeaders = new ArrayList<>();
-        clientHeaders.add(clientStrHeader);
-        clientHeaders.add(clientIntHeader);
-        continuation.activate(operationName, clientHeaders, operationPayload, MessageType.ApplicationMessage, 0).get(1, TimeUnit.SECONDS);
-        semaphore.await(1, TimeUnit.SECONDS);
-
-        assertArrayEquals(responsePayload, clientReceivedPayload[0]);
-        assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
-        assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
-        assertNotNull(receivedHeadersServer[0]);
-        assertEquals(clientStrHeader.getName(), receivedHeadersServer[0].get(0).getName());
-        assertEquals(clientStrHeader.getValueAsString(), receivedHeadersServer[0].get(0).getValueAsString());
-        assertEquals(clientIntHeader.getName(), receivedHeadersServer[0].get(1).getName());
-        assertEquals(clientIntHeader.getValueAsInt(), receivedHeadersServer[0].get(1).getValueAsInt());
-        assertEquals(serverStrHeader.getName(), clientReceivedMessageHeaders[0].get(0).getName());
-        assertEquals(serverStrHeader.getValueAsString(), clientReceivedMessageHeaders[0].get(0).getValueAsString());
-        assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
-        assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
-        assertTrue(clientContinuationClosed[0]);
-
-        clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-        semaphoreLock.unlock();
-        assertTrue(connectionShutdown[0]);
-        assertNotNull(receivedOperationName[0]);
-        assertEquals(operationName, receivedOperationName[0]);
-        assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        clientBootstrap.close();
-        clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        socketOptions.close();
     }
 }

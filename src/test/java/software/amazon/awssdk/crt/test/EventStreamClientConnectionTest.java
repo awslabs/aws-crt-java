@@ -6,6 +6,7 @@ import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.ServerBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.HostResolver;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

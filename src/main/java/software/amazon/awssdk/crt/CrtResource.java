@@ -238,6 +238,9 @@ public abstract class CrtResource implements AutoCloseable {
      */
     public void addRef() {
         refCount.incrementAndGet();
+        if (debugNativeObjects) {
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) is adding a reference", this.getClass().getCanonicalName(), id));
+        }
     }
 
     /**

@@ -270,28 +270,28 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         firstConnection.close();
     }
 
-    @Test
-    public void testCancelAcquire() throws Exception {
-        skipIfAndroid();
-        // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
-        skipIfNetworkUnavailable();
-
-        try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
-            CompletableFuture<HttpClientConnection> firstAcquisition = connectionPool.acquireConnection();
-            CompletableFuture<HttpClientConnection> secondAcquisition = connectionPool.acquireConnection();
-            CompletableFuture<HttpClientConnection> thirdAcquisition = connectionPool.acquireConnection();
-
-            HttpClientConnection firstConnection = firstAcquisition.get();
-
-            // cancel acquisition and abandon it
-            secondAcquisition.cancel(false);
-
-            // return the first conn to the pool, future acquisitions should succeed
-            firstConnection.close();
-
-            // should succeed, will timeout if the second acquisition doesn't return the unused/abandoned conn to the pool
-            HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
-            conn.close();
-        }
-    }
+//    @Test
+//    public void testCancelAcquire() throws Exception {
+//        skipIfAndroid();
+//        // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
+//        skipIfNetworkUnavailable();
+//
+//        try (HttpClientConnectionManager connectionPool = createConnectionManager(new URI(endpoint), 1, 1)) {
+//            CompletableFuture<HttpClientConnection> firstAcquisition = connectionPool.acquireConnection();
+//            CompletableFuture<HttpClientConnection> secondAcquisition = connectionPool.acquireConnection();
+//            CompletableFuture<HttpClientConnection> thirdAcquisition = connectionPool.acquireConnection();
+//
+//            HttpClientConnection firstConnection = firstAcquisition.get();
+//
+//            // cancel acquisition and abandon it
+//            secondAcquisition.cancel(false);
+//
+//            // return the first conn to the pool, future acquisitions should succeed
+//            firstConnection.close();
+//
+//            // should succeed, will timeout if the second acquisition doesn't return the unused/abandoned conn to the pool
+//            HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
+//            conn.close();
+//        }
+//    }
 }

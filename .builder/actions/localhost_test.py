@@ -53,4 +53,4 @@ class LocalhostTest(Builder.Action):
             -Daws.crt.aws_trace_log_per_test \
             -Daws.crt.localhost=true"):
             # Failed
-            actions.append("exit 1")
+            sys.exit(1)

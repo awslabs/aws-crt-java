@@ -497,7 +497,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
             elGroup.close();
             elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        finally {
+        } finally {
             socketOptions.close();
         }
     }

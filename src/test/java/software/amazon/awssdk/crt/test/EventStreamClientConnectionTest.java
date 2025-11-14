@@ -19,6 +19,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.Assert.*;
 
 public class EventStreamClientConnectionTest extends CrtTestFixture {
+    private static final int TEST_TIMEOUT_SECONDS = 5;
+    
     public EventStreamClientConnectionTest() {}
 
     @Test
@@ -81,23 +83,23 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
                 }
             });
 
-            connectFuture.get(1, TimeUnit.SECONDS);
+            connectFuture.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(clientConnectionArray[0]);
-            serverConnectionAccepted.get(1, TimeUnit.SECONDS);
+            serverConnectionAccepted.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(serverConnections[0]);
             clientConnectionArray[0].closeConnection(0);
-            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertTrue(connectionReceived[0]);
             assertTrue(connectionShutdown[0]);
             assertTrue(clientConnected[0]);
             listener.close();
-            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             bootstrap.close();
             clientBootstrap.close();
-            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            clientBootstrap.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             elGroup.close();
-            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             socketOptions.close();
         }
@@ -184,33 +186,33 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             });
 
             final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-            connectFuture.get(1, TimeUnit.SECONDS);
+            connectFuture.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(clientConnectionArray[0]);
-            serverConnectionAccepted.get(1, TimeUnit.SECONDS);
+            serverConnectionAccepted.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(serverConnectionArray[0]);
 
             clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
 
-            clientMessageReceived.get(1, TimeUnit.SECONDS);
+            clientMessageReceived.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertEquals(MessageType.Connect, receivedMessageType[0]);
             assertArrayEquals(connectPayload, receivedPayload[0]);
             assertEquals(MessageType.ConnectAck, clientReceivedMessageType[0]);
             assertEquals(MessageFlags.ConnectionAccepted.getByteValue(), clientReceivedMessageFlags[0]);
             assertArrayEquals(responseMessage, clientReceivedPayload[0]);
             clientConnectionArray[0].closeConnection(0);
-            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-            serverConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            serverConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             assertTrue(serverConnShutdown[0]);
             listener.close();
-            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             bootstrap.close();
             clientBootstrap.close();
-            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            clientBootstrap.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             elGroup.close();
-            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
-            socketOptionssocketOptions.close();
+            socketOptions.close();
         }
     }
 
@@ -304,10 +306,10 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             });
 
             final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-            connectFuture.get(1, TimeUnit.SECONDS);
+            connectFuture.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(clientConnectionArray[0]);
             semaphoreLock.lock();
-            semaphore.await(1, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(serverConnections[0]);
 
             Header clientStrHeader = Header.createHeader("clientStrHeaderName", "clientStrHeaderValue");
@@ -318,7 +320,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
             clientConnectionArray[0].sendProtocolMessage(clientHeaders, connectPayload, MessageType.Connect, 0);
 
-            semaphore.await(1, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             semaphoreLock.unlock();
             assertEquals(MessageType.Connect, receivedMessageType[0]);
             assertArrayEquals(connectPayload, receivedPayload[0]);
@@ -335,18 +337,18 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             assertEquals(serverIntHeader.getName(), clientReceivedMessageHeaders[0].get(1).getName());
             assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
             clientConnectionArray[0].closeConnection(0);
-            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             assertTrue(connectionShutdown[0]);
             assertTrue(clientConnected[0]);
             listener.close();
-            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             bootstrap.close();
             clientBootstrap.close();
-            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            clientBootstrap.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             elGroup.close();
-            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             socketOptions.close();
         }
@@ -475,15 +477,15 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
 
             final byte[] operationPayload = "{\"message\": \"message payload\"}".getBytes(StandardCharsets.UTF_8);
             continuation.activate(operationName, null, operationPayload, MessageType.ApplicationMessage, 0);
-            semaphore.await(1, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             assertArrayEquals(responsePayload, clientReceivedPayload[0]);
             assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
             assertEquals(MessageFlags.TerminateStream.getByteValue(), clientReceivedMessageFlags[0]);
             assertTrue(clientContinuationClosed[0]);
 
-            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             semaphoreLock.unlock();
 
             assertTrue(connectionShutdown[0]);
@@ -491,12 +493,12 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             assertEquals(operationName, receivedOperationName[0]);
             assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
             listener.close();
-            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             bootstrap.close();
             clientBootstrap.close();
-            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            clientBootstrap.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             elGroup.close();
-            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             socketOptions.close();
         }
@@ -601,13 +603,13 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             });
 
             final byte[] connectPayload = "test connect payload".getBytes(StandardCharsets.UTF_8);
-            connectFuture.get(1, TimeUnit.SECONDS);
+            connectFuture.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(clientConnectionArray[0]);
             semaphoreLock.lock();
-            semaphore.await(1, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertNotNull(serverConnections[0]);
             clientConnectionArray[0].sendProtocolMessage(null, connectPayload, MessageType.Connect, 0);
-            semaphore.await(1, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             String operationName = "testOperation";
 
             ClientConnectionContinuation continuation = clientConnectionArray[0].newStream(new ClientConnectionContinuationHandler() {
@@ -638,8 +640,8 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             List<Header> clientHeaders = new ArrayList<>();
             clientHeaders.add(clientStrHeader);
             clientHeaders.add(clientIntHeader);
-            continuation.activate(operationName, clientHeaders, operationPayload, MessageType.ApplicationMessage, 0).get(1, TimeUnit.SECONDS);
-            semaphore.await(1, TimeUnit.SECONDS);
+            continuation.activate(operationName, clientHeaders, operationPayload, MessageType.ApplicationMessage, 0).get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            semaphore.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             assertArrayEquals(responsePayload, clientReceivedPayload[0]);
             assertEquals(MessageType.ApplicationError, clientReceivedMessageType[0]);
@@ -655,20 +657,20 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
             assertEquals(serverIntHeader.getValueAsInt(), clientReceivedMessageHeaders[0].get(1).getValueAsInt());
             assertTrue(clientContinuationClosed[0]);
 
-            clientConnectionArray[0].getClosedFuture().get(1, TimeUnit.SECONDS);
-            serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientConnectionArray[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            serverConnections[0].getClosedFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             semaphoreLock.unlock();
             assertTrue(connectionShutdown[0]);
             assertNotNull(receivedOperationName[0]);
             assertEquals(operationName, receivedOperationName[0]);
             assertEquals(new String(operationPayload, StandardCharsets.UTF_8), receivedContinuationPayload[0]);
             listener.close();
-            listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             bootstrap.close();
             clientBootstrap.close();
-            clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            clientBootstrap.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             elGroup.close();
-            elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } finally {
             socketOptions.close();
         }

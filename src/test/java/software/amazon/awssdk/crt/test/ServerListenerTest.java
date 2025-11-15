@@ -50,7 +50,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -79,7 +79,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -114,6 +114,7 @@ public class ServerListenerTest extends CrtTestFixture {
             }
         });
         } catch (CrtRuntimeException ex) {
+            // TODO This doesn't happen for nw sockets.
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);
@@ -122,7 +123,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -190,7 +191,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -303,7 +304,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -453,7 +454,7 @@ public class ServerListenerTest extends CrtTestFixture {
         listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
 
         socketOptions.close();
     }

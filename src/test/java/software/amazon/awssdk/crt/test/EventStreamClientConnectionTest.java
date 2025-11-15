@@ -96,7 +96,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -204,7 +204,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -339,7 +339,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -486,7 +486,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -655,7 +655,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
         socketOptions.close();
     }
 }

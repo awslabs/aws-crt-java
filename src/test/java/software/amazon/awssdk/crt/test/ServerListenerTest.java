@@ -114,6 +114,7 @@ public class ServerListenerTest extends CrtTestFixture {
             }
         });
         } catch (CrtRuntimeException ex) {
+            // TODO This doesn't happen for nw sockets.
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);

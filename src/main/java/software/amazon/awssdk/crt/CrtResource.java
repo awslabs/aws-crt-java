@@ -124,15 +124,16 @@ public abstract class CrtResource implements AutoCloseable {
      * @param resource The resource to add a reference to
      */
     public void addReferenceTo(CrtResource resource) {
-        int remainingRefs = refCount.incrementAndGet();
+        resource.addRef();
+
         synchronized(this) {
             referencedResources.add(resource);
         }
 
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-                String.format("Instance of class %s(%d) is adding a reference to instance of class %s(%d) increasing its refcount to %d", 
-                this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id, remainingRefs));
+                String.format("%s(%d) is adding a reference to %s(%d).", 
+                this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
         }
     }
 
@@ -149,11 +150,11 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             if (removed) {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-                    String.format("Instance of class %s(%d) is removing a reference to instance of class %s(%d)", 
+                    String.format("%s(%d) is removing a reference to %s(%d)", 
                     this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
             } else {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-                    String.format("Instance of class %s(%d) erroneously tried to remove a reference to instance of class %s(%d) that it was not referencing", 
+                    String.format("%s(%d) erroneously tried to remove a reference to %s(%d) that it was not referencing", 
                     this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
             }
         }
@@ -248,7 +249,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         if (debugNativeObjects) {
            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-            String.format("Instance of class %s(%d) is adding a reference. RefCount is now %d", 
+            String.format("%s(%d) is adding a reference. RefCount is now %d", 
             this.getClass().getCanonicalName(), id, remainingRefs));
        }
     }
@@ -257,11 +258,11 @@ public abstract class CrtResource implements AutoCloseable {
      * Increments the reference count to this resource with a description.
      * @param desc Descrption string of why the reference is being incremented.
      */
-    public void addRefDescribe(String desc) {
+    public void addRef(String desc) {
        int remainingRefs = refCount.incrementAndGet();
        if (debugNativeObjects) {
            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-            String.format("Instance of class %s(%d) is adding a reference for: (%s). RefCount is now %d", 
+            String.format("%s(%d) is adding a reference for: (%s). RefCount is now %d", 
             this.getClass().getCanonicalName(), id, desc, remainingRefs));
        }
     }
@@ -313,7 +314,7 @@ public abstract class CrtResource implements AutoCloseable {
 
         if (debugNativeObjects && decRefInstigator != null) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format(
-                    "DecRef instance of class %s(%d) called by %s(%d). %d remaining refs", 
+                    "DecRef on %s(%d) called by %s(%d). %d remaining refs", 
                     this.getClass().getCanonicalName(), id, 
                     decRefInstigator.getClass().getCanonicalName(), decRefInstigator.id, 
                     remainingRefs));
@@ -340,11 +341,11 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             if (desc != null) {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
-                    String.format("DecRef instance of class %s(%d) for: (%s). %d remaining refs", 
+                    String.format("DecRef on %s(%d) for: (%s). %d remaining refs", 
                     this.getClass().getCanonicalName(), id, desc, remainingRefs));
             } else {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource,
-                    String.format("Defref instance of class %s(%d). %d remaining refs",
+                    String.format("Defref on %s(%d). %d remaining refs",
                     this.getClass().getCanonicalName(), id, remainingRefs));
             }
         }
@@ -374,7 +375,7 @@ public abstract class CrtResource implements AutoCloseable {
      */
     protected void releaseReferences() {
         if (debugNativeObjects) {
-            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("Instance of class %s(%d) closing all referenced objects", this.getClass().getCanonicalName(), id));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("%s(%d) closing all referenced objects", this.getClass().getCanonicalName(), id));
         }
 
         synchronized(this) {

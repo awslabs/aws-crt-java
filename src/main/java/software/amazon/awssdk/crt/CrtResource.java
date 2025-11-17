@@ -124,7 +124,7 @@ public abstract class CrtResource implements AutoCloseable {
      * @param resource The resource to add a reference to
      */
     public void addReferenceTo(CrtResource resource) {
-        int refCount = resource.addRef();
+        int remainingRefs = refCount.incrementAndGet();
         synchronized(this) {
             referencedResources.add(resource);
         }
@@ -132,7 +132,7 @@ public abstract class CrtResource implements AutoCloseable {
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
                 String.format("Instance of class %s(%d) is adding a reference to instance of class %s(%d) increasing its refcount to %d", 
-                this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id, refCount));
+                this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id, remainingRefs));
         }
     }
 
@@ -243,8 +243,8 @@ public abstract class CrtResource implements AutoCloseable {
     /**
      * Increments the reference count to this resource.
      */
-    public int addRef() {
-        return refCount.incrementAndGet();
+    public void addRef() {
+        refCount.incrementAndGet();
     }
 
     /**
@@ -252,11 +252,11 @@ public abstract class CrtResource implements AutoCloseable {
      * @param desc Descrption string of why the reference is being incremented.
      */
     public void addRefDescribe(String desc) {
-       int refCount = addRef();
+       int remainingRefs = refCount.incrementAndGet();
        if (debugNativeObjects) {
            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
             String.format("Instance of class %s(%d) is adding a reference for: (%s). RefCount is now %d", 
-            this.getClass().getCanonicalName(), id, desc, refCount));
+            this.getClass().getCanonicalName(), id, desc, remainingRefs));
        }
     }
 

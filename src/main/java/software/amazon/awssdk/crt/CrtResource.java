@@ -300,7 +300,7 @@ public abstract class CrtResource implements AutoCloseable {
 
     @Override
     public void close() {
-        decRef("close() called.");
+        decRef("close() called");
     }
 
     /**

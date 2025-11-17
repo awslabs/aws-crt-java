@@ -338,8 +338,8 @@ public abstract class CrtResource implements AutoCloseable {
                     this.getClass().getCanonicalName(), id, desc, remainingRefs));
             } else {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource,
-                    String.format("Defref instance of class %s(%d). %d remaining refs"),
-                    this.getClass().getCanonicalName(), id, remainingRefs);
+                    String.format("Defref instance of class %s(%d). %d remaining refs",
+                    this.getClass().getCanonicalName(), id, remainingRefs));
             }
         }
 

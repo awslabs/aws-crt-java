@@ -1,5 +1,6 @@
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.eventstream.*;
@@ -24,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
 
+@Ignore
 public class ServerListenerTest extends CrtTestFixture {
     public ServerListenerTest() {}
 

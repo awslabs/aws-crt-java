@@ -244,7 +244,13 @@ public abstract class CrtResource implements AutoCloseable {
      * Increments the reference count to this resource.
      */
     public void addRef() {
-        refCount.incrementAndGet();
+        int remainingRefs = refCount.incrementAndGet();
+
+        if (debugNativeObjects) {
+           Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
+            String.format("Instance of class %s(%d) is adding a reference. RefCount is now %d", 
+            this.getClass().getCanonicalName(), id, remainingRefs));
+       }
     }
 
     /**

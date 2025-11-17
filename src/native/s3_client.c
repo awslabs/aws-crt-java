@@ -1001,7 +1001,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jboolean force_dynamic_part_size) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1147,6 +1148,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .recv_file_delete_on_failure = jni_response_file_delete_on_failure,
         /* If fio options not set, let native code to decide the default instead */
         .fio_opts = fio_options_set ? &fio_opts : NULL,
+        .force_dynamic_part_size = force_dynamic_part_size,
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);

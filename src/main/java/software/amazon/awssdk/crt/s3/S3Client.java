@@ -220,7 +220,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo);
+                directIo,
+                options.getForceDynamicPartSize());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -299,5 +300,6 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo);
+            boolean directIo,
+            boolean forceDynamicPartSize);
 }

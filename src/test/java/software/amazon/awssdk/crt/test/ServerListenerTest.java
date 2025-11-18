@@ -1,6 +1,5 @@
 package software.amazon.awssdk.crt.test;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.eventstream.*;
@@ -25,7 +24,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
 
-@Ignore
 public class ServerListenerTest extends CrtTestFixture {
     public ServerListenerTest() {}
 
@@ -107,26 +105,31 @@ public class ServerListenerTest extends CrtTestFixture {
         assertNotNull(listener1);
         boolean exceptionThrown = false;
         try {
-        ServerListener listener2 = new ServerListener("127.0.0.1", (short)8039, socketOptions, null, bootstrap, new ServerListenerHandler() {
-            public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
-                return null;
-            }
+            ServerListener listener2 = new ServerListener("127.0.0.1", (short)8039, socketOptions, null, bootstrap, new ServerListenerHandler() {
+                public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                    return null;
+                }
 
-            public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
-            }
-        });
+                public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                }
+            });
         } catch (CrtRuntimeException ex) {
-            // TODO This doesn't happen for nw sockets.
             exceptionThrown = true;
         }
-        assertTrue(exceptionThrown);
 
-        listener1.close();
-        listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
-        socketOptions.close();
+        try {
+            assertTrue(exceptionThrown);
+
+            listener1.close();
+            listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            bootstrap.close();
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
+            socketOptions.close();
+        } catch (Exception ex) {
+            System.err.printf("Unexpected exception: %s", ex);
+            throw ex;
+        }
     }
 
     @Test
@@ -179,18 +182,18 @@ public class ServerListenerTest extends CrtTestFixture {
         SocketAddress address = new InetSocketAddress("127.0.0.1", 8040);
         lock.lock();
         clientSocket.connect(address, 3000);
-        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
+        testSynchronizationCVar.await(3, TimeUnit.SECONDS);
         lock.unlock();
         assertNotNull(serverConnections[0]);
         clientSocket.close();
 
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+        serverConnections[0].getClosedFuture().get(3, TimeUnit.SECONDS);
 
         assertTrue(connectionReceived[0]);
         assertTrue(connectionShutdown[0]);
 
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(3, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
         elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
@@ -401,63 +404,68 @@ public class ServerListenerTest extends CrtTestFixture {
             }
         });
 
-        Socket clientSocket = new Socket();
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
-        lock.lock();
-        clientSocket.connect(address, 3000);
-        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
+        try {
+            Socket clientSocket = new Socket();
+            SocketAddress address = new InetSocketAddress("127.0.0.1", 8042);
+            lock.lock();
+            clientSocket.connect(address, 3000);
+            testSynchronizationCVar.await(5, TimeUnit.SECONDS);
 
-        assertNotNull(serverConnections[0]);
-        assertTrue(connectionReceived[0]);
+            assertNotNull(serverConnections[0]);
+            assertTrue(connectionReceived[0]);
 
-        Header messageType = Header.createHeader(":message-type", (int)MessageType.Connect.getEnumValue());
-        Header messageFlags = Header.createHeader(":message-flags", 0);
-        Header streamId = Header.createHeader(":stream-id", 0);
+            Header messageType = Header.createHeader(":message-type", (int) MessageType.Connect.getEnumValue());
+            Header messageFlags = Header.createHeader(":message-flags", 0);
+            Header streamId = Header.createHeader(":stream-id", 0);
 
-        List<Header> messageHeaders = new ArrayList<>(3);
-        messageHeaders.add(messageType);
-        messageHeaders.add(messageFlags);
-        messageHeaders.add(streamId);
+            List<Header> messageHeaders = new ArrayList<>(3);
+            messageHeaders.add(messageType);
+            messageHeaders.add(messageFlags);
+            messageHeaders.add(streamId);
 
-        Message connectMessage = new Message(messageHeaders, null);
-        ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
-        byte[] toSend = new byte[connectMessageBuf.remaining()];
-        connectMessageBuf.get(toSend);
-        clientSocket.getOutputStream().write(toSend);
-        connectMessage.close();
+            Message connectMessage = new Message(messageHeaders, null);
+            ByteBuffer connectMessageBuf = connectMessage.getMessageBuffer();
+            byte[] toSend = new byte[connectMessageBuf.remaining()];
+            connectMessageBuf.get(toSend);
+            clientSocket.getOutputStream().write(toSend);
+            connectMessage.close();
 
-        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
+            testSynchronizationCVar.await(5, TimeUnit.SECONDS);
 
-        String operationName = "testOperation";
-        messageHeaders = new ArrayList<>(3);
-        messageHeaders.add(Header.createHeader(":message-type", (int)MessageType.ApplicationMessage.getEnumValue()));
-        messageHeaders.add(Header.createHeader(":message-flags", 0));
-        messageHeaders.add(Header.createHeader(":stream-id", 1));
-        messageHeaders.add(Header.createHeader("operation", operationName));
-        String payload = "{\"message\": \"message payload\"}";
-        Message continuationMessage = new Message(messageHeaders, payload.getBytes(StandardCharsets.UTF_8));
-        ByteBuffer continuationMessageBuf = continuationMessage.getMessageBuffer();
-        toSend = new byte[continuationMessageBuf.remaining()];
-        continuationMessageBuf.get(toSend);
-        clientSocket.getOutputStream().write(toSend);
-        continuationMessage.close();
+            String operationName = "testOperation";
+            messageHeaders = new ArrayList<>(3);
+            messageHeaders.add(Header.createHeader(":message-type", (int) MessageType.ApplicationMessage.getEnumValue()));
+            messageHeaders.add(Header.createHeader(":message-flags", 0));
+            messageHeaders.add(Header.createHeader(":stream-id", 1));
+            messageHeaders.add(Header.createHeader("operation", operationName));
+            String payload = "{\"message\": \"message payload\"}";
+            Message continuationMessage = new Message(messageHeaders, payload.getBytes(StandardCharsets.UTF_8));
+            ByteBuffer continuationMessageBuf = continuationMessage.getMessageBuffer();
+            toSend = new byte[continuationMessageBuf.remaining()];
+            continuationMessageBuf.get(toSend);
+            clientSocket.getOutputStream().write(toSend);
+            continuationMessage.close();
 
-        testSynchronizationCVar.await(1, TimeUnit.SECONDS);
-        lock.unlock();
+            testSynchronizationCVar.await(5, TimeUnit.SECONDS);
+            lock.unlock();
 
-        clientSocket.close();
-        serverConnections[0].getClosedFuture().get(1, TimeUnit.SECONDS);
+            clientSocket.close();
+            serverConnections[0].getClosedFuture().get(5, TimeUnit.SECONDS);
 
-        assertTrue(connectionShutdown[0]);
-        assertNotNull(receivedOperationName[0]);
-        assertEquals(operationName, receivedOperationName[0]);
-        assertEquals(payload, receivedContinuationPayload[0]);
-        listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
-        bootstrap.close();
-        elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
+            assertTrue(connectionShutdown[0]);
+            assertNotNull(receivedOperationName[0]);
+            assertEquals(operationName, receivedOperationName[0]);
+            assertEquals(payload, receivedContinuationPayload[0]);
+            listener.close();
+            listener.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
+            bootstrap.close();
+            elGroup.close();
+            elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
 
-        socketOptions.close();
+            socketOptions.close();
+        } catch (Exception ex) {
+            System.err.printf("Unexpected exception: %s", ex);
+            throw ex;
+        }
     }
 }

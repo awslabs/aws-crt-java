@@ -189,7 +189,7 @@ public class HttpClientConnectionManager extends CrtResource {
      * Resources that wait are responsible for calling releaseReferences() manually.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() { return true; }
+    protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
      * Closes this Connection Pool and any pending Connection Acquisitions

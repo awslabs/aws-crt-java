@@ -124,16 +124,15 @@ public abstract class CrtResource implements AutoCloseable {
      * @param resource The resource to add a reference to
      */
     public void addReferenceTo(CrtResource resource) {
-        resource.addRef();
-
-        synchronized(this) {
-            referencedResources.add(resource);
-        }
-
         if (debugNativeObjects) {
             Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
                 String.format("%s(%d) is adding a reference to %s(%d).", 
                 this.getClass().getCanonicalName(), id, resource.getClass().getCanonicalName(), resource.id));
+        }
+
+        resource.addRef();
+        synchronized(this) {
+            referencedResources.add(resource);
         }
     }
 
@@ -304,6 +303,10 @@ public abstract class CrtResource implements AutoCloseable {
         decRef("close() called");
     }
 
+    public void close(String desc) {
+        decRef(desc);
+    }
+
     /**
      * Decrements the reference count to this resource.  If zero is reached, begins (and possibly completes) the resource's
      * cleanup process.
@@ -375,12 +378,14 @@ public abstract class CrtResource implements AutoCloseable {
      */
     protected void releaseReferences() {
         if (debugNativeObjects) {
-            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, String.format("%s(%d) closing all referenced objects", this.getClass().getCanonicalName(), id));
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
+                String.format("%s(%d) closing %d referenced objects", 
+                this.getClass().getCanonicalName(), id, referencedResources.size()));
         }
 
         synchronized(this) {
             for (CrtResource resource : referencedResources) {
-                resource.decRef(this);
+                resource.decRef(String.format("%s releaseReferences()", this.getClass().getCanonicalName()));
             }
 
             referencedResources.clear();

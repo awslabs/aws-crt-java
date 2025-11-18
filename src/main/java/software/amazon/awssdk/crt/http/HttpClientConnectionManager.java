@@ -162,10 +162,6 @@ public class HttpClientConnectionManager extends CrtResource {
         }
 
         CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
-        /* Futures need to add a ref so the HttpClientConnectionManager doesn't clean up from underneath the Future. */
-        this.addRef();
-        /* This insures that whether a CompletableFuture completes or throws an exception, we remove the ref it added. */
-        returnedFuture.whenComplete((conn, ex) -> decRef());
         httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
         return returnedFuture;
     }
@@ -193,7 +189,7 @@ public class HttpClientConnectionManager extends CrtResource {
      * Resources that wait are responsible for calling releaseReferences() manually.
      */
     @Override
-    protected boolean canReleaseReferencesImmediately() { return false; }
+    protected boolean canReleaseReferencesImmediately() { return true; }
 
     /**
      * Closes this Connection Pool and any pending Connection Acquisitions

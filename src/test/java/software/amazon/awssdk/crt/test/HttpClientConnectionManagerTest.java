@@ -12,7 +12,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -26,6 +28,9 @@ import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.Log;
 
 public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
+    @Rule
+    public TestName testName = new TestName();
+    
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
@@ -155,8 +160,10 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
     @Test
     public void testSerialRequests() throws Exception {
+        System.out.println("[TEST START] " + testName.getMethodName());
         skipIfAndroid();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 
     /**
@@ -164,6 +171,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
      */
     @Test
     public void testConnectionCounters() throws Exception {
+        System.out.println("[TEST START] " + testName.getMethodName());
         skipIfAndroid();
         skipIfNetworkUnavailable();
 
@@ -243,16 +251,20 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        System.out.println("[TEST START] " + testName.getMethodName());
         skipIfAndroid();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 
     @Test
     public void testPendingAcquisitionsDuringShutdown() throws Exception {
+        System.out.println("[TEST START] " + testName.getMethodName());
         skipIfAndroid();
         skipIfNetworkUnavailable();
         HttpClientConnection firstConnection = null;
@@ -268,10 +280,12 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         }
 
         firstConnection.close();
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 
     @Test
     public void testCancelAcquire() throws Exception {
+        System.out.println("[TEST START] " + testName.getMethodName());
         skipIfAndroid();
         // related: https://github.com/awslabs/aws-sdk-kotlin/issues/511
         skipIfNetworkUnavailable();
@@ -293,5 +307,6 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
             conn.close();
         }
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 }

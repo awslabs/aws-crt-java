@@ -23,12 +23,18 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
 
 import java.util.Optional;
 
 public class CrtTestFixture {
 
     private CrtTestContext context;
+
+    @Rule
+    public TestName testName = new TestName();
 
     public final CrtTestContext getContext() {
         return context;
@@ -230,6 +236,7 @@ public class CrtTestFixture {
     /* The setup function will be run before every test */
     @Before
     public void setup() {
+        System.out.println("[TEST START] " + testName.getMethodName());
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
         // TODO this CrtTestContext should be removed as we are using System Properties
@@ -258,6 +265,7 @@ public class CrtTestFixture {
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
+        System.out.println("[TEST END] " + testName.getMethodName());
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

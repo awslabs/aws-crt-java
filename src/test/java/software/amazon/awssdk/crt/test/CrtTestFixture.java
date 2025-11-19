@@ -237,7 +237,7 @@ public class CrtTestFixture {
     @Before
     public void setup() {
         System.out.println("[TEST START] " + testName.getMethodName());
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, String.format("CrtTestFixture setup for %s begin", testName.getMethodName()));
 
         // TODO this CrtTestContext should be removed as we are using System Properties
         // for tests now.
@@ -246,7 +246,7 @@ public class CrtTestFixture {
 
     @After
     public void tearDown() {
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown begin");
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, String.format("CrtTestFixture tearDown begin", testName.getMethodName()));
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testTearDown(context);

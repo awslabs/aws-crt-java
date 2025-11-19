@@ -77,13 +77,14 @@ static void s_detach_jvm_from_thread(void *user_data) {
     }
 }
 
-static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
+static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *was_attached) {
 #ifdef ANDROID
     JNIEnv *env = NULL;
 #else
     void *env = NULL;
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        *was_attached = false;
         if (!s_dispatch_queue_threads) {
             AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
         }
@@ -129,6 +130,8 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
              * managed by the JVM, so we only need to clean up event loop thread attachments */
             AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
         }
+    } else {
+        *was_attached = true;
     }
 
     return env;
@@ -210,7 +213,7 @@ done:
     aws_rw_lock_wunlock(&s_jvm_table_lock);
 }
 
-JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
+JNIEnv *aws_jni_acquire_thread_env_with_check(JavaVM *jvm, bool *was_attached) {
     /*
      * We use try-lock here in order to avoid the re-entrant deadlock case that could happen if we have a read
      * lock already, the JVM shutdown hooks causes another thread to block on taking the write lock, and then
@@ -236,7 +239,7 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
         goto error;
     }
 
-    JNIEnv *env = s_aws_jni_get_thread_env(jvm);
+    JNIEnv *env = s_aws_jni_get_thread_env(jvm, was_attached);
     if (env == NULL) {
         aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         goto error;
@@ -249,6 +252,11 @@ error:
     aws_rw_lock_runlock(&s_jvm_table_lock);
 
     return NULL;
+}
+
+JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
+    bool ignore;
+    return aws_jni_acquire_thread_env_with_check(jvm, &ignore);
 }
 
 void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {

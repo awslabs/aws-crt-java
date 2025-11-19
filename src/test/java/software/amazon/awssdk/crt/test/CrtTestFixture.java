@@ -223,7 +223,7 @@ public class CrtTestFixture {
         // We stop all tests when one fails (see FailFastListener) so that
         // a valuable log.txt isn't overwritten.
         if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
-            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+            Log.initLoggingToFile(Log.LogLevel.Trace, "/tmp/log.txt");
         }
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {

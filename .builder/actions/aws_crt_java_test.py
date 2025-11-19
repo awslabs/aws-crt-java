@@ -7,8 +7,8 @@ import os.path
 class AWSCrtJavaTest(Builder.Action):
 
     def _run_java_tests(self, *extra_args):
-        if os.path.exists('log.txt'):
-            os.remove('log.txt')
+        if os.path.exists('/tmp/log.txt'):
+            os.remove('/tmp/log.txt')
 
         profiles = 'continuous-integration'
         if os.getenv("AWS_GRAALVM_CI") is not None:
@@ -29,9 +29,9 @@ class AWSCrtJavaTest(Builder.Action):
 
         result = self.env.shell.exec(*cmd_args, check=False)
         if result.returncode:
-            if os.path.exists('log.txt'):
+            if os.path.exists('/tmp/log.txt'):
                 print("--- CRT logs from failing test ---")
-                with open('log.txt', 'r') as log:
+                with open('/tmp/log.txt', 'r') as log:
                     print(log.read())
                 print("----------------------------------")
             sys.exit(f"Tests failed")

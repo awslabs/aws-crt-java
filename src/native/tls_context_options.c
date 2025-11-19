@@ -99,7 +99,6 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct jni_tls_ctx_options *tls = aws_mem_calloc(allocator, 1, sizeof(struct jni_tls_ctx_options));
     AWS_FATAL_ASSERT(tls);
-    aws_tls_ctx_options_init_default_client(&tls->options, allocator);
 
     /* Certs or paths will cause an init, which overwrites other fields, so do those first */
     if (jni_certificate && jni_private_key) {
@@ -256,6 +255,9 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_system_path failed");
             goto on_error;
+        } else {
+            /* no mTLS */
+            aws_tls_ctx_options_init_default_client(&tls->options, allocator);
         }
     }
 

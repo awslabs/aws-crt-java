@@ -142,6 +142,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
 
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
+        aws_jni_throw_runtime_exception(
+            env, "ClientBootstrap.clientBootstrapDestroy: instance should be non-null at release time");
         return;
     }
 

@@ -42,6 +42,10 @@ public class ServerListener extends CrtResource {
                 socketOptions.getNativeHandle(), tlsContextPtr, serverBootstrap.getNativeHandle(),
                 handler);
 
+        if (serverHandler == 0) {
+            throw new RuntimeException("ServerListener creation failed");
+        }
+
         boundPort = getBoundPort(serverHandler);
 
         acquireNativeHandle(serverHandler);

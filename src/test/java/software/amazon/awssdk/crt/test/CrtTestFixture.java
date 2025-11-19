@@ -246,7 +246,7 @@ public class CrtTestFixture {
 
     @After
     public void tearDown() {
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, String.format("CrtTestFixture tearDown begin", testName.getMethodName()));
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, String.format("CrtTestFixture tearDown for %s begin", testName.getMethodName()));
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testTearDown(context);
@@ -264,7 +264,7 @@ public class CrtTestFixture {
                 throw new RuntimeException("Memory leak from native resource detected!");
             }
         }
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, String.format("CrtTestFixture tearDown for %s end", testName.getMethodName()));
         System.out.println("[TEST END] " + testName.getMethodName());
     }
 

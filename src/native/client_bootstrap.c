@@ -63,7 +63,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JavaVM *jvm = callback_data->jvm;
     s_shutdown_callback_data_destroy(env, callback_data);
-    aws_jni_release_thread_env(jvm, env);
+    // aws_jni_release_thread_env(jvm, env);
     /********** JNI ENV RELEASE **********/
 }
 

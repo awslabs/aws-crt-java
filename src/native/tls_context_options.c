@@ -255,10 +255,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
 
             aws_jni_throw_runtime_exception(env, "aws_tls_ctx_options_init_client_mtls_from_system_path failed");
             goto on_error;
-        } else {
-            /* no mTLS */
-            aws_tls_ctx_options_init_default_client(&tls->options, allocator);
         }
+    } else {
+        /* no mTLS */
+        aws_tls_ctx_options_init_default_client(&tls->options, allocator);
     }
 
     if (jni_ca) {

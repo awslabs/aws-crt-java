@@ -230,14 +230,12 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Build ${{ env.PACKAGE_NAME }}
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder build -p ${{ env.PACKAGE_NAME }}
-    - name: Run ServerListenerTest only
-      run: |
-        mvn -B test -Dtest=ServerListenerTest
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python3 codebuild/macos_compatibility_check.py
 
   # check that docs can still build
   check-docs:

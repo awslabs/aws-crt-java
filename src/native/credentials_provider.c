@@ -696,8 +696,8 @@ static void s_aws_login_token_source_data_on_zero_ref(void *user_data) {
         if (login_token_source_data->login_token_source != NULL) {
             (*env)->DeleteGlobalRef(env, login_token_source_data->login_token_source);
         }
-        aws_jni_release_thread_env(jvm, env, needs_detach);
     }
+    aws_jni_release_thread_env(jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(login_token_source_data->allocator, login_token_source_data);

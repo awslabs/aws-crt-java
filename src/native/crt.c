@@ -54,6 +54,15 @@ struct aws_allocator *aws_jni_get_allocator(void) {
     return s_allocator;
 }
 
+/*
+Dispatch queue threads are handled differently than other types as we do not create and manage them. This is set during
+creation of an Event Loop Group to control attach/detach to/from JVM behavior of threads.
+*/
+static bool s_dispatch_queue_threads = false;
+void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue) {
+    s_dispatch_queue_threads = is_dispatch_queue;
+}
+
 static void s_detach_jvm_from_thread(void *user_data) {
     AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_detach_jvm_from_thread invoked");
     JavaVM *jvm = user_data;
@@ -63,7 +72,6 @@ static void s_detach_jvm_from_thread(void *user_data) {
     JNIEnv *env = aws_jni_acquire_thread_env(jvm);
     if (env != NULL) {
         (*jvm)->DetachCurrentThread(jvm);
-
         aws_jni_release_thread_env(jvm, env);
         /********** JNI ENV RELEASE **********/
     }
@@ -76,7 +84,9 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
     void *env = NULL;
 #endif
     if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+        if (!s_dispatch_queue_threads) {
+            AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+        }
 
         struct aws_string *thread_name = NULL;
         if (aws_thread_current_name(aws_jni_get_allocator(), &thread_name)) {
@@ -109,9 +119,16 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
             fprintf(stderr, "Unrecoverable AttachCurrentThreadAsDaemon failed, JNI error code is %d\n", (int)result);
             return NULL;
         }
-        /* This should only happen in event loop threads, the JVM main thread attachment is
-         * managed by the JVM, so we only need to clean up event loop thread attachments */
-        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+
+        /*
+        Dispatch Queue threads are managed by Apple's GCD and thus can't have an at_exit callback assigned. We manually
+        detatch dispatch queue threads from the JVM during `aws_jni_release_thread_env()` to insure cleanup.
+        */
+        if (!s_dispatch_queue_threads) {
+            /* This should only happen in event loop threads, the JVM main thread attachment is
+             * managed by the JVM, so we only need to clean up event loop thread attachments */
+            AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+        }
     }
 
     return env;
@@ -239,6 +256,15 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
     (void)env;
 
     if (env != NULL) {
+        /*
+        Dispatch Queue threads must be manually detached after they're used instead of depending
+        on a thread exit callback due to the threads not being managed by the CRT and thus, their
+        lifetimes not trackable outside the context of their immediate use.
+        */
+        if (s_dispatch_queue_threads) {
+            (*jvm)->DetachCurrentThread(jvm);
+        }
+
         aws_rw_lock_runlock(&s_jvm_table_lock);
     }
 }

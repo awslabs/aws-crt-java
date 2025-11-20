@@ -47,8 +47,8 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
     struct shutdown_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool is_attachment_happened = true;
-    JNIEnv *env = aws_jni_acquire_thread_env_with_check(callback_data->jvm, &is_attachment_happened);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -64,14 +64,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JavaVM *jvm = callback_data->jvm;
     s_shutdown_callback_data_destroy(env, callback_data);
-    // FIXME aws_jni_release_thread_env should be called always, for unlocking the rw lock.
-    //   But the detachment should be happened depending on the is_attachment_happened flag.
-    if (is_attachment_happened) {
-        fprintf(stderr, "=== s_client_bootstrap_shutdown_complete: detaching thread\n");
-        aws_jni_release_thread_env(jvm, env);
-    } else {
-        fprintf(stderr, "=== s_client_bootstrap_shutdown_complete: no detachment needed\n");
-    }
+    aws_jni_release_thread_env(jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 }
 

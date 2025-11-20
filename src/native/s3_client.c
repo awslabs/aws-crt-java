@@ -147,7 +147,8 @@ static int s_s3express_get_creds_java(
     int result = AWS_OP_ERR;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm, &needs_detach);
     if (!env) {
         /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
         return AWS_OP_SUCCESS;
@@ -214,7 +215,7 @@ done:
     if (original_credentials_object) {
         (*env)->DeleteLocalRef(env, original_credentials_object);
     }
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
     return result;
 }
@@ -223,7 +224,8 @@ static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *
     struct s3_client_s3express_provider_java_impl *impl = provider->impl;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm, &needs_detach);
     if (!env) {
         /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
         return;
@@ -234,7 +236,7 @@ static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *
 
     (*env)->DeleteGlobalRef(env, impl->java_s3express_provider);
 
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
     /* Once the java call returns, the java resource should be cleaned up already. We can finish up the shutdown
      * process. Clean up the native part. */
@@ -263,7 +265,8 @@ struct aws_s3express_credentials_provider *s_s3express_provider_jni_factory(
     struct s3_client_s3express_provider_java_impl *impl = NULL;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(client_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(client_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return NULL;
@@ -308,7 +311,7 @@ struct aws_s3express_credentials_provider *s_s3express_provider_jni_factory(
     client_data->java_s3express_provider_factory = NULL;
 
 done:
-    aws_jni_release_thread_env(client_data->jvm, env);
+    aws_jni_release_thread_env(client_data->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
     return provider;
 }
@@ -563,7 +566,8 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -591,7 +595,7 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
 
     aws_signing_config_data_clean_up(&callback->signing_config_data, env);
 
-    aws_jni_release_thread_env(callback->jvm, env);
+    aws_jni_release_thread_env(callback->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(aws_jni_get_allocator(), user_data);
@@ -612,7 +616,8 @@ static int s_on_s3_meta_request_body_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -622,7 +627,7 @@ static int s_on_s3_meta_request_body_callback(
     if (jni_payload == NULL) {
         /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
         aws_jni_check_and_clear_exception(env);
-        aws_jni_release_thread_env(callback_data->jvm, env);
+        aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
         /********** JNI ENV RELEASE **********/
         return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
     }
@@ -657,7 +662,7 @@ static int s_on_s3_meta_request_body_callback(
 cleanup:
     (*env)->DeleteLocalRef(env, jni_payload);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 
     return return_value;
@@ -697,7 +702,8 @@ static int s_on_s3_meta_request_headers_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -744,7 +750,7 @@ cleanup:
         (*env)->DeleteLocalRef(env, java_headers_buffer);
     }
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 
     return return_value;
@@ -761,7 +767,8 @@ static void s_on_s3_meta_request_finish_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -850,7 +857,7 @@ static void s_on_s3_meta_request_finish_callback(
         }
     }
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -865,7 +872,8 @@ static void s_on_s3_meta_request_progress_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -909,7 +917,7 @@ static void s_on_s3_meta_request_progress_callback(
 
 done:
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -1179,7 +1187,8 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -1200,7 +1209,7 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     JavaVM *jvm = callback_data->jvm;
     s_s3_meta_request_callback_cleanup(env, callback_data);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 }
 

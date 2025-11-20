@@ -158,7 +158,8 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    bool is_attachment_happened = false;
+    JNIEnv *env = aws_jni_acquire_thread_env_with_check(impl->jvm, &is_attachment_happened);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -168,7 +169,9 @@ static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl 
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
 
-    aws_jni_release_thread_env(impl->jvm, env);
+    if (is_attachment_happened) {
+        aws_jni_release_thread_env(impl->jvm, env);
+    }
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(impl->allocator, impl);

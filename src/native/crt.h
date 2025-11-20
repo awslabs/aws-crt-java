@@ -230,7 +230,7 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
  * attaching the env if necessary.  aws_jni_release_thread_env() must be called once
  * the caller is through with the environment.
  ******************************************************************************/
-JNIEnv *aws_jni_acquire_thread_env_with_check(JavaVM *jvm, bool *was_attached);
+JNIEnv *aws_jni_acquire_thread_env_with_check(JavaVM *jvm, bool *is_attachment_happened);
 JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
 
 /*******************************************************************************

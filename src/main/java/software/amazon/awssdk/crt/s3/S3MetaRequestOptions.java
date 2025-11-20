@@ -96,7 +96,6 @@ public class S3MetaRequestOptions {
     private ResumeToken resumeToken;
     private Long objectSizeHint;
     private FileIoOptions fileIoOptions;
-    private boolean forceDynamicPartSize = false;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -472,21 +471,5 @@ public class S3MetaRequestOptions {
      */
     public FileIoOptions getFileIoOptions() {
         return fileIoOptions;
-    }
-
-    /**
-     * WARNING: experimental/unstable.
-     * Set this to force the dynamic default part_size regardless the part size set from client or meta request.
-     * Set this to get the best performance under the memory constrain, especially for getting large objects.
-     *
-     * @param forceDynamicPartSize True to force the dynamic part size, False to use the part size set from client or meta request.
-     * @return this
-     */
-    public S3MetaRequestOptions withForceDynamicPartSize(boolean forceDynamicPartSize) {
-        this.forceDynamicPartSize = forceDynamicPartSize;
-        return this;
-    }
-    public boolean getForceDynamicPartSize() {
-        return forceDynamicPartSize;
     }
 }

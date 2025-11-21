@@ -245,6 +245,10 @@ jobs:
           hs_err_pid*.log
           core.*
         if-no-files-found: ignore
+    - name: Print crash log if exists
+      if: failure()  
+      run: |
+        find . -name "hs_err_pid*.log" -exec cat {} \;
 
   # check that docs can still build
   check-docs:

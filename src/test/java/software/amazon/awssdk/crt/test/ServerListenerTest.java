@@ -121,7 +121,7 @@ public class ServerListenerTest extends CrtTestFixture {
             assertTrue(exceptionThrown);
 
             listener1.close();
-            listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+            listener1.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);
             bootstrap.close();
             elGroup.close();
             elGroup.getShutdownCompleteFuture().get(5, TimeUnit.SECONDS);

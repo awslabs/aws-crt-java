@@ -78,10 +78,7 @@ static void s_detach_jvm_from_thread(void *user_data) {
 }
 
 static struct aws_jvm_env_context s_aws_jni_get_thread_env(JavaVM *jvm) {
-    struct aws_jvm_env_context jvm_env_context = {
-        .env = NULL,
-        .should_detach = false
-    };
+    struct aws_jvm_env_context jvm_env_context = {.env = NULL, .should_detach = false};
 
     if ((*jvm)->GetEnv(jvm, (void **)&jvm_env_context.env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         if (!s_dispatch_queue_threads) {

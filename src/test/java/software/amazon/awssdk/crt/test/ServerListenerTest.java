@@ -107,16 +107,26 @@ public class ServerListenerTest extends CrtTestFixture {
         try {
         ServerListener listener2 = new ServerListener("127.0.0.1", (short)8039, socketOptions, null, bootstrap, new ServerListenerHandler() {
             public ServerConnectionHandler onNewConnection(ServerConnection serverConnection, int errorCode) {
+                System.out.println("ServerListener onNewConnection()");
                 return null;
             }
 
             public void onConnectionShutdown(ServerConnection serverConnection, int errorCode) {
+                System.out.println("ServerListener onConnectionShutdown()");
             }
         });
         } catch (CrtRuntimeException ex) {
+            System.out.println("ServerListener CrtRuntimeException()");
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);
+        
+        // Add small delay to allow native cleanup to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         listener1.close();
         listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);

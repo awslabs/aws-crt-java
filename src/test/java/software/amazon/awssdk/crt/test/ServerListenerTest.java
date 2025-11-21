@@ -120,6 +120,13 @@ public class ServerListenerTest extends CrtTestFixture {
             exceptionThrown = true;
         }
         assertTrue(exceptionThrown);
+        
+        // Add small delay to allow native cleanup to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         listener1.close();
         listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);

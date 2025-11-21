@@ -64,8 +64,8 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
 
     struct aws_http2_stream_manager_binding *binding = (struct aws_http2_stream_manager_binding *)user_data;
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -85,7 +85,7 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
     /* We're done with this wrapper, free it. */
     JavaVM *jvm = binding->jvm;
     s_destroy_manager_binding(binding, env);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -310,8 +310,8 @@ static struct aws_sm_acquire_stream_callback_data *s_new_sm_acquire_stream_callb
 static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code, void *user_data) {
     struct aws_sm_acquire_stream_callback_data *callback_data = user_data;
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -352,7 +352,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_sm_acquire_stream_callback_data(callback_data, env);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

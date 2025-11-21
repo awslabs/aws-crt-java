@@ -47,8 +47,8 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
     struct shutdown_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -64,7 +64,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JavaVM *jvm = callback_data->jvm;
     s_shutdown_callback_data_destroy(env, callback_data);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

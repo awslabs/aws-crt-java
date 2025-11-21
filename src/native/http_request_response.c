@@ -159,8 +159,8 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
     struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -207,7 +207,7 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
 
 done:
 
-    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
@@ -222,8 +222,8 @@ int aws_java_http_stream_on_incoming_body_fn(
     size_t total_window_increment = 0;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -264,7 +264,7 @@ int aws_java_http_stream_on_incoming_body_fn(
 
 done:
 
-    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
@@ -274,8 +274,8 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
     struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -295,7 +295,7 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
-    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -303,8 +303,8 @@ void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
     struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -312,7 +312,7 @@ void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
     /* Native stream destroyed, release the binding. */
     JavaVM *jvm = binding->jvm;
     aws_http_stream_binding_release(env, binding);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -323,8 +323,8 @@ void aws_java_http_stream_on_stream_metrics_fn(
     struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -363,7 +363,7 @@ void aws_java_http_stream_on_stream_metrics_fn(
         aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
     }
 
-    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -532,8 +532,8 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
     struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -548,7 +548,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
 
     JavaVM *jvm = chunked_callback_data->stream_cb_data->jvm;
     s_cleanup_chunked_callback_data(env, chunked_callback_data);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -854,8 +854,8 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = callback_data->jvm;
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -871,7 +871,7 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -942,8 +942,8 @@ static void s_on_ping_completed(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = callback_data->jvm;
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -966,7 +966,7 @@ static void s_on_ping_completed(
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

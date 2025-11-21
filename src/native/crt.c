@@ -103,7 +103,7 @@ static struct aws_jvm_env_context s_aws_jni_get_thread_env(JavaVM *jvm) {
         }
 
 #ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void**)&jvm_env_context.env, &attach_args);
 #else
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&jvm_env_context.env, &attach_args);
 #endif

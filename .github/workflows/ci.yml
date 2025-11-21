@@ -248,7 +248,12 @@ jobs:
     - name: Print crash log if exists
       if: failure()  
       run: |
-        find . -name "hs_err_pid*.log" -exec cat {} \;
+        echo "Searching for crash logs..."
+        find /Users/runner -name "hs_err_pid*.log" 2>/dev/null || echo "No crash logs found in /Users/runner"
+        find . -name "hs_err_pid*.log" 2>/dev/null || echo "No crash logs found in current directory"
+        ls -la /tmp/hs_err_pid*.log 2>/dev/null || echo "No crash logs found in /tmp"
+
+Copy
 
   # check that docs can still build
   check-docs:

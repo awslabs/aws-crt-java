@@ -38,6 +38,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         boolean exceptionThrown = false;
         Exception exception = null;
         CompletableFuture<Void> shutdownComplete = null;
+        HttpClientConnectionManager connectionPool = null;
     }
 
     private HttpConnectionTestResponse testConnection(URI uri, ClientBootstrap bootstrap, SocketOptions sockOpts,
@@ -47,14 +48,19 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         options.withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
         int retryCounts = 3;
         for (int iter = 0; iter < retryCounts; iter++) {
-            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
-                resp.shutdownComplete = connectionPool.getShutdownCompleteFuture();
-                try (HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+            try {
+                resp.connectionPool = HttpClientConnectionManager.create(options);
+                resp.shutdownComplete = resp.connectionPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = resp.connectionPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
                     resp.actuallyConnected = true;
                     assertTrue(conn.isOpen());
                 }
                 break;
             } catch (Exception e) {
+                if (resp.connectionPool != null) {
+                    resp.connectionPool.close();
+                    resp.connectionPool = null;
+                }
                 if (iter == retryCounts - 1) {
                     resp.exceptionThrown = true;
                     resp.exception = e;
@@ -70,34 +76,42 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 continue;
             }
 
-            HttpConnectionTestResponse resp = null;
-            try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref)) {
-                if (getContext().trustStore != null) {
-                    tlsOpts.withCertificateAuthority(new String(getContext().trustStore));
+            try {
+                HttpConnectionTestResponse resp = null;
+                try (TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withCipherPreference(pref)) {
+                    if (getContext().trustStore != null) {
+                        tlsOpts.withCertificateAuthority(new String(getContext().trustStore));
+                    }
+                    try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                         HostResolver resolver = new HostResolver(eventLoopGroup);
+                         ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                         SocketOptions socketOptions = new SocketOptions();
+                         TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+
+                        socketOptions.connectTimeoutMs = 10000;
+                        resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+                    }
                 }
-                try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                        HostResolver resolver = new HostResolver(eventLoopGroup);
-                        ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                        SocketOptions socketOptions = new SocketOptions();
-                        TlsContext tlsCtx = new TlsContext(tlsOpts)) {
 
-                    socketOptions.connectTimeoutMs = 10000;
-                    resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+                String assertMsg = uri.toString() + " " + pref;
+
+                // If an unexpected exception occurred, rethrow so we get details in the logs
+                if (resp.exceptionThrown && (expectConnected || !resp.exception.getMessage().contains(exceptionMsg))) {
+                    System.out.println(assertMsg);
+                    throw resp.exception;
                 }
+
+                Assert.assertEquals(assertMsg + " connection success.", expectConnected, resp.actuallyConnected);
+                Assert.assertEquals(assertMsg + " exception thrown.", !expectConnected, resp.exceptionThrown);
+
+                if (resp.connectionPool != null) {
+                    resp.connectionPool.close();
+                }
+                resp.shutdownComplete.get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                System.err.println("Error occurred: " + e);
+                throw e;
             }
-
-            String assertMsg = uri.toString() + " " + pref;
-
-            // If an unexpected exception occurred, rethrow so we get details in the logs
-            if (resp.exceptionThrown && (expectConnected || !resp.exception.getMessage().contains(exceptionMsg))) {
-                System.out.println(assertMsg);
-                throw resp.exception;
-            }
-
-            Assert.assertEquals(assertMsg + " connection success.", expectConnected, resp.actuallyConnected);
-            Assert.assertEquals(assertMsg + " exception thrown.", !expectConnected, resp.exceptionThrown);
-
-            resp.shutdownComplete.get();
         }
     }
 

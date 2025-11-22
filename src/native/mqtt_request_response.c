@@ -41,7 +41,8 @@ static void s_destroy_mqtt_request_response_client_binding(void *context) {
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = binding->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
@@ -53,7 +54,7 @@ static void s_destroy_mqtt_request_response_client_binding(void *context) {
     }
 
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 
 done:
 
@@ -226,13 +227,14 @@ static void s_aws_request_response_operation_binding_destroy(struct aws_request_
         return;
     }
 
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
 
     if (env && binding->operation_future) {
         (*env)->DeleteGlobalRef(env, binding->operation_future);
     }
 
-    aws_jni_release_thread_env(binding->jvm, env);
+    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
 
     aws_mem_release(binding->allocator, binding);
 }
@@ -430,7 +432,8 @@ static void s_on_request_response_operation_completion(
     jstring java_topic = NULL;
     jbyteArray java_payload = NULL;
     struct aws_request_response_operation_binding *binding = user_data;
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm, &needs_detach);
     if (!env) {
         goto done;
     }
@@ -480,7 +483,7 @@ done:
         (*env)->DeleteLocalRef(env, java_payload);
     }
 
-    aws_jni_release_thread_env(binding->jvm, env);
+    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
 
     s_aws_request_response_operation_binding_destroy(binding);
 }
@@ -595,7 +598,8 @@ static void s_aws_streaming_operation_binding_destroy(struct aws_streaming_opera
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = binding->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
@@ -610,7 +614,7 @@ static void s_aws_streaming_operation_binding_destroy(struct aws_streaming_opera
         (*env)->DeleteGlobalRef(env, binding->java_subscription_status_event_callback);
     }
 
-    aws_jni_release_thread_env(binding->jvm, env);
+    aws_jni_release_thread_env(binding->jvm, env, needs_detach);
 
 done:
 
@@ -629,7 +633,8 @@ static void s_aws_mqtt_streaming_operation_subscription_status_callback(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = binding->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
@@ -685,7 +690,7 @@ done:
     }
 
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 }
 
 static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
@@ -699,7 +704,8 @@ static void s_aws_mqtt_streaming_operation_incoming_publish_callback(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = binding->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_JAVA_CRT_GENERAL, "JNI env no longer resolvable; JVM likely shutting down");
@@ -781,7 +787,7 @@ done:
     }
 
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 }
 
 static void s_aws_mqtt_streaming_operation_terminated_callback(void *user_data) {

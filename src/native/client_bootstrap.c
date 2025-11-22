@@ -47,7 +47,8 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
     struct shutdown_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -63,7 +64,7 @@ static void s_client_bootstrap_shutdown_complete(void *user_data) {
 
     JavaVM *jvm = callback_data->jvm;
     s_shutdown_callback_data_destroy(env, callback_data);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -142,6 +143,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_ClientBootstrap_clientBootstrapD
 
     struct aws_client_bootstrap *bootstrap = (struct aws_client_bootstrap *)jni_bootstrap;
     if (!bootstrap) {
+        aws_jni_throw_runtime_exception(
+            env, "ClientBootstrap.clientBootstrapDestroy: instance should be non-null at release time");
         return;
     }
 

@@ -303,7 +303,8 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = java_client->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "LifecycleEvent: could not get env");
@@ -357,7 +358,7 @@ static void s_aws_mqtt5_client_java_lifecycle_event(const struct aws_mqtt5_clien
     if (local_frame_result != 0) {
         s_aws_mqtt5_client_log_and_throw_exception(
             env, "LifecycleEvent: could not push local JNI frame with 14 allocation minimum!", AWS_ERROR_INVALID_STATE);
-        aws_jni_release_thread_env(jvm, env);
+        aws_jni_release_thread_env(jvm, env, needs_detach);
         return;
     }
 
@@ -503,7 +504,7 @@ clean_up:
 
     (*env)->PopLocalFrame(env, NULL);
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 }
 
 static void s_aws_mqtt5_client_java_publish_received(
@@ -523,7 +524,8 @@ static void s_aws_mqtt5_client_java_publish_received(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = java_client->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "publishReceived function: could not get env");
@@ -598,7 +600,7 @@ clean_up:
 
     (*env)->PopLocalFrame(env, NULL);
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 }
 
 static void s_aws_mqtt5_client_java_publish_callback_destructor(
@@ -623,6 +625,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
     int exception_error_code = error_code;
     JavaVM *jvm = NULL;
     JNIEnv *env = NULL;
+    bool needs_detach = false;
     bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_publish_return_data *return_data = (struct aws_mqtt5_client_publish_return_data *)user_data;
@@ -639,7 +642,7 @@ static void s_aws_mqtt5_client_java_publish_completion(
 
     /********** JNI ENV ACQUIRE **********/
     jvm = java_client->jvm;
-    env = aws_jni_acquire_thread_env(jvm);
+    env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "PublishCompletion function: could not get env");
@@ -739,7 +742,7 @@ clean_up:
             (*env)->PopLocalFrame(env, NULL);
         }
         /********** JNI ENV RELEASE **********/
-        aws_jni_release_thread_env(jvm, env);
+        aws_jni_release_thread_env(jvm, env, needs_detach);
     }
     return;
 }
@@ -765,6 +768,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
     JavaVM *jvm = NULL;
+    bool needs_detach = false;
     bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_subscribe_return_data *return_data =
@@ -781,7 +785,7 @@ static void s_aws_mqtt5_client_java_subscribe_completion(
 
     /********** JNI ENV ACQUIRE **********/
     jvm = java_client->jvm;
-    env = aws_jni_acquire_thread_env(jvm);
+    env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "SubscribeCompletion: could not get env");
@@ -893,7 +897,7 @@ clean_up:
             (*env)->PopLocalFrame(env, NULL);
         }
         /********** JNI ENV RELEASE **********/
-        aws_jni_release_thread_env(jvm, env);
+        aws_jni_release_thread_env(jvm, env, needs_detach);
     }
 }
 
@@ -918,6 +922,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
     int exception_error_code = error_code;
     JNIEnv *env = NULL;
     JavaVM *jvm = NULL;
+    bool needs_detach = false;
     bool has_pushed_frame = false;
 
     struct aws_mqtt5_client_unsubscribe_return_data *return_data =
@@ -935,7 +940,7 @@ static void s_aws_mqtt5_client_java_unsubscribe_completion(
 
     /********** JNI ENV ACQUIRE **********/
     jvm = java_client->jvm;
-    env = aws_jni_acquire_thread_env(jvm);
+    env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "UnsubscribeCompletion: could not get env");
@@ -1042,7 +1047,7 @@ clean_up:
             (*env)->PopLocalFrame(env, NULL);
         }
         /********** JNI ENV RELEASE **********/
-        aws_jni_release_thread_env(jvm, env);
+        aws_jni_release_thread_env(jvm, env, needs_detach);
     }
 }
 
@@ -1056,7 +1061,8 @@ static void s_aws_mqtt5_client_java_termination(void *complete_ctx) {
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = java_client->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         AWS_LOGF_ERROR(AWS_LS_MQTT5_CLIENT, "MQTT5 client termination function in JNI called, but could not get env");
@@ -1070,7 +1076,7 @@ static void s_aws_mqtt5_client_java_termination(void *complete_ctx) {
     aws_mqtt5_client_java_destroy(env, allocator, java_client);
 
     /********** JNI ENV RELEASE **********/
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, env, needs_detach);
 }
 
 /*******************************************************************************
@@ -1520,7 +1526,8 @@ static void s_aws_mqtt5_client_java_websocket_handshake_transform(
     }
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(java_client->jvm);
+    bool needs_detach = false;
+    JNIEnv *env = aws_jni_acquire_thread_env(java_client->jvm, &needs_detach);
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         complete_fn(request, AWS_ERROR_INVALID_STATE, complete_ctx);
@@ -1553,7 +1560,7 @@ static void s_aws_mqtt5_client_java_websocket_handshake_transform(
     }
 
     (*env)->DeleteLocalRef(env, java_http_request);
-    aws_jni_release_thread_env(java_client->jvm, env);
+    aws_jni_release_thread_env(java_client->jvm, env, needs_detach);
     /********** JNI ENV RELEASE SUCCESS PATH **********/
 
     return;
@@ -1562,7 +1569,7 @@ error:;
     int error_code = aws_last_error();
     s_ws_handshake_destroy(ws_handshake);
     complete_fn(request, error_code, complete_ctx);
-    aws_jni_release_thread_env(java_client->jvm, env);
+    aws_jni_release_thread_env(java_client->jvm, env, needs_detach);
     /********** JNI ENV RELEASE FAILURE PATH **********/
 }
 

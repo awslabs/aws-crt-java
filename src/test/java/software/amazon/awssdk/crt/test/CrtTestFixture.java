@@ -236,7 +236,7 @@ public class CrtTestFixture {
     /* The setup function will be run before every test */
     @Before
     public void setup() {
-        System.out.println("[TEST START] " + testName.getMethodName());
+        System.out.println("[TEST START] " + this.getClass().getName() + "#" + testName.getMethodName());
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
         // TODO this CrtTestContext should be removed as we are using System Properties
@@ -265,7 +265,7 @@ public class CrtTestFixture {
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
-        System.out.println("[TEST END] " + testName.getMethodName());
+        System.out.println("[TEST END] " + this.getClass().getName() + "#" + testName.getMethodName());
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

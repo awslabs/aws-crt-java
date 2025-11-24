@@ -72,7 +72,6 @@ static void s_detach_jvm_from_thread(void *user_data) {
     bool needs_detach = false;
     JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
     if (env != NULL) {
-        AWS_LOGF_DEBUG(10, "=== debug threads: detach 2");
         (*jvm)->DetachCurrentThread(jvm);
         aws_jni_release_thread_env(jvm, env, needs_detach);
         /********** JNI ENV RELEASE **********/
@@ -115,7 +114,6 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *needs_detach) {
 #ifdef ANDROID
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
 #else
-        AWS_LOGF_DEBUG(10, "=== debug threads: attaching the thread");
         jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
 #endif
 
@@ -275,7 +273,6 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env, bool needs_detach) {
         when a callback is executed on a JVM thread.
         */
         if (s_dispatch_queue_threads && needs_detach) {
-            AWS_LOGF_DEBUG(10, "=== debug threads: detach");
             (*jvm)->DetachCurrentThread(jvm);
         }
 

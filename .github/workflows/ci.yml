@@ -218,6 +218,15 @@ jobs:
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
         python3 codebuild/macos_compatibility_check.py
+    - name: Upload crash logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: crash-logs-macos-x64
+        path: |
+          hs_err_pid*.log
+          core.*
+        if-no-files-found: ignore
 
   macos-x64:
     runs-on: macos-14-large #latest
@@ -236,6 +245,15 @@ jobs:
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
         python3 codebuild/macos_compatibility_check.py
+    - name: Upload crash logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: crash-logs-macos-x64
+        path: |
+          hs_err_pid*.log
+          core.*
+        if-no-files-found: ignore
 
   # check that docs can still build
   check-docs:

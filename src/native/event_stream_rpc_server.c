@@ -56,7 +56,7 @@ static void s_shutdown_callback_data_destroy(JNIEnv *env, struct shutdown_callba
 struct connection_callback_data {
     JavaVM *jvm;
     jobject java_server_connection;
-    jweak java_listener_handler;
+    jobject java_listener_handler;
     jobject java_connection_handler;
 };
 

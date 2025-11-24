@@ -96,7 +96,8 @@ static void s_server_listener_shutdown_complete(
     }
 
     if (callback_data->java_server_listener) {
-        (*env)->CallVoidMethod(env, callback_data->java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
+        (*env)->CallVoidMethod(
+            env, callback_data->java_server_listener, event_stream_server_listener_properties.onShutdownComplete);
         aws_jni_check_and_clear_exception(env);
     }
 

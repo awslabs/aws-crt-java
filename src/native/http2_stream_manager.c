@@ -45,7 +45,7 @@
  */
 struct aws_http2_stream_manager_binding {
     JavaVM *jvm;
-    jweak java_http2_stream_manager;
+    jobject java_http2_stream_manager;
     struct aws_http2_stream_manager *stream_manager;
 };
 
@@ -54,7 +54,7 @@ static void s_destroy_manager_binding(struct aws_http2_stream_manager_binding *b
         return;
     }
     if (binding->java_http2_stream_manager != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, binding->java_http2_stream_manager);
+        (*env)->DeleteGlobalRef(env, binding->java_http2_stream_manager);
     }
 
     aws_mem_release(aws_jni_get_allocator(), binding);
@@ -72,14 +72,12 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
     }
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Java Stream Manager Shutdown Complete");
-    jobject java_http2_stream_manager = (*env)->NewLocalRef(env, binding->java_http2_stream_manager);
-    if (java_http2_stream_manager != NULL) {
-        (*env)->CallVoidMethod(env, java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
+    if (binding->java_http2_stream_manager != NULL) {
+        (*env)->CallVoidMethod(
+            env, binding->java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
 
         /* If exception raised from Java callback, but we already closed the stream manager, just move on */
         aws_jni_check_and_clear_exception(env);
-
-        (*env)->DeleteLocalRef(env, java_http2_stream_manager);
     }
 
     /* We're done with this wrapper, free it. */
@@ -182,7 +180,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));
     AWS_FATAL_ASSERT(binding);
-    binding->java_http2_stream_manager = (*env)->NewWeakGlobalRef(env, stream_manager_jobject);
+    binding->java_http2_stream_manager = (*env)->NewGlobalRef(env, stream_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;

@@ -154,13 +154,13 @@ static void s_on_connection_complete(
         return;
     }
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
+    if (connection->java_mqtt_connection != NULL) {
         (*env)->CallVoidMethod(
-            env, mqtt_connection, mqtt_connection_properties.on_connection_complete, error_code, session_present);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+            env,
+            connection->java_mqtt_connection,
+            mqtt_connection_properties.on_connection_complete,
+            error_code,
+            session_present);
         if (aws_jni_check_and_clear_exception(env)) {
             aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
             /********** JNI ENV RELEASE EARLY OUT **********/
@@ -184,13 +184,13 @@ static void s_on_connection_interrupted_internal(
 
     AWS_FATAL_ASSERT(env);
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection) {
+    if (connection->java_mqtt_connection) {
         (*env)->CallVoidMethod(
-            env, mqtt_connection, mqtt_connection_properties.on_connection_interrupted, error_code, ack_callback);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+            env,
+            connection->java_mqtt_connection,
+            mqtt_connection_properties.on_connection_interrupted,
+            error_code,
+            ack_callback);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }
@@ -234,13 +234,9 @@ static void s_on_connection_success(
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection) {
-
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_success, session_present);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+    if (connection->java_mqtt_connection) {
+        (*env)->CallVoidMethod(
+            env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_success, session_present);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
     aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
@@ -262,12 +258,9 @@ static void s_on_connection_failure(
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection) {
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_failure, error_code);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+    if (connection->java_mqtt_connection) {
+        (*env)->CallVoidMethod(
+            env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_failure, error_code);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
     aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
@@ -292,13 +285,9 @@ static void s_on_connection_resumed(
         return;
     }
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection) {
-
-        (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_resumed, session_present);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+    if (connection->java_mqtt_connection) {
+        (*env)->CallVoidMethod(
+            env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_resumed, session_present);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
@@ -351,13 +340,9 @@ static void s_on_connection_closed(
     }
 
     // Make sure the Java object has not been garbage collected
-    if (!(*env)->IsSameObject(env, connection->java_mqtt_connection, NULL)) {
-        jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-        if (mqtt_connection) {
-            (*env)->CallVoidMethod(env, mqtt_connection, mqtt_connection_properties.on_connection_closed);
-            (*env)->DeleteLocalRef(env, mqtt_connection);
-            AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-        }
+    if (connection->java_mqtt_connection) {
+        (*env)->CallVoidMethod(env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_closed);
+        AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
     aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
@@ -375,12 +360,8 @@ static void s_on_connection_terminated(void *user_data) {
         return;
     }
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, jni_connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
-        (*env)->CallVoidMethod(env, mqtt_connection, crt_resource_properties.release_references);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+    if (jni_connection->java_mqtt_connection != NULL) {
+        (*env)->CallVoidMethod(env, jni_connection->java_mqtt_connection, crt_resource_properties.release_references);
         aws_jni_check_and_clear_exception(env);
     }
 
@@ -406,7 +387,7 @@ static struct mqtt_jni_connection *s_mqtt_connection_new(
     }
 
     aws_atomic_store_int(&connection->ref_count, 1);
-    connection->java_mqtt_connection = (*env)->NewWeakGlobalRef(env, java_mqtt_connection);
+    connection->java_mqtt_connection = (*env)->NewGlobalRef(env, java_mqtt_connection);
     jint jvmresult = (*env)->GetJavaVM(env, &connection->jvm);
     AWS_FATAL_ASSERT(jvmresult == 0);
 
@@ -453,7 +434,7 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
     }
 
     if (connection->java_mqtt_connection) {
-        (*env)->DeleteWeakGlobalRef(env, connection->java_mqtt_connection);
+        (*env)->DeleteGlobalRef(env, connection->java_mqtt_connection);
     }
 
     aws_tls_connection_options_clean_up(&connection->tls_options);
@@ -1201,13 +1182,13 @@ static void s_ws_handshake_transform(
         goto error;
     }
 
-    jobject mqtt_connection = (*env)->NewLocalRef(env, connection->java_mqtt_connection);
-    if (mqtt_connection != NULL) {
+    if (connection->java_mqtt_connection != NULL) {
         (*env)->CallVoidMethod(
-            env, mqtt_connection, mqtt_connection_properties.on_websocket_handshake, java_http_request, ws_handshake);
-
-        (*env)->DeleteLocalRef(env, mqtt_connection);
-
+            env,
+            connection->java_mqtt_connection,
+            mqtt_connection_properties.on_websocket_handshake,
+            java_http_request,
+            ws_handshake);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 

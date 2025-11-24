@@ -79,7 +79,9 @@ static void s_on_shutdown_complete(void *user_data) {
 
     if (callback_data->java_crt_credentials_provider != NULL) {
         (*env)->CallVoidMethod(
-            env, callback_data->java_crt_credentials_provider, credentials_provider_properties.on_shutdown_complete_method_id);
+            env,
+            callback_data->java_crt_credentials_provider,
+            credentials_provider_properties.on_shutdown_complete_method_id);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 

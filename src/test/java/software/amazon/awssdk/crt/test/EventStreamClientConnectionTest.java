@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.Assert.*;
 
 public class EventStreamClientConnectionTest extends CrtTestFixture {
-    private static final int TEST_TIMEOUT_SECONDS = 5;
+    private static final int TEST_TIMEOUT_SECONDS = 3;
     public EventStreamClientConnectionTest() {}
 
     @Test

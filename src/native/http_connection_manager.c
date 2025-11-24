@@ -334,6 +334,7 @@ static void s_on_http_conn_acquisition_callback(
         error_code,
         aws_error_str(error_code));
 
+    JavaVM *jvm = binding->jvm;
     (*env)->CallStaticVoidMethod(
         env,
         http_client_connection_properties.http_client_connection_class,
@@ -344,7 +345,6 @@ static void s_on_http_conn_acquisition_callback(
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    JavaVM *jvm = binding->jvm;
     if (error_code) {
         s_destroy_connection_binding(binding, env);
     }

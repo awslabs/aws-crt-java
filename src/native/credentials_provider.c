@@ -70,7 +70,8 @@ static void s_on_shutdown_complete(void *user_data) {
 
     // Tell the Java credentials providers that shutdown is done.  This lets it release its references.
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -89,8 +90,7 @@ static void s_on_shutdown_complete(void *user_data) {
 
     JavaVM *jvm = callback_data->jvm;
     s_callback_data_clean_up(env, allocator, callback_data);
-
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -560,7 +560,8 @@ static int s_credentials_provider_delegate_get_credentials(
     int return_value = AWS_OP_ERR;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -590,7 +591,7 @@ static int s_credentials_provider_delegate_get_credentials(
 done:
     (*env)->DeleteLocalRef(env, java_credentials);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return return_value;
@@ -688,14 +689,14 @@ static void s_aws_login_token_source_data_on_zero_ref(void *user_data) {
     JavaVM *jvm = login_token_source_data->jvm;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env != NULL) {
         if (login_token_source_data->login_token_source != NULL) {
             (*env)->DeleteGlobalRef(env, login_token_source_data->login_token_source);
         }
     }
-
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(login_token_source_data->allocator, login_token_source_data);
@@ -855,7 +856,8 @@ static int s_cognito_get_token_pairs(
     JavaVM *jvm = login_token_source_data->jvm;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
     }
@@ -911,7 +913,7 @@ done:
         s_aws_login_token_source_invocation_destroy(invocation, env);
     }
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
@@ -1103,7 +1105,8 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
     struct aws_credentials_provider_get_credentials_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -1131,8 +1134,7 @@ static void s_on_get_credentials_callback(struct aws_credentials *credentials, i
 
     JavaVM *jvm = callback_data->jvm;
     s_cp_callback_data_clean_up(callback_data, env);
-
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

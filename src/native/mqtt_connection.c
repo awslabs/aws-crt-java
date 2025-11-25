@@ -161,7 +161,6 @@ static void s_on_connection_complete(
             mqtt_connection_properties.on_connection_complete,
             error_code,
             session_present);
-
         if (aws_jni_check_and_clear_exception(env)) {
             aws_jni_release_thread_env(connection->jvm, env, needs_detach);
             /********** JNI ENV RELEASE EARLY OUT **********/
@@ -192,7 +191,6 @@ static void s_on_connection_interrupted_internal(
             mqtt_connection_properties.on_connection_interrupted,
             error_code,
             ack_callback);
-
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 }

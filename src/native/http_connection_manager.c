@@ -334,7 +334,6 @@ static void s_on_http_conn_acquisition_callback(
         aws_error_str(error_code));
 
     JavaVM *jvm = binding->jvm;
-
     (*env)->CallStaticVoidMethod(
         env,
         http_client_connection_properties.http_client_connection_class,

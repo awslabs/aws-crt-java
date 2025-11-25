@@ -14,9 +14,6 @@ import software.amazon.awssdk.crt.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.*;
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
-import software.amazon.awssdk.crt.Log.LogSubject;
 import software.amazon.awssdk.crt.s3.*;
 import software.amazon.awssdk.crt.s3.ChecksumConfig.ChecksumLocation;
 import software.amazon.awssdk.crt.s3.S3MetaRequestOptions.MetaRequestType;
@@ -721,7 +718,6 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
-        Log.initLoggingToFile(LogLevel.Trace, "/Users/dengket/project/crts/aws-crt-java/log");
         final long fileSize = 1 * 1024 * 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
 

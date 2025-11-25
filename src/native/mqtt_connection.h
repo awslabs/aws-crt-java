@@ -37,7 +37,7 @@ struct mqtt_jni_connection {
     struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
-    jweak java_mqtt_connection; /* MqttClientConnection instance */
+    jobject java_mqtt_connection; /* MqttClientConnection instance */
     struct mqtt_jni_async_callback *on_message;
 
     struct aws_atomic_var ref_count;

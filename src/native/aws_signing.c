@@ -205,8 +205,8 @@ static void s_aws_request_signing_complete(struct aws_signing_result *result, in
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -236,7 +236,7 @@ done:;
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -245,8 +245,8 @@ static void s_aws_chunk_like_signing_complete(struct aws_signing_result *result,
     struct s_aws_sign_request_callback_data *callback_data = userdata;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -264,7 +264,7 @@ done:;
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -280,8 +280,8 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
     struct aws_signing_config_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return false;
@@ -295,7 +295,7 @@ static bool s_should_sign_header(const struct aws_byte_cursor *name, void *user_
 
     (*env)->DeleteLocalRef(env, header_name);
 
-    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;

@@ -55,8 +55,8 @@ static void s_on_connection_setup(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -78,7 +78,7 @@ static void s_on_connection_setup(
         s_destroy_connection_callback_data(callback_data, env);
     }
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -91,8 +91,8 @@ static void s_on_connection_shutdown(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -108,7 +108,7 @@ static void s_on_connection_shutdown(
     JavaVM *jvm = callback_data->jvm;
     s_destroy_connection_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -121,8 +121,8 @@ static void s_connection_protocol_message(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -147,7 +147,7 @@ static void s_connection_protocol_message(
     (*env)->DeleteLocalRef(env, headers_array);
     aws_jni_check_and_clear_exception(env);
 
-    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -348,8 +348,8 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -362,7 +362,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     JavaVM *jvm = callback_data->jvm;
     s_destroy_message_flush_callback_args(env, callback_data);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -459,8 +459,8 @@ static void s_stream_continuation(
     struct continuation_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -486,7 +486,7 @@ static void s_stream_continuation(
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 
-    aws_jni_release_thread_env(callback_data->jvm, env, needs_detach);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -497,8 +497,8 @@ static void s_stream_continuation_closed(
     struct continuation_callback_data *continuation_callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(continuation_callback_data->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(continuation_callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -513,7 +513,7 @@ static void s_stream_continuation_closed(
 
     JavaVM *jvm = continuation_callback_data->jvm;
     s_client_continuation_data_destroy(env, continuation_callback_data);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

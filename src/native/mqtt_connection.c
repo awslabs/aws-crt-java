@@ -147,8 +147,8 @@ static void s_on_connection_complete(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = connection->jvm;
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -162,7 +162,7 @@ static void s_on_connection_complete(
             error_code,
             session_present);
         if (aws_jni_check_and_clear_exception(env)) {
-            aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+            aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
             /********** JNI ENV RELEASE EARLY OUT **********/
             aws_mqtt_client_connection_disconnect(client_connection, s_on_connection_disconnected, connect_callback);
             return; /* callback and ref count will be cleaned up in s_on_connection_disconnected */
@@ -171,7 +171,7 @@ static void s_on_connection_complete(
 
     s_mqtt_jni_async_callback_destroy(connect_callback, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
     s_mqtt_jni_connection_release(connection);
 }
@@ -204,8 +204,8 @@ static void s_on_connection_interrupted(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -213,7 +213,7 @@ static void s_on_connection_interrupted(
 
     s_on_connection_interrupted_internal(user_data, error_code, NULL, env);
 
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -228,8 +228,8 @@ static void s_on_connection_success(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -239,7 +239,7 @@ static void s_on_connection_success(
             env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_success, session_present);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -252,8 +252,8 @@ static void s_on_connection_failure(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -263,7 +263,7 @@ static void s_on_connection_failure(
             env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_failure, error_code);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -278,8 +278,8 @@ static void s_on_connection_resumed(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -291,7 +291,7 @@ static void s_on_connection_resumed(
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
 
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -302,8 +302,8 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
     struct mqtt_jni_connection *jni_connection = connect_callback->connection;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jni_connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -315,7 +315,7 @@ static void s_on_connection_disconnected(struct aws_mqtt_client_connection *clie
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    aws_jni_release_thread_env(jni_connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(jni_connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     /* Do not call release here: s_on_connection_closed will (normally) be called
@@ -332,8 +332,8 @@ static void s_on_connection_closed(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -344,7 +344,7 @@ static void s_on_connection_closed(
         (*env)->CallVoidMethod(env, connection->java_mqtt_connection, mqtt_connection_properties.on_connection_closed);
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     }
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -353,8 +353,8 @@ static void s_on_connection_terminated(void *user_data) {
     struct mqtt_jni_connection *jni_connection = (struct mqtt_jni_connection *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jni_connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jni_connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -368,7 +368,7 @@ static void s_on_connection_terminated(void *user_data) {
     JavaVM *jvm = jni_connection->jvm;
 
     s_mqtt_connection_destroy(env, jni_connection);
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -706,8 +706,8 @@ static void s_on_op_complete(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = callback->connection->jvm;
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         return;
     }
@@ -720,7 +720,7 @@ static void s_on_op_complete(
 
     s_mqtt_jni_async_callback_destroy(callback, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -752,15 +752,15 @@ static void s_cleanup_handler(void *user_data) {
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = handler->connection->jvm;
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         return;
     }
 
     s_mqtt_jni_async_callback_destroy(handler, env);
 
-    aws_jni_release_thread_env(jvm, env, needs_detach);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -784,8 +784,8 @@ static void s_on_subscription_delivered(
     }
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback->connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -804,7 +804,7 @@ static void s_on_subscription_delivered(
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    aws_jni_release_thread_env(callback->connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(callback->connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -1154,8 +1154,8 @@ static void s_ws_handshake_transform(
     struct mqtt_jni_connection *connection = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(connection->jvm, &needs_detach);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(connection->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         complete_fn(request, AWS_ERROR_INVALID_STATE, complete_ctx);
@@ -1193,7 +1193,7 @@ static void s_ws_handshake_transform(
     }
 
     (*env)->DeleteLocalRef(env, java_http_request);
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE SUCCESS PATH **********/
 
     return;
@@ -1203,7 +1203,7 @@ error:;
     int error_code = aws_last_error();
     s_ws_handshake_destroy(ws_handshake);
     complete_fn(request, error_code, complete_ctx);
-    aws_jni_release_thread_env(connection->jvm, env, needs_detach);
+    aws_jni_release_thread_env(connection->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE FAILURE PATH **********/
 }
 

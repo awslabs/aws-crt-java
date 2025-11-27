@@ -620,11 +620,12 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         final long fileSize = 1 * 1024 * 1024;
+        final long initialReadWindowSize = 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
 
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
-                .withInitialReadWindowSize(1024)
+                .withInitialReadWindowSize(initialReadWindowSize)
                 .withPartSize(fileSize / 4);
         final long windowIncrementSize = clientOptions.getPartSize() / 2;
 
@@ -662,12 +663,16 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.GET_OBJECT)
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
+            long accumulated_data_size = 0;
+            long accumulated_window_increments = initialReadWindowSize;
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
 
                 while (!onFinishedFuture.isDone()) {
                     // Check if we've received data since last loop
                     long lastDownloadSizeDelta = downloadSizeDelta.getAndSet(0);
+                    accumulated_data_size += lastDownloadSizeDelta;
+                    long max_data_allowed = accumulated_window_increments;
 
                     // Figure out how long it's been since we last received data
                     Instant currentTime = clock.instant();
@@ -676,15 +681,20 @@ public class S3ClientTest extends CrtTestFixture {
                     }
 
                     Duration timeSinceSomethingHappened = Duration.between(lastTimeSomethingHappened, currentTime);
+                    Assert.assertTrue(accumulated_data_size <=  max_data_allowed);
 
                     // If it seems like data has stopped flowing, then we know a stall happened due
                     // to backpressure.
                     if (timeSinceSomethingHappened.compareTo(ifNothingHappensAfterThisLongItStalled) >= 0) {
                         stallCount += 1;
+                        long current_window = accumulated_window_increments - accumulated_data_size;
+                        /* If stalled, it must be the window reach to 0 */
+                        Assert.assertTrue(current_window == 0);
                         lastTimeSomethingHappened = currentTime;
 
                         // Increment window so that download continues...
                         metaRequest.incrementReadWindow(windowIncrementSize);
+                        accumulated_window_increments += windowIncrementSize;
                     }
 
                     // Sleep a moment and loop again...

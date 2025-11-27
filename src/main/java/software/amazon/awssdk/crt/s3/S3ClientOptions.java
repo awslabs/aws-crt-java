@@ -204,7 +204,7 @@ public class S3ClientOptions {
      * <p>
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
-     * and you may still receive some data after the window reaches zero.
+     * You will not receive any data after the window reaches zero until the window incremented.
      *
      * @param enable whether to enable or disable backpressure
      * @return this

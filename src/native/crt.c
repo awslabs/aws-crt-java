@@ -69,27 +69,18 @@ static void s_detach_jvm_from_thread(void *user_data) {
 
     /* we don't need this JNIEnv, but this is an easy way to verify the JVM is still valid to use */
     /********** JNI ENV ACQUIRE **********/
-    bool needs_detach = false;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm, &needs_detach);
-    if (env != NULL) {
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    if (jvm_env_context.env != NULL) {
         (*jvm)->DetachCurrentThread(jvm);
-        aws_jni_release_thread_env(jvm, env, needs_detach);
+        aws_jni_release_thread_env(jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
     }
 }
 
-static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *needs_detach) {
-#ifdef ANDROID
-    JNIEnv *env = NULL;
-#else
-    void *env = NULL;
-#endif
+static struct aws_jvm_env_context s_aws_jni_get_thread_env(JavaVM *jvm) {
+    struct aws_jvm_env_context jvm_env_context = {.env = NULL, .should_detach = false};
 
-    *needs_detach = false;
-
-    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        *needs_detach = true;
-
+    if ((*jvm)->GetEnv(jvm, (void **)&jvm_env_context.env, JNI_VERSION_1_6) == JNI_EDETACHED) {
         if (!s_dispatch_queue_threads) {
             AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
         }
@@ -112,9 +103,9 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *needs_detach) {
         }
 
 #ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, &attach_args);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &jvm_env_context.env, &attach_args);
 #else
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, &attach_args);
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&jvm_env_context.env, &attach_args);
 #endif
 
         aws_string_destroy(thread_name);
@@ -123,8 +114,11 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *needs_detach) {
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
             fprintf(stderr, "Unrecoverable AttachCurrentThreadAsDaemon failed, JNI error code is %d\n", (int)result);
-            return NULL;
+            jvm_env_context.env = NULL;
+            return jvm_env_context;
         }
+
+        jvm_env_context.should_detach = true;
 
         /*
         Dispatch Queue threads are managed by Apple's GCD and thus can't have an at_exit callback assigned. We manually
@@ -137,7 +131,7 @@ static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm, bool *needs_detach) {
         }
     }
 
-    return env;
+    return jvm_env_context;
 }
 
 /*
@@ -216,8 +210,11 @@ done:
     aws_rw_lock_wunlock(&s_jvm_table_lock);
 }
 
-JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm, bool *needs_detach) {
-    *needs_detach = false;
+struct aws_jvm_env_context aws_jni_acquire_thread_env(JavaVM *jvm) {
+    struct aws_jvm_env_context jvm_env_context = {
+        .env = NULL,
+        .should_detach = false,
+    };
 
     /*
      * We use try-lock here in order to avoid the re-entrant deadlock case that could happen if we have a read
@@ -229,7 +226,7 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm, bool *needs_detach) {
         if (aws_last_error() != AWS_ERROR_UNSUPPORTED_OPERATION) {
             aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         }
-        return NULL;
+        return jvm_env_context;
     }
 
     if (s_jvms == NULL) {
@@ -244,27 +241,23 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm, bool *needs_detach) {
         goto error;
     }
 
-    JNIEnv *env = s_aws_jni_get_thread_env(jvm, needs_detach);
-    if (env == NULL) {
+    jvm_env_context = s_aws_jni_get_thread_env(jvm);
+    if (jvm_env_context.env == NULL) {
         aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         goto error;
     }
 
-    return env;
+    return jvm_env_context;
 
 error:
 
     aws_rw_lock_runlock(&s_jvm_table_lock);
 
-    return NULL;
+    return jvm_env_context;
 }
 
-void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env, bool needs_detach) {
-    (void)jvm;
-    (void)env;
-    AWS_LOGF_DEBUG(10, "aws_jni_release_thread_env for env %p", (void *)env);
-
-    if (env != NULL) {
+void aws_jni_release_thread_env(JavaVM *jvm, struct aws_jvm_env_context *jvm_env_context) {
+    if (jvm_env_context->env != NULL) {
         /*
         Dispatch Queue threads must be manually detached after they're used instead of depending
         on a thread exit callback due to the threads not being managed by the CRT and thus, their
@@ -272,7 +265,7 @@ void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env, bool needs_detach) {
         An additional needs_detach variable is needed to avoid detaching JVM threads. It happens
         when a callback is executed on a JVM thread.
         */
-        if (s_dispatch_queue_threads && needs_detach) {
+        if (s_dispatch_queue_threads && jvm_env_context->should_detach) {
             (*jvm)->DetachCurrentThread(jvm);
         }
 

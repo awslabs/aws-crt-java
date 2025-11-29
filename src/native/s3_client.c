@@ -1118,6 +1118,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
             enum aws_s3_checksum_algorithm algorithm = (int)marshalled_algorithms[i];
             aws_array_list_push_back(&response_checksum_list, &algorithm);
         }
+        (*env)->ReleaseIntArrayElements(env, jni_marshalled_validate_algorithms, marshalled_algorithms, JNI_ABORT);
         checksum_config.validate_checksum_algorithms = &response_checksum_list;
     }
 
@@ -1158,8 +1159,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
-    /* We are done using the list, it can be safely cleaned up now. */
-    aws_array_list_clean_up(&response_checksum_list);
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");
@@ -1172,8 +1171,11 @@ done:
     aws_s3_meta_request_resume_token_release(resume_token);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     aws_http_message_release(request_message);
+    /* We are done using the list, it can be safely cleaned up now. */
+    aws_array_list_clean_up(&response_checksum_list);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_operation_name, operation_name);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_response_filepath, response_filepath);
     aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;

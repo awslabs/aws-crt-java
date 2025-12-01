@@ -496,7 +496,12 @@
                         </property>
                     </properties>
                     <shutdown>kill</shutdown>
-                    <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
+                    <argLine>
+                        -Daws.crt.memory.tracing=2 
+                        -Xcheck:jni
+                        -verbose:jni
+                        -Xdiag
+                    </argLine>
                     <runOrder>alphabetical</runOrder>
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>

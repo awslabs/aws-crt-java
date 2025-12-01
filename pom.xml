@@ -506,6 +506,7 @@
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
                     <forkCount>0</forkCount>
+                    <printJvmArgs>true</printJvmArgs>
                 </configuration>
             </plugin>
             <plugin>

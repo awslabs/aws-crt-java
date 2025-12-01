@@ -502,7 +502,8 @@
                     </jvmArgs>
                     <shutdown>kill</shutdown>
                     <argLine>
-                        -Daws.crt.memory.tracing=2 
+                        -Daws.crt.memory.tracing=2
+                        -Ddebug.native
                         -Xcheck:jni
                         -verbose:jni
                         -Xdiag

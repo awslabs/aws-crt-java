@@ -1027,6 +1027,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     bool success = false;
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
     struct aws_http_message *request_message = NULL;
+    struct aws_array_list response_checksum_list;
+    AWS_ZERO_STRUCT(response_checksum_list);
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
@@ -1108,8 +1110,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .validate_response_checksum = validate_response,
     };
 
-    struct aws_array_list response_checksum_list;
-    AWS_ZERO_STRUCT(response_checksum_list);
     if (jni_marshalled_validate_algorithms != NULL) {
         jint *marshalled_algorithms = (*env)->GetIntArrayElements(env, jni_marshalled_validate_algorithms, NULL);
         const size_t marshalled_len = (*env)->GetArrayLength(env, jni_marshalled_validate_algorithms);
@@ -1171,7 +1171,6 @@ done:
     aws_s3_meta_request_resume_token_release(resume_token);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     aws_http_message_release(request_message);
-    /* We are done using the list, it can be safely cleaned up now. */
     aws_array_list_clean_up(&response_checksum_list);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_operation_name, operation_name);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);

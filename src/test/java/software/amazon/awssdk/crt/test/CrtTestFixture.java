@@ -32,6 +32,7 @@ import java.util.Optional;
 public class CrtTestFixture {
 
     private CrtTestContext context;
+    private long jvmMemoryBeforeTest;
 
     @Rule
     public TestName testName = new TestName();
@@ -239,6 +240,13 @@ public class CrtTestFixture {
         System.out.println("[TEST START] " + testName.getMethodName());
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
 
+        // Capture initial JVM memory usage for leak detection
+        if (CRT.getOSIdentifier() != "android") {
+            // Force GC to get a stable baseline
+            Runtime.getRuntime().gc();
+            jvmMemoryBeforeTest = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        }
+
         // TODO this CrtTestContext should be removed as we are using System Properties
         // for tests now.
         context = new CrtTestContext();
@@ -260,8 +268,9 @@ public class CrtTestFixture {
             try {
                 Runtime.getRuntime().gc();
                 CrtMemoryLeakDetector.nativeMemoryLeakCheck();
+                CrtMemoryLeakDetector.jvmMemoryLeakCheck(jvmMemoryBeforeTest);
             } catch (Exception e) {
-                throw new RuntimeException("Memory leak from native resource detected!");
+                throw new RuntimeException("Memory leak detected!");
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");

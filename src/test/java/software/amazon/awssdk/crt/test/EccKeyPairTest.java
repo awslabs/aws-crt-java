@@ -25,7 +25,7 @@ public class EccKeyPairTest extends CrtTestFixture {
     @Test
     public void testSignMessage() {
         try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials, EccKeyPair.AwsEccCurve.AWS_ECDSA_P256)) {
-            byte[] signatureBytes = keyPair.signMessage("".getBytes());
+            byte[] signatureBytes = keyPair.signMessage("1".getBytes());
             assertTrue(signatureBytes.length > 0);
         }
     }

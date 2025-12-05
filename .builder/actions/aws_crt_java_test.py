@@ -2,6 +2,7 @@ import Builder
 import sys
 import os
 import os.path
+import pprint
 
 
 class AWSCrtJavaTest(Builder.Action):
@@ -28,6 +29,10 @@ class AWSCrtJavaTest(Builder.Action):
         cmd_args.append("test")
 
         result = self.env.shell.exec(*cmd_args, check=False)
+        print("***********************BEGIN RESULT OBJECT**************")
+        pprint.print(result)
+        print("************************END RESULT OBJECT***************")
+        print("result: ", result.returncode)
         if result.returncode:
             if os.path.exists('log.txt'):
                 print("--- CRT logs from failing test ---")
@@ -35,6 +40,8 @@ class AWSCrtJavaTest(Builder.Action):
                     print(log.read())
                 print("----------------------------------")
             sys.exit(f"Tests failed")
+
+        print("WE DID NOT FAIL THIS SET OF TESTS")
 
     def start_maven_tests(self, env):
         # tests must run with leak detection turned on

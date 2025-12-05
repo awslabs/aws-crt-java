@@ -1077,6 +1077,8 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
     s3_request_metrics_properties.error_code_field_id = (*env)->GetFieldID(env, cls, "errorCode", "I");
 
     s3_request_metrics_properties.retry_attempt_field_id = (*env)->GetFieldID(env, cls, "retryAttempt", "I");
+
+    (*env)->DeleteLocalRef(env, cls);
 }
 
 struct java_aws_s3_tcp_keep_alive_options_properties s3_tcp_keep_alive_options_properties;

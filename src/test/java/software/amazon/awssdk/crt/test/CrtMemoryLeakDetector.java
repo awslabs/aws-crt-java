@@ -65,6 +65,38 @@ public class CrtMemoryLeakDetector extends CrtTestFixture {
         }
     }
 
+    /**
+     * Checks for JVM memory leaks by comparing memory usage before and after test.
+     * A significant increase in memory usage indicates a potential leak.
+     *
+     * @param memoryBeforeTest The JVM memory usage before the test started
+     * @throws Exception if a memory leak is detected
+     */
+    public static void jvmMemoryLeakCheck(long memoryBeforeTest) throws Exception {
+        long memoryAfterTest = getJvmMemoryInUse();
+        long memoryGrowth = memoryAfterTest - memoryBeforeTest;
+
+        // Allow some tolerance for normal memory fluctuations (5MB)
+        long maxAllowedGrowth = expectedFixedGrowth();
+
+        if (memoryGrowth > maxAllowedGrowth) {
+            String output = String.format(
+                "Potential JVM Memory Leak Detected!\n" +
+                "Memory before test: %d bytes (%.2f MB)\n" +
+                "Memory after test: %d bytes (%.2f MB)\n" +
+                "Memory growth: %d bytes (%.2f MB)\n" +
+                "Allowed growth: %d bytes (%.2f MB)\n",
+                memoryBeforeTest, memoryBeforeTest / (1024.0 * 1024.0),
+                memoryAfterTest, memoryAfterTest / (1024.0 * 1024.0),
+                memoryGrowth, memoryGrowth / (1024.0 * 1024.0),
+                maxAllowedGrowth, maxAllowedGrowth / (1024.0 * 1024.0)
+            );
+
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtGeneral, output);
+            Assert.fail(output);
+        }
+    }
+
     public static void leakCheck(Callable<Void> fn) throws Exception {
         leakCheck(DEFAULT_NUM_LEAK_TEST_ITERATIONS, expectedFixedGrowth(), fn);
     }

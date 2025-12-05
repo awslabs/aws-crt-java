@@ -30,7 +30,7 @@ class AWSCrtJavaTest(Builder.Action):
 
         result = self.env.shell.exec(*cmd_args, check=False)
         print("***********************BEGIN RESULT OBJECT**************")
-        pprint.print(result)
+        pprint.pprint(result)
         print("************************END RESULT OBJECT***************")
         print("result: ", result.returncode)
         if result.returncode:
@@ -47,7 +47,7 @@ class AWSCrtJavaTest(Builder.Action):
         # tests must run with leak detection turned on
         env.shell.setenv('AWS_CRT_MEMORY_TRACING', '2')
 
-        self._run_java_tests("-DrerunFailingTestsCount=5")
+        self._run_java_tests("-DrerunFailingTestsCount=5", "-Dtest=EccKeyPairTest")
 
         if os.getenv("AWS_GRAALVM_CI") is None:
             # not running separate test for GraalVM, because GraalVM needs

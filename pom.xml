@@ -479,6 +479,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
+                    <testFailureIgnore>false</testFailureIgnore>
                     <systemPropertyVariables>
                         <crt.classifier>${crt.classifier}</crt.classifier>
                         <certificate>${crt.test.certificate}</certificate>

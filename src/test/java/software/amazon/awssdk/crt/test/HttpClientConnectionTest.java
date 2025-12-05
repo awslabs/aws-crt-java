@@ -97,7 +97,7 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
             Assert.assertEquals(assertMsg + " connection success.", expectConnected, resp.actuallyConnected);
             Assert.assertEquals(assertMsg + " exception thrown.", !expectConnected, resp.exceptionThrown);
 
-            resp.shutdownComplete.get();
+            resp.shutdownComplete.get(20, TimeUnit.SECONDS);
         }
     }
 

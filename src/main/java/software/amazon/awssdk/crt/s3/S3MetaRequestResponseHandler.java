@@ -70,8 +70,10 @@ public interface S3MetaRequestResponseHandler {
     }
 
     /**
-     * Invoked to report telemetry of partial execution of meta request.
-     * This reports back details irrespective of success or failure of partial request.
+     * Invoked to report telemetry of every request made to S3.
+     * Each meta request may or may not be split into multiple requests for faster execution.
+     * However, when it is split, each request is considered as an independent ranged_get/upload_part
+     * and receives its own set of metrics with details irrespective of success or failure.
      * More details on the specific metrics collected is provided on {@link S3RequestMetrics}
      * @param requestMetrics telemetry data for an individual http request attempt within the meta request
      */

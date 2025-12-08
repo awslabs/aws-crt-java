@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt;
 
 public enum ErrorType {
@@ -15,3 +19,4 @@ public enum ErrorType {
         this.name = name;
     }
 }
+

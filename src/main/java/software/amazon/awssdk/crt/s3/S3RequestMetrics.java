@@ -1,10 +1,22 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.ErrorType;
 
 /**
- * Metrics collected upon completion of an S3 Request
+ * An S3 Request is any HTTP request made to the S3 Server. Within CRT,
+ * this takes multiple forms, a large enough request (S3MetaRequest) from
+ * a customer might be divided into smaller, parallelised S3Requests for
+ * better performance. These are considered independed requests to S3 but
+ * abstracts away the implementation details.
+ *
+ * S3RequestMetrics are asynchronously collected upon completion of an S3 Request.
+ * This however, is independent from the success or failure of the corresponding
+ * S3MetaRequest or even the S3Request.
  */
 public class S3RequestMetrics {
     private long s3RequestFirstAttemptStartTimestampNs;

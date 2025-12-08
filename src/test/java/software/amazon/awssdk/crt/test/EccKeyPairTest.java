@@ -28,7 +28,7 @@ public class EccKeyPairTest extends CrtTestFixture {
             /**
              * TODO: windows stop supporting signing empty string, and the signing SHOULD take a hash digest, which SHOULD never be empty.
              **/
-            byte[] signatureBytes = keyPair.signMessage("".getBytes());
+            byte[] signatureBytes = keyPair.signMessage("1".getBytes());
             assertTrue(signatureBytes.length > 0);
         }
     }

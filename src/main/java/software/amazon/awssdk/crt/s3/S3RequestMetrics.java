@@ -8,15 +8,16 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.ErrorType;
 
 /**
- * An S3 Request is any HTTP request made to the S3 Server. Within CRT,
- * this takes multiple forms, a large enough request (S3MetaRequest) from
- * a customer might be divided into smaller, parallelised S3Requests for
- * better performance. These are considered independed requests to S3 but
- * abstracts away the implementation details.
+ * An Request is any HTTP request made to the S3 Server. Within CRT,
+ * a large enough request (S3MetaRequest) from the customer might be divided 
+ * into smaller, parallelised Requests for better performance. These are considered 
+ * independent requests to S3 but CRT abstracts away the implementation details.
  *
- * S3RequestMetrics are asynchronously collected upon completion of an S3 Request.
- * This however, is independent from the success or failure of the corresponding
- * S3MetaRequest or even the S3Request.
+ * S3RequestMetrics are asynchronously collected upon completion of a Request.
+ * This however, is independent from the success or even completion of the corresponding
+ * S3MetaRequest. When a particular request from customer (a Meta Request) is divided
+ * into n-requests on the CRT end, customer receives at minimum n-S3RequestMetrics
+ * objects (assuming all requests succeed in the first attempt, more if some fail).
  */
 public class S3RequestMetrics {
     private long s3RequestFirstAttemptStartTimestampNs;

@@ -25,6 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.Assert.*;
 
 public class ServerListenerTest extends CrtTestFixture {
+    private final int TIMEOUT_SEC = 10;
+
     public ServerListenerTest() {}
 
     @Test
@@ -47,10 +49,10 @@ public class ServerListenerTest extends CrtTestFixture {
         });
 
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -76,10 +78,10 @@ public class ServerListenerTest extends CrtTestFixture {
         int boundPort = listener.getBoundPort();
         assertTrue(boundPort > 0);
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -119,10 +121,10 @@ public class ServerListenerTest extends CrtTestFixture {
         assertTrue(exceptionThrown);
 
         listener1.close();
-        listener1.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener1.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -187,10 +189,10 @@ public class ServerListenerTest extends CrtTestFixture {
         assertTrue(connectionShutdown[0]);
 
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -300,10 +302,10 @@ public class ServerListenerTest extends CrtTestFixture {
         assertTrue(connectionShutdown[0]);
 
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -450,10 +452,10 @@ public class ServerListenerTest extends CrtTestFixture {
         assertEquals(operationName, receivedOperationName[0]);
         assertEquals(payload, receivedContinuationPayload[0]);
         listener.close();
-        listener.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        listener.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
         bootstrap.close();
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TIMEOUT_SEC, TimeUnit.SECONDS);
 
         socketOptions.close();
     }

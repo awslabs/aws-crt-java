@@ -55,13 +55,13 @@ public class S3RequestMetrics {
 
     // CRT info metrics
     private String ipAddress;
-    
+
     // Request ptr and connection id are internal metrics for crt that directly points to the
     // connection's and S3 request's addresses for this request attempt. This does not need to be exposed,
     // but it might prove useful for logs.
     private long connectionId;
     private long requestPtr;
-    
+
     private long threadId;
     private int streamId;
     private int errorCode;
@@ -69,7 +69,7 @@ public class S3RequestMetrics {
 
     public long getApiCallDurationNs() {
         return this.s3RequestLastAttemptEndTimestampNs - this.s3RequestFirstAttemptStartTimestampNs;
-    }
+    } 
 
     public boolean isApiCallSuccessful() {
         return this.errorCode == 0;
@@ -105,7 +105,7 @@ public class S3RequestMetrics {
 
     public long getServiceCallDurationNs() {
         return this.serviceCallDurationNs;
-    }    
+    }
 
     public long getSigningDurationNs() {
         return this.signingDurationNs;
@@ -117,5 +117,10 @@ public class S3RequestMetrics {
 
     public long getTimeToLastByte() {
         return this.receiveEndTimestampNs;
+    }
+
+    // Please use 
+    public int getErrorCode() {
+        return this.errorCode;
     }
 }

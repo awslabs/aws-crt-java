@@ -2691,7 +2691,6 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_directory_entry(env);
     s_cache_s3_tcp_keep_alive_options(env);
     s_cache_s3_meta_request_progress(env);
-    s_cache_s3_error_type(env);
     s_cache_s3_request_metrics(env);
     s_cache_s3_meta_request_resume_token(env);
     s_cache_mqtt5_connack_packet(env);

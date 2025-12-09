@@ -946,25 +946,6 @@ static void s_cache_s3_meta_request_progress(JNIEnv *env) {
     s3_meta_request_progress_properties.content_length_field_id = (*env)->GetFieldID(env, cls, "contentLength", "J");
 }
 
-struct java_s3_error_type_properties s3_error_type_properties;
-
-static void s_cache_s3_error_type(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/ErrorType");
-    AWS_FATAL_ASSERT(cls);
-    s3_error_type_properties.error_type_class = (*env)->NewGlobalRef(env, cls);
-
-    jmethodID values_method =
-        (*env)->GetStaticMethodID(env, cls, "values", "()[Lsoftware/amazon/awssdk/crt/ErrorType;");
-    AWS_FATAL_ASSERT(values_method);
-
-    jobjectArray values = (*env)->CallStaticObjectMethod(env, cls, values_method);
-    AWS_FATAL_ASSERT(values);
-    s3_error_type_properties.error_type_values = (*env)->NewGlobalRef(env, values);
-
-    (*env)->DeleteLocalRef(env, values);
-    (*env)->DeleteLocalRef(env, cls);
-}
-
 struct java_aws_s3_request_metrics s3_request_metrics_properties;
 
 static void s_cache_s3_request_metrics(JNIEnv *env) {

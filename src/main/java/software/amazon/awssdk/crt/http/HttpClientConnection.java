@@ -159,7 +159,6 @@ public class HttpClientConnection extends CrtResource {
      * @return true if the error that generated the exception makes sense for a retry, and
      * false otherwise.
      */
-    @Deprecated  // use CRT.awsGetErrorType() instead
     public static boolean isErrorRetryable(HttpException exception) {
         // why take an exception rather than an error code directly?
         // to give us breathing room for changing our mind later about how we convey

@@ -5,7 +5,6 @@
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.ErrorType;
 
 /**
  * An Request is any HTTP request made to the S3 Server. Within CRT,
@@ -102,10 +101,6 @@ public class S3RequestMetrics {
 
     public long getBackoffDelayDurationNs() {
         return this.retryDelayDurationNs;
-    }
-
-    public ErrorType getErrorType() {
-        return CRT.awsGetErrorType(this.errorCode);
     }
 
     public long getServiceCallDurationNs() {

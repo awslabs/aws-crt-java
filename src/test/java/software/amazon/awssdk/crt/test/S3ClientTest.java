@@ -5,7 +5,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.ErrorType;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.auth.credentials.Credentials;
@@ -1739,9 +1738,6 @@ public class S3ClientTest extends CrtTestFixture {
                     // Validate request ID
                     Assert.assertNotNull("Request ID should not be null", metrics.getAwsRequestId());
                     Assert.assertNotNull("Extended Request ID should not be null", metrics.getAwsExtendedRequestId());
-
-                    // Validate Error Type
-                    Assert.assertSame("Error type should be SUCCESS", ErrorType.SUCCESS, metrics.getErrorType());
 
                     // Validate timing metrics
                     Assert.assertTrue("Time to first byte should be > 0", metrics.getTimeToFirstByte() > 0);

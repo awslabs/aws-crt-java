@@ -1739,6 +1739,8 @@ public class S3ClientTest extends CrtTestFixture {
                     Assert.assertNotNull("Request ID should not be null", metrics.getAwsRequestId());
                     Assert.assertNotNull("Extended Request ID should not be null", metrics.getAwsExtendedRequestId());
 
+                    Assert.assertNotNull("Error Code should not be null", metrics.getErrorCode());
+
                     // Validate timing metrics
                     Assert.assertTrue("Time to first byte should be > 0", metrics.getTimeToFirstByte() > 0);
                     Assert.assertTrue("Time to last byte should be > 0", metrics.getTimeToLastByte() > 0);

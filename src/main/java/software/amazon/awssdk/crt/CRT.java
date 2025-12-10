@@ -312,7 +312,7 @@ public final class CRT {
             // process is still using the .dll, the delete will fail, which is fine.
             tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
         } else {
-            // In some edge cases, File.deleteOnExit() might not run in cases like Lambda SnapStart or abnormal termination of the JVM. 
+            // In some edge cases, File.deleteOnExit() might not run in cases like Lambda SnapStart or abnormal termination of the JVM.
             // Therefore, we delete the library file immediately after it has been successfully loaded.
             // This is safe to do on non-Windows platforms; everything will keep working in the current process.
             tempSharedLib.delete();

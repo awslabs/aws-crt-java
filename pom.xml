@@ -501,6 +501,7 @@
                     <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
                     <forkCount>0</forkCount>
+                    <testFailureIgnore>false</testFailureIgnore>
                 </configuration>
             </plugin>
             <plugin>

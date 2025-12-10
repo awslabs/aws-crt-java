@@ -55,7 +55,7 @@ phases:
       - git clone git@github.com:awslabs/aws-crt-canaries.git
       - cd aws-crt-canaries
       - git checkout Setup
-      - ls source/mqtt
+      - cp source/mqtt/*.py ../../codebuild
       - cd ..
       # Build CRT
       - mvn install -DskipTests

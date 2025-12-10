@@ -642,7 +642,7 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
-static bool s_is_transient_error(JNIEnv *env, int error_code) {
+static bool s_is_transient_error(int error_code) {
     bool is_transient_error;
     switch (error_code) {
         case AWS_ERROR_HTTP_PROXY_CONNECT_FAILED:
@@ -721,9 +721,10 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 }
 
 JNIEXPORT
-bool JNICALL Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIENV *env, jclass jni_crt_class, jint error_code) {
+bool JNICALL Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    (void)env; 
     (void)jni_crt_class;
-    return s_is_transient_error(env, error_code);
+    return s_is_transient_error(error_code);
 }
 
 JNIEXPORT

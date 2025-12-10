@@ -642,6 +642,18 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
+static bool s_is_transient_error(JNIEnv *env, int error_code) {
+    bool is_transient_error;
+    switch (error_code) {
+        case AWS_ERROR_HTTP_PROXY_CONNECT_FAILED:
+            is_transient_error = true;
+        default:
+            is_transient_error = false;
+    }
+
+    return is_transient_error;
+}
+
 #define KB_256 (256 * 1024)
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
@@ -706,6 +718,12 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     } else {
         atexit(s_jni_atexit_gentle);
     }
+}
+
+JNIEXPORT
+bool JNICALL Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIENV *env, jclass jni_crt_class, jint error_code) {
+    (void)jni_crt_class;
+    return s_is_transient_error(env, error_code);
 }
 
 JNIEXPORT

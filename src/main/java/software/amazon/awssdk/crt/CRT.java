@@ -489,6 +489,15 @@ public final class CRT {
     public static native String awsErrorName(int errorCode);
 
     /**
+     * Given an error code, get a boolean to check if an error is transient or not
+     *
+     * @param errorCode An error code returned from an exception or other native function call
+     * 
+     * @return A boolean for if the error is transient or not
+     */
+    public static native Boolean awsIsTransientError(int errorCode);
+
+    /**
      * @return The number of bytes allocated in native resources. If
      *         aws.crt.memory.tracing is 1 or 2, this will be a non-zero value.
      *         Otherwise, no tracing will be done, and the value will always be 0

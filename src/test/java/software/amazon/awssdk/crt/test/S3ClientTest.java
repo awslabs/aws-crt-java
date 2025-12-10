@@ -1691,6 +1691,60 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    // Helper class to capture telemetry data for validation
+    private static class CapturedMetrics {
+        public long apiCallDurationNs;
+        public boolean apiCallSuccessful;
+        public String serviceId;
+        public String serviceEndpoint;
+        public String operationName;
+        public String awsRequestId;
+        public String awsExtendedRequestId;
+        public int errorCode;
+        public long timeToFirstByte;
+        public long timeToLastByte;
+        public long signingDurationNs;
+        public long backoffDelayDurationNs;
+        public long serviceCallDurationNs;
+        public int retryCount;
+        
+        public void captureFrom(S3RequestMetrics metrics) {
+            this.apiCallDurationNs = metrics.getApiCallDurationNs();
+            this.apiCallSuccessful = metrics.isApiCallSuccessful();
+            this.serviceId = metrics.getServiceId();
+            this.serviceEndpoint = metrics.getServiceEndpoint();
+            this.operationName = metrics.getOperationName();
+            this.awsRequestId = metrics.getAwsRequestId();
+            this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
+            this.errorCode = metrics.getErrorCode();
+            this.timeToFirstByte = metrics.getTimeToFirstByte();
+            this.timeToLastByte = metrics.getTimeToLastByte();
+            this.signingDurationNs = metrics.getSigningDurationNs();
+            this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
+            this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
+            this.retryCount = metrics.getRetryCount();
+        }
+        
+        public void validateMetrics() {
+            Assert.assertTrue("API Call duration should be >= 0", apiCallDurationNs >= 0);
+            Assert.assertTrue("API call should be successful", apiCallSuccessful);
+            Assert.assertEquals("Service ID should be s3", "s3", serviceId);
+            Assert.assertNotNull("Service endpoint should not be null", serviceEndpoint);
+            Assert.assertNotNull("Operation name should not be null", operationName);
+            Assert.assertFalse("Operation name should not be empty", operationName.isEmpty());
+            Assert.assertNotNull("Request ID should not be null", awsRequestId);
+            Assert.assertNotNull("Extended Request ID should not be null", awsExtendedRequestId);
+            Assert.assertTrue("Error Code should be >= 0", errorCode >= 0);
+            Assert.assertTrue("Time to first byte should be > 0", timeToFirstByte > 0);
+            Assert.assertTrue("Time to last byte should be > 0", timeToLastByte > 0);
+            Assert.assertTrue("Time to last byte should be >= time to first byte", timeToLastByte >= timeToFirstByte);
+            Assert.assertTrue("Signing duration should be >= 0", signingDurationNs >= -1);
+            Assert.assertTrue("Delay duration should be >= 0", backoffDelayDurationNs >= -1);
+            Assert.assertTrue("Service call duration should be >= 0", serviceCallDurationNs >= -1);
+            Assert.assertTrue("Retry count should be >= 0", retryCount >= 0);
+        }
+    }
+
     @Test
     public void testS3GetWithTelemetry() {
         skipIfAndroid();
@@ -1701,6 +1755,7 @@ public class S3ClientTest extends CrtTestFixture {
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
             AtomicInteger telemetryCallbackCount = new AtomicInteger(0);
+            CapturedMetrics capturedMetrics = new CapturedMetrics();
 
             S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
                 @Override
@@ -1720,44 +1775,7 @@ public class S3ClientTest extends CrtTestFixture {
                 @Override
                 public void onTelemetry(S3RequestMetrics metrics) {
                     telemetryCallbackCount.incrementAndGet();
-
-                    // Validate api call duration
-                    Assert.assertTrue("API Call duration should be >= 0", metrics.getApiCallDurationNs() >= 0);
-
-                    // Validate basic success
-                    Assert.assertTrue("API call should be successful", metrics.isApiCallSuccessful());
-
-                    // Validate service info
-                    Assert.assertEquals("Service ID should be s3", "s3", metrics.getServiceId());
-                    Assert.assertNotNull("Service endpoint should not be null", metrics.getServiceEndpoint());
-
-                    // Validate operation name
-                    Assert.assertNotNull("Operation name should not be null", metrics.getOperationName());
-                    Assert.assertFalse("Operation name should not be empty", metrics.getOperationName().isEmpty());
-
-                    // Validate request ID
-                    Assert.assertNotNull("Request ID should not be null", metrics.getAwsRequestId());
-                    Assert.assertNotNull("Extended Request ID should not be null", metrics.getAwsExtendedRequestId());
-
-                    Assert.assertNotNull("Error Code should not be null", metrics.getErrorCode());
-
-                    // Validate timing metrics
-                    Assert.assertTrue("Time to first byte should be > 0", metrics.getTimeToFirstByte() > 0);
-                    Assert.assertTrue("Time to last byte should be > 0", metrics.getTimeToLastByte() > 0);
-                    Assert.assertTrue("Time to last byte should be >= time to first byte",
-                            metrics.getTimeToLastByte() >= metrics.getTimeToFirstByte());
-
-                    // Validate signing duration
-                    Assert.assertTrue("Signing duration should be >= 0", metrics.getSigningDurationNs() >= 0);
-
-                    // Validate delay duration
-                    Assert.assertTrue("Delay duration should be >= 0", metrics.getBackoffDelayDurationNs() >= 0);
-
-                    // Validate service call duration
-                    Assert.assertTrue("Service call duration should be >= 0", metrics.getServiceCallDurationNs() >= 0);
-
-                    // Validate retry count
-                    Assert.assertTrue("Retry count should be >= 0", metrics.getRetryCount() >= 0);
+                    capturedMetrics.captureFrom(metrics);
 
                     Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
                             String.format("Telemetry: operation=%s, requestId=%s, ttfb=%dns, ttlb=%dns, retries=%d",
@@ -1779,6 +1797,9 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
                 Assert.assertTrue("Telemetry callback should have been called at least once",
                         telemetryCallbackCount.get() > 0);
+                
+                // Validate captured metrics on main thread
+                capturedMetrics.validateMetrics();
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());

@@ -25,9 +25,39 @@ phases:
       - sudo apt-get install pip -y -f
       - python3 -m pip install psutil
       - python3 -m pip install boto3
+  pre_build:
+    commands:
+      # Retrieve the private key from Secrets Manager
+      - DEPLOY_KEY=$(aws secretsmanager get-secret-value --secret-id Aws-crt-canaries-deploy-key --query SecretString --output text)
+
+      # Set up SSH configuration
+      - mkdir -p ~/.ssh
+      - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+
+      # Add GitHub to known hosts to avoid host verification prompt
+      - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      # Configure SSH to use the key for GitHub
+      - |
+        cat > ~/.ssh/config << EOF
+        Host github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+        EOF
+      - chmod 600 ~/.ssh/config
   build:
     commands:
       - echo Build started on `date`
+      # pull and copy canary scripts
+      - git clone git@github.com:awslabs/aws-crt-canaries.git
+      - cd aws-crt-canaries
+      - git checkout Setup
+      - ls source/mqtt
+      - cd ..
+      # Build CRT
       - mvn install -DskipTests
       # Get secrets needed
       - export S3_DST=$(aws secretsmanager get-secret-value --secret-id "$CANARY_BUILD_S3_DST" --query "SecretString" | cut -f2,3 -d":" | sed -e 's/[\\\"\}]//g')
@@ -40,3 +70,5 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
+      # Clean up SSH keys for security
+      - rm -rf ~/.ssh/id_rsa ~/.ssh/config

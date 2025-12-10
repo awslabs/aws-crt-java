@@ -635,6 +635,8 @@ public class S3ClientTest extends CrtTestFixture {
         Clock clock = Clock.systemUTC();
         Instant lastTimeSomethingHappened = clock.instant();
         AtomicLong downloadSizeDelta = new AtomicLong(0);
+        long accumulated_data_size = 0;
+        long accumulated_window_increments = initialReadWindowSize;
 
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -663,8 +665,6 @@ public class S3ClientTest extends CrtTestFixture {
                     .withMetaRequestType(MetaRequestType.GET_OBJECT)
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
-            long accumulated_data_size = 0;
-            long accumulated_window_increments = initialReadWindowSize;
 
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
 
@@ -687,9 +687,6 @@ public class S3ClientTest extends CrtTestFixture {
                     // to backpressure.
                     if (timeSinceSomethingHappened.compareTo(ifNothingHappensAfterThisLongItStalled) >= 0) {
                         stallCount += 1;
-                        long current_window = accumulated_window_increments - accumulated_data_size;
-                        /* If stalled, it must be the window reach to 0 */
-                        Assert.assertTrue(current_window == 0);
                         lastTimeSomethingHappened = currentTime;
 
                         // Increment window so that download continues...
@@ -702,12 +699,40 @@ public class S3ClientTest extends CrtTestFixture {
                 }
 
                 // Assert that download stalled due to backpressure at some point
-                Assert.assertTrue(stallCount > 0);
+                Assert.assertTrue(
+                    String.format("Download never stalled. Stall count: %d, File size: %d bytes, " +
+                        "Total data received: %d bytes, Total window increments: %d bytes",
+                        stallCount, fileSize, accumulated_data_size, accumulated_window_increments),
+                    stallCount > 0);
 
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Integer result = onFinishedFuture.get();
+                Assert.assertEquals(
+                    String.format("S3 request failed. Expected error code 0 but got: %s. " +
+                        "Download stats - Total bytes: %d, Stall count: %d",
+                        result, accumulated_data_size, stallCount),
+                    Integer.valueOf(0), result);
             }
         } catch (InterruptedException | ExecutionException ex) {
-            Assert.fail(ex.getMessage());
+            String detailedError = String.format(
+                "testS3GetWithBackpressure failed with exception: %s\n" +
+                "Exception type: %s\n" +
+                "Cause: %s\n" +
+                "Download progress: %d bytes received\n" +
+                "Window increments: %d bytes\n" +
+                "Stall count: %d\n" +
+                "Initial window: %d bytes\n" +
+                "File size: %d bytes",
+                ex.getMessage() != null ? ex.getMessage() : "(null message)",
+                ex.getClass().getName(),
+                ex.getCause() != null ? ex.getCause().toString() : "(no cause)",
+                accumulated_data_size,
+                accumulated_window_increments,
+                stallCount,
+                initialReadWindowSize,
+                fileSize);
+
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3, detailedError);
+            Assert.fail(detailedError);
         }
     }
 

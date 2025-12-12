@@ -25,7 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://postman-echo.com";
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    private final static String HOST = "https://localhost:8082";
     private final int MAX_TEST_RETRIES = 5;
     private final int TEST_RETRY_SLEEP_MILLIS = 2000;
 
@@ -110,59 +111,21 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     }
 
     @Test
-    public void testHttpDelete() throws Exception {
+    public void testHttpEcho() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
-        testRequest("DELETE", HOST, "/delete", EMPTY_BODY, false, 200);
-        testRequest("DELETE", HOST, "/get", EMPTY_BODY, false, 404);
-        testRequest("DELETE", HOST, "/post", EMPTY_BODY, false, 404);
-        testRequest("DELETE", HOST, "/put", EMPTY_BODY, false, 404);
-    }
+        skipIfLocalhostUnavailable();
+        String bodyToSend = "test echo body";
+        TestHttpResponse response = testRequest("POST", HOST, "/echo", bodyToSend, false, 200);
 
-    @Test
-    public void testHttpGet() throws Exception {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        testRequest("GET", HOST, "/delete", EMPTY_BODY, false, 404);
-        testRequest("GET", HOST, "/get", EMPTY_BODY, false, 200);
-        testRequest("GET", HOST, "/post", EMPTY_BODY, false, 404);
-        testRequest("GET", HOST, "/put", EMPTY_BODY, false, 404);
-    }
-
-    @Test
-    public void testHttpPost() throws Exception {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        testRequest("POST", HOST, "/delete", EMPTY_BODY, false, 404);
-        testRequest("POST", HOST, "/get", EMPTY_BODY, false, 404);
-        testRequest("POST", HOST, "/post", EMPTY_BODY, false, 200);
-        testRequest("POST", HOST, "/put", EMPTY_BODY, false, 404);
-    }
-
-    @Test
-    public void testHttpPut() throws Exception {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        testRequest("PUT", HOST, "/delete", EMPTY_BODY, false, 404);
-        testRequest("PUT", HOST, "/get", EMPTY_BODY, false, 404);
-        testRequest("PUT", HOST, "/post", EMPTY_BODY, false, 404);
-        testRequest("PUT", HOST, "/put", EMPTY_BODY, false, 200);
-    }
-
-    @Test
-    public void testHttpResponseStatusCodes() throws Exception {
-        skipIfAndroid();
-        skipIfNetworkUnavailable();
-        testRequest("GET", HOST, "/status/200", EMPTY_BODY, false, 200);
-        testRequest("GET", HOST, "/status/300", EMPTY_BODY, false, 300);
-        testRequest("GET", HOST, "/status/400", EMPTY_BODY, false, 400);
-        testRequest("GET", HOST, "/status/500", EMPTY_BODY, false, 500);
+        String echoedBody = response.getBody();
+        String expectedJson = "{\n    \"data\": \"" + bodyToSend + "\"\n}";
+        Assert.assertEquals(expectedJson, echoedBody);
     }
 
     @Test
     public void testHttpDownload() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com",
                 "/http_test_doc.txt", EMPTY_BODY, false, 200);
 
@@ -186,7 +149,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     private void testHttpUpload(boolean chunked) throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
         String bodyToSend = TEST_DOC_LINE;
         TestHttpResponse response = testRequest("PUT", HOST, "/put", bodyToSend, chunked, 200);
 
@@ -248,18 +210,23 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpUpload() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttpUpload(false);
     }
 
     @Test
     public void testHttpUploadChunked() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
         testHttpUpload(true);
     }
 
     private void doHttpRequestUnActivatedTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
         try {
             URI uri = new URI(HOST);
 
@@ -312,7 +279,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     @Test
     public void testHttpRequestUnActivated() throws Exception {
         skipIfAndroid();
-        skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 

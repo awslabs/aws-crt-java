@@ -163,46 +163,6 @@ jobs:
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
-  linux-musl-arm:
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - alpine-3.16-armv7
-          - alpine-3.16-arm64
-    steps:
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ env.CRT_CI_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
-        role-duration-seconds: 14400 # these tests run slow and easily reach default cred expiry, hence change expiry to 4hrs
-    - name: Install qemu/docker
-      run: docker run --privileged --rm tonistiigi/binfmt --install all
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
-
-  raspberry:
-    runs-on: ubuntu-24.04 # latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - raspbian-bullseye
-    steps:
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ env.CRT_CI_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - name: Install qemu/docker
-      run: docker run --privileged --rm tonistiigi/binfmt --install linux/arm/v7
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
-
   windows:
     runs-on: windows-2025 # latest
     steps:
@@ -277,122 +237,6 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
         python3 codebuild/macos_compatibility_check.py
 
-  android:
-      # ubuntu-24.04 comes with Android tooling
-    name: Android
-    runs-on: ubuntu-24.04 # latest
-    steps:
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ env.CRT_CI_ROLE }}
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - name: Checkout Sources
-      uses: actions/checkout@v4
-      with:
-          submodules: true
-    # Setup JDK 17
-    - name: set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    # Ensure Gradle uses this JDK (important when toolchains are present)
-    - name: Point Gradle at JDK 17
-      run: echo "ORG_GRADLE_JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-
-    - name: Mirror ANDROID_HOME → ANDROID_SDK_ROOT
-      run: echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
-
-    # Install required Android components & accept licenses (NDK r28 + compileSdk 35)
-    - name: Install Android SDK packages
-      shell: bash
-      run: |
-        set -euo pipefail
-        SDKROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-        SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
-
-        # Some images have cmdline-tools already; ensure path exists
-        if [[ ! -x "$SDKMANAGER" ]]; then
-          echo "cmdline-tools not found; installing…"
-          mkdir -p "$SDKROOT/cmdline-tools"
-          curl -sSL -o /tmp/clt.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          sudo unzip -q /tmp/clt.zip -d "$SDKROOT/cmdline-tools"
-          sudo mv "$SDKROOT/cmdline-tools/cmdline-tools" "$SDKROOT/cmdline-tools/latest"
-          SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
-        fi
-
-        echo "Installing platform-tools, Build-Tools 35, platform android-35, NDK r28, and CMake…"
-        # Avoid 'yes' SIGPIPE killing the step: turn off pipefail just for these lines
-        set +o pipefail
-        yes | sudo "$SDKMANAGER" --install \
-          "platform-tools" \
-          "build-tools;35.0.0" \
-          "platforms;android-35" \
-          "ndk;28.0.12433566" \
-          "cmake;3.22.1"
-
-        yes | "$SDKMANAGER" --licenses
-        set -o pipefail
-
-        # Quick sanity prints (non-fatal)
-        "$SDKROOT/ndk/28.0.12433566/ndk-build" -v >/dev/null 2>&1 || true
-        "$SDKMANAGER" --list | sed -n '1,80p' || true
-
-    # Build and publish locally for the test app to find the SNAPSHOT version
-    - name: Build ${{ env.PACKAGE_NAME }}
-      run: |
-        # Manually set -Xmx (max heap size) to something huge (tested 2g and that works, but why not go bigger).
-        # Only in CI, gradle daemon runs out of memory during "lintAnalyzeDebug" task, unless you specify it this way.
-        # You'd think Java's default of 25% RAM (ubuntu24 runner has 12g, so max 4g) would be sufficient, but no.
-        # You'd think setting -Xmx via gradle.properties would help, but no.
-        ./gradlew :android:crt:build -Dorg.gradle.jvmargs="-Xmx8g"
-        ./gradlew -PnewVersion="1.0.0-SNAPSHOT" :android:crt:publishToMavenLocal
-    # Setup files required by test app for Device Farm testing
-    - name: Setup Android Test Files
-      run: |
-        cd src/test/android/testapp/src/main/assets
-        python3 -m pip install boto3
-        python3 ./android_file_creation.py
-
-    - name: Set Android keystore home
-      run: |
-        echo "ANDROID_SDK_HOME=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
-        echo "ANDROID_PREFS_ROOT=$GITHUB_WORKSPACE/.android-home" >> "$GITHUB_ENV"
-        mkdir -p "$GITHUB_WORKSPACE/.android-home/.android"
-
-    - name: Create debug keystore
-      run: |
-        keytool -genkeypair \
-          -keystore "$ANDROID_SDK_HOME/.android/debug.keystore" \
-          -storepass android -keypass android \
-          -alias androiddebugkey \
-          -dname "CN=Android Debug,O=Android,C=US" \
-          -keyalg RSA -keysize 2048 -validity 14000
-
-    - name: Build Test App
-      run: |
-        cd src/test/android/testapp
-        ../../../../gradlew assembledebug
-        ../../../../gradlew assembleAndroidTest
-    - name: Device Farm Tests Highly Available
-      run: |
-        echo "Running Device Farm Python Script"
-        python3 ./.github/workflows/run_android_ci.py \
-        --run_id ${{ github.run_id }} \
-        --run_attempt ${{ github.run_attempt }} \
-        --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-        --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-        --device_pool highly_available
-    - name: Device Farm Tests Android 8.0.0
-      run: |
-        echo "Running Device Farm Python Script"
-        python3 ./.github/workflows/run_android_ci.py \
-        --run_id ${{ github.run_id }} \
-        --run_attempt ${{ github.run_attempt }} \
-        --project_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/ProjectArn" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-        --device_pool_arn $(aws secretsmanager get-secret-value --region us-east-1 --secret-id "ci/DeviceFarm/DevicePoolArnAndroid8" --query "SecretString" | cut -f5 -d\" | cut -f1 -d'\') \
-        --device_pool android_8
-
   # check that docs can still build
   check-docs:
     runs-on: ubuntu-22.04 # use same version as docs.yml
@@ -436,16 +280,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
-      run: |
-        python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=localhost
+
 
   localhost-test-macos:
     runs-on: macos-14 # latest
@@ -458,19 +297,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
-      run: |
-        python3 -m venv .venv
-        source .venv/bin/activate
-        python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        ./builder build -p ${{ env.PACKAGE_NAME }} --variant=localhost
 
   localhost-test-win:
     runs-on: windows-2025 # latest
@@ -483,17 +314,10 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
-      run: |
-        python -m pip install h2
     - name: Build and test
       run: |
-        cd crt/aws-c-http/tests/py_localhost/
-        Start-Process -NoNewWindow python .\server.py
-        Start-Process -NoNewWindow python .\non_tls_server.py
-        cd ../../../../
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=localhost
 
   GraalVM:
     runs-on: ${{ matrix.os }}

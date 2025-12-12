@@ -204,6 +204,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         HttpProxyOptions proxyOptions = builder.getHttpProxyOptions();
         if (proxyOptions != null) {
             proxyConnectionType = proxyOptions.getConnectionType().getValue();
@@ -217,6 +218,9 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            if (proxyOptions.getNoProxyHosts() != null) {
+                noProxyHosts = proxyOptions.getNoProxyHosts();
+            }
         }
 
         long nativeHandle = cognitoCredentialsProviderNew(
@@ -234,6 +238,7 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 builder.loginTokenSource);
 
         acquireNativeHandle(nativeHandle);
@@ -305,7 +310,8 @@ public class CognitoCredentialsProvider extends CredentialsProvider {
                                                           int proxyAuthorizationType,
                                                           byte[] proxyAuthorizationUsername,
                                                           byte[] proxyAuthorizationPassword,
-                                                         CognitoLoginTokenSource loginTokenSource);
+                                                          byte[] noProxyHosts,
+                                                          CognitoLoginTokenSource loginTokenSource);
 
     private static native void completeLoginTokenFetch(long invocationHandle, byte[] marshalledLogins, Throwable ex);
 }

@@ -21,6 +21,7 @@ void aws_http_proxy_options_jni_init(
     jint proxy_port,
     jbyteArray proxy_authorization_username,
     jbyteArray proxy_authorization_password,
+    jbyteArray no_proxy_hosts,
     int proxy_authorization_type,
     struct aws_tls_ctx *proxy_tls_ctx);
 
@@ -29,6 +30,7 @@ void aws_http_proxy_options_jni_clean_up(
     struct aws_http_proxy_options *options,
     jbyteArray proxy_host,
     jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password);
+    jbyteArray proxy_authorization_password,
+    jbyteArray no_proxy_hosts);
 
 #endif /* AWS_JNI_CRT_HTTP_PROXY_OPTIONS_H */

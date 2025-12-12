@@ -30,7 +30,7 @@ public class HttpClientTestFixture extends CrtTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
                 TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient()
-                        .withAlpnList("h2;http/1.1");
+                        .withAlpnList("h2;http/1.1").withVerifyPeer(false);
                 TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
@@ -45,7 +45,9 @@ public class HttpClientTestFixture extends CrtTestFixture {
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext = createHttpClientTlsContext()) {
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient()
+                        .withAlpnList("http/1.1").withVerifyPeer(false);
+                TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
                     .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);

@@ -148,6 +148,18 @@ public class S3ClientOptions {
         return signingConfig;
     }
 
+    /**
+     * Sets the size, in bytes, of parts that files will be downloaded or uploaded in.
+     * If not set, a dynamic default part size will be used based on the throughputTargetGbps, memoryLimitInBytes and initialReadWindowSize
+     * to utilize the available resource and get the best performance.
+     *
+     * Notes: For PUT_OBJECT requests, the client will automatically adjust the part size to meet service limits:
+     *   - Maximum number of parts per upload is 10,000
+     *   - Minimum upload part size is 5 MiB
+     *
+     * @param partSize size in bytes of parts for downloads and uploads
+     * @return this
+     */
     public S3ClientOptions withPartSize(long partSize) {
         this.partSize = partSize;
         return this;
@@ -192,7 +204,7 @@ public class S3ClientOptions {
      * <p>
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
-     * and you may still receive some data after the window reaches zero.
+     * You will not receive any data after the window reaches zero until the window incremented.
      *
      * @param enable whether to enable or disable backpressure
      * @return this
@@ -358,7 +370,7 @@ public class S3ClientOptions {
      * The amount of memory the CRT client is allowed to use.
      * The client makes a best-effort attempt at memory limiting but might exceed this limit in some cases.
      * If not provided, the client calculates this optimally from other settings, such as targetThroughput.
-     * On a 64-bit system, the default is between 2Gib-8Gib.
+     * On a 64-bit system, the default is between 2Gib-24Gib.
      * It must be at least 1GiB and will be capped to SIZE_MAX of the system.
      * @param memoryLimitBytes Memory limit in bytes.
      * @return this

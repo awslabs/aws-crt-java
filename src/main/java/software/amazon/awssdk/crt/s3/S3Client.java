@@ -38,6 +38,7 @@ public class S3Client extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         // Handle FileIoOptions from S3ClientOptions
         boolean fioOptionsSet = false;
         boolean shouldStream = false;
@@ -61,6 +62,7 @@ public class S3Client extends CrtResource {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
         }
 
         int environmentVariableProxyConnectionType = 0;
@@ -108,6 +110,7 @@ public class S3Client extends CrtResource {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 environmentVariableProxyConnectionType,
                 environmentVariableProxyTlsConnectionOptions != null
                         ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
@@ -267,6 +270,7 @@ public class S3Client extends CrtResource {
             int proxyAuthorizationType,
             byte[] proxyAuthorizationUsername,
             byte[] proxyAuthorizationPassword,
+            byte[] noProxyHosts,
             int environmentVariableProxyConnectionType,
             long environmentVariableProxyTlsConnectionOptions,
             int environmentVariableSetting,

@@ -6,6 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.Assert;
 
 import java.net.URI;
@@ -27,8 +28,11 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
 
     private final static int MAX_TEST_RETRIES = 5;
     private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
-    private final static String HOST = "https://postman-echo.com";
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
+
+
 
     private void doHttp2ConnectionGetVersionTest() {
         try {
@@ -56,6 +60,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     public void testHttp2ConnectionGetVersion() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionGetVersionTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -94,6 +99,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     public void testHttp2ConnectionUpdateSettings() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateSettingsTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -129,6 +135,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
         skipIfAndroid();
         /* empty settings is allowed to send */
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateSettingsEmptyTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -166,6 +173,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     public void testHttp2ConnectionPing() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionPingTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -210,6 +218,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
     public void testHttp2ConnectionPingExceptionPingDataLength() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionPingExceptionPingDataLengthTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -248,6 +257,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          * for functionality
          */
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionSendGoAwayTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -286,6 +296,7 @@ public class Http2ClientConnectionTest extends HttpClientTestFixture {
          * for functionality
          */
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
         TestUtils.doRetryableTest(this::doHttp2ConnectionUpdateConnectionWindowTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 

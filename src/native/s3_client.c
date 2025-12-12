@@ -147,7 +147,8 @@ static int s_s3express_get_creds_java(
     int result = AWS_OP_ERR;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (!env) {
         /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
         return AWS_OP_SUCCESS;
@@ -214,7 +215,7 @@ done:
     if (original_credentials_object) {
         (*env)->DeleteLocalRef(env, original_credentials_object);
     }
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
     return result;
 }
@@ -223,7 +224,8 @@ static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *
     struct s3_client_s3express_provider_java_impl *impl = provider->impl;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (!env) {
         /* If we can't get an environment, then the JVM is probably shutting down. Don't crash. */
         return;
@@ -234,7 +236,7 @@ static void s_s3express_destroy_java(struct aws_s3express_credentials_provider *
 
     (*env)->DeleteGlobalRef(env, impl->java_s3express_provider);
 
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
     /* Once the java call returns, the java resource should be cleaned up already. We can finish up the shutdown
      * process. Clean up the native part. */
@@ -263,7 +265,8 @@ struct aws_s3express_credentials_provider *s_s3express_provider_jni_factory(
     struct s3_client_s3express_provider_java_impl *impl = NULL;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(client_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(client_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return NULL;
@@ -308,7 +311,7 @@ struct aws_s3express_credentials_provider *s_s3express_provider_jni_factory(
     client_data->java_s3express_provider_factory = NULL;
 
 done:
-    aws_jni_release_thread_env(client_data->jvm, env);
+    aws_jni_release_thread_env(client_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
     return provider;
 }
@@ -336,6 +339,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
+    jbyteArray jni_proxy_no_proxy_hosts,
     jint jni_environment_variable_proxy_connection_type,
     jlong jni_environment_variable_proxy_tls_connection_options,
     jint jni_environment_variable_type,
@@ -497,6 +501,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
+        jni_proxy_no_proxy_hosts,
         jni_proxy_authorization_type,
         (struct aws_tls_ctx *)jni_proxy_tls_context);
 
@@ -529,7 +534,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_proxy_no_proxy_hosts);
 
     aws_mem_release(aws_jni_get_allocator(), s3_tcp_keep_alive_options);
     if (tls_options) {
@@ -556,7 +566,8 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -584,7 +595,7 @@ static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
 
     aws_signing_config_data_clean_up(&callback->signing_config_data, env);
 
-    aws_jni_release_thread_env(callback->jvm, env);
+    aws_jni_release_thread_env(callback->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(aws_jni_get_allocator(), user_data);
@@ -605,7 +616,8 @@ static int s_on_s3_meta_request_body_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -615,7 +627,7 @@ static int s_on_s3_meta_request_body_callback(
     if (jni_payload == NULL) {
         /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
         aws_jni_check_and_clear_exception(env);
-        aws_jni_release_thread_env(callback_data->jvm, env);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
         return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
     }
@@ -650,7 +662,7 @@ static int s_on_s3_meta_request_body_callback(
 cleanup:
     (*env)->DeleteLocalRef(env, jni_payload);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return return_value;
@@ -690,7 +702,8 @@ static int s_on_s3_meta_request_headers_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -737,7 +750,7 @@ cleanup:
         (*env)->DeleteLocalRef(env, java_headers_buffer);
     }
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return return_value;
@@ -754,7 +767,8 @@ static void s_on_s3_meta_request_finish_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -843,7 +857,7 @@ static void s_on_s3_meta_request_finish_callback(
         }
     }
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -858,7 +872,8 @@ static void s_on_s3_meta_request_progress_callback(
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -902,7 +917,7 @@ static void s_on_s3_meta_request_progress_callback(
 
 done:
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -1012,6 +1027,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     bool success = false;
     struct aws_byte_cursor region = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_region);
     struct aws_http_message *request_message = NULL;
+    struct aws_array_list response_checksum_list;
+    AWS_ZERO_STRUCT(response_checksum_list);
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
@@ -1093,8 +1110,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .validate_response_checksum = validate_response,
     };
 
-    struct aws_array_list response_checksum_list;
-    AWS_ZERO_STRUCT(response_checksum_list);
     if (jni_marshalled_validate_algorithms != NULL) {
         jint *marshalled_algorithms = (*env)->GetIntArrayElements(env, jni_marshalled_validate_algorithms, NULL);
         const size_t marshalled_len = (*env)->GetArrayLength(env, jni_marshalled_validate_algorithms);
@@ -1103,6 +1118,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
             enum aws_s3_checksum_algorithm algorithm = (int)marshalled_algorithms[i];
             aws_array_list_push_back(&response_checksum_list, &algorithm);
         }
+        (*env)->ReleaseIntArrayElements(env, jni_marshalled_validate_algorithms, marshalled_algorithms, JNI_ABORT);
         checksum_config.validate_checksum_algorithms = &response_checksum_list;
     }
 
@@ -1143,8 +1159,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
-    /* We are done using the list, it can be safely cleaned up now. */
-    aws_array_list_clean_up(&response_checksum_list);
     if (!meta_request) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.aws_s3_client_make_meta_request: creating aws_s3_meta_request failed");
@@ -1157,8 +1171,10 @@ done:
     aws_s3_meta_request_resume_token_release(resume_token);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_region, region);
     aws_http_message_release(request_message);
+    aws_array_list_clean_up(&response_checksum_list);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_operation_name, operation_name);
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_request_filepath, request_filepath);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_response_filepath, response_filepath);
     aws_uri_clean_up(&endpoint);
     if (success) {
         return (jlong)meta_request;
@@ -1172,7 +1188,8 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -1193,7 +1210,7 @@ static void s_on_s3_meta_request_shutdown_complete_callback(void *user_data) {
     JavaVM *jvm = callback_data->jvm;
     s_s3_meta_request_callback_cleanup(env, callback_data);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

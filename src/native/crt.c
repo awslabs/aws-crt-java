@@ -642,8 +642,6 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
-
-
 #define KB_256 (256 * 1024)
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */

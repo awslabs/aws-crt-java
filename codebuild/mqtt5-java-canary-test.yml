@@ -56,7 +56,7 @@ phases:
       - cd aws-crt-canaries
       - git checkout Setup
       - cd ..
-      - cp aws-crt-canaries/source/mqtt/*.py codebuild
+      - cp aws-crt-canaries/source/mqtt5/*.py codebuild
       # Build CRT
       - mvn install -DskipTests
       # Get secrets needed
@@ -66,7 +66,7 @@ phases:
       - export ENDPOINT=$(aws secretsmanager get-secret-value --secret-id ${CANARY_SERVER_ARN} --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       # Run the Canary
       - cd ./utils/Canary
-      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\"" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --ticket_item "${CODEBUILD_TICKET_ITEM}"
+      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\"" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --ticket_item "${CODEBUILD_TICKET_ITEM} --cloudwatch_namespace mqtt5_canary"
   post_build:
     commands:
       - echo Build completed on `date`

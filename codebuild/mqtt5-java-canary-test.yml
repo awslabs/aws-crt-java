@@ -53,9 +53,6 @@ phases:
       - echo Build started on `date`
       # pull and copy canary scripts
       - git clone git@github.com:awslabs/aws-crt-canaries.git
-      - cd aws-crt-canaries
-      - git checkout Setup
-      - cd ..
       - cp aws-crt-canaries/source/mqtt5/*.py codebuild
       # Build CRT
       - mvn install -DskipTests

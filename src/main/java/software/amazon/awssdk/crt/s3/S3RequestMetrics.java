@@ -119,7 +119,7 @@ public class S3RequestMetrics {
         return this.receiveEndTimestampNs;
     }
 
-    // Please use 
+    // Please use CRT.awsIsTransientError() to identify transient errors
     public int getErrorCode() {
         return this.errorCode;
     }

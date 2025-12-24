@@ -437,8 +437,6 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteGlobalRef(env, connection->java_mqtt_connection);
     }
 
-    aws_tls_connection_options_clean_up(&connection->tls_options);
-
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection);
 }
@@ -620,6 +618,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
 cleanup:
+    aws_tls_connection_options_clean_up(&connection->tls_options);
     aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
     aws_jni_byte_cursor_from_jstring_release(env, jni_client_id, client_id);
 }

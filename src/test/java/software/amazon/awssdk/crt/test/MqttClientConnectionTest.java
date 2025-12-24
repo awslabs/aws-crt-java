@@ -263,6 +263,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         }
      }
 
+     /* This scenario once led to memory leaks, so this test primarily checks that there is no memory leaks. */
      @Test
      public void testMultipleFailedAttemptsOnSingleConnection() {
         skipIfNetworkUnavailable();

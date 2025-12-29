@@ -123,4 +123,8 @@ public class S3RequestMetrics {
     public int getErrorCode() {
         return this.errorCode;
     }
+
+    public String getIpAddress() {
+        return this.ipAddress;
+    }
 }

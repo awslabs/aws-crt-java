@@ -34,7 +34,6 @@ struct mqtt_jni_connection {
     struct aws_mqtt_client *client; /* Provided to mqtt_connect */
     struct aws_mqtt_client_connection *client_connection;
     struct aws_socket_options socket_options;
-    struct aws_tls_connection_options tls_options;
 
     JavaVM *jvm;
     jobject java_mqtt_connection; /* MqttClientConnection instance */

@@ -176,13 +176,15 @@ import org.junit.Assume;
         connectionEventsStatistics = new ConnectionEventsStatistics();
     }
 
-    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
-    {
-        reset();
-
-        try(EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
+    MqttClientConnection createMqttClientConnection(TlsContext tlsContext,
+                                                    String endpoint,
+                                                    int port,
+                                                    String username,
+                                                    String password,
+                                                    HttpProxyOptions httpProxyOptions) throws Exception {
+        try (EventLoopGroup elg = new EventLoopGroup(1);
+             HostResolver hr = new HostResolver(elg);
+             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
 
             // Connection callback events
             MqttClientConnectionEvents events = new MqttClientConnectionEvents() {
@@ -256,10 +258,17 @@ import org.junit.Assume;
                 if (connectionMessageTransfomer != null) {
                     connection.onMessage(connectionMessageTransfomer);
                 }
-                CompletableFuture<Boolean> connected = connection.connect();
-                connected.get();
+
+                return connection;
             }
         }
+    }
+
+    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception {
+        reset();
+        MqttClientConnection connection = createMqttClientConnection(tlsContext, endpoint, port, username, password, httpProxyOptions);
+        CompletableFuture<Boolean> connected = connection.connect();
+        connected.get(30, TimeUnit.SECONDS);
     }
 
     void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception

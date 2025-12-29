@@ -2,7 +2,7 @@ version: 0.2
 env:
   shell: bash
   variables:
-    CANARY_DURATION: 25200
+    CANARY_DURATION: 300
     CANARY_THREADS: 3
     CANARY_TPS: 50
     CANARY_CLIENT_COUNT: 10
@@ -25,9 +25,36 @@ phases:
       - sudo apt-get install pip -y -f
       - python3 -m pip install psutil
       - python3 -m pip install boto3
+  pre_build:
+    commands:
+      # Retrieve the private key from Secrets Manager
+      - DEPLOY_KEY=$(aws secretsmanager get-secret-value --secret-id Aws-crt-canaries-deploy-key --query SecretString --output text)
+
+      # Set up SSH configuration
+      - mkdir -p ~/.ssh
+      - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+
+      # Add GitHub to known hosts to avoid host verification prompt
+      - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      # Configure SSH to use the key for GitHub
+      - |
+        cat > ~/.ssh/config << EOF
+        Host github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+        EOF
+      - chmod 600 ~/.ssh/config
   build:
     commands:
       - echo Build started on `date`
+      # pull and copy canary scripts
+      - git clone git@github.com:awslabs/aws-crt-canaries.git
+      - cp aws-crt-canaries/source/mqtt5/*.py codebuild
+      # Build CRT
       - mvn install -DskipTests
       # Get secrets needed
       - export S3_DST=$(aws secretsmanager get-secret-value --secret-id "$CANARY_BUILD_S3_DST" --query "SecretString" | cut -f2,3 -d":" | sed -e 's/[\\\"\}]//g')
@@ -36,7 +63,9 @@ phases:
       - export ENDPOINT=$(aws secretsmanager get-secret-value --secret-id ${CANARY_SERVER_ARN} --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
       # Run the Canary
       - cd ./utils/Canary
-      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\" -Daws.crt.debugnative=true -Daws.crt.log.destination=Stdout -Daws.crt.log.level=${CANARY_LOG_LEVEL}" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --codebuild_log_path $CODEBUILD_LOG_PATH --ticket_item "${CODEBUILD_TICKET_ITEM}"
+      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\"" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --ticket_item "${CODEBUILD_TICKET_ITEM}" --cloudwatch_namespace mqtt5_canary
   post_build:
     commands:
       - echo Build completed on `date`
+      # Clean up SSH keys for security
+      - rm -rf ~/.ssh/id_rsa ~/.ssh/config

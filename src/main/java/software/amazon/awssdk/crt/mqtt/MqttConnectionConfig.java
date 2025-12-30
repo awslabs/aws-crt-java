@@ -46,6 +46,9 @@ public final class MqttConnectionConfig extends CrtResource {
     private HttpProxyOptions proxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
+    /* metrics */
+    private boolean metricsEnabled = true;
+
     public MqttConnectionConfig() {}
 
 
@@ -539,6 +542,24 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * Enables or disables IoT Device SDK metrics collection
+     *
+     * @param enabled true to enable metrics, false to disable
+     */
+    public void setMetricsEnabled(boolean enabled) {
+        this.metricsEnabled = enabled;
+    }
+
+    /**
+     * Queries whether IoT Device SDK metrics collection is enabled
+     *
+     * @return true if metrics are enabled, false if disabled
+     */
+    public boolean getMetricsEnabled() {
+        return metricsEnabled;
+    }
+
+    /**
      * Creates a (shallow) clone of this config object
      *
      * @return shallow clone of this config object
@@ -567,6 +588,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
+            clone.setMetricsEnabled(getMetricsEnabled());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();

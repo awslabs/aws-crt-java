@@ -1707,6 +1707,7 @@ public class S3ClientTest extends CrtTestFixture {
         public long backoffDelayDurationNs;
         public long serviceCallDurationNs;
         public int retryCount;
+        public String ipAddress;
         
         public void captureFrom(S3RequestMetrics metrics) {
             this.apiCallDurationNs = metrics.getApiCallDurationNs();
@@ -1723,6 +1724,7 @@ public class S3ClientTest extends CrtTestFixture {
             this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
             this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
             this.retryCount = metrics.getRetryCount();
+            this.ipAddress = metrics.getIpAddress();
         }
         
         public void validateMetrics() {
@@ -1742,6 +1744,30 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.assertTrue("Delay duration should be >= 0", backoffDelayDurationNs >= -1);
             Assert.assertTrue("Service call duration should be >= 0", serviceCallDurationNs >= -1);
             Assert.assertTrue("Retry count should be >= 0", retryCount >= 0);
+            Assert.assertTrue("IP Address should be valid", validateIpAddress(ipAddress));
+        }
+
+        private boolean validateIpAddress(String ip) {
+            if (ip == null || ip.isEmpty()) {
+                return false;
+            }
+
+            // Validate IP address format
+            try {
+                String[] parts = ip.split("\\.");
+                if (parts.length != 4) {
+                    return false;
+                }
+                for (String part : parts) {
+                    int octet = Integer.parseInt(part);
+                    if (octet < 0 || octet > 255) {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (NumberFormatException e) {
+                return false;
+            }
         }
     }
 

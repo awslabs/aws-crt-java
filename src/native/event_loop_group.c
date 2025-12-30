@@ -107,6 +107,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         goto on_error;
     }
 
+    if (aws_event_loop_group_get_type(elg) == AWS_EVENT_LOOP_DISPATCH_QUEUE) {
+        aws_jni_set_dispatch_queue_threads(true);
+    }
+
     callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
 
     return (jlong)elg;
@@ -152,6 +156,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         aws_jni_throw_runtime_exception(
             env, "EventLoopGroup.event_loop_group_new: eventLoopGroupNewPinnedToCpuGroup failed");
         goto on_error;
+    }
+
+    if (aws_event_loop_group_get_type(elg) == AWS_EVENT_LOOP_DISPATCH_QUEUE) {
+        aws_jni_set_dispatch_queue_threads(true);
     }
 
     callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);

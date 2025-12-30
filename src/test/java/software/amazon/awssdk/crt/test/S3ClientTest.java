@@ -620,11 +620,12 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         final long fileSize = 1 * 1024 * 1024;
+        final long initialReadWindowSize = 1024;
         S3ClientOptions clientOptions = new S3ClientOptions()
 
                 .withRegion(REGION)
                 .withReadBackpressureEnabled(true)
-                .withInitialReadWindowSize(1024)
+                .withInitialReadWindowSize(initialReadWindowSize)
                 .withPartSize(fileSize / 4);
         final long windowIncrementSize = clientOptions.getPartSize() / 2;
 
@@ -634,6 +635,8 @@ public class S3ClientTest extends CrtTestFixture {
         Clock clock = Clock.systemUTC();
         Instant lastTimeSomethingHappened = clock.instant();
         AtomicLong downloadSizeDelta = new AtomicLong(0);
+        long accumulated_data_size = 0;
+        long accumulated_window_increments = initialReadWindowSize;
 
         try (S3Client client = createS3Client(clientOptions)) {
             CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
@@ -668,6 +671,8 @@ public class S3ClientTest extends CrtTestFixture {
                 while (!onFinishedFuture.isDone()) {
                     // Check if we've received data since last loop
                     long lastDownloadSizeDelta = downloadSizeDelta.getAndSet(0);
+                    accumulated_data_size += lastDownloadSizeDelta;
+                    long max_data_allowed = accumulated_window_increments;
 
                     // Figure out how long it's been since we last received data
                     Instant currentTime = clock.instant();
@@ -676,6 +681,7 @@ public class S3ClientTest extends CrtTestFixture {
                     }
 
                     Duration timeSinceSomethingHappened = Duration.between(lastTimeSomethingHappened, currentTime);
+                    Assert.assertTrue(accumulated_data_size <=  max_data_allowed);
 
                     // If it seems like data has stopped flowing, then we know a stall happened due
                     // to backpressure.
@@ -685,6 +691,7 @@ public class S3ClientTest extends CrtTestFixture {
 
                         // Increment window so that download continues...
                         metaRequest.incrementReadWindow(windowIncrementSize);
+                        accumulated_window_increments += windowIncrementSize;
                     }
 
                     // Sleep a moment and loop again...
@@ -692,12 +699,40 @@ public class S3ClientTest extends CrtTestFixture {
                 }
 
                 // Assert that download stalled due to backpressure at some point
-                Assert.assertTrue(stallCount > 0);
+                Assert.assertTrue(
+                    String.format("Download never stalled. Stall count: %d, File size: %d bytes, " +
+                        "Total data received: %d bytes, Total window increments: %d bytes",
+                        stallCount, fileSize, accumulated_data_size, accumulated_window_increments),
+                    stallCount > 0);
 
-                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Integer result = onFinishedFuture.get();
+                Assert.assertEquals(
+                    String.format("S3 request failed. Expected error code 0 but got: %s. " +
+                        "Download stats - Total bytes: %d, Stall count: %d",
+                        result, accumulated_data_size, stallCount),
+                    Integer.valueOf(0), result);
             }
         } catch (InterruptedException | ExecutionException ex) {
-            Assert.fail(ex.getMessage());
+            String detailedError = String.format(
+                "testS3GetWithBackpressure failed with exception: %s\n" +
+                "Exception type: %s\n" +
+                "Cause: %s\n" +
+                "Download progress: %d bytes received\n" +
+                "Window increments: %d bytes\n" +
+                "Stall count: %d\n" +
+                "Initial window: %d bytes\n" +
+                "File size: %d bytes",
+                ex.getMessage() != null ? ex.getMessage() : "(null message)",
+                ex.getClass().getName(),
+                ex.getCause() != null ? ex.getCause().toString() : "(no cause)",
+                accumulated_data_size,
+                accumulated_window_increments,
+                stallCount,
+                initialReadWindowSize,
+                fileSize);
+
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3, detailedError);
+            Assert.fail(detailedError);
         }
     }
 

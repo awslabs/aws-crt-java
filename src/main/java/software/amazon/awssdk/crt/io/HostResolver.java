@@ -73,7 +73,7 @@ public class HostResolver extends CrtResource {
     public static void closeStaticDefault() {
         synchronized (HostResolver.class) {
             if (staticDefaultResolver != null) {
-                staticDefaultResolver.close();
+                staticDefaultResolver.close("closeStaticDefault");
             }
             staticDefaultResolver = null;
         }

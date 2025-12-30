@@ -33,6 +33,13 @@ enum aws_java_crt_error {
 
 struct aws_allocator *aws_jni_get_allocator(void);
 
+/* This struct holds everything needed to interact with the JVM from native functions. */
+struct aws_jvm_env_context {
+    JNIEnv *env;
+    /* Determines whether to detach non-CRT threads at the end of a callback. */
+    bool should_detach;
+};
+
 /*******************************************************************************
  * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the
  * supplied message, sprintf formatted. Control WILL return from this function,
@@ -227,17 +234,26 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
  * aws_jni_acquire_thread_env - Acquires the JNIEnv for the current thread from the VM,
- * attaching the env if necessary.  aws_jni_release_thread_env() must be called once
+ * attaching the env if necessary. aws_jni_release_thread_env() must be called once
  * the caller is through with the environment.
+ * The needs_detach field in the returned context will be set to true if the thread
+ * was not attached to JVM when this function was called, and false otherwise.
  ******************************************************************************/
-JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
+struct aws_jvm_env_context aws_jni_acquire_thread_env(JavaVM *jvm);
 
 /*******************************************************************************
- * aws_jni_release_thread_env - Releases an acquired JNIEnv for the current thread.  Every successfully
- * acquired JNIEnv must be released exactly once.  Internally, all this does is release the reader
- * lock on the set of valid JVMs.
+ * aws_jni_release_thread_env - Releases an acquired JNIEnv for the current thread. Every
+ * successfully acquired JNIEnv must be released exactly once.
+ * Internally, it
+ * - releases the reader lock on the set of valid JVMs
+ * - detaches the dispatch queue threads (on Apple platforms only) from JVM.
  ******************************************************************************/
-void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
+void aws_jni_release_thread_env(JavaVM *jvm, struct aws_jvm_env_context *jvm_env_context);
+
+/*******************************************************************************
+ * aws_jni_set_dispatch_queue_threads - Sets whether the current event loop group uses dispatch queue threads
+ ******************************************************************************/
+void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue);
 
 /*******************************************************************************
  * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws

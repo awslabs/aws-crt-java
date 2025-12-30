@@ -45,7 +45,7 @@
  */
 struct aws_http2_stream_manager_binding {
     JavaVM *jvm;
-    jweak java_http2_stream_manager;
+    jobject java_http2_stream_manager;
     struct aws_http2_stream_manager *stream_manager;
 };
 
@@ -54,7 +54,7 @@ static void s_destroy_manager_binding(struct aws_http2_stream_manager_binding *b
         return;
     }
     if (binding->java_http2_stream_manager != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, binding->java_http2_stream_manager);
+        (*env)->DeleteGlobalRef(env, binding->java_http2_stream_manager);
     }
 
     aws_mem_release(aws_jni_get_allocator(), binding);
@@ -64,27 +64,26 @@ static void s_on_stream_manager_shutdown_complete_callback(void *user_data) {
 
     struct aws_http2_stream_manager_binding *binding = (struct aws_http2_stream_manager_binding *)user_data;
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_STREAM_MANAGER, "Java Stream Manager Shutdown Complete");
-    jobject java_http2_stream_manager = (*env)->NewLocalRef(env, binding->java_http2_stream_manager);
-    if (java_http2_stream_manager != NULL) {
-        (*env)->CallVoidMethod(env, java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
+    if (binding->java_http2_stream_manager != NULL) {
+        (*env)->CallVoidMethod(
+            env, binding->java_http2_stream_manager, http2_stream_manager_properties.onShutdownComplete);
 
         /* If exception raised from Java callback, but we already closed the stream manager, just move on */
         aws_jni_check_and_clear_exception(env);
-
-        (*env)->DeleteLocalRef(env, java_http2_stream_manager);
     }
 
     /* We're done with this wrapper, free it. */
     JavaVM *jvm = binding->jvm;
     s_destroy_manager_binding(binding, env);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -181,7 +180,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_http2_stream_manager_binding));
     AWS_FATAL_ASSERT(binding);
-    binding->java_http2_stream_manager = (*env)->NewWeakGlobalRef(env, stream_manager_jobject);
+    binding->java_http2_stream_manager = (*env)->NewGlobalRef(env, stream_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;
@@ -261,7 +260,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
 
 cleanup:
     aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
-
+    (*env)->ReleaseLongArrayElements(env, java_marshalled_settings, (jlong *)marshalled_settings, JNI_ABORT);
     if (binding->stream_manager == NULL) {
         s_destroy_manager_binding(binding, env);
         binding = NULL;
@@ -309,7 +308,8 @@ static struct aws_sm_acquire_stream_callback_data *s_new_sm_acquire_stream_callb
 static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code, void *user_data) {
     struct aws_sm_acquire_stream_callback_data *callback_data = user_data;
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -350,7 +350,7 @@ static void s_on_stream_acquired(struct aws_http_stream *stream, int error_code,
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     JavaVM *jvm = callback_data->jvm;
     s_cleanup_sm_acquire_stream_callback_data(callback_data, env);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 

@@ -23,12 +23,18 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
 
 import java.util.Optional;
 
 public class CrtTestFixture {
 
     private CrtTestContext context;
+
+    @Rule
+    public TestName testName = new TestName();
 
     public final CrtTestContext getContext() {
         return context;
@@ -209,16 +215,6 @@ public class CrtTestFixture {
     /* The function will be run once before any of the test methods in the class */
     @BeforeClass
     public static void setupOnce() {
-        // We only want to see the CRT logs if the test fails.
-        // Surefire has a redirectTestOutputToFile option, but that doesn't
-        // capture what the CRT logger writes to stdout or stderr.
-        // Our workaround is to have the CRT logger write to log.txt.
-        // We clear the file for each new test by restarting the logger.
-        // We stop all tests when one fails (see FailFastListener) so that
-        // a valuable log.txt isn't overwritten.
-        if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
-            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
-        }
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.setupOnce();
@@ -230,7 +226,18 @@ public class CrtTestFixture {
     /* The setup function will be run before every test */
     @Before
     public void setup() {
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture setup begin");
+        // We only want to see the CRT logs if the test fails.
+        // Surefire has a redirectTestOutputToFile option, but that doesn't
+        // capture what the CRT logger writes to stdout or stderr.
+        // Our workaround is to have the CRT logger write to log.txt.
+        // We clear the file for each new test by restarting the logger.
+        // We stop all tests when one fails (see FailFastListener) so that
+        // a valuable log.txt isn't overwritten.
+        if (System.getProperty("aws.crt.aws_trace_log_per_test") != null) {
+            Log.initLoggingToFile(Log.LogLevel.Trace, "log.txt");
+        }
+        System.out.println("[TEST START] " + this.getClass().getName() + "#" + testName.getMethodName());
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "[TEST START] " + this.getClass().getName() + "#" + testName.getMethodName() + "CrtTestFixture setup begin");
 
         // TODO this CrtTestContext should be removed as we are using System Properties
         // for tests now.
@@ -239,7 +246,7 @@ public class CrtTestFixture {
 
     @After
     public void tearDown() {
-        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown begin");
+        Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "[TEST END] " + testName.getMethodName() + "CrtTestFixture tearDown begin");
         CrtPlatform platform = CRT.getPlatformImpl();
         if (platform != null) {
             platform.testTearDown(context);
@@ -258,6 +265,7 @@ public class CrtTestFixture {
             }
         }
         Log.log(Log.LogLevel.Debug, LogSubject.JavaCrtGeneral, "CrtTestFixture tearDown end");
+        System.out.println("[TEST END] " + this.getClass().getName() + "#" + testName.getMethodName());
     }
 
     protected TlsContext createTlsContextOptions(byte[] trustStore) {

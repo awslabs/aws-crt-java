@@ -78,6 +78,7 @@ public class MqttClientConnection extends CrtResource {
         options.setProtocolOperationTimeoutMs(mqtt5options.getAckTimeoutSeconds() != null
                 ? Math.toIntExact(mqtt5options.getAckTimeoutSeconds()) * 1000
                 : 0);
+        options.setMetricsEnabled(mqtt5options.getMetricsEnabled());
         return options;
     }
 

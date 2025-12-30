@@ -28,10 +28,10 @@
 #include "crt.h"
 
 #include "http_request_utils.h"
+#include "iot_device_sdk_metrics.h"
 #include "java_class_ids.h"
 #include "mqtt5_client_jni.h"
 #include "mqtt_connection.h"
-#include "iot_device_sdk_metrics.h"
 
 /*******************************************************************************
  * mqtt_jni_ws_handshake - Data needed to perform the async websocket handshake
@@ -1135,7 +1135,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
         return;
     }
 
-    struct aws_mqtt_iot_sdk_metrics_java_jni *iot_sdk_metrics_java_jni = aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(env, aws_jni_get_allocator(), jni_metrics);
+    struct aws_mqtt_iot_sdk_metrics_java_jni *iot_sdk_metrics_java_jni =
+        aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(env, aws_jni_get_allocator(), jni_metrics);
 
     if (aws_mqtt_client_connection_set_metrics(connection->client_connection, &iot_sdk_metrics_java_jni->metrics)) {
         aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_metrics: Failed to set metrics");

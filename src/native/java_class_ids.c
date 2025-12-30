@@ -1628,8 +1628,8 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         "topicAliasingOptions",
         "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
-    mqtt5_client_options_properties.metrics_enabled_field_id = (*env)->GetFieldID(
-        env, mqtt5_client_options_properties.client_options_class, "metricsEnabled", "Z");
+    mqtt5_client_options_properties.metrics_enabled_field_id =
+        (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "metricsEnabled", "Z");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.metrics_enabled_field_id);
     mqtt5_client_options_properties.iot_device_sdk_metrics_field_id = (*env)->GetFieldID(
         env,

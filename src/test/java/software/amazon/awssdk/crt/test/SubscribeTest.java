@@ -49,7 +49,8 @@ public class SubscribeTest extends MqttClientConnectionFixture {
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             Consumer<MqttMessage> messageHandler = (message) -> {};
 
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE,

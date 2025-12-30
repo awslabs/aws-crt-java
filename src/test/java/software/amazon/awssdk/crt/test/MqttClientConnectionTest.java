@@ -41,7 +41,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -73,7 +74,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             publish(
                     "test/topic/" + (UUID.randomUUID()).toString(),
@@ -112,7 +114,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             String topic = "test/topic/" + (UUID.randomUUID()).toString();
             byte[] payload = "Hello_World".getBytes();
@@ -158,7 +161,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -190,7 +194,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             OnConnectionSuccessReturn connectionResult = waitForConnectSuccess();
             assertTrue("Connection success callback was empty", connectionResult != null);
@@ -242,7 +247,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     123,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             } catch (Exception ex) {
                 // Do nothing with the exception - we expect this to throw since we passed an incorrect port.
             }

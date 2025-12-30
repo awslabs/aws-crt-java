@@ -147,7 +147,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -242,7 +243,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
         } catch (Exception ex) {
             return;
         } finally {
@@ -265,7 +267,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -305,7 +308,8 @@ public class CustomKeyOpsTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
         } catch (Exception ex) {
             return;
         } finally {

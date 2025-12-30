@@ -43,7 +43,8 @@ public class IotServiceTest extends MqttClientConnectionFixture {
                     port,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
 
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE, messageHandler);
             subscribed.thenApply(packetId -> subsAcked++);

@@ -5,9 +5,9 @@
 #ifndef AWS_JNI_IOT_DEVICE_SDK_METRICS_H
 #define AWS_JNI_IOT_DEVICE_SDK_METRICS_H
 
-#include <jni.h>
 #include <aws/mqtt/mqtt.h>
 #include <crt.h>
+#include <jni.h>
 
 struct aws_mqtt_iot_sdk_metrics_java_jni {
     struct aws_mqtt_iot_sdk_metrics metrics;

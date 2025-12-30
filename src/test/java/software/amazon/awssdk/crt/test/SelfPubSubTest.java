@@ -49,7 +49,8 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
 
             CompletableFuture<MqttMessage> receivedFuture = new CompletableFuture<>();
             Consumer<MqttMessage> messageHandler = (message) -> {
@@ -128,7 +129,8 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
 
             CompletableFuture<Integer> subscribed = connection.subscribe(TEST_TOPIC, QualityOfService.AT_LEAST_ONCE);

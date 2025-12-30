@@ -176,7 +176,7 @@ import org.junit.Assume;
         connectionEventsStatistics = new ConnectionEventsStatistics();
     }
 
-    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
+    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions, boolean metricsEnabled) throws Exception
     {
         reset();
 
@@ -236,6 +236,7 @@ import org.junit.Assume;
                 config.setKeepAliveSecs(0);
                 config.setProtocolOperationTimeoutMs(60000);
                 config.setConnectionCallbacks(events);
+                config.setMetricsEnabled(metricsEnabled);
 
                 if (httpProxyOptions != null) {
                     config.setHttpProxyOptions(httpProxyOptions);
@@ -262,7 +263,7 @@ import org.junit.Assume;
         }
     }
 
-    void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions) throws Exception
+    void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions, boolean metricsEnabled) throws Exception
     {
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
@@ -313,6 +314,7 @@ import org.junit.Assume;
             config.setPort(port);
             config.setUseWebsockets(true);
             config.setConnectionCallbacks(events);
+            config.setMetricsEnabled(metricsEnabled);
 
             if (username != null) {
                 config.setUsername(username);

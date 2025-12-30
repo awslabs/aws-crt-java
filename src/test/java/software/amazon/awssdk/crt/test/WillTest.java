@@ -50,7 +50,8 @@ public class WillTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -83,7 +84,8 @@ public class WillTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -116,7 +118,8 @@ public class WillTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);

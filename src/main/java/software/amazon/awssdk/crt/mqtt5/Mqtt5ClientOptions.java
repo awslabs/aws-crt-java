@@ -270,6 +270,15 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns whether AWS IoT Device SDK metrics collection is enabled
+     *
+     * @return true if metrics are enabled, false otherwise
+     */
+    public boolean getMetricsEnabled() {
+        return this.metricsEnabled;
+    }
+
+    /**
      * Enables or disables IoT Device SDK metrics collection
      *
      * @param enabled true to enable metrics, false to disable
@@ -600,7 +609,6 @@ public class Mqtt5ClientOptions {
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
         private TopicAliasingOptions topicAliasingOptions;
-        private boolean enableAwsMetrics = true;
         private boolean metricsEnabled = true;
 
         /**
@@ -866,18 +874,6 @@ public class Mqtt5ClientOptions {
          */
         public Mqtt5ClientOptionsBuilder withTopicAliasingOptions(TopicAliasingOptions options) {
             this.topicAliasingOptions = options;
-            return this;
-        }
-
-        /**
-         * Enable or disable AWS IoT specific metrics. The metrics will be set in username field of CONNECT packet.
-         * By default, the AWS IoT metrics are enabled. Disable it if you are connecting to a non-AWS IoT MQTT broker.
-         *
-         * @param enableAwsMetrics true to enable, false to disable
-         * @return The Mqtt5ClientOptionsBuilder after setting the AWS metrics option
-         */
-        public Mqtt5ClientOptionsBuilder withAWSMetrics(boolean enableAwsMetrics) {
-            this.enableAwsMetrics = enableAwsMetrics;
             return this;
         }
 

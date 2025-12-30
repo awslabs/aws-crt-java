@@ -709,6 +709,14 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 }
 
 JNIEXPORT
+bool JNICALL
+    Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    (void)env;
+    (void)jni_crt_class;
+    return aws_http_error_code_is_retryable(error_code);
+}
+
+JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_CRT_onJvmShutdown(JNIEnv *env, jclass jni_crt_class) {
 
     (void)jni_crt_class;

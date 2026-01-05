@@ -10,7 +10,6 @@
 #include <crt.h>
 #include <java_class_ids.h>
 
-
 static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
 
 void aws_mqtt_iot_sdk_metrics_java_jni_destroy(

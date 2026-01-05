@@ -170,6 +170,9 @@ In this way, it reduces the native image size around 30% (142 MB to 101 MB for a
 > [!NOTE]
 > The JNI shared lib must be in the same directory as the GraalVM native image. If you move the native image, you must move this file too. It is `aws-crt-jni.dll` on Windows, `libaws-crt-jni.dylib` on macOS, and `libaws-crt-jni.so` on Unix.
 
+> [!IMPORTANT]
+> When adding or modifying JNI bindings (native methods, classes, or interfaces), update [jni-config.json](src/main/resources/META-INF/native-image/software.amazon.awssdk/crt/aws-crt/jni-config.json) to ensure GraalVM compatibility and CI test success. 
+
 ## System Properties
 
 - To enable logging, set `aws.crt.log.destination` or `aws.crt.log.level`:

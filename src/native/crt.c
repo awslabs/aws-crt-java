@@ -738,14 +738,6 @@ jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsErrorName(JNIEnv *env, jc
 }
 
 JNIEXPORT
-jstring JNICALL Java_software_amazon_awssdk_crt_CRT_awsPlatformBuildString(JNIEnv *env, jclass jni_crt_class) {
-    (void)jni_crt_class;
-    struct aws_byte_cursor platform_string = aws_get_platform_build_os_string();
-
-    return aws_jni_string_from_cursor(env, &platform_string);
-}
-
-JNIEXPORT
 jlong JNICALL Java_software_amazon_awssdk_crt_CRT_awsNativeMemory(JNIEnv *env, jclass jni_crt_class) {
     (void)env;
     (void)jni_crt_class;

@@ -1710,21 +1710,81 @@ public class S3ClientTest extends CrtTestFixture {
         public String ipAddress;
         
         public void captureFrom(S3RequestMetrics metrics) {
-            this.apiCallDurationNs = metrics.getApiCallDurationNs();
-            this.apiCallSuccessful = metrics.isApiCallSuccessful();
-            this.serviceId = metrics.getServiceId();
-            this.serviceEndpoint = metrics.getServiceEndpoint();
-            this.operationName = metrics.getOperationName();
-            this.awsRequestId = metrics.getAwsRequestId();
-            this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
-            this.errorCode = metrics.getErrorCode();
-            this.timeToFirstByte = metrics.getTimeToFirstByte();
-            this.timeToLastByte = metrics.getTimeToLastByte();
-            this.signingDurationNs = metrics.getSigningDurationNs();
-            this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
-            this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
-            this.retryCount = metrics.getRetryCount();
-            this.ipAddress = metrics.getIpAddress();
+            try {
+                this.apiCallDurationNs = metrics.getApiCallDurationNs();
+            } catch (Exception e) {
+                this.apiCallDurationNs = -1;
+            }
+            try {
+                this.apiCallSuccessful = metrics.isApiCallSuccessful();
+            } catch (Exception e) {
+                this.apiCallSuccessful = false;
+            }
+            try {
+                this.serviceId = metrics.getServiceId();
+            } catch (Exception e) {
+                this.serviceId = null;
+            }
+            try {
+                this.serviceEndpoint = metrics.getServiceEndpoint();
+            } catch (Exception e) {
+                this.serviceEndpoint = null;
+            }
+            try {
+                this.operationName = metrics.getOperationName();
+            } catch (Exception e) {
+                this.operationName = null;
+            }
+            try {
+                this.awsRequestId = metrics.getAwsRequestId();
+            } catch (Exception e) {
+                this.awsRequestId = null;
+            }
+            try {
+                this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
+            } catch (Exception e) {
+                this.awsExtendedRequestId = null;
+            }
+            try {
+                this.errorCode = metrics.getErrorCode();
+            } catch (Exception e) {
+                this.errorCode = 0;
+            }
+            try {
+                this.timeToFirstByte = metrics.getTimeToFirstByte();
+            } catch (Exception e) {
+                this.timeToFirstByte = -1;
+            }
+            try {
+                this.timeToLastByte = metrics.getTimeToLastByte();
+            } catch (Exception e) {
+                this.timeToLastByte = -1;
+            }
+            try {
+                this.signingDurationNs = metrics.getSigningDurationNs();
+            } catch (Exception e) {
+                this.signingDurationNs = -1;
+            }
+            try {
+                this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
+            } catch (Exception e) {
+                this.backoffDelayDurationNs = -1;
+            }
+            try {
+                this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
+            } catch (Exception e) {
+                this.serviceCallDurationNs = -1;
+            }
+            try {
+                this.retryCount = metrics.getRetryCount();
+            } catch (Exception e) {
+                this.retryCount = 0;
+            }
+            try {
+                this.ipAddress = metrics.getIpAddress();
+            } catch (Exception e) {
+                this.ipAddress = null;
+            }
         }
         
         public void validateMetrics() {

@@ -17,7 +17,6 @@
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
-#include <aws/s3/private/s3_request.h>
 #include <aws/s3/s3_client.h>
 #include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
@@ -951,207 +950,227 @@ static void s_on_s3_meta_request_telemetry_callback(
     }
 
     // Timestamp fields (long) - from time_metrics
+    uint64_t timestamp_value;
+
+    aws_s3_request_metrics_get_s3_request_first_attempt_start_timestamp_ns(metrics, &timestamp_value);
     (*env)->SetLongField(
         env,
         metrics_object,
         s3_request_metrics_properties.s3_request_first_attempt_start_timestamp_ns_field_id,
-        metrics->time_metrics.s3_request_first_attempt_start_timestamp_ns);
+        timestamp_value);
+
+    if (aws_s3_request_metrics_get_s3_request_last_attempt_end_timestamp_ns(metrics, &timestamp_value) ==
+        AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env,
+            metrics_object,
+            s3_request_metrics_properties.s3_request_last_attempt_end_timestamp_ns_field_id,
+            timestamp_value);
+    }
+
+    aws_s3_request_metrics_get_start_timestamp_ns(metrics, &timestamp_value);
     (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.s3_request_last_attempt_end_timestamp_ns_field_id,
-        metrics->time_metrics.s3_request_last_attempt_end_timestamp_ns);
+        env, metrics_object, s3_request_metrics_properties.start_timestamp_ns_field_id, timestamp_value);
+
+    aws_s3_request_metrics_get_end_timestamp_ns(metrics, &timestamp_value);
+    (*env)->SetLongField(env, metrics_object, s3_request_metrics_properties.end_timestamp_ns_field_id, timestamp_value);
+
+    aws_s3_request_metrics_get_total_duration_ns(metrics, &timestamp_value);
     (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.start_timestamp_ns_field_id,
-        metrics->time_metrics.start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.end_timestamp_ns_field_id,
-        metrics->time_metrics.end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.total_duration_ns_field_id,
-        metrics->time_metrics.total_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.send_start_timestamp_ns_field_id,
-        metrics->time_metrics.send_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.send_end_timestamp_ns_field_id,
-        metrics->time_metrics.send_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.sending_duration_ns_field_id,
-        metrics->time_metrics.sending_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.receive_start_timestamp_ns_field_id,
-        metrics->time_metrics.receive_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.receive_end_timestamp_ns_field_id,
-        metrics->time_metrics.receive_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.receiving_duration_ns_field_id,
-        metrics->time_metrics.receiving_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.sign_start_timestamp_ns_field_id,
-        metrics->time_metrics.sign_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.sign_end_timestamp_ns_field_id,
-        metrics->time_metrics.sign_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.signing_duration_ns_field_id,
-        metrics->time_metrics.signing_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.mem_acquire_start_timestamp_ns_field_id,
-        metrics->time_metrics.mem_acquire_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.mem_acquire_end_timestamp_ns_field_id,
-        metrics->time_metrics.mem_acquire_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.mem_acquire_duration_ns_field_id,
-        metrics->time_metrics.mem_acquire_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.deliver_start_timestamp_ns_field_id,
-        metrics->time_metrics.deliver_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.deliver_end_timestamp_ns_field_id,
-        metrics->time_metrics.deliver_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.deliver_duration_ns_field_id,
-        metrics->time_metrics.deliver_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.retry_delay_start_timestamp_ns_field_id,
-        metrics->time_metrics.retry_delay_start_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.retry_delay_end_timestamp_ns_field_id,
-        metrics->time_metrics.retry_delay_end_timestamp_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.retry_delay_duration_ns_field_id,
-        metrics->time_metrics.retry_delay_duration_ns);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.service_call_duration_ns_field_id,
-        metrics->time_metrics.service_call_duration_ns);
+        env, metrics_object, s3_request_metrics_properties.total_duration_ns_field_id, timestamp_value);
+
+    if (aws_s3_request_metrics_get_send_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.send_start_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_send_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.send_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_sending_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.sending_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_receive_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.receive_start_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_receive_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.receive_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_receiving_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.receiving_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_sign_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.sign_start_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_sign_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.sign_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_signing_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.signing_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_mem_acquire_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env,
+            metrics_object,
+            s3_request_metrics_properties.mem_acquire_start_timestamp_ns_field_id,
+            timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_mem_acquire_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.mem_acquire_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_mem_acquire_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.mem_acquire_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_delivery_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.deliver_start_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_delivery_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.deliver_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_delivery_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.deliver_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_retry_delay_start_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env,
+            metrics_object,
+            s3_request_metrics_properties.retry_delay_start_timestamp_ns_field_id,
+            timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_retry_delay_end_timestamp_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.retry_delay_end_timestamp_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_retry_delay_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.retry_delay_duration_ns_field_id, timestamp_value);
+    }
+
+    if (aws_s3_request_metrics_get_service_call_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.service_call_duration_ns_field_id, timestamp_value);
+    }
 
     // Request/Response info (int) - from req_resp_info_metrics
-    (*env)->SetIntField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.response_status_field_id,
-        metrics->req_resp_info_metrics.response_status);
-    (*env)->SetIntField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.request_type_field_id,
-        metrics->req_resp_info_metrics.request_type);
+    int response_status;
+    if (aws_s3_request_metrics_get_response_status_code(metrics, &response_status) == AWS_OP_SUCCESS) {
+        (*env)->SetIntField(
+            env, metrics_object, s3_request_metrics_properties.response_status_field_id, response_status);
+    }
+
+    enum aws_s3_request_type request_type;
+    aws_s3_request_metrics_get_request_type(metrics, &request_type);
+    (*env)->SetIntField(env, metrics_object, s3_request_metrics_properties.request_type_field_id, request_type);
 
     // Request/Response info (String) - from req_resp_info_metrics
-    struct aws_byte_cursor request_id_cursor = aws_byte_cursor_from_string(metrics->req_resp_info_metrics.request_id);
-    jstring request_id = aws_jni_string_from_cursor(env, &request_id_cursor);
-    (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.request_id_field_id, request_id);
-    (*env)->DeleteLocalRef(env, request_id);
+    const struct aws_string *request_id_string;
+    if (aws_s3_request_metrics_get_request_id(metrics, &request_id_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor request_id_cursor = aws_byte_cursor_from_string(request_id_string);
+        jstring request_id = aws_jni_string_from_cursor(env, &request_id_cursor);
+        (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.request_id_field_id, request_id);
+        (*env)->DeleteLocalRef(env, request_id);
+    }
 
-    struct aws_byte_cursor extended_request_id_cursor =
-        aws_byte_cursor_from_string(metrics->req_resp_info_metrics.extended_request_id);
-    jstring extended_request_id = aws_jni_string_from_cursor(env, &extended_request_id_cursor);
-    (*env)->SetObjectField(
-        env, metrics_object, s3_request_metrics_properties.extended_request_id_field_id, extended_request_id);
-    (*env)->DeleteLocalRef(env, extended_request_id);
+    const struct aws_string *extended_request_id_string;
+    if (aws_s3_request_metrics_get_extended_request_id(metrics, &extended_request_id_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor extended_request_id_cursor = aws_byte_cursor_from_string(extended_request_id_string);
+        jstring extended_request_id = aws_jni_string_from_cursor(env, &extended_request_id_cursor);
+        (*env)->SetObjectField(
+            env, metrics_object, s3_request_metrics_properties.extended_request_id_field_id, extended_request_id);
+        (*env)->DeleteLocalRef(env, extended_request_id);
+    }
 
-    struct aws_byte_cursor operation_name_cursor =
-        aws_byte_cursor_from_string(metrics->req_resp_info_metrics.operation_name);
-    jstring operation_name = aws_jni_string_from_cursor(env, &operation_name_cursor);
-    (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.operation_name_field_id, operation_name);
-    (*env)->DeleteLocalRef(env, operation_name);
+    const struct aws_string *operation_name_string;
+    if (aws_s3_request_metrics_get_operation_name(metrics, &operation_name_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor operation_name_cursor = aws_byte_cursor_from_string(operation_name_string);
+        jstring operation_name = aws_jni_string_from_cursor(env, &operation_name_cursor);
+        (*env)->SetObjectField(
+            env, metrics_object, s3_request_metrics_properties.operation_name_field_id, operation_name);
+        (*env)->DeleteLocalRef(env, operation_name);
+    }
 
-    struct aws_byte_cursor request_path_query_cursor =
-        aws_byte_cursor_from_string(metrics->req_resp_info_metrics.request_path_query);
+    const struct aws_string *request_path_query_string;
+    aws_s3_request_metrics_get_request_path_query(metrics, &request_path_query_string);
+    struct aws_byte_cursor request_path_query_cursor = aws_byte_cursor_from_string(request_path_query_string);
     jstring request_path_query = aws_jni_string_from_cursor(env, &request_path_query_cursor);
     (*env)->SetObjectField(
         env, metrics_object, s3_request_metrics_properties.request_path_query_field_id, request_path_query);
     (*env)->DeleteLocalRef(env, request_path_query);
 
-    struct aws_byte_cursor host_address_cursor =
-        aws_byte_cursor_from_string(metrics->req_resp_info_metrics.host_address);
+    const struct aws_string *host_address_string;
+    aws_s3_request_metrics_get_host_address(metrics, &host_address_string);
+    struct aws_byte_cursor host_address_cursor = aws_byte_cursor_from_string(host_address_string);
     jstring host_address = aws_jni_string_from_cursor(env, &host_address_cursor);
     (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.host_address_field_id, host_address);
     (*env)->DeleteLocalRef(env, host_address);
 
     // CRT info (String) - from crt_info_metrics
-    struct aws_byte_cursor ip_address_cursor = aws_byte_cursor_from_string(metrics->crt_info_metrics.ip_address);
-    jstring ip_address = aws_jni_string_from_cursor(env, &ip_address_cursor);
-    (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.ip_address_field_id, ip_address);
-    (*env)->DeleteLocalRef(env, ip_address);
+    const struct aws_string *ip_address_string;
+    if (aws_s3_request_metrics_get_ip_address(metrics, &ip_address_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor ip_address_cursor = aws_byte_cursor_from_string(ip_address_string);
+        jstring ip_address = aws_jni_string_from_cursor(env, &ip_address_cursor);
+        (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.ip_address_field_id, ip_address);
+        (*env)->DeleteLocalRef(env, ip_address);
+    }
 
     // CRT info (long) - from crt_info_metrics
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.connection_id_field_id,
-        (jlong)metrics->crt_info_metrics.connection_ptr);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.request_ptr_field_id,
-        (jlong)metrics->crt_info_metrics.request_ptr);
-    (*env)->SetLongField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.thread_id_field_id,
-        (jlong)metrics->crt_info_metrics.thread_id);
+    size_t connection_id;
+    if (aws_s3_request_metrics_get_connection_id(metrics, &connection_id) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.connection_id_field_id, (jlong)connection_id);
+    }
+
+    size_t request_ptr;
+    if (aws_s3_request_metrics_get_request_ptr(metrics, &request_ptr) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env, metrics_object, s3_request_metrics_properties.request_ptr_field_id, (jlong)request_ptr);
+    }
+
+    aws_thread_id_t thread_id;
+    if (aws_s3_request_metrics_get_thread_id(metrics, &thread_id) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(env, metrics_object, s3_request_metrics_properties.thread_id_field_id, (jlong)thread_id);
+    }
 
     // CRT info (int) - from crt_info_metrics
-    (*env)->SetIntField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.stream_id_field_id,
-        (jint)metrics->crt_info_metrics.stream_id);
-    (*env)->SetIntField(
-        env, metrics_object, s3_request_metrics_properties.error_code_field_id, metrics->crt_info_metrics.error_code);
-    (*env)->SetIntField(
-        env,
-        metrics_object,
-        s3_request_metrics_properties.retry_attempt_field_id,
-        (jint)metrics->crt_info_metrics.retry_attempt);
+    uint32_t stream_id;
+    if (aws_s3_request_metrics_get_request_stream_id(metrics, &stream_id) == AWS_OP_SUCCESS) {
+        (*env)->SetIntField(env, metrics_object, s3_request_metrics_properties.stream_id_field_id, (jint)stream_id);
+    }
+
+    int error_code = aws_s3_request_metrics_get_error_code(metrics);
+    (*env)->SetIntField(env, metrics_object, s3_request_metrics_properties.error_code_field_id, error_code);
+
+    uint32_t retry_attempt = aws_s3_request_metrics_get_retry_attempt(metrics);
+    (*env)->SetIntField(env, metrics_object, s3_request_metrics_properties.retry_attempt_field_id, (jint)retry_attempt);
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
 

@@ -1710,19 +1710,51 @@ public class S3ClientTest extends CrtTestFixture {
         public String ipAddress;
         
         public void captureFrom(S3RequestMetrics metrics) {
-            this.apiCallDurationNs = metrics.getApiCallDurationNs();
+            try {
+                this.apiCallDurationNs = metrics.getApiCallDurationNs();
+            } catch (Exception e) {
+                this.apiCallDurationNs = -1;
+            }
             this.apiCallSuccessful = metrics.isApiCallSuccessful();
             this.serviceId = metrics.getServiceId();
             this.serviceEndpoint = metrics.getServiceEndpoint();
             this.operationName = metrics.getOperationName();
-            this.awsRequestId = metrics.getAwsRequestId();
-            this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
+            try {
+                this.awsRequestId = metrics.getAwsRequestId();
+            } catch (Exception e) {
+                this.awsRequestId = null;
+            }
+            try {
+                this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
+            } catch (Exception e) {
+                this.awsExtendedRequestId = null;
+            }
             this.errorCode = metrics.getErrorCode();
-            this.timeToFirstByte = metrics.getTimeToFirstByte();
-            this.timeToLastByte = metrics.getTimeToLastByte();
-            this.signingDurationNs = metrics.getSigningDurationNs();
-            this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
-            this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
+            try {
+                this.timeToFirstByte = metrics.getTimeToFirstByte();
+            } catch (Exception e) {
+                this.timeToFirstByte = -1;
+            }
+            try {
+                this.timeToLastByte = metrics.getTimeToLastByte();
+            } catch (Exception e) {
+                this.timeToLastByte = -1;
+            }
+            try {
+                this.signingDurationNs = metrics.getSigningDurationNs();
+            } catch (Exception e) {
+                this.signingDurationNs = -1;
+            }
+            try {
+                this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
+            } catch (Exception e) {
+                this.backoffDelayDurationNs = -1;
+            }
+            try {
+                this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
+            } catch (Exception e) {
+                this.serviceCallDurationNs = -1;
+            }
             this.retryCount = metrics.getRetryCount();
             this.ipAddress = metrics.getIpAddress();
         }

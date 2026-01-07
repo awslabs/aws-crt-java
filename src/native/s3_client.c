@@ -1093,19 +1093,21 @@ static void s_on_s3_meta_request_telemetry_callback(
 
     // Request/Response info (String) - from req_resp_info_metrics
     const struct aws_string *request_id_string;
-    aws_s3_request_metrics_get_request_id(metrics, &request_id_string);
-    struct aws_byte_cursor request_id_cursor = aws_byte_cursor_from_string(request_id_string);
-    jstring request_id = aws_jni_string_from_cursor(env, &request_id_cursor);
-    (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.request_id_field_id, request_id);
-    (*env)->DeleteLocalRef(env, request_id);
+    if (aws_s3_request_metrics_get_request_id(metrics, &request_id_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor request_id_cursor = aws_byte_cursor_from_string(request_id_string);
+        jstring request_id = aws_jni_string_from_cursor(env, &request_id_cursor);
+        (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.request_id_field_id, request_id);
+        (*env)->DeleteLocalRef(env, request_id);
+    }
 
     const struct aws_string *extended_request_id_string;
-    aws_s3_request_metrics_get_extended_request_id(metrics, &extended_request_id_string);
-    struct aws_byte_cursor extended_request_id_cursor = aws_byte_cursor_from_string(extended_request_id_string);
-    jstring extended_request_id = aws_jni_string_from_cursor(env, &extended_request_id_cursor);
-    (*env)->SetObjectField(
-        env, metrics_object, s3_request_metrics_properties.extended_request_id_field_id, extended_request_id);
-    (*env)->DeleteLocalRef(env, extended_request_id);
+    if (aws_s3_request_metrics_get_extended_request_id(metrics, &extended_request_id_string) == AWS_OP_SUCCESS) {
+        struct aws_byte_cursor extended_request_id_cursor = aws_byte_cursor_from_string(extended_request_id_string);
+        jstring extended_request_id = aws_jni_string_from_cursor(env, &extended_request_id_cursor);
+        (*env)->SetObjectField(
+            env, metrics_object, s3_request_metrics_properties.extended_request_id_field_id, extended_request_id);
+        (*env)->DeleteLocalRef(env, extended_request_id);
+    }
 
     const struct aws_string *operation_name_string;
     if (aws_s3_request_metrics_get_operation_name(metrics, &operation_name_string) == AWS_OP_SUCCESS) {

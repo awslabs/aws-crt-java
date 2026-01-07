@@ -1715,26 +1715,10 @@ public class S3ClientTest extends CrtTestFixture {
             } catch (Exception e) {
                 this.apiCallDurationNs = -1;
             }
-            try {
-                this.apiCallSuccessful = metrics.isApiCallSuccessful();
-            } catch (Exception e) {
-                this.apiCallSuccessful = false;
-            }
-            try {
-                this.serviceId = metrics.getServiceId();
-            } catch (Exception e) {
-                this.serviceId = null;
-            }
-            try {
-                this.serviceEndpoint = metrics.getServiceEndpoint();
-            } catch (Exception e) {
-                this.serviceEndpoint = null;
-            }
-            try {
-                this.operationName = metrics.getOperationName();
-            } catch (Exception e) {
-                this.operationName = null;
-            }
+            this.apiCallSuccessful = metrics.isApiCallSuccessful();
+            this.serviceId = metrics.getServiceId();
+            this.serviceEndpoint = metrics.getServiceEndpoint();
+            this.operationName = metrics.getOperationName();
             try {
                 this.awsRequestId = metrics.getAwsRequestId();
             } catch (Exception e) {
@@ -1745,11 +1729,7 @@ public class S3ClientTest extends CrtTestFixture {
             } catch (Exception e) {
                 this.awsExtendedRequestId = null;
             }
-            try {
-                this.errorCode = metrics.getErrorCode();
-            } catch (Exception e) {
-                this.errorCode = 0;
-            }
+            this.errorCode = metrics.getErrorCode();
             try {
                 this.timeToFirstByte = metrics.getTimeToFirstByte();
             } catch (Exception e) {
@@ -1775,16 +1755,8 @@ public class S3ClientTest extends CrtTestFixture {
             } catch (Exception e) {
                 this.serviceCallDurationNs = -1;
             }
-            try {
-                this.retryCount = metrics.getRetryCount();
-            } catch (Exception e) {
-                this.retryCount = 0;
-            }
-            try {
-                this.ipAddress = metrics.getIpAddress();
-            } catch (Exception e) {
-                this.ipAddress = null;
-            }
+            this.retryCount = metrics.getRetryCount();
+            this.ipAddress = metrics.getIpAddress();
         }
         
         public void validateMetrics() {

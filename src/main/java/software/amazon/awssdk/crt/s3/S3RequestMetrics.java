@@ -82,7 +82,7 @@ public class S3RequestMetrics {
     private int errorCode = 0;
     private int retryAttempt = 0;
 
-    public long getApiCallDurationNs() {
+    public long getApiCallDurationNs() throws CrtRuntimeException {
         if (this.s3RequestLastAttemptEndTimestampNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
@@ -109,49 +109,49 @@ public class S3RequestMetrics {
         return this.hostAddress;
     }
 
-    public String getAwsExtendedRequestId() {
+    public String getAwsExtendedRequestId() throws CrtRuntimeException {
         if (this.extendedRequestId == null) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.extendedRequestId;
     }
 
-    public String getAwsRequestId() {
+    public String getAwsRequestId() throws CrtRuntimeException {
         if (this.requestId == null) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.requestId;
     }
 
-    public long getBackoffDelayDurationNs() {
+    public long getBackoffDelayDurationNs() throws CrtRuntimeException {
         if (this.retryDelayDurationNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.retryDelayDurationNs;
     }
 
-    public long getServiceCallDurationNs() {
+    public long getServiceCallDurationNs() throws CrtRuntimeException {
         if (this.serviceCallDurationNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.serviceCallDurationNs;
     }
 
-    public long getSigningDurationNs() {
+    public long getSigningDurationNs() throws CrtRuntimeException {
         if (this.signingDurationNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.signingDurationNs;
     }
 
-    public long getTimeToFirstByte() {
+    public long getTimeToFirstByte() throws CrtRuntimeException {
         if (this.receiveStartTimestampNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.receiveStartTimestampNs;
     }
 
-    public long getTimeToLastByte() {
+    public long getTimeToLastByte() throws CrtRuntimeException {
         if (this.receiveEndTimestampNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }

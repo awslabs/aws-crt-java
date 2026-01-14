@@ -437,8 +437,6 @@ static void s_mqtt_connection_destroy(JNIEnv *env, struct mqtt_jni_connection *c
         (*env)->DeleteGlobalRef(env, connection->java_mqtt_connection);
     }
 
-    aws_tls_connection_options_clean_up(&connection->tls_options);
-
     struct aws_allocator *allocator = aws_jni_get_allocator();
     aws_mem_release(allocator, connection);
 }
@@ -587,11 +585,11 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
 
     /* if a tls_ctx was provided, initialize tls options */
     struct aws_tls_ctx *tls_ctx = (struct aws_tls_ctx *)jni_tls_ctx;
-    struct aws_tls_connection_options *tls_options = NULL;
+    struct aws_tls_connection_options tls_options;
+    AWS_ZERO_STRUCT(tls_options);
     if (tls_ctx) {
-        tls_options = &connection->tls_options;
-        aws_tls_connection_options_init_from_ctx(tls_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, aws_jni_get_allocator(), &endpoint);
+        aws_tls_connection_options_init_from_ctx(&tls_options, tls_ctx);
+        aws_tls_connection_options_set_server_name(&tls_options, aws_jni_get_allocator(), &endpoint);
     }
 
     client_id = aws_jni_byte_cursor_from_jstring_acquire(env, jni_client_id);
@@ -602,7 +600,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     connect_options.host_name = endpoint;
     connect_options.port = port;
     connect_options.socket_options = &connection->socket_options;
-    connect_options.tls_options = tls_options;
+    connect_options.tls_options = tls_ctx ? &tls_options : NULL;
     connect_options.client_id = client_id;
     connect_options.keep_alive_time_secs = (uint16_t)keep_alive_secs;
     connect_options.ping_timeout_ms = ping_timeout_ms;
@@ -620,6 +618,7 @@ void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClien
     }
 
 cleanup:
+    aws_tls_connection_options_clean_up(&tls_options);
     aws_jni_byte_cursor_from_jstring_release(env, jni_endpoint, endpoint);
     aws_jni_byte_cursor_from_jstring_release(env, jni_client_id, client_id);
 }

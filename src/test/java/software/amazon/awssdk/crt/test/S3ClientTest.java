@@ -56,12 +56,13 @@ public class S3ClientTest extends CrtTestFixture {
             ? "aws-c-s3-test-bucket"
             : System.getenv("CRT_S3_TEST_BUCKET_NAME");
 
-
     static final String PUBLIC_BUCKET_NAME = String.format("%s-public", BUCKET_NAME);
     static final String REGION = "us-west-2";
     static final String ENDPOINT = String.format("%s.s3.%s.amazonaws.com", BUCKET_NAME, REGION);
-    static final String S3EXPRESS_ENDPOINT_USW2_AZ1 = String.format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com", BUCKET_NAME);
-    static final String S3EXPRESS_ENDPOINT_USE1_AZ4 = String.format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com", BUCKET_NAME);
+    static final String S3EXPRESS_ENDPOINT_USW2_AZ1 = String
+            .format("%s--usw2-az1--x-s3.s3express-usw2-az1.us-west-2.amazonaws.com", BUCKET_NAME);
+    static final String S3EXPRESS_ENDPOINT_USE1_AZ4 = String
+            .format("%s--use1-az4--x-s3.s3express-use1-az4.us-east-1.amazonaws.com", BUCKET_NAME);
 
     static final String PRE_EXIST_1MB_PATH = "/pre-existing-1MB";
     static final String PRE_EXIST_10MB_PATH = "/pre-existing-10MB";
@@ -906,7 +907,10 @@ public class S3ClientTest extends CrtTestFixture {
 
     private void testS3PutHelper(boolean useFile, boolean unknownContentLength, String objectPath, boolean s3express,
             int contentLength, boolean contentMD5) throws IOException {
-        /* Give a default file options, which should have no affect on non-file path tests and also works for every file-based tests. */
+        /*
+         * Give a default file options, which should have no affect on non-file path
+         * tests and also works for every file-based tests.
+         */
         FileIoOptions fIoOptions = new FileIoOptions(true, 10.0, true);
         S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION).withEnableS3Express(s3express)
                 .withComputeContentMd5(contentMD5).withFileIoOptions(fIoOptions);
@@ -1303,7 +1307,10 @@ public class S3ClientTest extends CrtTestFixture {
             ChecksumConfig config = new ChecksumConfig();
 
             if (!provide_full_object_checksum) {
-                /* If the checksum provided for the full object via header, skip the checksum from client. */
+                /*
+                 * If the checksum provided for the full object via header, skip the checksum
+                 * from client.
+                 */
                 config.withChecksumAlgorithm(algo)
                         .withChecksumLocation(location);
             }
@@ -1678,6 +1685,179 @@ public class S3ClientTest extends CrtTestFixture {
                 Assert.assertTrue(progressInvocationCount.get() > 0);
                 Assert.assertTrue(contentLength.get() > 0);
                 Assert.assertEquals(contentLength.get(), totalBytesTransferred.get());
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    // Helper class to capture telemetry data for validation
+    private static class CapturedMetrics {
+        public long apiCallDurationNs;
+        public boolean apiCallSuccessful;
+        public String serviceId;
+        public String serviceEndpoint;
+        public String operationName;
+        public String awsRequestId;
+        public String awsExtendedRequestId;
+        public int errorCode;
+        public long timeToFirstByte;
+        public long timeToLastByte;
+        public long signingDurationNs;
+        public long backoffDelayDurationNs;
+        public long serviceCallDurationNs;
+        public int retryCount;
+        public String ipAddress;
+        
+        public void captureFrom(S3RequestMetrics metrics) {
+            try {
+                this.apiCallDurationNs = metrics.getApiCallDurationNs();
+            } catch (Exception e) {
+                this.apiCallDurationNs = -1;
+            }
+            this.apiCallSuccessful = metrics.isApiCallSuccessful();
+            this.serviceId = metrics.getServiceId();
+            this.serviceEndpoint = metrics.getServiceEndpoint();
+            this.operationName = metrics.getOperationName();
+            try {
+                this.awsRequestId = metrics.getAwsRequestId();
+            } catch (Exception e) {
+                this.awsRequestId = null;
+            }
+            try {
+                this.awsExtendedRequestId = metrics.getAwsExtendedRequestId();
+            } catch (Exception e) {
+                this.awsExtendedRequestId = null;
+            }
+            this.errorCode = metrics.getErrorCode();
+            try {
+                this.timeToFirstByte = metrics.getTimeToFirstByte();
+            } catch (Exception e) {
+                this.timeToFirstByte = -1;
+            }
+            try {
+                this.timeToLastByte = metrics.getTimeToLastByte();
+            } catch (Exception e) {
+                this.timeToLastByte = -1;
+            }
+            try {
+                this.signingDurationNs = metrics.getSigningDurationNs();
+            } catch (Exception e) {
+                this.signingDurationNs = -1;
+            }
+            try {
+                this.backoffDelayDurationNs = metrics.getBackoffDelayDurationNs();
+            } catch (Exception e) {
+                this.backoffDelayDurationNs = -1;
+            }
+            try {
+                this.serviceCallDurationNs = metrics.getServiceCallDurationNs();
+            } catch (Exception e) {
+                this.serviceCallDurationNs = -1;
+            }
+            this.retryCount = metrics.getRetryCount();
+            this.ipAddress = metrics.getIpAddress();
+        }
+        
+        public void validateMetrics() {
+            Assert.assertTrue("API Call duration should be >= 0", apiCallDurationNs >= 0);
+            Assert.assertTrue("API call should be successful", apiCallSuccessful);
+            Assert.assertEquals("Service ID should be s3", "s3", serviceId);
+            Assert.assertNotNull("Service endpoint should not be null", serviceEndpoint);
+            Assert.assertNotNull("Operation name should not be null", operationName);
+            Assert.assertFalse("Operation name should not be empty", operationName.isEmpty());
+            Assert.assertNotNull("Request ID should not be null", awsRequestId);
+            Assert.assertNotNull("Extended Request ID should not be null", awsExtendedRequestId);
+            Assert.assertTrue("Error Code should be >= 0", errorCode >= 0);
+            Assert.assertTrue("Time to first byte should be > 0", timeToFirstByte > 0);
+            Assert.assertTrue("Time to last byte should be > 0", timeToLastByte > 0);
+            Assert.assertTrue("Time to last byte should be >= time to first byte", timeToLastByte >= timeToFirstByte);
+            Assert.assertTrue("Signing duration should be >= 0", signingDurationNs >= -1);
+            Assert.assertTrue("Delay duration should be >= 0", backoffDelayDurationNs >= -1);
+            Assert.assertTrue("Service call duration should be >= 0", serviceCallDurationNs >= -1);
+            Assert.assertTrue("Retry count should be >= 0", retryCount >= 0);
+            Assert.assertTrue("IP Address should be valid", validateIpAddress(ipAddress));
+        }
+
+        private boolean validateIpAddress(String ip) {
+            if (ip == null || ip.isEmpty()) {
+                return false;
+            }
+
+            // Validate IP address format
+            try {
+                String[] parts = ip.split("\\.");
+                if (parts.length != 4) {
+                    return false;
+                }
+                for (String part : parts) {
+                    int octet = Integer.parseInt(part);
+                    if (octet < 0 || octet > 255) {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+    }
+
+    @Test
+    public void testS3GetWithTelemetry() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            AtomicInteger telemetryCallbackCount = new AtomicInteger(0);
+            CapturedMetrics capturedMetrics = new CapturedMetrics();
+
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(makeExceptionFromFinishedResponseContext(context));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+
+                @Override
+                public void onTelemetry(S3RequestMetrics metrics) {
+                    telemetryCallbackCount.incrementAndGet();
+                    capturedMetrics.captureFrom(metrics);
+
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            String.format("Telemetry: operation=%s, requestId=%s, ttfb=%dns, ttlb=%dns, retries=%d",
+                                    metrics.getOperationName(), metrics.getAwsRequestId(),
+                                    metrics.getTimeToFirstByte(), metrics.getTimeToLastByte(),
+                                    metrics.getRetryCount()));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
+                Assert.assertTrue("Telemetry callback should have been called at least once",
+                        telemetryCallbackCount.get() > 0);
+                
+                // Validate captured metrics on main thread
+                capturedMetrics.validateMetrics();
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());

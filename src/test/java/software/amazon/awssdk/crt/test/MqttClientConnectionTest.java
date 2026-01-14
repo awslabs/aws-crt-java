@@ -6,8 +6,9 @@
  package software.amazon.awssdk.crt.test;
 
 import org.junit.Assume;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -259,6 +260,30 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             assertEquals("Unexpected onConnectionClosed call: ", 0, connectionEventsStatistics.onConnectionClosedCalled);
         } finally {
             close();
+        }
+     }
+
+     /* This scenario once led to memory leaks, so this test primarily checks that there is no memory leaks. */
+     @Test
+     public void testMultipleFailedAttemptsOnSingleConnection() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST);
+        try (TlsContextOptions contextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext context = new TlsContext(contextOptions)) {
+            try (MqttClientConnection connection = createMqttClientConnection(
+                    context,
+                    AWS_TEST_MQTT311_IOT_CORE_HOST,
+                    8883,
+                    null,
+                    null,
+                    null)) {
+                for (int i = 0; i < 2; i++) {
+                    CompletableFuture<Boolean> connected = connection.connect();
+                    assertThrows(Exception.class, () -> connected.get(30, TimeUnit.SECONDS));
+                }
+            } catch (Exception ex) {
+                fail(ex.toString());
+            }
         }
      }
 };

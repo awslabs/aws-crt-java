@@ -438,6 +438,11 @@ jobject aws_jni_direct_byte_buffer_from_raw_ptr(JNIEnv *env, const void *dst, si
     if (jByteBuf) {
         aws_jni_byte_buffer_set_limit(env, jByteBuf, (jint)capacity);
         aws_jni_byte_buffer_set_position(env, jByteBuf, 0);
+    } else{
+        if (aws_jni_check_and_clear_exception(env)) {
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            (*env)->DeleteLocalRef(env, direct_buffer);
+        }
     }
 
     return jByteBuf;

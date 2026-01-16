@@ -98,7 +98,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     /* Newer updates allow part sizes up to 5GB. Since number of bytes required for a 5GB part is
     greater than INT_MAX, it would cause a bug where the java does not allocate memory and return a null buffer
     since Java natively does not support direct allocation of buffers of capacity > Integer.MAX_VALUE. */
-    while(out_remaining > 0) {
+    while (out_remaining > 0) {
         size_t chunk_size = INT_MAX;
         if (out_remaining <= chunk_size) {
             chunk_size = out_remaining;
@@ -116,7 +116,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
         }
 
         size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-        if(amt_written == 0) {
+        if (amt_written == 0) {
             (*env)->DeleteLocalRef(env, direct_buffer);
             break;
         }

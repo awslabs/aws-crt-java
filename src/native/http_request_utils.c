@@ -94,21 +94,37 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     }
 
     size_t out_remaining = dest->capacity - dest->len;
-
-    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
-
-    impl->body_done = (*env)->CallBooleanMethod(
-        env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
-
     int result = AWS_OP_SUCCESS;
-    if (aws_jni_check_and_clear_exception(env)) {
-        result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    } else {
-        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-        dest->len += amt_written;
-    }
+    /* Newer updates allow part sizes up to 5GB. Since number of bytes required for a 5GB part is
+    greater than INT_MAX, it would cause a bug where the java does not allocate memory and return a null buffer
+    since Java natively does not support direct allocation of buffers of capacity > Integer.MAX_VALUE. */
+    while(out_remaining > 0) {
+        size_t chunk_size = INT_MAX;
+        if (out_remaining <= chunk_size) {
+            chunk_size = out_remaining;
+        }
 
-    (*env)->DeleteLocalRef(env, direct_buffer);
+        jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, chunk_size);
+
+        impl->body_done = (*env)->CallBooleanMethod(
+            env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+            (*env)->DeleteLocalRef(env, direct_buffer);
+            break;
+        }
+
+        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
+        if(amt_written == 0) {
+            (*env)->DeleteLocalRef(env, direct_buffer);
+            break;
+        }
+        dest->len += amt_written;
+        out_remaining -= amt_written;
+
+        (*env)->DeleteLocalRef(env, direct_buffer);
+    }
 
     aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/

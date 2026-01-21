@@ -1,0 +1,65 @@
+version: 0.2
+# this buildspec assumes the ubuntu image
+# This job is responsible for release the uber jar and platform-specific jars to Maven Central.
+phases:
+  install:
+    commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
+      - sudo apt-get update -y
+      - sudo apt-get install openjdk-11-jdk-headless maven wget unzip -y -f
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      - export PKG_VERSION=$(git describe --tags | cut -f2 -dv)
+      - echo $PKG_VERSION
+      - mkdir -p target/cmake-build/lib
+      # mv all the platform-specific jars to target/
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/jar $CODEBUILD_SRC_DIR/aws-crt-java/target/
+      # cp all the shared libs to cmake-build/lib/
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/v${PKG_VERSION}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      # log the downloaded files
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-java/target
+      # install settings.xml to ~/.m2/settings.xml
+      - mkdir -p $HOME/.m2
+      - aws s3 cp s3://code-sharing-aws-crt/aws-crt-java.settings.token.xml $HOME/.m2/settings.xml
+      # import gpg key
+      - aws s3 cp s3://code-sharing-aws-crt/aws-sdk-common-runtime.key.asc /tmp/aws-sdk-common-runtime.key.asc
+      # for https://github.com/keybase/keybase-issues/issues/2798
+      - export GPG_TTY=$(tty)
+      - gpg --batch --import /tmp/aws-sdk-common-runtime.key.asc
+      # refer to https://maven.apache.org/plugins/maven-gpg-plugin/usage.html
+      - export MAVEN_GPG_PASSPHRASE=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id aws-sdk-common-runtime.key.asc/password  --region us-east-1 | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      - export ST_USERNAME=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token --region us-east-1 | cut -f2 -d":" | cut -f1 -d"," | sed -e 's/[\\\"\}]//g')
+      - export ST_PASSWORD=$(aws --query "SecretString" secretsmanager get-secret-value --secret-id Sonatype/JIRA/token --region us-east-1 | cut -f3 -d":" | sed -e 's/[\\\"\}]//g')
+      # Use the username and password from secret manager to update the settings
+      - sed -i 's|token-username|'"$ST_USERNAME"'|g' $HOME/.m2/settings.xml
+      - sed -i 's|token-password|'"$ST_PASSWORD"'|g' $HOME/.m2/settings.xml
+
+  build:
+    commands:
+       # update the version to match the git tag, make a staging release which we will release once snapshot testing passes
+      - export DEPLOY_VERSION=${PKG_VERSION}
+      - export AUTH_HEADER_VAL=$(printf "$ST_USERNAME:$ST_PASSWORD" | base64)
+      - export BUNDLE_DIR=$CODEBUILD_SRC_DIR/aws-crt-java/bundle/
+      - mkdir -p $BUNDLE_DIR
+      - mvn -B versions:set -DnewVersion=${DEPLOY_VERSION}
+      # bundle the JAR to the local bundle directory and skip publish to maven central.
+      # since the maven plugin will automatically close the staging repository, and we cannot publish our classified JARs anymore.
+      # To work around this, we create a local bundle for the uber jar and platform-specific jars.
+      # Then use the publisher API to upload the bundle to maven central.
+      - mvn -B deploy -Prelease -Dshared-lib.skip=true -Dmaven.test.skip=true -DstagingDirectory=${BUNDLE_DIR} -DskipPublishing=true
+      - bash ./codebuild/cd/bundle-platform-specific-jars.sh
+      - cd ${BUNDLE_DIR}
+      # create a zip file of the bundle
+      - zip -r $CODEBUILD_SRC_DIR/aws-crt-java/bundle.zip .
+
+  post_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      # Publish and promote the release.
+      - export PROMOTE_RELEASE=true
+      - bash ./codebuild/cd/publish-bundle.sh
+
+cache:
+  paths:
+    - "/root/.m2/**/*"

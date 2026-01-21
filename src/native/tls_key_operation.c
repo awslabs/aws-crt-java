@@ -29,6 +29,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     jbyteArray jni_output_data) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_tls_key_operation *operation = (struct aws_tls_key_operation *)jni_operation;
 
     struct aws_byte_cursor output_data = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_output_data);
@@ -52,6 +54,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_TlsKeyOperation_tlsKey
     jthrowable jni_throwable) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_tls_key_operation *operation = (struct aws_tls_key_operation *)jni_operation;
 
     int error_code = 0;

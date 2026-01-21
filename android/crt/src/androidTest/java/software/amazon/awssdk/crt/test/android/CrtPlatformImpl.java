@@ -52,6 +52,8 @@ public class CrtPlatformImpl extends software.amazon.awssdk.crt.android.CrtPlatf
         ctx.trustStore = assetContents("ca-certificates.crt");
         ctx.iotClientCertificate = assetContents("certificate.pem");
         ctx.iotClientPrivateKey = assetContents("privatekey.pem");
+        ctx.iotClientECCPrivateKey = assetContents("ecc_privatekey.pem");
+        ctx.iotClientECCCertificate = assetContents("ecc_certificate.pem");
         byte[] endpoint = assetContents("endpoint.txt");
         if (endpoint != null) {
             ctx.iotEndpoint = new String(endpoint).trim();

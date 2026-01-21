@@ -10,7 +10,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.Http2Request;
@@ -30,7 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Http2RequestResponseTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://httpbin.org";
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    private final static String HOST = "https://localhost:3443";
     private final static HttpVersion EXPECTED_VERSION = HttpVersion.HTTP_2;
 
     private Http2Request getHttp2Request(String method, String endpoint, String path, String requestBody)
@@ -91,21 +91,24 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
         } while ((response == null || shouldRetry(response)) && numAttempts < 3);
 
+        Assert.assertNotNull(response);
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
 
         /* The first header of response has to be ":status" for HTTP/2 response */
         response.headers.get(0).getName().equals(":status");
-        for (HttpHeader h : response.headers) {
-            if (h.getName().equals("content-length")) {
-                hasContentLengthHeader = true;
-            }
-        }
 
-        Assert.assertTrue(hasContentLengthHeader);
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
+        }
+        if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
+            for (HttpHeader h : response.headers) {
+                if (h.getName().equals("content-length")) {
+                    hasContentLengthHeader = true;
+                }
+            }
+            Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
 
         return response;
@@ -113,42 +116,38 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttp2Get() throws Exception {
-        Assume.assumeTrue(System.getProperty("NETWORK_TESTS_DISABLED") == null);
-        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/get", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 405);
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        testHttp2Request("GET", HOST, "/delete", EMPTY_BODY, 404);
+        testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
+        testHttp2Request("GET", HOST, "/post", EMPTY_BODY, 404);
+        testHttp2Request("GET", HOST, "/put", EMPTY_BODY, 404);
     }
 
     @Test
     public void testHttp2Post() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("POST", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("POST", HOST, "/post", EMPTY_BODY, 200);
-        testHttp2Request("POST", HOST, "/put", EMPTY_BODY, 405);
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        testHttp2Request("POST", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2Put() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("PUT", HOST, "/delete", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/get", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/post", EMPTY_BODY, 405);
-        testHttp2Request("PUT", HOST, "/put", EMPTY_BODY, 200);
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        testHttp2Request("PUT", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2ResponseStatusCodes() throws Exception {
-        skipIfNetworkUnavailable();
-        testHttp2Request("GET", HOST, "/status/200", EMPTY_BODY, 200);
-        testHttp2Request("GET", HOST, "/status/300", EMPTY_BODY, 300);
-        testHttp2Request("GET", HOST, "/status/400", EMPTY_BODY, 400);
-        testHttp2Request("GET", HOST, "/status/500", EMPTY_BODY, 500);
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        testHttp2Request("GET", HOST, "/echo", EMPTY_BODY, 200);
     }
 
     @Test
     public void testHttp2Download() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         /* cloudfront uses HTTP/2 */
         TestHttpResponse response = testHttp2Request("GET", "https://d1cz66xoahf9cl.cloudfront.net/",
@@ -160,60 +159,71 @@ public class Http2RequestResponseTest extends HttpRequestResponseFixture {
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
     }
 
+    private void doHttp2ResetStreamTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
+        try {
+            CompletableFuture<Void> shutdownComplete = null;
+            boolean actuallyConnected = false;
+            URI uri = new URI(HOST);
+
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
+                        TimeUnit.SECONDS);) {
+                    actuallyConnected = true;
+                    CompletableFuture<Void> streamComplete = new CompletableFuture<>();
+                    Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
+                    HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                                      HttpHeader[] nextHeaders) {
+                            Http2Stream h2Stream = (Http2Stream) stream;
+                            h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            stream.close();
+                            if (errorCode != 0) {
+                                streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
+                            } else {
+                                streamComplete.complete(null);
+                            }
+                        }
+                    };
+                    Http2Request request = getHttp2Request("GET", HOST, "/echo", EMPTY_BODY);
+                    try (Http2Stream h2Stream = conn.makeRequest(request, streamHandler)) {
+                        h2Stream.activate();
+                        streamComplete.get();
+                    } catch (Exception e) {
+                        // ignoring the exception as it might fail that RST_STREAM has been sent.
+                    }
+                }
+            }
+
+            Assert.assertTrue(actuallyConnected);
+
+            shutdownComplete.get(60, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
     public void testHttp2ResetStream() throws Exception {
+        skipIfAndroid();
         /*
          * Test that the binding works not the actual functionality. C part has the test
          * for functionality
          */
         skipIfNetworkUnavailable();
+        skipIfLocalhostUnavailable();
 
-        CompletableFuture<Void> shutdownComplete = null;
-        boolean actuallyConnected = false;
-        URI uri = new URI(HOST);
-
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, EXPECTED_VERSION)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (Http2ClientConnection conn = (Http2ClientConnection) connPool.acquireConnection().get(60,
-                    TimeUnit.SECONDS);) {
-                actuallyConnected = true;
-                CompletableFuture<Void> streamComplete = new CompletableFuture<>();
-                Assert.assertTrue(conn.getVersion() == EXPECTED_VERSION);
-                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                    }
-
-                    @Override
-                    public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
-                        /* Only invoke once */
-                        Http2Stream h2Stream = (Http2Stream) stream;
-                        h2Stream.resetStream(Http2ErrorCode.INTERNAL_ERROR);
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                        stream.close();
-                        if (errorCode != 0) {
-                            streamComplete.completeExceptionally(new CrtRuntimeException(errorCode));
-                        } else {
-                            streamComplete.complete(null);
-                        }
-                    }
-                };
-                Http2Request request = getHttp2Request("GET", HOST, "/get", EMPTY_BODY);
-                Http2Stream h2Stream = conn.makeRequest(request, streamHandler);
-                h2Stream.activate();
-                streamComplete.get();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Assert.assertTrue(actuallyConnected);
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
+        TestUtils.doRetryableTest(this::doHttp2ResetStreamTest, TestUtils::isRetryableTimeout, 5, 2000);
 
         CrtResource.waitForNoResources();
     }

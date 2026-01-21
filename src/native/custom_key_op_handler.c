@@ -42,7 +42,8 @@ static void s_aws_custom_key_op_handler_perform_operation(
     AWS_ASSERT(operation != NULL);
 
     /* Get the Java ENV */
-    JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(op_handler->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* JVM is likely shutting down. Do not crash but log error. */
         AWS_LOGF_ERROR(
@@ -105,7 +106,7 @@ clean_up:
     }
 
     /* Release the Java ENV */
-    aws_jni_release_thread_env(op_handler->jvm, env);
+    aws_jni_release_thread_env(op_handler->jvm, &jvm_env_context);
 }
 
 static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler *key_op_handler) {
@@ -113,7 +114,8 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     struct aws_jni_custom_key_op_handler *op_handler = (struct aws_jni_custom_key_op_handler *)key_op_handler->impl;
 
     /* Get the Java ENV */
-    JNIEnv *env = aws_jni_acquire_thread_env(op_handler->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(op_handler->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* JVM is likely shutting down. Do not crash but log error. */
         AWS_LOGF_ERROR(
@@ -127,7 +129,7 @@ static void s_aws_custom_key_op_handler_destroy(struct aws_custom_key_op_handler
     }
 
     /* Release the Java ENV */
-    aws_jni_release_thread_env(op_handler->jvm, env);
+    aws_jni_release_thread_env(op_handler->jvm, &jvm_env_context);
 
     /* Release the Java struct */
     aws_mem_release(op_handler->allocator, op_handler);

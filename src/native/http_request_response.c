@@ -62,50 +62,65 @@ void aws_java_http_stream_from_native_delete(JNIEnv *env, jobject jHttpStream) {
 }
 
 /*******************************************************************************
- * http_stream_binding - carries around data needed by the various http request
- * callbacks.
+ * http_stream_binding - Jni native represent of the Java HTTP stream object
  ******************************************************************************/
 
-void aws_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *callback) {
+static void s_http_stream_binding_destroy(JNIEnv *env, struct http_stream_binding *binding) {
 
-    if (callback == NULL) {
-        return;
+    if (binding->java_http_stream_base) {
+        aws_java_http_stream_from_native_delete(env, binding->java_http_stream_base);
     }
 
-    if (callback->java_http_stream_base) {
-        aws_java_http_stream_from_native_delete(env, callback->java_http_stream_base);
+    if (binding->java_http_response_stream_handler != NULL) {
+        (*env)->DeleteGlobalRef(env, binding->java_http_response_stream_handler);
     }
 
-    if (callback->java_http_response_stream_handler != NULL) {
-        (*env)->DeleteGlobalRef(env, callback->java_http_response_stream_handler);
+    if (binding->native_request) {
+        aws_http_message_release(binding->native_request);
     }
+    aws_byte_buf_clean_up(&binding->headers_buf);
+    aws_mem_release(aws_jni_get_allocator(), binding);
+}
 
-    if (callback->native_request) {
-        aws_http_message_release(callback->native_request);
+void *aws_http_stream_binding_acquire(struct http_stream_binding *binding) {
+    if (binding == NULL) {
+        return NULL;
     }
-    aws_byte_buf_clean_up(&callback->headers_buf);
-    aws_mem_release(aws_jni_get_allocator(), callback);
+    aws_atomic_fetch_add(&binding->ref, 1);
+    return binding;
+}
+
+void *aws_http_stream_binding_release(JNIEnv *env, struct http_stream_binding *binding) {
+    if (binding == NULL) {
+        return NULL;
+    }
+    size_t pre_ref = aws_atomic_fetch_sub(&binding->ref, 1);
+    AWS_ASSERT(pre_ref > 0 && "stream binding refcount has gone negative");
+    if (pre_ref == 1) {
+        s_http_stream_binding_destroy(env, binding);
+    }
+    return NULL;
 }
 
 // If error occurs, A Java exception is thrown and NULL is returned.
-struct http_stream_binding *aws_http_stream_binding_alloc(JNIEnv *env, jobject java_callback_handler) {
+struct http_stream_binding *aws_http_stream_binding_new(JNIEnv *env, jobject java_callback_handler) {
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct http_stream_binding *callback = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_binding));
-    AWS_FATAL_ASSERT(callback);
+    struct http_stream_binding *binding = aws_mem_calloc(allocator, 1, sizeof(struct http_stream_binding));
+    AWS_FATAL_ASSERT(binding);
 
     // GetJavaVM() reference doesn't need a NewGlobalRef() call since it's global by default
-    jint jvmresult = (*env)->GetJavaVM(env, &callback->jvm);
+    jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;
     AWS_FATAL_ASSERT(jvmresult == 0);
 
-    callback->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
-    AWS_FATAL_ASSERT(callback->java_http_response_stream_handler);
-    AWS_FATAL_ASSERT(!aws_byte_buf_init(&callback->headers_buf, allocator, 1024));
+    binding->java_http_response_stream_handler = (*env)->NewGlobalRef(env, java_callback_handler);
+    AWS_FATAL_ASSERT(binding->java_http_response_stream_handler);
+    AWS_FATAL_ASSERT(!aws_byte_buf_init(&binding->headers_buf, allocator, 1024));
 
-    aws_atomic_init_int(&callback->activated, 0);
+    aws_atomic_init_int(&binding->ref, 1);
 
-    return callback;
+    return binding;
 }
 
 int aws_java_http_stream_on_incoming_headers_fn(
@@ -116,7 +131,7 @@ int aws_java_http_stream_on_incoming_headers_fn(
     void *user_data) {
     (void)block_type;
 
-    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
     int resp_status = -1;
     int err_code = aws_http_stream_get_incoming_response_status(stream, &resp_status);
     if (err_code != AWS_OP_SUCCESS) {
@@ -124,9 +139,9 @@ int aws_java_http_stream_on_incoming_headers_fn(
         return AWS_OP_ERR;
     }
 
-    callback->response_status = resp_status;
+    binding->response_status = resp_status;
 
-    if (aws_marshal_http_headers_to_dynamic_buffer(&callback->headers_buf, header_array, num_headers)) {
+    if (aws_marshal_http_headers_array_to_dynamic_buffer(&binding->headers_buf, header_array, num_headers)) {
         AWS_LOGF_ERROR(
             AWS_LS_HTTP_STREAM, "id=%p: Failed to allocate buffer space for incoming headers", (void *)stream);
         return AWS_OP_ERR;
@@ -141,10 +156,11 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
     void *user_data) {
     (void)stream;
 
-    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -154,14 +170,14 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
     jint jni_block_type = block_type;
 
     jobject jni_headers_buf =
-        aws_jni_direct_byte_buffer_from_raw_ptr(env, callback->headers_buf.buffer, callback->headers_buf.len);
+        aws_jni_direct_byte_buffer_from_raw_ptr(env, binding->headers_buf.buffer, binding->headers_buf.len);
 
     (*env)->CallVoidMethod(
         env,
-        callback->java_http_response_stream_handler,
+        binding->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseHeaders,
-        callback->java_http_stream_base,
-        (jint)callback->response_status,
+        binding->java_http_stream_base,
+        (jint)binding->response_status,
         (jint)block_type,
         jni_headers_buf);
 
@@ -172,14 +188,14 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
     }
 
     /* instead of cleaning it up here, reset it in case another block is encountered */
-    aws_byte_buf_reset(&callback->headers_buf, false);
+    aws_byte_buf_reset(&binding->headers_buf, false);
     (*env)->DeleteLocalRef(env, jni_headers_buf);
 
     (*env)->CallVoidMethod(
         env,
-        callback->java_http_response_stream_handler,
+        binding->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseHeadersDone,
-        callback->java_http_stream_base,
+        binding->java_http_stream_base,
         jni_block_type);
 
     if (aws_jni_check_and_clear_exception(env)) {
@@ -191,7 +207,7 @@ int aws_java_http_stream_on_incoming_header_block_done_fn(
 
 done:
 
-    aws_jni_release_thread_env(callback->jvm, env);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
@@ -201,12 +217,13 @@ int aws_java_http_stream_on_incoming_body_fn(
     struct aws_http_stream *stream,
     const struct aws_byte_cursor *data,
     void *user_data) {
-    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     size_t total_window_increment = 0;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -218,9 +235,9 @@ int aws_java_http_stream_on_incoming_body_fn(
 
     jint window_increment = (*env)->CallIntMethod(
         env,
-        callback->java_http_response_stream_handler,
+        binding->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseBody,
-        callback->java_http_stream_base,
+        binding->java_http_stream_base,
         jni_payload);
 
     (*env)->DeleteLocalRef(env, jni_payload);
@@ -247,17 +264,18 @@ int aws_java_http_stream_on_incoming_body_fn(
 
 done:
 
-    aws_jni_release_thread_env(callback->jvm, env);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
 }
 
 void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, int error_code, void *user_data) {
-    struct http_stream_binding *callback = (struct http_stream_binding *)user_data;
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -267,9 +285,9 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
     jint jErrorCode = error_code;
     (*env)->CallVoidMethod(
         env,
-        callback->java_http_response_stream_handler,
+        binding->java_http_response_stream_handler,
         http_stream_response_handler_properties.onResponseComplete,
-        callback->java_http_stream_base,
+        binding->java_http_stream_base,
         jErrorCode);
 
     if (aws_jni_check_and_clear_exception(env)) {
@@ -277,9 +295,75 @@ void aws_java_http_stream_on_stream_complete_fn(struct aws_http_stream *stream, 
         aws_http_connection_close(aws_http_stream_get_connection(stream));
     }
 
-    JavaVM *jvm = callback->jvm;
-    aws_http_stream_binding_destroy(env, callback);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+}
+
+void aws_java_http_stream_on_stream_destroy_fn(void *user_data) {
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+    /* Native stream destroyed, release the binding. */
+    JavaVM *jvm = binding->jvm;
+    aws_http_stream_binding_release(env, binding);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+}
+
+void aws_java_http_stream_on_stream_metrics_fn(
+    struct aws_http_stream *stream,
+    const struct aws_http_stream_metrics *metrics,
+    void *user_data) {
+    struct http_stream_binding *binding = (struct http_stream_binding *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
+        return;
+    }
+
+    /* Convert metrics to Java HttpStreamMetrics obj */
+    jobject jni_metrics = (*env)->NewObject(
+        env,
+        http_stream_metrics_properties.http_stream_metrics_class,
+        http_stream_metrics_properties.constructor_id,
+        (jlong)metrics->send_start_timestamp_ns,
+        (jlong)metrics->send_end_timestamp_ns,
+        (jlong)metrics->sending_duration_ns,
+        (jlong)metrics->receive_start_timestamp_ns,
+        (jlong)metrics->receive_end_timestamp_ns,
+        (jlong)metrics->receiving_duration_ns,
+
+        /* Stream IDs are 31-bit unsigned integers, which fits into Java's regular (signed) 32-bit int */
+        (jint)metrics->stream_id);
+
+    (*env)->CallVoidMethod(
+        env,
+        binding->java_http_response_stream_handler,
+        http_stream_response_handler_properties.onMetrics,
+        binding->java_http_stream_base,
+        jni_metrics);
+
+    /* Delete local reference to metrics object */
+    (*env)->DeleteLocalRef(env, jni_metrics);
+
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* Close the Connection if the Java Callback throws an Exception */
+        aws_http_connection_close(aws_http_stream_get_connection(stream));
+
+        AWS_LOGF_ERROR(AWS_LS_HTTP_STREAM, "id=%p: Received Exception from onMetrics", (void *)stream);
+        aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
+
+    aws_jni_release_thread_env(binding->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -332,62 +416,60 @@ static jobject s_make_request_general(
         return (jobject)NULL;
     }
 
-    struct http_stream_binding *callback_data = aws_http_stream_binding_alloc(env, jni_http_response_callback_handler);
-    if (!callback_data) {
+    /* initial refcount created for the Java object */
+    struct http_stream_binding *stream_binding = aws_http_stream_binding_new(env, jni_http_response_callback_handler);
+    if (!stream_binding) {
         /* Exception already thrown */
         return (jobject)NULL;
     }
 
-    callback_data->native_request =
+    stream_binding->native_request =
         aws_http_request_new_from_java_http_request(env, marshalled_request, jni_http_request_body_stream);
-    if (callback_data->native_request == NULL) {
+    if (stream_binding->native_request == NULL) {
         /* Exception already thrown */
-        aws_http_stream_binding_destroy(env, callback_data);
-        return (jobject)NULL;
+        goto error;
     }
 
     struct aws_http_make_request_options request_options = {
         .self_size = sizeof(request_options),
-        .request = callback_data->native_request,
+        .request = stream_binding->native_request,
         /* Set Callbacks */
         .on_response_headers = aws_java_http_stream_on_incoming_headers_fn,
         .on_response_header_block_done = aws_java_http_stream_on_incoming_header_block_done_fn,
         .on_response_body = aws_java_http_stream_on_incoming_body_fn,
         .on_complete = aws_java_http_stream_on_stream_complete_fn,
-        .user_data = callback_data,
+        .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
+        .on_metrics = aws_java_http_stream_on_stream_metrics_fn,
+        .user_data = stream_binding,
     };
 
-    jobject jHttpStreamBase = NULL;
-
-    callback_data->native_stream = aws_http_connection_make_request(native_conn, &request_options);
-    if (callback_data->native_stream) {
-        AWS_LOGF_TRACE(
-            AWS_LS_HTTP_CONNECTION,
-            "Opened new Stream on Connection. conn: %p, stream: %p",
-            (void *)native_conn,
-            (void *)callback_data->native_stream);
-
-        jHttpStreamBase = aws_java_http_stream_from_native_new(env, callback_data, version);
-    }
-
-    /* Check for errors that might have occurred while holding the lock. */
-    if (!callback_data->native_stream) {
-        /* Failed to create native aws_http_stream. Clean up callback_data. */
+    stream_binding->native_stream = aws_http_connection_make_request(native_conn, &request_options);
+    if (stream_binding->native_stream == NULL) {
         AWS_LOGF_ERROR(AWS_LS_HTTP_CONNECTION, "Stream Request Failed. conn: %p", (void *)native_conn);
         aws_jni_throw_runtime_exception(env, "HttpClientConnection.MakeRequest: Unable to Execute Request");
-        aws_http_stream_binding_destroy(env, callback_data);
-        return NULL;
-    } else if (!jHttpStreamBase) {
-        /* Failed to create java HttpStream, but did create native aws_http_stream.
-          Close connection and mark native_stream for release.
-          callback_data will clean itself up when stream completes. */
-        aws_http_connection_close(native_conn);
-        aws_http_stream_release(callback_data->native_stream);
-        /* Java exception has already been raised. */
-        return NULL;
+        goto error;
     }
 
+    /* Stream created successfully, acquire on binding for the native stream lifetime. */
+    aws_http_stream_binding_acquire(stream_binding);
+
+    jobject jHttpStreamBase = aws_java_http_stream_from_native_new(env, stream_binding, version);
+    if (jHttpStreamBase == NULL) {
+        goto error;
+    }
+
+    AWS_LOGF_TRACE(
+        AWS_LS_HTTP_CONNECTION,
+        "Opened new Stream on Connection. conn: %p, stream: %p",
+        (void *)native_conn,
+        (void *)stream_binding->native_stream);
+
     return jHttpStreamBase;
+
+error:
+    aws_http_stream_release(stream_binding->native_stream);
+    aws_http_stream_binding_release(env, stream_binding);
+    return NULL;
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionMakeRequest(
@@ -398,6 +480,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_make_request_general(
         env,
         jni_connection,
@@ -415,6 +499,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnec
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_make_request_general(
         env,
         jni_connection,
@@ -446,7 +532,8 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
     struct http_stream_chunked_callback_data *chunked_callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(chunked_callback_data->stream_cb_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -461,7 +548,7 @@ static void s_write_chunk_complete(struct aws_http_stream *stream, int error_cod
 
     JavaVM *jvm = chunked_callback_data->stream_cb_data->jvm;
     s_cleanup_chunked_callback_data(env, chunked_callback_data);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -473,6 +560,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     jboolean is_final_chunk,
     jobject completion_callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
     struct aws_http_stream *stream = cb_data->native_stream;
@@ -518,12 +606,13 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseActivate(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_cb_data,
+    jlong jni_stream_binding,
     jobject j_http_stream_base) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
-    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
-    struct aws_http_stream *stream = cb_data->native_stream;
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_stream_binding;
+    struct aws_http_stream *stream = binding->native_stream;
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");
@@ -534,11 +623,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 
     /* global ref this because now the callbacks will be firing, and they will release their reference when the
      * stream callback sequence completes. */
-    cb_data->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream_base);
-    aws_atomic_store_int(&cb_data->activated, 1);
+    binding->java_http_stream_base = (*env)->NewGlobalRef(env, j_http_stream_base);
     if (aws_http_stream_activate(stream)) {
-        aws_atomic_store_int(&cb_data->activated, 0);
-        (*env)->DeleteGlobalRef(env, cb_data->java_http_stream_base);
+        (*env)->DeleteGlobalRef(env, binding->java_http_stream_base);
         aws_jni_throw_runtime_exception(
             env, "HttpStream activate failed with error %s\n", aws_error_str(aws_last_error()));
     }
@@ -547,12 +634,13 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseRelease(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_cb_data) {
+    jlong jni_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
-    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
-    struct aws_http_stream *stream = cb_data->native_stream;
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
+    struct aws_http_stream *stream = binding->native_stream;
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");
@@ -561,21 +649,19 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Releasing Stream. stream: %p", (void *)stream);
     aws_http_stream_release(stream);
 
-    size_t not_activated = 0;
-    if (aws_atomic_compare_exchange_int(&cb_data->activated, &not_activated, 1)) {
-        aws_http_stream_binding_destroy(env, cb_data);
-    }
+    aws_http_stream_binding_release(env, binding);
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseGetResponseStatusCode(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_cb_data) {
+    jlong jni_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
-    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
-    struct aws_http_stream *stream = cb_data->native_stream;
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
+    struct aws_http_stream *stream = binding->native_stream;
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");
@@ -596,13 +682,14 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseIncrementWindow(
     JNIEnv *env,
     jclass jni_class,
-    jlong jni_cb_data,
+    jlong jni_binding,
     jint window_update) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
-    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
-    struct aws_http_stream *stream = cb_data->native_stream;
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
+    struct aws_http_stream *stream = binding->native_stream;
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");
@@ -626,9 +713,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2Str
     jint error_code) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
-    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
-    struct aws_http_stream *stream = cb_data->native_stream;
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_cb_data;
+    struct aws_http_stream *stream = binding->native_stream;
 
     if (stream == NULL) {
         aws_jni_throw_null_pointer_exception(env, "Http2Stream is null.");
@@ -649,6 +737,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     jlong jni_connection) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -660,12 +750,33 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     aws_http_connection_close(native_conn);
 }
 
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionIsOpen(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection) {
+
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
+    struct aws_http_connection *native_conn = connection_binding->connection;
+
+    if (!native_conn) {
+        aws_jni_throw_runtime_exception(env, "HttpClientConnection.isOpen: Invalid aws_http_connection");
+        return false;
+    }
+
+    return aws_http_connection_is_open(native_conn);
+}
+
 JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_httpClientConnectionGetVersion(
     JNIEnv *env,
     jclass jni_class,
     jlong jni_connection) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -675,6 +786,36 @@ JNIEXPORT jshort JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnecti
     }
     return (jshort)aws_http_connection_get_version(native_conn);
 }
+
+JNIEXPORT jboolean JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection_isErrorRetryable(
+    JNIEnv *env,
+    jclass jni_class,
+    jint error_code) {
+
+    (void)jni_class;
+    (void)env;
+    aws_cache_jni_ids(env);
+
+    switch (error_code) {
+        case AWS_ERROR_HTTP_HEADER_NOT_FOUND:
+        case AWS_ERROR_HTTP_INVALID_HEADER_FIELD:
+        case AWS_ERROR_HTTP_INVALID_HEADER_NAME:
+        case AWS_ERROR_HTTP_INVALID_HEADER_VALUE:
+        case AWS_ERROR_HTTP_INVALID_METHOD:
+        case AWS_ERROR_HTTP_INVALID_PATH:
+        case AWS_ERROR_HTTP_INVALID_STATUS_CODE:
+        case AWS_ERROR_HTTP_MISSING_BODY_STREAM:
+        case AWS_ERROR_HTTP_INVALID_BODY_STREAM:
+        case AWS_ERROR_HTTP_OUTGOING_STREAM_LENGTH_INCORRECT:
+        case AWS_ERROR_HTTP_CALLBACK_FAILURE:
+        case AWS_ERROR_HTTP_STREAM_MANAGER_SHUTTING_DOWN:
+        case AWS_HTTP2_ERR_CANCEL:
+            return false;
+        default:
+            return true;
+    }
+}
+
 struct aws_http2_callback_data {
     JavaVM *jvm;
     jobject async_callback;
@@ -713,7 +854,8 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = callback_data->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -729,7 +871,7 @@ static void s_on_settings_completed(struct aws_http_connection *http2_connection
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -741,6 +883,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jlongArray java_marshalled_settings) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
@@ -799,7 +942,8 @@ static void s_on_ping_completed(
 
     /********** JNI ENV ACQUIRE **********/
     JavaVM *jvm = callback_data->jvm;
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -822,7 +966,7 @@ static void s_on_ping_completed(
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
     s_cleanup_http2_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -834,6 +978,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jbyteArray ping_data) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 
@@ -882,6 +1028,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnectio
     jbyteArray debug_data) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
     struct aws_byte_cursor *debug_cur_pointer = NULL;
@@ -912,6 +1060,8 @@ JNIEXPORT void JNICALL
         jlong increment_size) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
 

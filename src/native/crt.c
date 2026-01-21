@@ -24,14 +24,19 @@
 #include <aws/mqtt/mqtt.h>
 #include <aws/s3/s3.h>
 
-#include <stdio.h>
-
 #include "crt.h"
 #include "java_class_ids.h"
 #include "logging.h"
+#include <stdio.h>
+
+#ifdef AWS_OS_LINUX
+#    include <openssl/crypto.h>
+#endif
 
 /* 0 = off, 1 = bytes, 2 = stack traces, see aws_mem_trace_level */
 int g_memory_tracing = 0;
+int g_crt_fips_mode = 0;
+
 static struct aws_allocator *s_init_allocator(void) {
     if (g_memory_tracing) {
         struct aws_allocator *allocator = aws_default_allocator();
@@ -42,11 +47,20 @@ static struct aws_allocator *s_init_allocator(void) {
 }
 
 static struct aws_allocator *s_allocator = NULL;
-struct aws_allocator *aws_jni_get_allocator() {
+struct aws_allocator *aws_jni_get_allocator(void) {
     if (AWS_UNLIKELY(s_allocator == NULL)) {
         s_allocator = s_init_allocator();
     }
     return s_allocator;
+}
+
+/*
+Dispatch queue threads are handled differently than other types as we do not create and manage them. This is set during
+creation of an Event Loop Group to control attach/detach to/from JVM behavior of threads.
+*/
+static bool s_dispatch_queue_threads = false;
+void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue) {
+    s_dispatch_queue_threads = is_dispatch_queue;
 }
 
 static void s_detach_jvm_from_thread(void *user_data) {
@@ -55,40 +69,69 @@ static void s_detach_jvm_from_thread(void *user_data) {
 
     /* we don't need this JNIEnv, but this is an easy way to verify the JVM is still valid to use */
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(jvm);
-    if (env != NULL) {
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(jvm);
+    if (jvm_env_context.env != NULL) {
         (*jvm)->DetachCurrentThread(jvm);
-
-        aws_jni_release_thread_env(jvm, env);
+        aws_jni_release_thread_env(jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
     }
 }
 
-static JNIEnv *s_aws_jni_get_thread_env(JavaVM *jvm) {
+static struct aws_jvm_env_context s_aws_jni_get_thread_env(JavaVM *jvm) {
+    struct aws_jvm_env_context jvm_env_context = {.env = NULL, .should_detach = false};
+
+    if ((*jvm)->GetEnv(jvm, (void **)&jvm_env_context.env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (!s_dispatch_queue_threads) {
+            AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
+        }
+
+        struct aws_string *thread_name = NULL;
+        if (aws_thread_current_name(aws_jni_get_allocator(), &thread_name)) {
+            /* Retrieving thread name can fail for multitude of reasons and is
+            not fatal. Ignore the error and continue. */
+            AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "Failed to retrieve name for the thread.");
+        }
+
+        struct JavaVMAttachArgs attach_args = {
+            .version = JNI_VERSION_1_6,
+            .name = NULL,
+            .group = NULL,
+        };
+
+        if (thread_name != NULL) {
+            attach_args.name = (char *)aws_string_c_str(thread_name);
+        }
+
 #ifdef ANDROID
-    JNIEnv *env = NULL;
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &jvm_env_context.env, &attach_args);
 #else
-    void *env = NULL;
+        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&jvm_env_context.env, &attach_args);
 #endif
-    if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        AWS_LOGF_DEBUG(AWS_LS_COMMON_GENERAL, "s_aws_jni_get_thread_env returned detached, attaching");
-#ifdef ANDROID
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, &env, NULL);
-#else
-        jint result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void **)&env, NULL);
-#endif
+
+        aws_string_destroy(thread_name);
+
         /* Ran out of memory, don't log in this case */
         AWS_FATAL_ASSERT(result != JNI_ENOMEM);
         if (result != JNI_OK) {
             fprintf(stderr, "Unrecoverable AttachCurrentThreadAsDaemon failed, JNI error code is %d\n", (int)result);
-            return NULL;
+            jvm_env_context.env = NULL;
+            return jvm_env_context;
         }
-        /* This should only happen in event loop threads, the JVM main thread attachment is
-         * managed by the JVM, so we only need to clean up event loop thread attachments */
-        AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+
+        jvm_env_context.should_detach = true;
+
+        /*
+        Dispatch Queue threads are managed by Apple's GCD and thus can't have an at_exit callback assigned. We manually
+        detatch dispatch queue threads from the JVM during `aws_jni_release_thread_env()` to insure cleanup.
+        */
+        if (!s_dispatch_queue_threads) {
+            /* This should only happen in event loop threads, the JVM main thread attachment is
+             * managed by the JVM, so we only need to clean up event loop thread attachments */
+            AWS_FATAL_ASSERT(AWS_OP_SUCCESS == aws_thread_current_at_exit(s_detach_jvm_from_thread, (void *)jvm));
+        }
     }
 
-    return env;
+    return jvm_env_context;
 }
 
 /*
@@ -167,7 +210,12 @@ done:
     aws_rw_lock_wunlock(&s_jvm_table_lock);
 }
 
-JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
+struct aws_jvm_env_context aws_jni_acquire_thread_env(JavaVM *jvm) {
+    struct aws_jvm_env_context jvm_env_context = {
+        .env = NULL,
+        .should_detach = false,
+    };
+
     /*
      * We use try-lock here in order to avoid the re-entrant deadlock case that could happen if we have a read
      * lock already, the JVM shutdown hooks causes another thread to block on taking the write lock, and then
@@ -178,7 +226,7 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
         if (aws_last_error() != AWS_ERROR_UNSUPPORTED_OPERATION) {
             aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         }
-        return NULL;
+        return jvm_env_context;
     }
 
     if (s_jvms == NULL) {
@@ -193,26 +241,34 @@ JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm) {
         goto error;
     }
 
-    JNIEnv *env = s_aws_jni_get_thread_env(jvm);
-    if (env == NULL) {
+    jvm_env_context = s_aws_jni_get_thread_env(jvm);
+    if (jvm_env_context.env == NULL) {
         aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_DESTROYED);
         goto error;
     }
 
-    return env;
+    return jvm_env_context;
 
 error:
 
     aws_rw_lock_runlock(&s_jvm_table_lock);
 
-    return NULL;
+    return jvm_env_context;
 }
 
-void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env) {
-    (void)jvm;
-    (void)env;
+void aws_jni_release_thread_env(JavaVM *jvm, struct aws_jvm_env_context *jvm_env_context) {
+    if (jvm_env_context->env != NULL) {
+        /*
+        Dispatch Queue threads must be manually detached after they're used instead of depending
+        on a thread exit callback due to the threads not being managed by the CRT and thus, their
+        lifetimes not trackable outside the context of their immediate use.
+        An additional needs_detach variable is needed to avoid detaching JVM threads. It happens
+        when a callback is executed on a JVM thread.
+        */
+        if (s_dispatch_queue_threads && jvm_env_context->should_detach) {
+            (*jvm)->DetachCurrentThread(jvm);
+        }
 
-    if (env != NULL) {
         aws_rw_lock_runlock(&s_jvm_table_lock);
     }
 }
@@ -247,6 +303,15 @@ void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...) {
     (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/NullPointerException"), buf);
 }
 
+void aws_jni_throw_out_of_memory_exception(JNIEnv *env, const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), msg, args);
+    va_end(args);
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/OutOfMemoryError"), buf);
+}
+
 void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...) {
     va_list args;
     va_start(args, msg);
@@ -263,6 +328,59 @@ bool aws_jni_check_and_clear_exception(JNIEnv *env) {
         (*env)->ExceptionClear(env);
     }
     return exception_pending;
+}
+
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out) {
+    bool exception_pending = (*env)->ExceptionCheck(env);
+    if (exception_pending) {
+        (*env)->DeleteGlobalRef(env, *out);
+        *out = (jthrowable)(*env)->NewGlobalRef(env, (*env)->ExceptionOccurred(env));
+        (*env)->ExceptionClear(env);
+    }
+    return exception_pending;
+}
+
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix) {
+    if (java_long < 0) {
+        aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
+        goto error;
+    }
+
+    if ((uint64_t)java_long > (uint64_t)SIZE_MAX) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "%s cannot exceed %zu when running 32bit", errmsg_prefix, SIZE_MAX);
+        goto error;
+    }
+
+    *out_size = (size_t)java_long;
+    return AWS_OP_SUCCESS;
+error:
+    *out_size = 0;
+    return AWS_OP_ERR;
+}
+
+int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix) {
+    if (java_Long == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "%s can't be null");
+        goto error;
+    }
+
+    jlong jlong_value = (*env)->CallLongMethod(env, java_Long, boxed_long_properties.long_value_method_id);
+    if ((*env)->ExceptionCheck(env)) {
+        goto error;
+    }
+
+    int64_t jlong_value_int64 = (int64_t)jlong_value;
+    if (jlong_value_int64 < 0) {
+        aws_jni_throw_illegal_argument_exception(env, "%s cannot be negative", errmsg_prefix);
+        goto error;
+    }
+    *out_long = (uint64_t)jlong_value_int64;
+    return AWS_OP_SUCCESS;
+
+error:
+    *out_long = 0;
+    return AWS_OP_ERR;
 }
 
 jbyteArray aws_java_byte_array_new(JNIEnv *env, size_t size) {
@@ -341,7 +459,9 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jstring_acquire(JNIEnv *env, jst
 }
 
 void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct aws_byte_cursor cur) {
-    (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseStringUTFChars(env, str, (const char *)cur.ptr);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray array) {
@@ -360,8 +480,32 @@ struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, 
     return aws_byte_cursor_from_array(bytes, len);
 }
 
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_critical_acquire(JNIEnv *env, jbyteArray array) {
+    if (array == NULL) {
+        aws_jni_throw_null_pointer_exception(env, "byte[] is null");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    jbyte *bytes = (*env)->GetPrimitiveArrayCritical(env, array, NULL);
+    if (bytes == NULL) {
+        aws_jni_throw_out_of_memory_exception(env, "failed to acquire array memory");
+        return aws_byte_cursor_from_array(NULL, 0);
+    }
+
+    size_t len = (*env)->GetArrayLength(env, array);
+    return aws_byte_cursor_from_array(bytes, len);
+}
+
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
-    (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    if (cur.ptr != NULL) {
+        (*env)->ReleaseByteArrayElements(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
+}
+
+void aws_jni_byte_cursor_from_jbyteArray_critical_release(JNIEnv *env, jbyteArray array, struct aws_byte_cursor cur) {
+    if (cur.ptr != NULL) {
+        (*env)->ReleasePrimitiveArrayCritical(env, array, (jbyte *)cur.ptr, JNI_ABORT);
+    }
 }
 
 struct aws_byte_cursor aws_jni_byte_cursor_from_direct_byte_buffer(JNIEnv *env, jobject byte_buffer) {
@@ -411,6 +555,9 @@ static struct aws_error_info s_crt_errors[] = {
     AWS_DEFINE_ERROR_INFO_CRT(
         AWS_ERROR_JAVA_CRT_JVM_DESTROYED,
         "Attempt to use a JVM that has already been destroyed"),
+    AWS_DEFINE_ERROR_INFO_CRT(
+        AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
+        "OutOfMemoryError has been raised from JVM."),
 };
 /* clang-format on */
 
@@ -420,10 +567,16 @@ static struct aws_error_info_list s_crt_error_list = {
 };
 
 static struct aws_log_subject_info s_crt_log_subject_infos[] = {
+    /* clang-format off */
     DEFINE_LOG_SUBJECT_INFO(
-        AWS_LS_JAVA_CRT_GENERAL,
-        "JavaCrtGeneral",
-        "Subject for aws-crt-java logging that defies categorization."),
+        AWS_LS_JAVA_CRT_GENERAL, "JavaCrtGeneral", "Subject for aws-crt-java logging that defies categorization"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_RESOURCE, "JavaCrtResource", "Subject for CrtResource"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_CRT_S3, "JavaCrtS3", "Subject for the layer binding aws-c-s3 to Java"),
+    DEFINE_LOG_SUBJECT_INFO(
+        AWS_LS_JAVA_ANDROID_KEYCHAIN, "android-keychain", "Subject for Android KeyChain"),
+    /* clang-format on */
 };
 
 static struct aws_log_subject_info_list s_crt_log_subject_list = {
@@ -522,6 +675,19 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
         g_memory_tracing = 1;
     }
 
+/* FIPS mode can be checked if OpenSSL was configured and built for FIPS which then defines OPENSSL_FIPS.
+ *
+ * AWS-LC always defines FIPS_mode() that you can call and check what the library was built with. It does not define
+ * a public OPENSSL_FIPS/AWSLC_FIPS macro that we can (or need to) check here
+ *
+ * Safeguard with macro's, for example because Libressl doesn't define
+ * FIPS_mode() by default.
+ * */
+#if defined(OPENSSL_FIPS) || defined(OPENSSL_IS_AWSLC)
+    /* Try to enable fips mode for libcrypto */
+    g_crt_fips_mode = FIPS_mode_set(1);
+#endif
+
     /* NOT using aws_jni_get_allocator to avoid trace leak outside the test */
     struct aws_allocator *allocator = aws_default_allocator();
     aws_mqtt_library_init(allocator);
@@ -534,13 +700,20 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
     aws_register_log_subject_info_list(&s_crt_log_subject_list);
 
     s_jvm_table_add_jvm_for_env(env);
-    cache_java_class_ids(env);
 
     if (jni_strict_shutdown) {
         atexit(s_jni_atexit_strict);
     } else {
         atexit(s_jni_atexit_gentle);
     }
+}
+
+JNIEXPORT
+bool JNICALL
+    Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIEnv *env, jclass jni_crt_class, jint error_code) {
+    (void)env;
+    (void)jni_crt_class;
+    return aws_http_error_code_is_retryable(error_code);
 }
 
 JNIEXPORT
@@ -590,6 +763,14 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_dumpNativeMemory(JNIEnv *env, j
     if (g_memory_tracing > 1) {
         aws_mem_tracer_dump(aws_jni_get_allocator());
     }
+}
+
+JNIEXPORT
+jboolean JNICALL Java_software_amazon_awssdk_crt_CRT_isFIPS(JNIEnv *env, jclass jni_crt_class) {
+    (void)env;
+    (void)jni_crt_class;
+
+    return g_crt_fips_mode == 1;
 }
 
 jstring aws_jni_string_from_cursor(JNIEnv *env, const struct aws_byte_cursor *native_data) {

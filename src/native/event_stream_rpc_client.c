@@ -55,7 +55,8 @@ static void s_on_connection_setup(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -77,7 +78,7 @@ static void s_on_connection_setup(
         s_destroy_connection_callback_data(callback_data, env);
     }
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -90,7 +91,8 @@ static void s_on_connection_shutdown(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -106,7 +108,7 @@ static void s_on_connection_shutdown(
     JavaVM *jvm = callback_data->jvm;
     s_destroy_connection_callback_data(callback_data, env);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -119,7 +121,8 @@ static void s_connection_protocol_message(
     struct connection_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -144,7 +147,7 @@ static void s_connection_protocol_message(
     (*env)->DeleteLocalRef(env, headers_array);
     aws_jni_check_and_clear_exception(env);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -153,12 +156,14 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_client
     JNIEnv *env,
     jclass jni_class,
     jbyteArray jni_host_name,
-    jshort port,
+    jint port,
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jlong jni_client_bootstrap,
     jobject jni_client_connection_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
     struct aws_tls_ctx *tls_context = (struct aws_tls_ctx *)jni_tls_ctx;
@@ -219,7 +224,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_client
         .socket_options = socket_options,
         .tls_options = conn_options_ptr,
         .user_data = callback_data,
-        .port = (uint16_t)port,
+        .port = (uint32_t)port,
         .bootstrap = client_bootstrap,
         .host_name = c_str_host_name,
         .on_connection_setup = s_on_connection_setup,
@@ -256,6 +261,7 @@ jboolean JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_is
     jlong jni_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -274,6 +280,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_closeC
     jint error_code) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -291,6 +298,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_acquir
     jlong jni_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -308,6 +316,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_releas
     jlong jni_connection) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -339,7 +348,8 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     struct message_flush_callback_args *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -352,7 +362,7 @@ static void s_message_flush_fn(int error_code, void *user_data) {
     JavaVM *jvm = callback_data->jvm;
     s_destroy_message_flush_callback_args(env, callback_data);
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -367,6 +377,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_sendPr
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -448,7 +459,8 @@ static void s_stream_continuation(
     struct continuation_callback_data *callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -474,7 +486,7 @@ static void s_stream_continuation(
     /* don't really care if they threw here, but we want to make the jvm happy that we checked */
     aws_jni_check_and_clear_exception(env);
 
-    aws_jni_release_thread_env(callback_data->jvm, env);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -485,7 +497,8 @@ static void s_stream_continuation_closed(
     struct continuation_callback_data *continuation_callback_data = user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(continuation_callback_data->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(continuation_callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -500,7 +513,7 @@ static void s_stream_continuation_closed(
 
     JavaVM *jvm = continuation_callback_data->jvm;
     s_client_continuation_data_destroy(env, continuation_callback_data);
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -511,6 +524,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnection_newCl
     jlong jni_connection,
     jobject continuation_handler) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_connection *connection =
         (struct aws_event_stream_rpc_client_connection *)jni_connection;
@@ -569,6 +583,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_continuation_token *continuation_token =
         (struct aws_event_stream_rpc_client_continuation_token *)jni_continuation_ptr;
@@ -657,6 +672,7 @@ jint JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     jint message_flags,
     jobject callback) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_continuation_token *continuation_token =
         (struct aws_event_stream_rpc_client_continuation_token *)jni_continuation_ptr;
@@ -722,6 +738,7 @@ void JNICALL Java_software_amazon_awssdk_crt_eventstream_ClientConnectionContinu
     jlong jni_continuation_ptr) {
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_event_stream_rpc_client_continuation_token *continuation_token =
         (struct aws_event_stream_rpc_client_continuation_token *)jni_continuation_ptr;

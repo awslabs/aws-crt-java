@@ -12,6 +12,7 @@ Release
 *#
 *.iml
 tags
+.vscode
 
 #vim swap file
 *.swp
@@ -29,7 +30,6 @@ Vagrantfile
 #doxygen
 doxygen/html/
 doxygen/latex/
-
 
 #cmake artifacts
 dependencies
@@ -85,6 +85,7 @@ target/
 .settings/
 
 .gradle/
+local.properties
 
 # configuration pulled from Secrets Manager
 settings.xml
@@ -94,3 +95,8 @@ log.txt
 # docs are updated automatically by .github/workflows/docs.yml
 docs/
 
+# graalvm manually generated config files
+graalvm-configuration
+
+# LSP
+.cache

@@ -98,10 +98,28 @@ public class HttpClientConnection extends CrtResource {
      * the connection as well in order to release the native resources.
      */
     public void shutdown() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
+        }
         httpClientConnectionShutdown(getNativeHandle());
     }
 
+    /**
+     * Check the underlying http connection is still open or not.
+     *
+     * @return true unless the underlying http connection is shutting down, or has been shutdown.
+     */
+    public boolean isOpen() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
+        }
+        return httpClientConnectionIsOpen(getNativeHandle());
+    }
+
     public HttpVersion getVersion() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnection has been closed.");
+        }
         short version = httpClientConnectionGetVersion(getNativeHandle());
         return HttpVersion.getEnumValueFromInteger((int) version);
     };
@@ -128,6 +146,26 @@ public class HttpClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Certain exceptions thrown by this HTTP API are from invalid boundary conditions
+     * that, if the request isn't altered, will never succeed. This function returns
+     * false if the exception is caused by such a condition.
+     * <p>
+     * It does not mean the request that generated the error SHOULD be retried:
+     * only that as far as this client is concerned, the request might,
+     * possibly succeed with a subsequent attempt.
+     *
+     * @param exception, an exception thrown by the CRT HTTP API--for any reason.
+     * @return true if the error that generated the exception makes sense for a retry, and
+     * false otherwise.
+     */
+    public static boolean isErrorRetryable(HttpException exception) {
+        // why take an exception rather than an error code directly?
+        // to give us breathing room for changing our mind later about how we convey
+        // retry information on the exceptions we throw.
+        return isErrorRetryable(exception.getErrorCode());
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -137,7 +175,10 @@ public class HttpClientConnection extends CrtResource {
                                                                      HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
 
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
+    private static native boolean httpClientConnectionIsOpen(long connectionBinding) throws CrtRuntimeException;
 
     private static native void httpClientConnectionReleaseManaged(long connectionBinding) throws CrtRuntimeException;
     private static native short httpClientConnectionGetVersion(long connectionBinding) throws CrtRuntimeException;
+
+    private static native boolean isErrorRetryable(int errorCode);
 }

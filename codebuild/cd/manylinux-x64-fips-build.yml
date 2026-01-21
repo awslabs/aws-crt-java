@@ -1,0 +1,26 @@
+version: 0.2
+phases:
+  install:
+    commands:
+  pre_build:
+    commands:
+      - export CC=gcc
+  build:
+    commands:
+      - cd aws-crt-java
+      - git submodule update --init
+      # double check aws-lc is the FIPS approved branch.
+      - bash ./codebuild/cd/test-fips-branch.sh
+      # aws-lc FIPS build requires golang for codegen
+      - yum install -y golang
+      - mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64-fips -Dcmake.crt_fips=ON
+
+  post_build:
+    commands:
+      # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
+      - aws s3 cp --recursive --exclude "*" --include "*.so" target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib
+
+cache:
+  paths:
+    - '/root/.m2/**/*'

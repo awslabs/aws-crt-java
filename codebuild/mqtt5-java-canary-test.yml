@@ -1,0 +1,71 @@
+version: 0.2
+env:
+  shell: bash
+  variables:
+    CANARY_DURATION: 300
+    CANARY_THREADS: 3
+    CANARY_TPS: 50
+    CANARY_CLIENT_COUNT: 10
+    CANARY_LOG_FILE: 'canary_log.txt'
+    CANARY_LOG_LEVEL: 'Error'
+    PACKAGE_NAME: 'aws-crt-java'
+    CANARY_SERVER_ARN: Mqtt5MosquittoSever
+    CANARY_BUILD_S3_DST: mqtt5-canary/s3
+    CODEBUILD_TICKET_ITEM: "IoT SDK for Java"
+phases:
+  install:
+    commands:
+      - add-apt-repository ppa:openjdk-r/ppa
+      - add-apt-repository ppa:ubuntu-toolchain-r/test
+      - apt-get update -y
+      - sudo apt-get install cmake -y
+      - git submodule update --init --recursive
+      # Install necessary lib for canary wrapper
+      - sudo apt-get install gcc python3-dev -y -f
+      - sudo apt-get install pip -y -f
+      - python3 -m pip install psutil
+      - python3 -m pip install boto3
+  pre_build:
+    commands:
+      # Retrieve the private key from Secrets Manager
+      - DEPLOY_KEY=$(aws secretsmanager get-secret-value --secret-id Aws-crt-canaries-deploy-key --query SecretString --output text)
+
+      # Set up SSH configuration
+      - mkdir -p ~/.ssh
+      - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+
+      # Add GitHub to known hosts to avoid host verification prompt
+      - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      # Configure SSH to use the key for GitHub
+      - |
+        cat > ~/.ssh/config << EOF
+        Host github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+        EOF
+      - chmod 600 ~/.ssh/config
+  build:
+    commands:
+      - echo Build started on `date`
+      # pull and copy canary scripts
+      - git clone git@github.com:awslabs/aws-crt-canaries.git
+      - cp aws-crt-canaries/source/mqtt5/*.py codebuild
+      # Build CRT
+      - mvn install -DskipTests
+      # Get secrets needed
+      - export S3_DST=$(aws secretsmanager get-secret-value --secret-id "$CANARY_BUILD_S3_DST" --query "SecretString" | cut -f2,3 -d":" | sed -e 's/[\\\"\}]//g')
+      - export GIT_HASH=$(git rev-parse HEAD)
+      # Get the endpoint, certificate, and key for connecting to IoT Core
+      - export ENDPOINT=$(aws secretsmanager get-secret-value --secret-id ${CANARY_SERVER_ARN} --query "SecretString" | cut -f2 -d":" | sed -e 's/[\\\"\}]//g')
+      # Run the Canary
+      - cd ./utils/Canary
+      - python3 ../../codebuild/CanaryWrapper.py --canary_executable mvn --canary_arguments "compile exec:java -Dexec.mainClass=canary.mqtt5.Mqtt5Canary -Dexec.args=\"--endpoint \"${ENDPOINT}\" --port 1883 --seconds ${CANARY_DURATION} --threads ${CANARY_THREADS} --tps ${CANARY_TPS} --clients ${CANARY_CLIENT_COUNT}\"" --git_hash ${GIT_HASH} --git_repo_name $PACKAGE_NAME --ticket_item "${CODEBUILD_TICKET_ITEM}" --cloudwatch_namespace mqtt5_canary
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      # Clean up SSH keys for security
+      - rm -rf ~/.ssh/id_rsa ~/.ssh/config

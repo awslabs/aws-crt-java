@@ -5,6 +5,7 @@
 
 #include <jni.h>
 
+#include <aws/common/shutdown_types.h>
 #include <aws/io/event_loop.h>
 #include <aws/io/logging.h>
 
@@ -78,6 +79,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     jobject elg_jobject,
     jint num_threads) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct event_loop_group_cleanup_callback_data *callback_data =
@@ -104,6 +107,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         goto on_error;
     }
 
+    if (aws_event_loop_group_get_type(elg) == AWS_EVENT_LOOP_DISPATCH_QUEUE) {
+        aws_jni_set_dispatch_queue_threads(true);
+    }
+
     callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
 
     return (jlong)elg;
@@ -123,6 +130,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
     jint cpu_group,
     jint num_threads) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
 
     struct event_loop_group_cleanup_callback_data *callback_data =
@@ -149,6 +158,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupNe
         goto on_error;
     }
 
+    if (aws_event_loop_group_get_type(elg) == AWS_EVENT_LOOP_DISPATCH_QUEUE) {
+        aws_jni_set_dispatch_queue_threads(true);
+    }
+
     callback_data->java_event_loop_group = (*env)->NewGlobalRef(env, elg_jobject);
 
     return (jlong)elg;
@@ -166,6 +179,8 @@ void JNICALL Java_software_amazon_awssdk_crt_io_EventLoopGroup_eventLoopGroupDes
     jclass jni_elg,
     jlong elg_addr) {
     (void)jni_elg;
+    aws_cache_jni_ids(env);
+
     struct aws_event_loop_group *elg = (struct aws_event_loop_group *)elg_addr;
     if (!elg) {
         aws_jni_throw_runtime_exception(

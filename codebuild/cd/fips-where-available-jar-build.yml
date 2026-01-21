@@ -1,0 +1,30 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - sudo add-apt-repository ppa:openjdk-r/ppa
+      - sudo apt-get update -y
+      - sudo apt-get install openjdk-11-jdk-headless maven wget unzip -y -f
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-java
+      # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
+      - mkdir -p target/cmake-build/lib
+      # prepare fips-where-available uber jar, download the regular libs
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/${GIT_TAG}/lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      # Override with the FIPS libs
+      - aws s3 cp --recursive s3://aws-crt-java-pipeline/${GIT_TAG}/fips_lib $CODEBUILD_SRC_DIR/aws-crt-java/target/cmake-build/lib
+      # Run a test to make sure we get the FIPS libs
+      - CRT_FIPS=ON mvn test -Dtest=software.amazon.awssdk.crt.test.SystemInfoTest#testIsFIPS -Dshared-lib.skip=true
+      - mvn -B package -DskipTests -Dshared-lib.skip=true -Dcrt.classifier=fips-where-available
+
+  post_build:
+    commands:
+      # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
+      - aws s3 cp --recursive --exclude "*" --include "aws-crt*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar
+
+cache:
+  paths:
+    - "/root/.m2/**/*"

@@ -6,235 +6,342 @@ on:
       - 'main'
       - 'docs'
 
+# cancel in-progress builds after a new commit
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  BUILDER_VERSION: v0.9.15
+  BUILDER_VERSION: v0.9.84
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
   LINUX_BASE_IMAGE: ubuntu-18-x64
   RUN: ${{ github.run_id }}-${{ github.run_number }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
+  AWS_DEFAULT_REGION: us-east-1
   AWS_REGION: us-east-1
+  AWS_DEVICE_FARM_REGION: us-west-2 # Device Farm only available in us-west-2 region
+
+permissions:
+  id-token: write # This is required for requesting the JWT
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         image:
           - manylinux2014-x64
+          - manylinux2014-x86
           - al2-x64
           - fedora-34-x64
           - opensuse-leap
           - rhel8-x64
           #- manylinux2014-x86 until we find 32-bit linux binaries we can use
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: logs
-          path: |
-            hs_err_pid*
-            target/surefire-reports/*stream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         compiler:
-          - clang-3
           - clang-6
           - clang-8
           - clang-9
           - clang-10
           - clang-11
+          - clang-15
+          - clang-17
           - gcc-4.8
           - gcc-5
           - gcc-6
           - gcc-7
           - gcc-8
+          - gcc-11
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }}
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: logs
-          path: |
-            hs_err_pid*
-            target/surefire-reports/*stream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }}
 
   linux-arm:
     name: ARM (${{ matrix.arch }})
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-24.04 # latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [armv6, armv7, arm64]
     steps:
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-          chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} --spec=downstream
+
+  linux-fips-x64:
+    runs-on: ubuntu-24.04 # latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        bash codebuild/cd/test-fips-branch.sh
+        export CRT_FIPS=ON
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }}
+
+  linux-fips-armv8:
+    runs-on: ubuntu-24.04 # latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        bash codebuild/cd/test-fips-branch.sh
+        export CRT_FIPS=ON
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --target=linux-arm64 --spec=downstream --cmake-extra=-DCRT_FIPS=ON
+
+  linux-musl-x64:
+    runs-on: ubuntu-24.04 # latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - alpine-3.16-x64
+          - openwrt-x64-openjdk8
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }}
 
   windows:
-    runs-on: windows-2022 # latest
+    runs-on: windows-2025 # latest
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        run: |
-          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-          python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  windows-vc14:
-    runs-on: windows-2019 # windows-2019 is last env with Visual Studio 2015 (v14.0)
+  windows-vc17:
+    runs-on: windows-2025 # latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [x86, x64]
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        env:
-          AWS_CMAKE_TOOLSET: v140
-        run: |
-          python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-          python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      env:
+        AWS_CMAKE_TOOLSET: v143 #Visual Studio C++ v143 is Visual Studio 2022 and msvc 17
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
 
-  osx:
-    runs-on: macos-11 # latest
+  macos:
+    runs-on: macos-14 #latest
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        run: |
-          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-          chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python3 codebuild/macos_compatibility_check.py
 
-  osx-arm64:
-    runs-on: macos-11 # latest
+  macos-x64:
+    runs-on: macos-14-large #latest
     steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }} + consumers
-        run: |
-          mvn -B compile -P mac-arm64
-
-  android:
-    name: Android
-    # ubuntu-20.04 comes with Android tooling, see: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md#android
-    runs-on: ubuntu-20.04 # latest
-    steps:
-      - name: Checkout Sources
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          ./gradlew :android:crt:build
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python3 codebuild/macos_compatibility_check.py
 
   # check that docs can still build
   check-docs:
-    runs-on: ubuntu-20.04 # latest
+    runs-on: ubuntu-22.04 # use same version as docs.yml
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Check docs
-        run: |
-          ./make-docs.sh
-
-  check-submodules:
-    runs-on: ubuntu-20.04 # latest
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v2
-        with:
-          submodules: true
-          fetch-depth: 0
-      - name: Check Submodules
-        # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
-        # https://github.com/actions/runner/issues/480
-        uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
-
-
-  localhost-test-linux:
-    runs-on: ubuntu-20.04 # latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
+    - name: Check docs
       run: |
-        python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
+        ./make-docs.sh
+
+  check-submodules:
+    runs-on: ubuntu-24.04 # latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Source
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Check Submodules
+      # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
+      # https://github.com/actions/runner/issues/480
+      uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
+
+  localhost-test-linux:
+    runs-on: ubuntu-24.04 # latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=localhost
 
-  localhost-test-mac:
-    runs-on: macos-11 # latest
+
+  localhost-test-macos:
+    runs-on: macos-14 # latest
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
-      run: |
-        python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
-        ./builder localhost-test -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        ./builder build -p ${{ env.PACKAGE_NAME }} --variant=localhost
 
   localhost-test-win:
-    runs-on: windows-2022 # latest
+    runs-on: windows-2025 # latest
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Configure local host
-      run: |
-        python -m pip install h2
     - name: Build and test
       run: |
-        cd crt/aws-c-http/tests/py_localhost/
-        Start-Process -NoNewWindow python .\server.py
-        Start-Process -NoNewWindow python .\non_tls_server.py
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz localhost-test -p ${{ env.PACKAGE_NAME }} downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=localhost
+
+  GraalVM:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        java-version: ['22', '21', '17']
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Setup GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --variant=graalvm downstream

@@ -76,7 +76,7 @@ public abstract class ServerConnectionHandler implements AutoCloseable {
         if (connection.isConnectionOpen()) {
             connection.closeConnection(0);
         }
-        connection.decRef();
+        connection.decRef("close() called");
         connection = null;
     }
 }

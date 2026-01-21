@@ -14,6 +14,9 @@ import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
+import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
+import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -26,6 +29,8 @@ import java.util.function.Consumer;
  * MQTT service endpoint
  */
 public class MqttClientConnection extends CrtResource {
+
+    private static final int MAX_PORT = 65535;
 
     private MqttConnectionConfig config;
 
@@ -50,6 +55,32 @@ public class MqttClientConnection extends CrtResource {
     }
 
     /**
+     * Static help function to create a MqttConnectionConfig from a
+     * Mqtt5ClientOptions
+     */
+    private static MqttConnectionConfig s_toMqtt3ConnectionConfig(Mqtt5ClientOptions mqtt5options) {
+        MqttConnectionConfig options = new MqttConnectionConfig();
+        options.setEndpoint(mqtt5options.getHostName());
+        options.setPort(mqtt5options.getPort() != null ? Math.toIntExact(mqtt5options.getPort()) : 0);
+        options.setSocketOptions(mqtt5options.getSocketOptions());
+        if (mqtt5options.getConnectOptions() != null) {
+            options.setClientId(mqtt5options.getConnectOptions().getClientId());
+            options.setKeepAliveSecs(
+                    mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds() != null
+                            ? Math.toIntExact(mqtt5options.getConnectOptions().getKeepAliveIntervalSeconds())
+                            : 0);
+        }
+        options.setCleanSession(
+                mqtt5options.getSessionBehavior().compareTo(Mqtt5ClientOptions.ClientSessionBehavior.CLEAN) <= 0);
+        options.setPingTimeoutMs(
+                mqtt5options.getPingTimeoutMs() != null ? Math.toIntExact(mqtt5options.getPingTimeoutMs()) : 0);
+        options.setProtocolOperationTimeoutMs(mqtt5options.getAckTimeoutSeconds() != null
+                ? Math.toIntExact(mqtt5options.getAckTimeoutSeconds()) * 1000
+                : 0);
+        return options;
+    }
+
+    /**
      * Constructs a new MqttClientConnection. Connections are reusable after being
      * disconnected.
      *
@@ -66,13 +97,67 @@ public class MqttClientConnection extends CrtResource {
         if (config.getEndpoint() == null) {
             throw new MqttException("endpoint must not be null");
         }
-        if (config.getPort() <= 0 || config.getPort() > 65535) {
+        if (config.getPort() <= 0 || config.getPort() > MAX_PORT) {
             throw new MqttException("port must be a positive integer between 1 and 65535");
         }
 
         try {
-            acquireNativeHandle(mqttClientConnectionNew(config.getMqttClient().getNativeHandle(), this));
+            acquireNativeHandle(mqttClientConnectionNewFrom311Client(config.getMqttClient().getNativeHandle(), this));
+            SetupConfig(config);
 
+        } catch (CrtRuntimeException ex) {
+            throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Constructs a new MqttClientConnection from a Mqtt5Client. Connections are
+     * reusable after being
+     * disconnected.
+     *
+     * @param mqtt5client the mqtt5 client to setup from
+     * @param callbacks   connection callbacks triggered when receive connection
+     *                    events
+     *
+     * @throws MqttException If mqttClient is null
+     */
+    public MqttClientConnection(Mqtt5Client mqtt5client, MqttClientConnectionEvents callbacks) throws MqttException {
+        if (mqtt5client == null) {
+            throw new MqttException("mqttClient must not be null");
+        }
+
+        try (MqttConnectionConfig config = s_toMqtt3ConnectionConfig(mqtt5client.getClientOptions())) {
+            config.setMqtt5Client(mqtt5client);
+            if (callbacks != null) {
+                config.setConnectionCallbacks(callbacks);
+            }
+
+            if (config.getClientId() == null) {
+                throw new MqttException("clientId must not be null");
+            }
+            if (config.getEndpoint() == null) {
+                throw new MqttException("endpoint must not be null");
+            }
+            if (config.getPort() <= 0 || config.getPort() > MAX_PORT) {
+                throw new MqttException("port must be a positive integer between 1 and 65535");
+            }
+
+            try {
+                acquireNativeHandle(
+                        mqttClientConnectionNewFrom5Client(config.getMqtt5Client().getNativeHandle(), this));
+                SetupConfig(config);
+
+            } catch (CrtRuntimeException ex) {
+                throw new MqttException("Exception during mqttClientConnectionNew: " + ex.getMessage());
+            }
+        } catch (Exception e) {
+            throw new MqttException("Failed to setup mqtt3 connection : " + e.getMessage());
+        }
+
+    }
+
+    private void SetupConfig(MqttConnectionConfig config) throws MqttException {
+        try {
             if (config.getUsername() != null) {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
@@ -102,7 +187,8 @@ public class MqttClientConnection extends CrtResource {
                         proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
                         options.getAuthorizationType().getValue(),
                         options.getAuthorizationUsername(),
-                        options.getAuthorizationPassword());
+                        options.getAuthorizationPassword(),
+                        options.getNoProxyHosts());
             }
 
             addReferenceTo(config);
@@ -159,11 +245,42 @@ public class MqttClientConnection extends CrtResource {
         }
     }
 
+    // called when the connection or reconnection is successful
+    private void onConnectionSuccess(boolean sessionPresent) {
+        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        if (callbacks != null) {
+            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+            callbacks.onConnectionSuccess(returnData);
+        }
+    }
+
+    // called when the connection drops
+    private void onConnectionFailure(int errorCode) {
+        MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+        if (callbacks != null) {
+            OnConnectionFailureReturn returnData = new OnConnectionFailureReturn(errorCode);
+            callbacks.onConnectionFailure(returnData);
+        }
+    }
+
     // Called when a reconnect succeeds, and also on initial connection success.
     private void onConnectionResumed(boolean sessionPresent) {
         MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
         if (callbacks != null) {
             callbacks.onConnectionResumed(sessionPresent);
+            OnConnectionSuccessReturn returnData = new OnConnectionSuccessReturn(sessionPresent);
+            callbacks.onConnectionSuccess(returnData);
+        }
+    }
+
+    // Called when the connection is disconnected successfully and intentionally.
+    private void onConnectionClosed() {
+        if (config != null) {
+            MqttClientConnectionEvents callbacks = config.getConnectionCallbacks();
+            if (callbacks != null) {
+                OnConnectionClosedReturn returnData = new OnConnectionClosedReturn();
+                callbacks.onConnectionClosed(returnData);
+            }
         }
     }
 
@@ -175,14 +292,19 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Boolean> connect() throws MqttException {
 
-        TlsContext tls = config.getMqttClient().getTlsContext();
+        TlsContext tls = null;
+        if (config.getMqttClient() != null) {
+            tls = config.getMqttClient().getTlsContext();
+        } else if (config.getMqtt5Client() != null) {
+            tls = config.getMqtt5Client().getClientOptions().getTlsContext();
+        }
 
         // Just clamp the pingTimeout, no point in throwing
         short pingTimeout = (short) Math.max(0, Math.min(config.getPingTimeoutMs(), Short.MAX_VALUE));
 
-        short port = (short) config.getPort();
-        if (port > Short.MAX_VALUE || port <= 0) {
-            throw new MqttException("Port must be betweeen 0 and " + Short.MAX_VALUE);
+        int port = config.getPort();
+        if (port > MAX_PORT || port <= 0) {
+            throw new MqttException("Port must be betweeen 0 and 65535");
         }
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         connectAck = AsyncCallback.wrapFuture(future, null);
@@ -336,15 +458,28 @@ public class MqttClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Returns statistics about the current state of the MqttClientConnection's
+     * queue of operations.
+     *
+     * @return Current state of the connection's queue of operations.
+     */
+    public MqttClientConnectionOperationStatistics getOperationStatistics() {
+        return mqttClientConnectionGetOperationStatistics(getNativeHandle());
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
-    private static native long mqttClientConnectionNew(long client, MqttClientConnection thisObj)
+    private static native long mqttClientConnectionNewFrom311Client(long client, MqttClientConnection thisObj)
+            throws CrtRuntimeException;
+
+    private static native long mqttClientConnectionNewFrom5Client(long client, MqttClientConnection thisObj)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionDestroy(long connection);
 
-    private static native void mqttClientConnectionConnect(long connection, String endpoint, short port,
+    private static native void mqttClientConnectionConnect(long connection, String endpoint, int port,
             long socketOptions, long tlsContext, String clientId, boolean cleanSession, int keepAliveMs,
             short pingTimeoutMs, int protocolOperationTimeoutMs) throws CrtRuntimeException;
 
@@ -384,5 +519,10 @@ public class MqttClientConnection extends CrtResource {
             long proxyTlsContext,
             int proxyAuthorizationType,
             String proxyAuthorizationUsername,
-            String proxyAuthorizationPassword) throws CrtRuntimeException;
+            String proxyAuthorizationPassword,
+            String noProxyHosts) throws CrtRuntimeException;
+
+    private static native MqttClientConnectionOperationStatistics mqttClientConnectionGetOperationStatistics(
+            long connection);
+
 };

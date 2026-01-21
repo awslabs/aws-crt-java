@@ -7,18 +7,15 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assert;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.Http2ClientConnection;
-import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBase;
-import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStreamBase;
 import software.amazon.awssdk.crt.http.HttpStream;
-import software.amazon.awssdk.crt.http.Http2Stream;
+import software.amazon.awssdk.crt.http.HttpStreamBase;
+import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
+import software.amazon.awssdk.crt.http.HttpStreamMetrics;
+import software.amazon.awssdk.crt.http.HttpVersion;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -31,6 +28,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class HttpRequestResponseFixture extends HttpClientTestFixture {
 
@@ -72,8 +70,8 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
     }
 
     protected boolean shouldRetry(TestHttpResponse response) {
-        // Retry if we couldn't connect or if we got 503 response
-        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503) {
+        // Retry if we couldn't connect or if we got flaky 5xx server errors
+        if (response.onCompleteErrorCode != CRT.AWS_CRT_SUCCESS || response.statusCode == 503 || response.statusCode == 504) {
             return true;
         }
         return false;
@@ -98,6 +96,7 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
         boolean actuallyConnected = false;
 
         final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        final AtomicReference<HttpStreamMetrics> metricsRef = new AtomicReference<>(null);
 
         final TestHttpResponse response = new TestHttpResponse();
 
@@ -131,10 +130,14 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                     }
 
                     @Override
+                    public void onMetrics(HttpStreamBase stream, HttpStreamMetrics metrics) {
+                        Assert.assertTrue(metricsRef.compareAndSet(null, metrics));
+                    }
+
+                    @Override
                     public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                         response.onCompleteErrorCode = errorCode;
                         reqCompleted.complete(null);
-                        stream.close();
                     }
                 };
                 HttpStreamBase stream = conn.makeRequest(request, streamHandler);
@@ -147,12 +150,14 @@ public class HttpRequestResponseFixture extends HttpClientTestFixture {
                 // Give the request up to 60 seconds to complete, otherwise throw a
                 // TimeoutException
                 reqCompleted.get(60, TimeUnit.SECONDS);
+                stream.close();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         Assert.assertTrue(actuallyConnected);
+        Assert.assertNotNull(metricsRef.get());
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
 

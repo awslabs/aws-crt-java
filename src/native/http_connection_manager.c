@@ -6,6 +6,7 @@
 #include "crt.h"
 #include "java_class_ids.h"
 
+#include <http_proxy_options.h>
 #include <jni.h>
 #include <string.h>
 
@@ -22,6 +23,7 @@
 #include <aws/http/connection_manager.h>
 #include <aws/http/http.h>
 #include <aws/http/proxy.h>
+#include <http_proxy_options_environment_variable.h>
 
 #include "http_connection_manager.h"
 
@@ -42,7 +44,7 @@
  */
 struct http_connection_manager_binding {
     JavaVM *jvm;
-    jweak java_http_conn_manager;
+    jobject java_http_conn_manager;
     struct aws_http_connection_manager *manager;
 };
 
@@ -52,7 +54,7 @@ static void s_destroy_manager_binding(struct http_connection_manager_binding *bi
     }
 
     if (binding->java_http_conn_manager != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, binding->java_http_conn_manager);
+        (*env)->DeleteGlobalRef(env, binding->java_http_conn_manager);
     }
 
     aws_mem_release(aws_jni_get_allocator(), binding);
@@ -63,89 +65,26 @@ static void s_on_http_conn_manager_shutdown_complete_callback(void *user_data) {
     struct http_connection_manager_binding *binding = (struct http_connection_manager_binding *)user_data;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
     }
 
     AWS_LOGF_DEBUG(AWS_LS_HTTP_CONNECTION_MANAGER, "ConnManager Shutdown Complete");
-    jobject java_http_conn_manager = (*env)->NewLocalRef(env, binding->java_http_conn_manager);
-    if (java_http_conn_manager != NULL) {
+    if (binding->java_http_conn_manager != NULL) {
         (*env)->CallVoidMethod(
-            env, java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
+            env, binding->java_http_conn_manager, http_client_connection_manager_properties.onShutdownComplete);
 
         AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
-        (*env)->DeleteLocalRef(env, java_http_conn_manager);
     }
 
     // We're done with this wrapper, free it.
     JavaVM *jvm = binding->jvm;
     s_destroy_manager_binding(binding, env);
-
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
-}
-
-void aws_http_proxy_options_jni_init(
-    JNIEnv *env,
-    struct aws_http_proxy_options *options,
-    jint proxy_connection_type,
-    struct aws_tls_connection_options *tls_options,
-    jbyteArray proxy_host,
-    uint16_t proxy_port,
-    jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password,
-    int proxy_authorization_type,
-    struct aws_tls_ctx *proxy_tls_ctx) {
-
-    struct aws_allocator *allocator = aws_jni_get_allocator();
-
-    options->connection_type = proxy_connection_type;
-    options->port = proxy_port;
-    options->auth_type = proxy_authorization_type;
-
-    if (proxy_host != NULL) {
-        options->host = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_host);
-    }
-
-    if (proxy_authorization_username != NULL) {
-        options->auth_username = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_authorization_username);
-    }
-
-    if (proxy_authorization_password != NULL) {
-        options->auth_password = aws_jni_byte_cursor_from_jbyteArray_acquire(env, proxy_authorization_password);
-    }
-
-    if (proxy_tls_ctx != NULL) {
-        aws_tls_connection_options_init_from_ctx(tls_options, proxy_tls_ctx);
-        aws_tls_connection_options_set_server_name(tls_options, allocator, &options->host);
-        options->tls_options = tls_options;
-    }
-}
-
-void aws_http_proxy_options_jni_clean_up(
-    JNIEnv *env,
-    struct aws_http_proxy_options *options,
-    jbyteArray proxy_host,
-    jbyteArray proxy_authorization_username,
-    jbyteArray proxy_authorization_password) {
-
-    if (options->host.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_host, options->host);
-    }
-
-    if (options->auth_username.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_authorization_username, options->auth_username);
-    }
-
-    if (options->auth_password.ptr != NULL) {
-        aws_jni_byte_cursor_from_jbyteArray_release(env, proxy_authorization_password, options->auth_password);
-    }
-
-    if (options->tls_options != NULL) {
-        aws_tls_connection_options_clean_up((struct aws_tls_connection_options *)options->tls_options);
-    }
 }
 
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerNew(
@@ -156,7 +95,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_socket_options,
     jlong jni_tls_ctx,
     jlong jni_tls_connection_options,
-    jint jni_window_size,
+    jlong jni_window_size,
     jbyteArray jni_endpoint,
     jint jni_port,
     jint jni_max_conns,
@@ -167,14 +106,22 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jint jni_proxy_authorization_type,
     jbyteArray jni_proxy_authorization_username,
     jbyteArray jni_proxy_authorization_password,
+    jbyteArray jni_no_proxy_hosts,
+    jint jni_environment_variable_proxy_connection_type,
+    jlong jni_environment_variable_proxy_tls_connection_options,
+    jint jni_environment_variable_type,
     jboolean jni_manual_window_management,
     jlong jni_max_connection_idle_in_milliseconds,
     jlong jni_monitoring_throughput_threshold_in_bytes_per_second,
     jint jni_monitoring_failure_interval_in_seconds,
-    jint jni_expected_protocol_version) {
+    jint jni_expected_protocol_version,
+    jlong jni_max_pending_connection_acquisitions,
+    jlong jni_connection_acquisition_timeout_ms,
+    jlong jni_response_first_byte_timeout_ms) {
 
     (void)jni_class;
     (void)jni_expected_protocol_version;
+    aws_cache_jni_ids(env);
 
     struct aws_client_bootstrap *client_bootstrap = (struct aws_client_bootstrap *)jni_client_bootstrap;
     struct aws_socket_options *socket_options = (struct aws_socket_options *)jni_socket_options;
@@ -196,13 +143,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
 
-    if (jni_port <= 0 || 65535 < jni_port) {
-        aws_jni_throw_runtime_exception(env, "Port must be between 1 and 65535");
-        goto cleanup;
-    }
-
-    if (jni_window_size <= 0) {
-        aws_jni_throw_runtime_exception(env, "Window Size must be > 0");
+    size_t window_size;
+    if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
         goto cleanup;
     }
 
@@ -211,7 +153,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         goto cleanup;
     }
 
-    uint16_t port = (uint16_t)jni_port;
+    uint32_t port = (uint32_t)jni_port;
 
     bool new_tls_conn_opts = (jni_tls_ctx != 0 && !tls_connection_options);
 
@@ -225,7 +167,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
 
     binding = aws_mem_calloc(allocator, 1, sizeof(struct http_connection_manager_binding));
     AWS_FATAL_ASSERT(binding);
-    binding->java_http_conn_manager = (*env)->NewWeakGlobalRef(env, conn_manager_jobject);
+    binding->java_http_conn_manager = (*env)->NewGlobalRef(env, conn_manager_jobject);
 
     jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
     (void)jvmresult;
@@ -235,7 +177,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     AWS_ZERO_STRUCT(manager_options);
 
     manager_options.bootstrap = client_bootstrap;
-    manager_options.initial_window_size = (size_t)jni_window_size;
+    manager_options.initial_window_size = window_size;
     manager_options.socket_options = socket_options;
     manager_options.tls_connection_options = tls_connection_options;
     manager_options.host = endpoint;
@@ -247,6 +189,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     /* TODO: this variable needs to be renamed in aws-c-http. Come back and change it next revision. */
     manager_options.enable_read_back_pressure = jni_manual_window_management;
     manager_options.max_connection_idle_in_milliseconds = jni_max_connection_idle_in_milliseconds;
+    manager_options.max_pending_connection_acquisitions = jni_max_pending_connection_acquisitions;
+    manager_options.connection_acquisition_timeout_ms = jni_connection_acquisition_timeout_ms;
+    manager_options.response_first_byte_timeout_ms = jni_response_first_byte_timeout_ms;
 
     struct aws_http_connection_monitoring_options monitoring_options;
     AWS_ZERO_STRUCT(monitoring_options);
@@ -271,15 +216,27 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
         jni_proxy_connection_type,
         &proxy_tls_conn_options,
         jni_proxy_host,
-        (uint16_t)jni_proxy_port,
+        jni_proxy_port,
         jni_proxy_authorization_username,
         jni_proxy_authorization_password,
+        jni_no_proxy_hosts,
         jni_proxy_authorization_type,
         (struct aws_tls_ctx *)jni_proxy_tls_context);
 
     if (jni_proxy_host != NULL) {
         manager_options.proxy_options = &proxy_options;
     }
+
+    struct proxy_env_var_settings proxy_ev_settings;
+    AWS_ZERO_STRUCT(proxy_ev_settings);
+
+    aws_http_proxy_environment_variable_setting_jni_init(
+        &proxy_ev_settings,
+        jni_environment_variable_proxy_connection_type,
+        jni_environment_variable_type,
+        (struct aws_tls_connection_options *)jni_environment_variable_proxy_tls_connection_options);
+
+    manager_options.proxy_ev_settings = &proxy_ev_settings;
 
     binding->manager = aws_http_connection_manager_new(allocator, &manager_options);
     if (binding->manager == NULL) {
@@ -288,7 +245,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     aws_http_proxy_options_jni_clean_up(
-        env, &proxy_options, jni_proxy_host, jni_proxy_authorization_username, jni_proxy_authorization_password);
+        env,
+        &proxy_options,
+        jni_proxy_host,
+        jni_proxy_authorization_username,
+        jni_proxy_authorization_password,
+        jni_no_proxy_hosts);
 
     if (new_tls_conn_opts) {
         aws_tls_connection_options_clean_up(&tls_conn_options);
@@ -312,6 +274,7 @@ JNIEXPORT void JNICALL
         jlong jni_conn_manager_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_connection_manager_binding *binding =
         (struct http_connection_manager_binding *)jni_conn_manager_binding;
@@ -353,7 +316,8 @@ static void s_on_http_conn_acquisition_callback(
     binding->connection = connection;
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(binding->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -369,6 +333,7 @@ static void s_on_http_conn_acquisition_callback(
         error_code,
         aws_error_str(error_code));
 
+    JavaVM *jvm = binding->jvm;
     (*env)->CallStaticVoidMethod(
         env,
         http_client_connection_properties.http_client_connection_class,
@@ -379,12 +344,11 @@ static void s_on_http_conn_acquisition_callback(
 
     AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
 
-    JavaVM *jvm = binding->jvm;
     if (error_code) {
         s_destroy_connection_binding(binding, env);
     }
 
-    aws_jni_release_thread_env(jvm, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 }
 
@@ -396,6 +360,7 @@ JNIEXPORT void JNICALL
         jobject acquire_future) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct http_connection_manager_binding *manager_binding =
         (struct http_connection_manager_binding *)jni_conn_manager_binding;
@@ -435,6 +400,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
     jlong jni_connection_binding) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_http_connection_binding *binding = (struct aws_http_connection_binding *)jni_connection_binding;
 
@@ -458,6 +424,35 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnection
         (void *)conn);
 
     s_destroy_connection_binding(binding, env);
+}
+
+JNIEXPORT jobject JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpConnectionManagerFetchMetrics(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager_binding) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct http_connection_manager_binding *manager_binding =
+        (struct http_connection_manager_binding *)jni_conn_manager_binding;
+    struct aws_http_connection_manager *conn_manager = manager_binding->manager;
+
+    if (!conn_manager) {
+        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        return NULL;
+    }
+
+    struct aws_http_manager_metrics metrics;
+    aws_http_connection_manager_fetch_metrics(conn_manager, &metrics);
+
+    return (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)metrics.available_concurrency,
+        (jlong)metrics.pending_concurrency_acquires,
+        (jlong)metrics.leased_concurrency);
 }
 
 #if UINTPTR_MAX == 0xffffffff

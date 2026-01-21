@@ -41,7 +41,8 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
         }
 
         /********** JNI ENV ACQUIRE **********/
-        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+        struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+        JNIEnv *env = jvm_env_context.env;
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return AWS_OP_ERR;
@@ -56,7 +57,7 @@ static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offs
             result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
 
-        aws_jni_release_thread_env(impl->jvm, env);
+        aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
     }
 
@@ -85,7 +86,8 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     }
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return AWS_OP_ERR;
@@ -108,7 +110,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
 
     (*env)->DeleteLocalRef(env, direct_buffer);
 
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     return result;
@@ -132,7 +134,8 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
     if (impl->http_request_body_stream != NULL) {
 
         /********** JNI ENV ACQUIRE **********/
-        JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+        struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+        JNIEnv *env = jvm_env_context.env;
         if (env == NULL) {
             /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
             return AWS_OP_ERR;
@@ -146,7 +149,7 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
             result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         }
 
-        aws_jni_release_thread_env(impl->jvm, env);
+        aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
 
         return result;
@@ -158,7 +161,8 @@ static int s_aws_input_stream_get_length(struct aws_input_stream *stream, int64_
 static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl *impl) {
 
     /********** JNI ENV ACQUIRE **********/
-    JNIEnv *env = aws_jni_acquire_thread_env(impl->jvm);
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(impl->jvm);
+    JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
         /* If we can't get an environment, then the JVM is probably shutting down.  Don't crash. */
         return;
@@ -168,7 +172,7 @@ static void s_aws_input_stream_destroy(struct aws_http_request_body_stream_impl 
         (*env)->DeleteGlobalRef(env, impl->http_request_body_stream);
     }
 
-    aws_jni_release_thread_env(impl->jvm, env);
+    aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
     aws_mem_release(impl->allocator, impl);
@@ -222,6 +226,7 @@ static inline int s_marshal_http_header_to_buffer(
         return AWS_OP_ERR;
     }
 
+    /* This will append to the buffer without overwriting anything */
     aws_byte_buf_write_be32(buf, (uint32_t)name->len);
     aws_byte_buf_write_from_whole_cursor(buf, *name);
     aws_byte_buf_write_be32(buf, (uint32_t)value->len);
@@ -229,7 +234,7 @@ static inline int s_marshal_http_header_to_buffer(
     return AWS_OP_SUCCESS;
 }
 
-int aws_marshal_http_headers_to_dynamic_buffer(
+int aws_marshal_http_headers_array_to_dynamic_buffer(
     struct aws_byte_buf *buf,
     const struct aws_http_header *header_array,
     size_t num_headers) {
@@ -241,6 +246,19 @@ int aws_marshal_http_headers_to_dynamic_buffer(
 
     return AWS_OP_SUCCESS;
 }
+
+int aws_marshal_http_headers_to_dynamic_buffer(struct aws_byte_buf *buf, const struct aws_http_headers *headers) {
+    for (size_t i = 0; i < aws_http_headers_count(headers); ++i) {
+        struct aws_http_header header;
+        aws_http_headers_get_index(headers, i, &header);
+        if (s_marshal_http_header_to_buffer(buf, &header.name, &header.value)) {
+            return AWS_OP_ERR;
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 /**
  * Unmarshal the request from java.
  *

@@ -4,13 +4,19 @@
  */
 package software.amazon.awssdk.crt;
 
+import software.amazon.awssdk.crt.internal.ExtractLib;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * This class is responsible for loading the aws-crt-jni shared lib for the
@@ -19,7 +25,10 @@ import java.util.*;
  * load the shared lib
  */
 public final class CRT {
-    private static final String CRT_LIB_NAME = "aws-crt-jni";
+    private static final String CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY = "aws.crt.arch";
+    private static final String CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE = "AWS_CRT_ARCH";
+
+    public static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
     private static final CrtPlatform s_platform;
 
@@ -31,8 +40,15 @@ public final class CRT {
             // If the lib is already present/loaded or is in java.library.path, just use it
             System.loadLibrary(CRT_LIB_NAME);
         } catch (UnsatisfiedLinkError e) {
-            // otherwise, load from the jar this class is in
-            loadLibraryFromJar();
+            String graalVMImageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
+            if (graalVMImageCode != null && graalVMImageCode == "runtime") {
+                throw new CrtRuntimeException(
+                        "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
+                        "'. Make sure this file is in the same directory as the GraalVM native image. ");
+            } else {
+                // otherwise, load from the jar this class is in
+                loadLibraryFromJar();
+            }
         }
 
         // Initialize the CRT
@@ -49,7 +65,7 @@ public final class CRT {
         {
             public void run()
             {
-                CRT.onJvmShutdown();
+                CRT.releaseShutdownRef();
             }
         });
 
@@ -81,7 +97,6 @@ public final class CRT {
      * @return a string describing the detected platform the CRT is executing on
      */
     public static String getOSIdentifier() throws UnknownPlatformException {
-
         CrtPlatform platform = getPlatformImpl();
         String name = normalize(platform != null ? platform.getOSIdentifier() : System.getProperty("os.name"));
 
@@ -95,6 +110,8 @@ public final class CRT {
             return "osx";
         } else if (name.contains("sun os") || name.contains("sunos") || name.contains("solaris")) {
             return "solaris";
+        } else if (name.contains("android")){
+            return "android";
         }
 
         throw new UnknownPlatformException("AWS CRT: OS not supported: " + name);
@@ -104,9 +121,18 @@ public final class CRT {
      * @return a string describing the detected architecture the CRT is executing on
      */
     public static String getArchIdentifier() throws UnknownPlatformException {
+        String systemPropertyOverride = System.getProperty(CRT_ARCH_OVERRIDE_SYSTEM_PROPERTY);
+        if (systemPropertyOverride != null && systemPropertyOverride.length() > 0) {
+            return systemPropertyOverride;
+        }
+
+        String environmentOverride = System.getenv(CRT_ARCH_OVERRIDE_ENVIRONMENT_VARIABLE);
+        if (environmentOverride != null && environmentOverride.length() > 0) {
+            return environmentOverride;
+        }
+
         CrtPlatform platform = getPlatformImpl();
         String arch = normalize(platform != null ? platform.getArchIdentifier() : System.getProperty("os.arch"));
-
         if (arch.matches("^(x8664|amd64|ia32e|em64t|x64|x86_64)$")) {
             return "x86_64";
         } else if (arch.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
@@ -119,110 +145,177 @@ public final class CRT {
             }
         } else if (arch.startsWith("arm64") || arch.startsWith("aarch64")) {
             return "armv8";
-        } else if (arch.equals("arm")) {
+        } else if (arch.equals("armv7l")) {
+            return "armv7";
+        } else if (arch.startsWith("arm")) {
             return "armv6";
         }
 
         throw new UnknownPlatformException("AWS CRT: architecture not supported: " + arch);
     }
 
-    private static void extractAndLoadLibrary(String path) {
-        try {
-            // Check java.io.tmpdir
-            String tmpdirPath;
-            File tmpdirFile;
-            try {
-                tmpdirFile = new File(path).getAbsoluteFile();
-                tmpdirPath = tmpdirFile.getAbsolutePath();
-                if (tmpdirFile.exists()) {
-                    if (!tmpdirFile.isDirectory()) {
-                        throw new IOException("not a directory: " + tmpdirPath);
+    private static final String NON_LINUX_RUNTIME_TAG = "cruntime";
+    private static final String MUSL_RUNTIME_TAG = "musl";
+    private static final String GLIBC_RUNTIME_TAG = "glibc";
+
+    public static String getCRuntime(String osIdentifier) {
+        if (!osIdentifier.equals("linux")) {
+            return NON_LINUX_RUNTIME_TAG;
+        }
+
+        // If system property is set, use that.
+        String systemPropertyOverride = System.getProperty("aws.crt.libc");
+        if (systemPropertyOverride != null) {
+            systemPropertyOverride = systemPropertyOverride.toLowerCase().trim();
+            if (!systemPropertyOverride.isEmpty()) {
+                return systemPropertyOverride;
+            }
+        }
+
+        // Be warned, the system might have both musl and glibc on it:
+        // https://github.com/awslabs/aws-crt-java/issues/659
+
+        // Next, check which one java is using.
+        // Run: ldd /path/to/java
+        // If musl, has a line like: libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f7732ae4000)
+        // If glibc, has a line like: libc.so.6 => /lib64/ld-linux-x86-64.so.2 (0x7f112c894000)
+        Pattern muslWord = Pattern.compile("\\bmusl\\b", Pattern.CASE_INSENSITIVE);
+        Pattern libcWord = Pattern.compile("\\blibc\\b", Pattern.CASE_INSENSITIVE);
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null) {
+            File javaExecutable = new File(new File(javaHome, "bin"), "java");
+            if (javaExecutable.exists()) {
+                try {
+                    String[] lddJavaCmd = {"ldd", javaExecutable.toString()};
+                    List<String> lddJavaOutput = runProcess(lddJavaCmd);
+                    for (String line : lddJavaOutput) {
+                        // check if the "libc" line mentions "musl"
+                        if (libcWord.matcher(line).find()) {
+                            if (muslWord.matcher(line).find()) {
+                                return MUSL_RUNTIME_TAG;
+                            } else {
+                                return GLIBC_RUNTIME_TAG;
+                            }
+                        }
                     }
-                } else {
-                    tmpdirFile.mkdirs();
+                    // uncertain, continue to next check
+                } catch (IOException ex) {
+                    // uncertain, continue to next check
                 }
+            }
+        }
 
-                if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
-                    throw new IOException("access denied: " + tmpdirPath);
+        // Next, check whether ldd says it's using musl
+        // Run: ldd --version
+        // If musl, has a line like: musl libc (x86_64)
+        try {
+            String[] lddVersionCmd = {"ldd", "--version"};
+            List<String> lddVersionOutput = runProcess(lddVersionCmd);
+            for (String line : lddVersionOutput) {
+                // any mention of "musl" is sufficient
+                if (muslWord.matcher(line).find()) {
+                    return MUSL_RUNTIME_TAG;
                 }
-            } catch (Exception ex) {
-                String msg = "Invalid directory: " + path;
-                throw new IOException(msg, ex);
+            }
+            // uncertain, continue to next check
+
+        } catch (IOException io) {
+            // uncertain, continue to next check
+        }
+
+        // Assume it's glibc
+        return GLIBC_RUNTIME_TAG;
+    }
+
+    // Run process and return lines of output.
+    // Output is stdout and stderr merged together.
+    // The exit code is ignored.
+    // We do it this way because, on some Linux distros (Alpine),
+    // "ldd --version" reports exit code 1 and prints to stderr.
+    // But on most Linux distros it reports exit code 0 and prints to stdout.
+    private static List<String> runProcess(String[] cmdArray) throws IOException {
+        java.lang.Process proc = new ProcessBuilder(cmdArray)
+                .redirectErrorStream(true) // merge stderr into stdout
+                .start();
+
+        // confusingly, getInputStream() gets you stdout
+        BufferedReader outputReader = new BufferedReader(new
+                InputStreamReader(proc.getInputStream()));
+
+        String line;
+        List<String> output = new ArrayList<String>();
+        while ((line = outputReader.readLine()) != null) {
+            output.add(line);
+        }
+
+        return output;
+    }
+
+    private static void extractAndLoadLibrary(String path) {
+        // Check java.io.tmpdir
+        String tmpdirPath;
+        File tmpdirFile;
+        try {
+            tmpdirFile = new File(path).getAbsoluteFile();
+            tmpdirPath = tmpdirFile.getAbsolutePath();
+            if (tmpdirFile.exists()) {
+                if (!tmpdirFile.isDirectory()) {
+                    throw new IOException("not a directory: " + tmpdirPath);
+                }
+            } else {
+                tmpdirFile.mkdirs();
             }
 
-            String libraryName = System.mapLibraryName(CRT_LIB_NAME);
-
-            // Prefix the lib we'll extract to disk
-            String tempSharedLibPrefix = "AWSCRT_";
-
-            File tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
-            if (!tempSharedLib.setExecutable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library executable by owner only");
+            if (!tmpdirFile.canRead() || !tmpdirFile.canWrite()) {
+                throw new IOException("access denied: " + tmpdirPath);
             }
-            if (!tempSharedLib.setWritable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library writeable by owner only");
-            }
-            if (!tempSharedLib.setReadable(true, true)) {
-                throw new CrtRuntimeException("Unable to make shared library readable by owner only");
-            }
+        } catch (IOException ex) {
+            CrtRuntimeException rex = new CrtRuntimeException("Invalid directory: " + path);
+            rex.initCause(ex);
+            throw rex;
+        }
 
-			// The temp lib file should be deleted when we're done with it.
-			// Ask Java to try and delete it on exit. We call this immediately
-			// so that if anything goes wrong writing the file to disk, or
-			// loading it as a shared lib, it will still get cleaned up.
-			tempSharedLib.deleteOnExit();
+        String libraryName = System.mapLibraryName(CRT_LIB_NAME);
 
-            // Unfortunately File.deleteOnExit() won't work on Windows, where
+        // Prefix the lib we'll extract to disk
+        String tempSharedLibPrefix = "AWSCRT_";
+        File tempSharedLib = null;
+        try{
+            tempSharedLib = File.createTempFile(tempSharedLibPrefix, libraryName, tmpdirFile);
+        }
+        catch (IOException ex){
+            System.err.println("Unable to create temp file to extract AWS CRT library: " + ex);
+            ex.printStackTrace();
+            CrtRuntimeException rex = new CrtRuntimeException("Unable to create temp file to extract AWS CRT library");
+            rex.initCause(ex);
+            throw rex;
+        }
+        // The temp lib file should be deleted when we're done with it.
+        // Ask Java to try and delete it on exit. We call this immediately
+        // so that if anything goes wrong writing the file to disk, or
+        // loading it as a shared lib, it will still get cleaned up.
+        tempSharedLib.deleteOnExit();
+
+        ExtractLib.extractLibrary(tempSharedLib);
+        // load the shared lib from the temp path
+        System.load(tempSharedLib.getAbsolutePath());
+
+        // Unfortunately, we can't rely solely on File.deleteOnExit() to clean things up, so we also try to clean up manually.
+        String os = getOSIdentifier();
+        if (os.equals("windows")) {
+            // File.deleteOnExit() and File.delete() won't work on Windows, where
             // files cannot be deleted while they're in use. On Windows, once
             // our .dll is loaded, it can't be deleted by this process.
             //
             // The Windows-only solution to this problem is to scan on startup
             // for old instances of the .dll and try to delete them. If another
             // process is still using the .dll, the delete will fail, which is fine.
-            String os = getOSIdentifier();
-            if (os.equals("windows")) {
-                tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
-            }
-
-            // open a stream to read the shared lib contents from this JAR
-            String libResourcePath = "/" + os + "/" + getArchIdentifier() + "/" + libraryName;
-            try (InputStream in = CRT.class.getResourceAsStream(libResourcePath)) {
-                if (in == null) {
-                    throw new IOException("Unable to open library in jar for AWS CRT: " + libResourcePath);
-                }
-
-                // Copy from jar stream to temp file
-                try (FileOutputStream out = new FileOutputStream(tempSharedLib)) {
-                    int read;
-                    byte [] bytes = new byte[1024];
-                    while ((read = in.read(bytes)) != -1){
-                        out.write(bytes, 0, read);
-                    }
-                }
-            }
-
-            if (!tempSharedLib.setWritable(false)) {
-                throw new CrtRuntimeException("Unable to make shared library read-only");
-            }
-
-            // load the shared lib from the temp path
-            System.load(tempSharedLib.getAbsolutePath());
-        } catch (CrtRuntimeException crtex) {
-            System.err.println("Unable to initialize AWS CRT: " + crtex);
-            crtex.printStackTrace();
-            throw crtex;
-        } catch (UnknownPlatformException upe) {
-            System.err.println("Unable to determine platform for AWS CRT: " + upe);
-            upe.printStackTrace();
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to determine platform for AWS CRT");
-            rex.initCause(upe);
-            throw rex;
-        } catch (Exception ex) {
-            System.err.println("Unable to unpack AWS CRT lib: " + ex);
-            ex.printStackTrace();
-            CrtRuntimeException rex = new CrtRuntimeException("Unable to unpack AWS CRT library");
-            rex.initCause(ex);
-            throw rex;
+            tryDeleteOldLibrariesFromTempDir(tmpdirFile, tempSharedLibPrefix, libraryName);
+        } else {
+            // In some edge cases, File.deleteOnExit() might not run in cases like Lambda SnapStart or abnormal termination of the JVM.
+            // Therefore, we delete the library file immediately after it has been successfully loaded.
+            // This is safe to do on non-Windows platforms; everything will keep working in the current process.
+            tempSharedLib.delete();
         }
     }
 
@@ -279,9 +372,17 @@ public final class CRT {
 
     private static CrtPlatform findPlatformImpl() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+
         String[] platforms = new String[] {
-                // Search for test impl first, fall back to crt
+                // Search for OS specific test impl first
                 String.format("software.amazon.awssdk.crt.test.%s.CrtPlatformImpl", getOSIdentifier()),
+                // Search for android test impl specifically because getOSIdentifier will return "linux" on android
+                "software.amazon.awssdk.crt.test.android.CrtPlatformImpl",
+                "software.amazon.awssdk.crt.android.CrtPlatformImpl",
+                // Fall back to crt
                 String.format("software.amazon.awssdk.crt.%s.CrtPlatformImpl", getOSIdentifier()), };
         for (String platformImpl : platforms) {
             try {
@@ -308,6 +409,55 @@ public final class CRT {
         }
     }
 
+    private static int shutdownRefCount = 1;
+
+    /**
+     * Public API that allows a user to indicate interest in controlling the CRT's time of shutdown.  The
+     * shutdown process works via ref-counting, with a default starting count of 1 which is decremented by a
+     * JVM shutdown hook.  Each external call to `acquireShutdownRef()` requires a corresponding call to
+     * `releaseShutdownRef()` when the caller is ready for the CRT to be shut down.  Once all shutdown references
+     * have been released, the CRT will be shut down.
+     *
+     * If the ref count is not properly driven to zero (and thus leaving the CRT active), the JVM may crash
+     * if unmanaged native code in the CRT is still busy and attempts to call back into the JVM after the JVM cleans
+     * up JNI.
+     */
+    public static void acquireShutdownRef() {
+        synchronized(CRT.class) {
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot acquire CRT shutdown when ref count is non-positive");
+            }
+            ++shutdownRefCount;
+        }
+    }
+
+    /**
+     * Public API to release a shutdown reference that blocks CRT shutdown from proceeding.  Must be called once, and
+     * only once, for each call to `acquireShutdownRef()`.  Once all shutdown references have been released (including
+     * the initial reference that is managed by a JVM shutdown hook), the CRT will begin its shutdown process which
+     * permanently severs all native-JVM interactions.
+     */
+    public static void releaseShutdownRef() {
+        boolean invoke_native_shutdown = false;
+        synchronized(CRT.class) {
+            if (shutdownRefCount <= 0) {
+                throw new CrtRuntimeException("Cannot release CRT shutdown when ref count is non-positive");
+            }
+
+            --shutdownRefCount;
+            if (shutdownRefCount == 0) {
+                invoke_native_shutdown = true;
+            }
+        }
+
+        if (invoke_native_shutdown) {
+            onJvmShutdown();
+            ClientBootstrap.closeStaticDefault();
+            EventLoopGroup.closeStaticDefault();
+            HostResolver.closeStaticDefault();
+        }
+    }
+
     // Called internally when bootstrapping the CRT, allows native code to do any
     // static initialization it needs
     private static native void awsCrtInit(int memoryTracingLevel, boolean debugWait, boolean strictShutdown)
@@ -321,7 +471,7 @@ public final class CRT {
     public static native int awsLastError();
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding description for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
@@ -330,13 +480,28 @@ public final class CRT {
     public static native String awsErrorString(int errorCode);
 
     /**
-     * Given an integer error code from an internal operation
+     * Given an integer error code from an internal operation, get a corresponding string identifier for it.
      *
      * @param errorCode An error code returned from an exception or other native
      *                  function call
      * @return A string identifier for the error
      */
     public static native String awsErrorName(int errorCode);
+
+    /**
+     * Given an error code, get a boolean to check if an error is transient or not.
+     *
+     * Transient errors are defined as IO level errors where we are unable to read an HTTP response.
+     * This can occur due to connect timeouts, read timeouts, or the server closing the connection without 
+     * sending a response. This method helps identify CRT error codes that are not generic or widely adopted.
+     *
+     * This is not the complete logic to identify transient or retryable errors, this includes only IO level 
+     * errors that are transient.
+     *
+     * @param errorCode An error code returned from an exception or other native function call
+     * @return A boolean for if the error is transient or not
+     */
+    public static native Boolean awsIsTransientError(int errorCode);
 
     /**
      * @return The number of bytes allocated in native resources. If
@@ -367,7 +532,10 @@ public final class CRT {
         nativeCheckJniExceptionContract(clearException);
     }
 
+    public static native boolean isFIPS();
+
     private static native void nativeCheckJniExceptionContract(boolean clearException);
 
     private static native void onJvmShutdown();
+
 };

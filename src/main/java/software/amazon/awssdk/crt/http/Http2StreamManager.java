@@ -78,6 +78,7 @@ public class Http2StreamManager extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         HttpProxyOptions proxyOptions = connectionManagerOptions.getProxyOptions();
 
         if (proxyOptions != null) {
@@ -88,6 +89,7 @@ public class Http2StreamManager extends CrtResource {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
         }
 
         HttpMonitoringOptions monitoringOptions = connectionManagerOptions.getMonitoringOptions();
@@ -113,6 +115,7 @@ public class Http2StreamManager extends CrtResource {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 connectionManagerOptions.isManualWindowManagement(),
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
@@ -177,6 +180,23 @@ public class Http2StreamManager extends CrtResource {
     }
 
     /**
+     * @return maximum number of connections this connection manager will pool
+     */
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        return http2StreamManagerFetchMetrics(getNativeHandle());
+    }
+
+    /**
      * Called from Native when all Streams from this Stream manager have finished
      * and underlying resources like connections opened under the hood has been
      * cleaned up
@@ -236,6 +256,7 @@ public class Http2StreamManager extends CrtResource {
             int proxyAuthorizationType,
             byte[] proxyAuthorizationUsername,
             byte[] proxyAuthorizationPassword,
+            byte[] noProxyHosts,
             boolean isManualWindowManagement,
             long monitoringThroughputThresholdInBytesPerSecond,
             int monitoringFailureIntervalInSeconds,
@@ -254,4 +275,6 @@ public class Http2StreamManager extends CrtResource {
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
             AsyncCallback completedCallback) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics http2StreamManagerFetchMetrics(long stream_manager) throws CrtRuntimeException;
 }

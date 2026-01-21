@@ -51,17 +51,24 @@ public class HttpStreamBase extends CrtResource {
     /*******************************************************************************
      * Shared method
      ******************************************************************************/
+
     /**
-     * Opens the Sliding Read/Write Window by the number of bytes passed as an
-     * argument for this HttpStream.
-     *
-     * This function should only be called if the user application previously
-     * returned less than the length of the input
-     * ByteBuffer from a onResponseBody() call in a HttpStreamResponseHandler, and
-     * should be &lt;= to the total number of
-     * un-acked bytes.
+     * Increment the flow-control window, so that response data continues downloading.
+     * <p>
+     * If {@link HttpClientConnectionManagerOptions#withManualWindowManagement} was set true,
+     * each HTTP stream has a flow-control window that shrinks as response
+     * body data is downloaded (headers do not affect the size of the window).
+     * {@link HttpClientConnectionManagerOptions#withWindowSize} sets the starting size for each HTTP stream's window.
+     * Whenever the window reaches zero, data stops downloading.
+     * Increment the window to keep data flowing.
+     * Maintain a larger window to keep up a high download throughput,
+     * parts cannot download in parallel unless the window is large enough to hold multiple parts.
+     * Maintain a smaller window to limit the amount of data buffered in memory.
+     * <p>
+     * If manual window management is disabled this call has no effect.
      *
      * @param windowSize How many bytes to increment the sliding window by.
+     * @see HttpClientConnectionManagerOptions#withManualWindowManagement
      */
     public void incrementWindow(int windowSize) {
         if (windowSize < 0) {

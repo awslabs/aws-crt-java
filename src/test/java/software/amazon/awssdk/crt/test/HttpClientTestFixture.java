@@ -5,6 +5,7 @@
 
 package software.amazon.awssdk.crt.test;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpVersion;
@@ -16,8 +17,12 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 public class HttpClientTestFixture extends CrtTestFixture {
+    private final static int NUM_ITERATIONS = 10;
+    private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
 
     private HttpClientConnectionManager createHTTP2ConnectionPoolManager(URI uri) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
@@ -25,7 +30,7 @@ public class HttpClientTestFixture extends CrtTestFixture {
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
                 TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient()
-                        .withAlpnList("h2;http/1.1");
+                        .withAlpnList("h2;http/1.1").withVerifyPeer(false);
                 TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
@@ -40,7 +45,9 @@ public class HttpClientTestFixture extends CrtTestFixture {
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions sockOpts = new SocketOptions();
-                TlsContext tlsContext = createHttpClientTlsContext()) {
+                TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient()
+                        .withAlpnList("http/1.1").withVerifyPeer(false);
+                TlsContext tlsContext = createHttpClientTlsContext(tlsContextOptions)) {
 
             HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
                     .withClientBootstrap(bootstrap).withSocketOptions(sockOpts).withTlsContext(tlsContext).withUri(uri);
@@ -65,5 +72,36 @@ public class HttpClientTestFixture extends CrtTestFixture {
             return createHTTP1ConnectionPoolManager(uri);
         }
 
+    }
+
+    public void testParallelRequests(int numThreads, int numRequests) throws Exception {
+        throw new UnsupportedOperationException("Only supported from override");
+    }
+
+
+    protected void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
+        skipIfNetworkUnavailable();
+        Callable<Void> fn = () -> {
+            testParallelRequests(numThreads, numRequests);
+            return null;
+        };
+
+        // For Android: Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
+        // observable correlation to when System.gc() is called. Therefore, we cannot reliably
+        // sample it, so we don't bother.
+        // For GraalVM: It's not using JVM, there is no reason to check the JVM memory.
+        // If we have a leak, we should have it on all platforms, and we'll catch it
+        // elsewhere.
+        if (CRT.getOSIdentifier() != "android" && System.getProperty("org.graalvm.nativeimage.imagecode") == null) {
+            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
+            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
+            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
+            // the workload
+            // we're running, 8K worth of growth (an additional 4K for an increased healthy
+            // margin)
+            // in the JVM only is acceptable.
+            fixedGrowth = Math.max(fixedGrowth, 8192);
+            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
+        }
     }
 }

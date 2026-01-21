@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("commons-cli:commons-cli:1.5.0")
     testImplementation("org.mockito:mockito-core:3.11.2")
 }
 
@@ -61,10 +62,17 @@ tasks.processResources {
     dependsOn(":native:cmakeBuild")
 }
 
+// withSourcesJar uses output of task :native:cmakeBuild so explicitly declaring dependency:
+tasks.named("sourcesJar") {
+    dependsOn(":native:cmakeBuild")
+}
+
 tasks.test {
     useJUnit()
     testLogging {
         events("passed", "skipped", "failed")
+        showExceptions = true
+        showCauses = true
     }
     for (prop in listOf("certificate", "privatekey", "endpoint", "rootca", "privatekey_p8")) {
         if (project.hasProperty(prop)) {
@@ -72,7 +80,7 @@ tasks.test {
         }
     }
     //uncomment the next line to attach the debugger to the JNI layer.
-    //systemProperty("aws.crt.debugwait", "1")
+    // systemProperty("aws.crt.debugwait", "1")
 }
 
 tasks.compileTestJava {
@@ -116,8 +124,8 @@ publishing {
     }
     repositories {
         maven {
-            val releasesRepo = uri("https://aws.oss.sonatype.org/")
-            val snapshotRepo = uri("https://aws.oss.sonatype.org/content/repositories/snapshots")
+            val releasesRepo = uri("https://ossrh-staging-api.central.sonatype.com/")
+            val snapshotRepo = uri("https://central.sonatype.com/repository/maven-snapshots/")
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotRepo else releasesRepo
         }
     }

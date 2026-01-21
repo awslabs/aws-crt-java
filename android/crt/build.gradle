@@ -3,13 +3,6 @@ import java.util.regex.Pattern
 apply plugin: 'com.android.library'
 apply plugin: 'signing'
 
-// Before configuring, make sure libcrypto is installed
-preBuild {
-    println('Installing libcrypto prebuilt binaries')
-    def exec = (project.file('fetch_libcrypto.sh').absolutePath).execute()
-    exec.waitForProcessOutput(System.out, System.err)
-}
-
 Properties getGitTag() {
     def gitTag = "git describe --tags".execute().text.trim()
     def version = new Properties()
@@ -50,9 +43,11 @@ ext {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
-    ndkVersion "21.4.7075529" // LTS version
+    namespace "software.amazon.awssdk.crt"
+
+    compileSdk 35
+    // Pin NDK r28+ (16KB alignment & removal of PAGE_SIZE macro are default)
+    ndkVersion "28.0.12433566"
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
@@ -60,7 +55,8 @@ android {
 
     defaultConfig {
         minSdkVersion 24  // TODO - dictated by CompletableFuture which is API 24+
-        targetSdkVersion 30
+        targetSdkVersion 33
+
         versionCode = gitVersionCode()
         versionName = gitVersionName()
 
@@ -74,8 +70,34 @@ android {
 
         externalNativeBuild {
             cmake {
+                // If built on NDK r27 you need `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON`
                 arguments "-DBUILD_DEPS=ON"
             }
+        }
+
+        aarMetadata {
+        // Keeps from referencing newer resources/manifest attributes introduced after 30
+        minCompileSdk = 30
+        }
+    }
+
+    buildFeatures {
+        // AGP 8 disables buildConfig generation by default. We set this to true
+        // to resstore BuildConfig.VERSION_NAME for both debug and release build types.
+        buildConfig true
+    }
+
+    packagingOptions {
+        jniLibs {
+            // Make sure JNI libs are packaged UNCOMPRESSED (so AGP can align them)
+            useLegacyPackaging false
+        }
+    }
+
+    publishing {
+        // Creates the 'release' SoftwareComponent used by maven-publish
+        singleVariant("release") {
+            withSourcesJar()
         }
     }
 
@@ -83,6 +105,7 @@ android {
         main {
             java.srcDir '../../src/main/java'
             java.srcDir 'src/main/java'
+            java.exclude '**/GraalVMNativeFeature.java'
         }
         androidTest {
             setRoot '../../src/test'
@@ -99,7 +122,6 @@ android {
         }
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             versionNameSuffix ""
             buildConfigField("String", "VERSION_NAME", "\"" + gitVersionName() + "\"")
         }
@@ -109,7 +131,6 @@ android {
         cmake {
             path "../../CMakeLists.txt"
             buildStagingDirectory "../../target/cmake-build"
-            version "3.10.2"
         }
     }
 
@@ -127,7 +148,6 @@ build.dependsOn preBuild
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
-
     androidTestImplementation 'org.mockito:mockito-core:3.11.2'
     androidTestImplementation 'androidx.appcompat:appcompat:1.3.1'
     androidTestImplementation 'junit:junit:4.13.2'
@@ -171,10 +191,14 @@ afterEvaluate {
 
         publications {
             release(MavenPublication) {
-                from components.release
-
+                def comp = components.findByName("release")
+                if (comp != null) {
+                    from comp
+                }
                 groupId = 'software.amazon.awssdk.crt'
                 artifactId = 'aws-crt-android'
+                version = project.hasProperty('newVersion') ? project.property('newVersion') : android.defaultConfig.versionName
+
                 pom {
                     name.set("software.amazon.awssdk.crt:aws-crt-android")
                     description.set("Java Android bindings for the AWS SDK Common Runtime")
@@ -185,6 +209,7 @@ afterEvaluate {
                             url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
+
                     developers {
                         developer {
                             id.set("aws-sdk-common-runtime")
@@ -192,19 +217,20 @@ afterEvaluate {
                             email.set("aws-sdk-common-runtime@amazon.com")
                         }
                     }
+
                     scm {
                         connection.set("scm:git:git://github.com/awslabs/aws-crt-java.git")
                         developerConnection.set("scm:git:ssh://github.com/awslabs/aws-crt-java.git")
                         url.set("https://github.com/awslabs/aws-crt-java")
                     }
                 }
-                version = android.defaultConfig.versionName
             }
         }
+
         repositories {
             maven {
-                def snapshotRepo = "https://aws.oss.sonatype.org/content/repositories/snapshots"
-                def releaseRepo = "https://aws.oss.sonatype.org/"
+                def snapshotRepo = "https://central.sonatype.com/repository/maven-snapshots/"
+                def releaseRepo = "https://ossrh-staging-api.central.sonatype.com/"
                 url = version.endsWith('SNAPSHOT') ? snapshotRepo : releaseRepo
             }
         }

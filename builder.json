@@ -4,18 +4,20 @@
         "maven"
     ],
     "build_steps": [
-        "mvn -P continuous-integration -B compile"
+        "aws-crt-java-build"
     ],
     "test_steps": [
-       "aws-crt-java-test"
+        "aws-crt-java-test"
     ],
     "+imports": [
-        "JDK8"
+        "JDK8",
+        "golang"
     ],
     "build_dir": "target/cmake-build",
     "build_env": {
         "JAVA_HOME": "{java_home}",
-        "OVERRIDE_JAVA_HOME": "{java_home}"
+        "OVERRIDE_JAVA_HOME": "{java_home}",
+        "GOPROXY": "https://goproxy.io,direct"
     },
     "test_env": {
         "JAVA_HOME": "{java_home}",
@@ -35,15 +37,6 @@
     },
     "targets": {
         "linux": {
-            "_comment": "set up SoftHSM2 for PKCS#11 tests (see: ./builder/actions/pkcs11_test_setup.py)",
-            "+pre_build_steps": ["pkcs11-test-setup"],
-            "!build_steps": [
-                "{source_dir}/gradlew :s3-native-client:build -x test",
-                "mvn -P continuous-integration -B compile"
-            ],
-            "!test_steps": [
-                "aws-crt-java-test"
-            ],
             "architectures": {
                 "armv6": {
                     "!packages": [],
@@ -80,6 +73,40 @@
                         "-DBUILD_DEPS=ON",
                         "-DBUILD_TESTING=OFF"
                     ]
+                }
+            },
+            "hosts": {
+                "_comment": "Reset the overrides from targets/linux/architectures/arm* for Alpine",
+                "alpine": {
+                    "!packages": [
+                        "maven",
+                        "openjdk8"
+                    ],
+                    "!build_steps": [
+                        "aws-crt-java-build"
+                    ],
+                    "!test_steps": [
+                        "aws-crt-java-test"
+                    ],
+                    "!run_tests": true,
+                    "architectures": {
+                        "armv7": {
+                            "_comment": [
+                                "Due to inability to differentiate at runtime armv6 vs armv7 in the jvm",
+                                "At build time we can properly figure out that we're targeting armv7.",
+                                "At run time we have to force armv7 (via environment variable) in order to achieve proper resource path resolution."
+                            ],
+                            "+build_env": {
+                                "AWS_CRT_ARCH": "armv7"
+                            },
+                            "+test_env": {
+                                "AWS_CRT_ARCH": "armv7"
+                            }
+                        }
+                    }
+                },
+                "openwrt": {
+                    "!packages": []
                 }
             }
         },
@@ -127,12 +154,22 @@
             "!build_env": {
                 "JAVA_HOME": "/usr/local/openjdk8"
             },
-            "!build_steps": [
-                "mvn -P continuous-integration -B compile"
-            ],
             "!test_steps": [
                 "mvn -B test -DrerunFailingTestsCount=5"
             ]
+        }
+    },
+    "variants":{
+        "graalvm": {
+            "!packages": [],
+            "!imports": [],
+            "!test_env": {
+                "AWS_GRAALVM_CI": true
+            },
+            "!build_env": {}
+        },
+        "localhost": {
+            "!test_steps": ["localhost-test"]
         }
     }
 }

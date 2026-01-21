@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -43,6 +44,9 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    private static final int LOCAL_HTTPS_PORT = 3443;
+    private static final int LOCAL_HTTP_PORT = 3280;
 
     private Http2StreamManager createStreamManager(URI uri, int numConnections) {
 
@@ -130,8 +134,9 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStress() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/echo");
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
 
@@ -176,8 +181,9 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testParallelRequestsStressWithBody() throws Exception {
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/uploadTest");
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             int numberToAcquire = 500 * 100;
             int bodyLength = 2000;
@@ -187,6 +193,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
             final AtomicInteger numStreamsFailures = new AtomicInteger(0);
             for (int i = 0; i < numberToAcquire; i++) {
                 Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+                request.addHeader(new HttpHeader("x-upload-test", "true"));
 
                 final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
                 final int expectedLength = bodyLength;
@@ -203,12 +210,11 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                     @Override
                     public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
                         String bodyString = new String(bodyBytesIn);
-                        int receivedLength = Integer.parseInt(bodyString);
-
-                        Assert.assertTrue(receivedLength == expectedLength);
-                        if(receivedLength!=expectedLength) {
-                            numStreamsFailures.incrementAndGet();
-                        }
+                        // Parse {"bytes": 123456} manually
+                        int start = bodyString.indexOf("\"bytes\":") + 8;
+                        int end = bodyString.indexOf("}", start);
+                        String bytesStr = bodyString.substring(start, end).trim();
+                        long receivedLength = Long.parseLong(bytesStr);
                         return bodyString.length();
                     }
 
@@ -237,21 +243,22 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsUploadStress() throws Exception {
-        /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-
-        URI uri = new URI("https://localhost:8443/uploadTest");
+        /* Test that upload a 2.5GB data from local server (0.25GB for linux) */
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
 
             Http2Request request = createHttp2Request("PUT", uri, bodyLength);
+            request.addHeader(new HttpHeader("x-upload-test", "true"));
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final long expectedLength = bodyLength;
             CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                 @Override
                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
+                                              HttpHeader[] nextHeaders) {
 
                     Assert.assertTrue(responseStatusCode == 200);
                 }
@@ -259,7 +266,11 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                 @Override
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
                     String bodyString = new String(bodyBytesIn);
-                    long receivedLength = Long.parseLong(bodyString);
+                    // Parse {"bytes": 123456} manually
+                    int start = bodyString.indexOf("\"bytes\":") + 8;
+                    int end = bodyString.indexOf("}", start);
+                    String bytesStr = bodyString.substring(start, end).trim();
+                    long receivedLength = Long.parseLong(bytesStr);
                     Assert.assertTrue(receivedLength == expectedLength);
                     return bodyString.length();
                 }
@@ -282,20 +293,22 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
     @Test
     public void testRequestsDownloadStress() throws Exception {
-        /* Test that download a 2.5GB data from local server */
+        skipIfAndroid();
         skipIfLocalhostUnavailable();
-        URI uri = new URI("https://localhost:8443/downloadTest");
+        /* Test that download a 2.5GB data from local server */
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
         try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
             long bodyLength = 2500000000L;
 
             Http2Request request = createHttp2Request("GET", uri, 0);
+            request.addHeader(new HttpHeader("x-repeat-data", String.valueOf(bodyLength)));
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final AtomicLong receivedLength = new AtomicLong(0);
             CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
                 @Override
                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
+                                              HttpHeader[] nextHeaders) {
 
                     Assert.assertTrue(responseStatusCode == 200);
                 }

@@ -17,17 +17,28 @@
 
 enum aws_java_crt_log_subject {
     AWS_LS_JAVA_CRT_GENERAL = AWS_LOG_SUBJECT_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+    AWS_LS_JAVA_CRT_RESOURCE,
+    AWS_LS_JAVA_CRT_S3,
+    AWS_LS_JAVA_ANDROID_KEYCHAIN,
 
     AWS_LS_JAVA_CRT_LAST = AWS_LOG_SUBJECT_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 };
 
 enum aws_java_crt_error {
     AWS_ERROR_JAVA_CRT_JVM_DESTROYED = AWS_ERROR_ENUM_BEGIN_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
+    AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY,
 
     AWS_ERROR_JAVA_CRT_END_RANGE = AWS_ERROR_ENUM_END_RANGE(AWS_CRT_JAVA_PACKAGE_ID),
 };
 
 struct aws_allocator *aws_jni_get_allocator(void);
+
+/* This struct holds everything needed to interact with the JVM from native functions. */
+struct aws_jvm_env_context {
+    JNIEnv *env;
+    /* Determines whether to detach non-CRT threads at the end of a callback. */
+    bool should_detach;
+};
 
 /*******************************************************************************
  * aws_jni_throw_runtime_exception - throws a crt.CrtRuntimeException with the
@@ -43,6 +54,11 @@ void aws_jni_throw_runtime_exception(JNIEnv *env, const char *msg, ...);
 void aws_jni_throw_null_pointer_exception(JNIEnv *env, const char *msg, ...);
 
 /*******************************************************************************
+ * Throws java OutOfMemoryError
+ ******************************************************************************/
+void aws_jni_throw_out_of_memory_exception(JNIEnv *env, const char *msg, ...);
+
+/*******************************************************************************
  * Throws java IllegalArgumentException
  ******************************************************************************/
 void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...);
@@ -55,6 +71,35 @@ void aws_jni_throw_illegal_argument_exception(JNIEnv *env, const char *msg, ...)
  * the pending exception was cleared.
  ******************************************************************************/
 bool aws_jni_check_and_clear_exception(JNIEnv *env);
+
+/*******************************************************************************
+ * Checks whether or not an exception is pending on the stack.
+ * If the exception is pending, deletes existing global reference of `out`, sets `out` to the new exception and clears
+ * it.
+ *
+ * @param env A pointer to the JNI environment, used to interact with the JVM.
+ * @param out A pointer to a jthrowable object. If an exception is pending, the function
+ *            deletes any existing global reference pointed to by 'out', and sets 'out'
+ *            to point to the new exception. Must not be NULL.
+ *
+ * @return true if an exception was pending and has been cleared; false otherwise.
+ *
+ ******************************************************************************/
+bool aws_jni_get_and_clear_exception(JNIEnv *env, jthrowable *out);
+
+/*******************************************************************************
+ * Set a size_t based on a jlong.
+ * If conversion fails, a java IllegalArgumentException is thrown like
+ * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.
+ ******************************************************************************/
+int aws_size_t_from_java(JNIEnv *env, size_t *out_size, jlong java_long, const char *errmsg_prefix);
+
+/*******************************************************************************
+ * Set a uint64_t based on a Long (jobject).
+ * If conversion fails, a java IllegalArgumentException is thrown like
+ * "{errmsg_prefix} cannot be negative" and AWS_OP_ERR is returned.
+ ******************************************************************************/
+int aws_uint64_t_from_java_Long(JNIEnv *env, uint64_t *out_long, jobject java_Long, const char *errmsg_prefix);
 
 /*******************************************************************************
  * aws_java_byte_array_new - Creates a new Java byte[]
@@ -139,7 +184,7 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
 /*******************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray_acquire - Creates an aws_byte_cursor from the
  * bytes extracted from the supplied jbyteArray.
- * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from jstring_release() when
+ * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from_jbyteArray_release() when
  * it's no longer needed, or it will leak.
  *
  * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
@@ -147,10 +192,31 @@ void aws_jni_byte_cursor_from_jstring_release(JNIEnv *env, jstring str, struct a
  ******************************************************************************/
 struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_acquire(JNIEnv *env, jbyteArray str);
 
+/*******************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_critical_acquire - Creates an aws_byte_cursor from the
+ * bytes extracted from the supplied jbyteArray.
+ * The aws_byte_cursor MUST be given to aws_jni_byte_cursor_from_jbyteArray_critical_release() when
+ * it's no longer needed, or it will leak.
+ *
+ * If there is an error, the returned aws_byte_cursor.ptr will be NULL and
+ * and a java exception is being thrown.
+ * **** WARNING: Here be dragons ****
+ * This function uses critical jvm functions to access memory, which is faster, but comes
+ * with a litany of limitations, so use at your own risk.
+ * Spending too much time in a critical section will stall gc and mem functionality, so under
+ * no conditions use jni functions while in critical section on current thread (ok, on other threads).
+ ******************************************************************************/
+struct aws_byte_cursor aws_jni_byte_cursor_from_jbyteArray_critical_acquire(JNIEnv *env, jbyteArray str);
+
 /********************************************************************************
  * aws_jni_byte_cursor_from_jbyteArray_release - Releases the array back to the JVM
  ********************************************************************************/
 void aws_jni_byte_cursor_from_jbyteArray_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
+
+/********************************************************************************
+ * aws_jni_byte_cursor_from_jbyteArray_critical_release - Releases critical array access back to JVM
+ ********************************************************************************/
+void aws_jni_byte_cursor_from_jbyteArray_critical_release(JNIEnv *env, jbyteArray str, struct aws_byte_cursor cur);
 
 /*******************************************************************************
  * aws_jni_byte_cursor_from_direct_byte_buffer - Creates an aws_byte_cursor from the
@@ -168,17 +234,26 @@ struct aws_string *aws_jni_new_string_from_jstring(JNIEnv *env, jstring str);
 
 /*******************************************************************************
  * aws_jni_acquire_thread_env - Acquires the JNIEnv for the current thread from the VM,
- * attaching the env if necessary.  aws_jni_release_thread_env() must be called once
+ * attaching the env if necessary. aws_jni_release_thread_env() must be called once
  * the caller is through with the environment.
+ * The needs_detach field in the returned context will be set to true if the thread
+ * was not attached to JVM when this function was called, and false otherwise.
  ******************************************************************************/
-JNIEnv *aws_jni_acquire_thread_env(JavaVM *jvm);
+struct aws_jvm_env_context aws_jni_acquire_thread_env(JavaVM *jvm);
 
 /*******************************************************************************
- * aws_jni_release_thread_env - Releases an acquired JNIEnv for the current thread.  Every successfully
- * acquired JNIEnv must be released exactly once.  Internally, all this does is release the reader
- * lock on the set of valid JVMs.
+ * aws_jni_release_thread_env - Releases an acquired JNIEnv for the current thread. Every
+ * successfully acquired JNIEnv must be released exactly once.
+ * Internally, it
+ * - releases the reader lock on the set of valid JVMs
+ * - detaches the dispatch queue threads (on Apple platforms only) from JVM.
  ******************************************************************************/
-void aws_jni_release_thread_env(JavaVM *jvm, JNIEnv *env);
+void aws_jni_release_thread_env(JavaVM *jvm, struct aws_jvm_env_context *jvm_env_context);
+
+/*******************************************************************************
+ * aws_jni_set_dispatch_queue_threads - Sets whether the current event loop group uses dispatch queue threads
+ ******************************************************************************/
+void aws_jni_set_dispatch_queue_threads(bool is_dispatch_queue);
 
 /*******************************************************************************
  * aws_jni_new_crt_exception_from_error_code - Creates a new jobject from the aws

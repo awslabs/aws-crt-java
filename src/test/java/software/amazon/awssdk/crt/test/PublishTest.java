@@ -6,10 +6,15 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.mqtt.*;
 
 import java.util.ArrayList;
@@ -20,14 +25,19 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+
+/* For environment variable setup, see SetupCrossCICrtEnvironment in the CRT builder */
 public class PublishTest extends MqttClientConnectionFixture {
+    private final static int MAX_TEST_RETRIES = 3;
+    private final static int TEST_RETRY_SLEEP_MILLIS = 2000;
+
     @Rule
     public Timeout testTimeout = Timeout.seconds(15);
 
     public PublishTest() {
     }
 
-    final String TEST_TOPIC = "publish/me/senpai" + (UUID.randomUUID()).toString();
+    final String TEST_TOPIC = "publish/me/senpai/" + (UUID.randomUUID()).toString();
     static final String TEST_PAYLOAD = "PUBLISH ME! SHINY AND CHROME!";
     static final String EMPTY_PAYLOAD = "";
 
@@ -77,33 +87,99 @@ public class PublishTest extends MqttClientConnectionFixture {
         }
     }
 
-    @Test
-    public void testRoundTrip() {
-        skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(TEST_PAYLOAD.getBytes());
-        disconnect();
-        close();
+    private void doRoundTripTest() {
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+             TlsContext context = new TlsContext(contextOptions)) {
+            connectDirect(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
+            subscribe();
+            publishAndCheck(TEST_PAYLOAD.getBytes());
+            disconnect();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            close();
+        }
     }
 
     @Test
-    public void testEmptyRoundTrip() {
+    public void testRoundTrip() throws Exception {
         skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(EMPTY_PAYLOAD.getBytes());
-        disconnect();
-        close();
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+
+        TestUtils.doRetryableTest(this::doRoundTripTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doEmptyRoundTripTest() {
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+             TlsContext context = new TlsContext(contextOptions)) {
+            connectDirect(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
+            subscribe();
+            publishAndCheck(EMPTY_PAYLOAD.getBytes());
+            disconnect();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            close();
+        }
     }
 
     @Test
-    public void testNullRoundTrip() {
+    public void testEmptyRoundTrip() throws Exception {
         skipIfNetworkUnavailable();
-        connect();
-        subscribe();
-        publishAndCheck(null);
-        disconnect();
-        close();
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+
+        TestUtils.doRetryableTest(this::doEmptyRoundTripTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doNullRoundTripTest() {
+        try (TlsContextOptions contextOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT311_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT311_IOT_CORE_RSA_KEY);
+             TlsContext context = new TlsContext(contextOptions)) {
+            connectDirect(
+                context,
+                AWS_TEST_MQTT311_IOT_CORE_HOST,
+                8883,
+                null,
+                null,
+                null);
+            subscribe();
+            publishAndCheck(null);
+            disconnect();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            close();
+        }
+    }
+
+    @Test
+    public void testNullRoundTrip() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_RSA_KEY, AWS_TEST_MQTT311_IOT_CORE_RSA_CERT);
+
+        TestUtils.doRetryableTest(this::doNullRoundTripTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
     }
 };

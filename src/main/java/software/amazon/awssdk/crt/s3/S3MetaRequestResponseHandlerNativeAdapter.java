@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.http.HttpHeader;
@@ -15,8 +19,9 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
     }
 
-    void onFinished(int errorCode, int responseStatus, byte[] errorPayload, int checksumAlgorithm, boolean didValidateChecksum) {
-        S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum);
+    void onFinished(int errorCode, int responseStatus, byte[] errorPayload, String errorOperationName, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {
+        HttpHeader[] errorHeaders = headersBlob == null ? null : HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
+        S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, errorOperationName, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum, cause, errorHeaders);
         this.responseHandler.onFinished(context);
     }
 
@@ -26,5 +31,9 @@ class S3MetaRequestResponseHandlerNativeAdapter {
 
     void onProgress(final S3MetaRequestProgress progress) {
         responseHandler.onProgress(progress);
+    }
+
+    void onTelemetry(final S3RequestMetrics requestMetrics) {
+        responseHandler.onTelemetry(requestMetrics);
     }
 }

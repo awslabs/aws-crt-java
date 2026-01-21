@@ -7,9 +7,6 @@ rootProject.name = "aws-crt"
 include(":native")
 project(":native").projectDir = File("${settingsDir}/src/native")
 
-include(":smithy-crt")
-include(":s3-native-client")
-
 
 val localPropertiesFile = File(rootProject.projectDir, "local.properties")
 val localProperties = java.util.Properties()

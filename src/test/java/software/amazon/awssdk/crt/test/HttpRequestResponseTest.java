@@ -25,6 +25,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    private final static String HOST = "https://localhost:8082";
+    private final int MAX_TEST_RETRIES = 5;
+    private final int TEST_RETRY_SLEEP_MILLIS = 2000;
 
     public TestHttpResponse testRequest(String method, String endpoint, String path, String requestBody,
             boolean useChunkedEncoding, int expectedStatus) throws Exception {
@@ -89,70 +93,39 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-        boolean hasContentLengthHeader = false;
 
-        for (HttpHeader h : response.headers) {
-            if (h.getName().equals("Content-Length")) {
-                hasContentLengthHeader = true;
-            }
-        }
-
-        Assert.assertTrue(hasContentLengthHeader);
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
+        }
+        if (response.statusCode == 200) {
+            boolean hasContentLengthHeader = false;
+            for (HttpHeader h : response.headers) {
+                if (h.getName().toLowerCase().equals("content-length")) {
+                    hasContentLengthHeader = true;
+                }
+            }
+            Assert.assertTrue("Expected to have content-length header that is missing.", hasContentLengthHeader);
         }
 
         return response;
     }
 
     @Test
-    public void testHttpDelete() throws Exception {
-        skipIfNetworkUnavailable();
-        testRequest("DELETE", "https://httpbin.org", "/delete", EMPTY_BODY, false, 200);
-        testRequest("DELETE", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("DELETE", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("DELETE", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
-    }
+    public void testHttpEcho() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        String bodyToSend = "test echo body";
+        TestHttpResponse response = testRequest("POST", HOST, "/echo", bodyToSend, false, 200);
 
-    @Test
-    public void testHttpGet() throws Exception {
-        skipIfNetworkUnavailable();
-        testRequest("GET", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("GET", "https://httpbin.org", "/get", EMPTY_BODY, false, 200);
-        testRequest("GET", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("GET", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
-    }
-
-    @Test
-    public void testHttpPost() throws Exception {
-        skipIfNetworkUnavailable();
-        testRequest("POST", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("POST", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("POST", "https://httpbin.org", "/post", EMPTY_BODY, false, 200);
-        testRequest("POST", "https://httpbin.org", "/put", EMPTY_BODY, false, 405);
-    }
-
-    @Test
-    public void testHttpPut() throws Exception {
-        skipIfNetworkUnavailable();
-        testRequest("PUT", "https://httpbin.org", "/delete", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/get", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/post", EMPTY_BODY, false, 405);
-        testRequest("PUT", "https://httpbin.org", "/put", EMPTY_BODY, false, 200);
-    }
-
-    @Test
-    public void testHttpResponseStatusCodes() throws Exception {
-        skipIfNetworkUnavailable();
-        testRequest("GET", "https://httpbin.org", "/status/200", EMPTY_BODY, false, 200);
-        testRequest("GET", "https://httpbin.org", "/status/300", EMPTY_BODY, false, 300);
-        testRequest("GET", "https://httpbin.org", "/status/400", EMPTY_BODY, false, 400);
-        testRequest("GET", "https://httpbin.org", "/status/500", EMPTY_BODY, false, 500);
+        String echoedBody = response.getBody();
+        String expectedJson = "{\n    \"data\": \"" + bodyToSend + "\"\n}";
+        Assert.assertEquals(expectedJson, echoedBody);
     }
 
     @Test
     public void testHttpDownload() throws Exception {
-        skipIfNetworkUnavailable();
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
         TestHttpResponse response = testRequest("GET", "https://aws-crt-test-stuff.s3.amazonaws.com",
                 "/http_test_doc.txt", EMPTY_BODY, false, 200);
 
@@ -175,15 +148,15 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     }
 
     private void testHttpUpload(boolean chunked) throws Exception {
-        skipIfNetworkUnavailable();
+        skipIfAndroid();
         String bodyToSend = TEST_DOC_LINE;
-        TestHttpResponse response = testRequest("PUT", "https://httpbin.org", "/anything", bodyToSend, chunked, 200);
+        TestHttpResponse response = testRequest("PUT", HOST, "/put", bodyToSend, chunked, 200);
 
         // Get the Body bytes that were echoed back to us
         String body = response.getBody();
 
         /**
-         * Example Json Response Body from httpbin.org:
+         * Example Json Response Body from postman-echo.com:
          *
          * {
          * "args": {},
@@ -194,28 +167,38 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
          * "form": {},
          * "headers": {
          * "Content-Length": "166",
-         * "Host": "httpbin.org"
+         * "Host": "postman-echo.com"
          * },
          * "json": null,
          * "method": "PUT",
          * "origin": "1.2.3.4, 5.6.7.8",
-         * "url": "https://httpbin.org/anything"
          * }
          *
          */
 
+        // The response is a JSON object, extract the "data" field using proper JSON parsing
         String echoedBody = null;
-        for (String line : body.split("\n")) {
-            String[] keyAndValue = line.split(":", 2);
 
-            // Found JSON Key/Value Pair
-            if (keyAndValue.length == 2) {
-                String key = extractValueFromJson(keyAndValue[0]);
-                String val = extractValueFromJson(keyAndValue[1]);
+        // Find the "data" field in the JSON response
+        int dataIndex = body.indexOf("\"data\"");
+        if (dataIndex != -1) {
+            // Find the colon after "data"
+            int colonIndex = body.indexOf(':', dataIndex);
+            if (colonIndex != -1) {
+                // Find the value after the colon, which should be a quoted string
+                int valueStartIndex = body.indexOf('"', colonIndex);
+                if (valueStartIndex != -1) {
+                    // Find the end of the quoted string
+                    int valueEndIndex = body.indexOf('"', valueStartIndex + 1);
+                    while (valueEndIndex > 0 && body.charAt(valueEndIndex - 1) == '\\') {
+                        // This quote is escaped, find the next one
+                        valueEndIndex = body.indexOf('"', valueEndIndex + 1);
+                    }
 
-                // Found Echoed Body
-                if (key.equals("data")) {
-                    echoedBody = extractValueFromJson(val);
+                    if (valueEndIndex != -1) {
+                        // Extract the value between the quotes
+                        echoedBody = body.substring(valueStartIndex + 1, valueEndIndex);
+                    }
                 }
             }
         }
@@ -226,71 +209,86 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
     @Test
     public void testHttpUpload() throws Exception {
-        skipIfNetworkUnavailable();
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
         testHttpUpload(false);
     }
 
     @Test
     public void testHttpUploadChunked() throws Exception {
-        skipIfNetworkUnavailable();
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
         testHttpUpload(true);
     }
 
-    @Test
-    public void testHttpRequestUnActivated() throws Exception {
-        skipIfNetworkUnavailable();
+    private void doHttpRequestUnActivatedTest() {
+        // postman-echo.com in now requires TLS1.3,
+        // but our Mac implementation doesn't support TLS1.3 yet.
+        // The work has been planned to Dec. 2025 to support TLS1.3,
+        // so disable the test for now. And reenable it afterward
+        skipIfMac();
+        try {
+            URI uri = new URI(HOST);
 
-        URI uri = new URI("https://httpbin.org");
+            HttpHeader[] requestHeaders = new HttpHeader[]{new HttpHeader("Host", uri.getHost())};
 
-        HttpHeader[] requestHeaders = new HttpHeader[] { new HttpHeader("Host", uri.getHost()) };
+            HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
 
-        HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
+            CompletableFuture<Void> shutdownComplete = null;
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
+                    HttpVersion.HTTP_1_1)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                                                      HttpHeader[] nextHeaders) {
+                            // do nothing
+                        }
 
-        CompletableFuture<Void> shutdownComplete = null;
-        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
-                HttpVersion.HTTP_1_1)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
-            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
-                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        // do nothing
-                    }
+                        @Override
+                        public void onResponseHeadersDone(HttpStream stream, int blockType) {
+                            // do nothing
+                        }
 
-                    @Override
-                    public void onResponseHeadersDone(HttpStream stream, int blockType) {
-                        // do nothing
-                    }
+                        @Override
+                        public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                            // do nothing
+                            return bodyBytesIn.length;
+                        }
 
-                    @Override
-                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                        // do nothing
-                        return bodyBytesIn.length;
-                    }
+                        @Override
+                        public void onResponseComplete(HttpStream stream, int errorCode) {
+                            // do nothing.
+                        }
+                    };
 
-                    @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
-                        // do nothing.
-                    }
-                };
+                    HttpStream stream = conn.makeRequest(request, streamHandler);
+                    stream.close();
+                }
+            }
 
-                HttpStream stream = conn.makeRequest(request, streamHandler);
-                stream.close();
+            if (shutdownComplete != null) {
+                shutdownComplete.get();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
 
-        if (shutdownComplete != null) {
-            shutdownComplete.get();
-        }
+    @Test
+    public void testHttpRequestUnActivated() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     @Test
     public void testMarshallJniUtf8Path() throws Exception {
+        skipIfAndroid();
         HttpRequest request = new HttpRequest("GET", "/?ሴ=bar");
         request.marshalForJni();
     }

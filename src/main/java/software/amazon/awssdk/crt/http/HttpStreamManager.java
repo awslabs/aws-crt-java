@@ -165,6 +165,10 @@ public class HttpStreamManager implements AutoCloseable {
      * HTTP/1.1, the request is transparently retried using the HTTP/1.1 manager. This ensures
      * seamless operation regardless of the server's capabilities.
      *
+     * TODO: It's not ideally that when HTTP/2 stream manager get a HTTP/1.1 connection,
+     *      we need to discard it and re-establish the connection again. Consider to add
+     *      feature to connection manager to take an existing connection so that we can reuse it.
+     *
      * @param request The HTTP request to make to the server.
      * @param streamHandler The response handler that will be called from the native event loop
      *                      when response data arrives.

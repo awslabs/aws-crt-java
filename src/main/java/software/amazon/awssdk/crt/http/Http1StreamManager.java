@@ -39,78 +39,31 @@ public class Http1StreamManager implements AutoCloseable {
      * Request an HTTP/1.1 HttpStream from StreamManager.
      *
      * @param request         HttpRequest. The Request to make to the Server.
-     * @param streamHandler   HttpStreamResponseHandler. The Stream Handler to be called from the Native EventLoop
+     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
      * @return A future for a HttpStream that will be completed when the stream is
      *         acquired.
      * @throws CrtRuntimeException Exception happens from acquiring stream.
      */
     public CompletableFuture<HttpStream> acquireStream(HttpRequest request,
-            HttpStreamResponseHandler streamHandler) {
-        CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
-        HttpClientConnectionManager connManager = this.connectionManager;
-        this.connectionManager.acquireConnection().whenComplete((conn, throwable) -> {
-            if (throwable != null) {
-                completionFuture.completeExceptionally(throwable);
-            } else {
-                try {
-                    HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
-                        @Override
-                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                                HttpHeader[] nextHeaders) {
-                            streamHandler.onResponseHeaders(stream, responseStatusCode, blockType, nextHeaders);
-                        }
-
-                        @Override
-                        public void onResponseHeadersDone(HttpStream stream, int blockType) {
-                            streamHandler.onResponseHeadersDone(stream, blockType);
-                        }
-
-                        @Override
-                        public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                            return streamHandler.onResponseBody(stream, bodyBytesIn);
-                        }
-
-                        @Override
-                        public void onResponseComplete(HttpStream stream, int errorCode) {
-                            streamHandler.onResponseComplete(stream, errorCode);
-                            /* Release the connection back */
-                            connManager.releaseConnection(conn);
-                        }
-                    });
-                    completionFuture.complete(stream);
-                    /* Active the stream for user */
-                    try {
-                        stream.activate();
-                    } catch (CrtRuntimeException e) {
-                        /* If activate failed, complete callback will not be invoked */
-                        streamHandler.onResponseComplete(stream, e.errorCode);
-                        /* Release the connection back */
-                        connManager.releaseConnection(conn);
-                    }
-                } catch (Exception ex) {
-                    connManager.releaseConnection(conn);
-                    completionFuture.completeExceptionally(ex);
-                }
-            }
-        });
-        return completionFuture;
+            HttpStreamBaseResponseHandler streamHandler) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
-
 
     /**
      * Request an HTTP/1.1 HttpStream from StreamManager.
      *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
-     * @return A future for a HttpStreamBase that will be completed when the stream is
+     * @return A future for a HttpStream that will be completed when the stream is
      *         acquired.
      * @throws CrtRuntimeException Exception happens from acquiring stream.
      */
-    public CompletableFuture<HttpStreamBase> acquireStream(HttpRequestBase request,
+    public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler) {
-        CompletableFuture<HttpStreamBase> completionFuture = new CompletableFuture<>();
+        CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
         HttpClientConnectionManager connManager = this.connectionManager;
-        this.connectionManager.acquireConnection().whenComplete((conn, throwable) -> {
+
+        connManager.acquireConnection().whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 completionFuture.completeExceptionally(throwable);
             } else {
@@ -139,7 +92,7 @@ public class Http1StreamManager implements AutoCloseable {
                             connManager.releaseConnection(conn);
                         }
                     });
-                    completionFuture.complete(stream);
+                    completionFuture.complete((HttpStream) stream);
                     /* Active the stream for user */
                     try {
                         stream.activate();

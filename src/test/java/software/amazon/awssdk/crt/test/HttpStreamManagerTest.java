@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 
-import javax.management.RuntimeErrorException;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -31,6 +29,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamManager;
 import software.amazon.awssdk.crt.http.HttpStreamManagerOptions;
+import software.amazon.awssdk.crt.http.Http1StreamManager;
 import software.amazon.awssdk.crt.http.Http2StreamManager;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.Http2Stream;
@@ -296,6 +295,153 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
     }
 
     /**
-     * TODO: test unknown protocol version behave right.
+     * Test that streams acquired with HTTP/1.1 configuration are HttpStream instances,
+     * verifying proper type safety and allowing access to HTTP/1.1-specific methods.
      */
+    @Test
+    public void testHTTP1StreamTypeFromAcquireStream() throws Throwable {
+        URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
+
+        try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+            HttpRequest request = createHttp1Request("GET", endpoint, path, EMPTY_BODY);
+
+            final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+            final AtomicInteger streamType = new AtomicInteger(0); // 0=unknown, 1=HttpStream, 2=Http2Stream
+
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Verify the stream is actually an HttpStream instance
+                    Assert.assertTrue("Stream should be an instance of HttpStream", stream instanceof HttpStream);
+                    streamType.set(1);
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    reqCompleted.complete(null);
+                    stream.close();
+                }
+            };
+
+            HttpStreamBase stream = streamManager.acquireStream(request, streamHandler).get(60, TimeUnit.SECONDS);
+
+            // Verify we got an HttpStream (not just HttpStreamBase)
+            Assert.assertNotNull("Stream should not be null", stream);
+            Assert.assertTrue("Stream should be an HttpStream instance", stream instanceof HttpStream);
+
+            reqCompleted.get(60, TimeUnit.SECONDS);
+            Assert.assertEquals("Stream type should be HttpStream", 1, streamType.get());
+        }
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Test that streams acquired with HTTP/2 configuration are Http2Stream instances,
+     * verifying proper type safety for HTTP/2.
+     */
+    @Test
+    public void testHTTP2StreamTypeFromAcquireStream() throws Throwable {
+        URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
+
+        try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+            Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
+
+            final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+            final AtomicInteger streamType = new AtomicInteger(0); // 0=unknown, 1=HttpStream, 2=Http2Stream
+
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Verify the stream is actually an Http2Stream instance
+                    Assert.assertTrue("Stream should be an instance of Http2Stream", stream instanceof Http2Stream);
+                    streamType.set(2);
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    reqCompleted.complete(null);
+                    stream.close();
+                }
+            };
+
+            HttpStreamBase stream = streamManager.acquireStream(request, streamHandler).get(60, TimeUnit.SECONDS);
+
+            // Verify we got an Http2Stream (not just HttpStreamBase)
+            Assert.assertNotNull("Stream should not be null", stream);
+            Assert.assertTrue("Stream should be an Http2Stream instance", stream instanceof Http2Stream);
+
+            reqCompleted.get(60, TimeUnit.SECONDS);
+            Assert.assertEquals("Stream type should be Http2Stream", 2, streamType.get());
+        }
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Test that HttpStreamManager with UNKNOWN protocol correctly returns appropriate stream types
+     * and handles automatic HTTP/2 to HTTP/1.1 fallback when server doesn't support HTTP/2.
+     */
+    @Test
+    public void testUnknownProtocolStreamTypeAndFallback() throws Throwable {
+        URI uri = new URI(endpoint);
+        CompletableFuture<Void> shutdownComplete = null;
+
+        try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.UNKNOWN)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+            HttpRequest request = createHttp1Request("GET", endpoint, path, EMPTY_BODY);
+
+            final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+            final AtomicInteger streamType = new AtomicInteger(0); // 0=unknown, 1=HttpStream, 2=Http2Stream
+
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Record what type of stream we actually got
+                    if (stream instanceof Http2Stream) {
+                        streamType.set(2);
+                    } else if (stream instanceof HttpStream) {
+                        streamType.set(1);
+                    }
+                    // Verify it's one of the concrete types, not just base
+                    Assert.assertTrue("Stream should be HttpStream or Http2Stream, not just HttpStreamBase",
+                            (stream instanceof HttpStream) || (stream instanceof Http2Stream));
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    reqCompleted.complete(null);
+                    stream.close();
+                }
+            };
+
+            HttpStreamBase stream = streamManager.acquireStream(request, streamHandler).get(60, TimeUnit.SECONDS);
+
+            // Verify we got a concrete stream type (either HttpStream or Http2Stream)
+            Assert.assertNotNull("Stream should not be null", stream);
+            Assert.assertTrue("Stream should be HttpStream or Http2Stream",
+                    (stream instanceof HttpStream) || (stream instanceof Http2Stream));
+
+            reqCompleted.get(60, TimeUnit.SECONDS);
+
+            // Verify we got one of the expected stream types
+            Assert.assertTrue("Stream type should be HttpStream (1) or Http2Stream (2), got: " + streamType.get(),
+                    streamType.get() == 1 || streamType.get() == 2);
+        }
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

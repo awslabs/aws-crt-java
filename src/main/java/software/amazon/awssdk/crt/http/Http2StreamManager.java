@@ -233,6 +233,13 @@ public class Http2StreamManager extends CrtResource {
         }
     }
 
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
     public CompletableFuture<Void> getShutdownCompleteFuture() {
         return shutdownComplete;
     }

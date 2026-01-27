@@ -111,6 +111,13 @@ public class Http1StreamManager implements AutoCloseable {
         return completionFuture;
     }
 
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        return this.connectionManager.getManagerMetrics();
+    }
+
     @Override
     public void close() {
         this.connectionManager.close();

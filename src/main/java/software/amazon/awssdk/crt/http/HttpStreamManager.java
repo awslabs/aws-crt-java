@@ -64,6 +64,17 @@ public class HttpStreamManager implements AutoCloseable {
         return shutdownComplete;
     }
 
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (this.h2StreamManager != null) {
+            return this.h2StreamManager.getManagerMetrics();
+        } else {
+            return this.h1StreamManager.getManagerMetrics();
+        }
+    }
+
     @Override
     public void close() {
         if (this.h1StreamManager != null) {

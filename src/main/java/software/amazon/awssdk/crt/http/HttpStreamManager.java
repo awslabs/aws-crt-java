@@ -75,6 +75,17 @@ public class HttpStreamManager implements AutoCloseable {
         }
     }
 
+    /**
+     * @return maximum number of connections this connection manager will pool
+     */
+    public int getMaxConnections() {
+        if (this.h2StreamManager != null) {
+            return this.h2StreamManager.getMaxConnections();
+        } else {
+            return this.h1StreamManager.getMaxConnections();
+        }
+    }
+
     @Override
     public void close() {
         if (this.h1StreamManager != null) {

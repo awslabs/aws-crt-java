@@ -118,6 +118,13 @@ public class Http1StreamManager implements AutoCloseable {
         return this.connectionManager.getManagerMetrics();
     }
 
+    /**
+     * @return maximum number of connections this manager will pool
+     */
+    public int getMaxConnections() {
+        return this.connectionManager.getMaxConnections();
+    }
+
     @Override
     public void close() {
         this.connectionManager.close();

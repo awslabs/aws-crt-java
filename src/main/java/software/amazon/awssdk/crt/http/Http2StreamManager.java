@@ -117,6 +117,7 @@ public class Http2StreamManager extends CrtResource {
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
                 noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 connectionManagerOptions.isManualWindowManagement(),
+                connectionManagerOptions.getWindowSize(),
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
                 maxConnections,
@@ -158,9 +159,8 @@ public class Http2StreamManager extends CrtResource {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
-            HttpStreamBaseResponseHandler streamHandler) {
-
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+        HttpStreamBaseResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {
@@ -259,6 +259,7 @@ public class Http2StreamManager extends CrtResource {
             byte[] proxyAuthorizationPassword,
             byte[] noProxyHosts,
             boolean isManualWindowManagement,
+            long windowSize,
             long monitoringThroughputThresholdInBytesPerSecond,
             int monitoringFailureIntervalInSeconds,
             int maxConns,

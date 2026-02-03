@@ -204,6 +204,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSanitizerHTTP1() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -217,6 +218,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSanitizerHTTP2() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
@@ -230,6 +232,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSingleHTTP2Requests() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
@@ -246,6 +249,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSingleHTTP1Request() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -267,6 +271,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testSingleHTTP1RequestsFailure() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -300,6 +305,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testHTTP1StreamTypeFromAcquireStream() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
 
@@ -347,6 +353,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testHTTP2StreamTypeFromAcquireStream() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
 

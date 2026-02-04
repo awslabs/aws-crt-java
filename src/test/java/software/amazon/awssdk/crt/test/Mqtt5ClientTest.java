@@ -264,7 +264,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 })
                 .withRetryJitterMode(JitterMode.Default)
                 .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                .withSocketOptions(socketOptions);
+                .withSocketOptions(socketOptions)
+                .withMetricsEnabled(false);
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
@@ -330,6 +331,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
                     Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
             builder.withLifecycleEvents(events);
+            builder.withMetricsEnabled(false);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -510,7 +512,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                    .withSocketOptions(socketOptions);
+                    .withSocketOptions(socketOptions)
+                    .withMetricsEnabled(false);
             // Skip websocket, proxy options, and TLS options - those are all different tests
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -605,6 +608,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
+            builder.withMetricsEnabled(false);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -772,7 +776,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                    .withSocketOptions(socketOptions);
+                    .withSocketOptions(socketOptions)
+                    .withMetricsEnabled(false);
 
             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                 @Override

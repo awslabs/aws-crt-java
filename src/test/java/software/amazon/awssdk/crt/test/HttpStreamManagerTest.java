@@ -8,41 +8,26 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamManager;
 import software.amazon.awssdk.crt.http.HttpStreamManagerOptions;
-import software.amazon.awssdk.crt.http.Http1StreamManager;
-import software.amazon.awssdk.crt.http.Http2StreamManager;
 import software.amazon.awssdk.crt.http.Http2Request;
 import software.amazon.awssdk.crt.http.Http2Stream;
 import software.amazon.awssdk.crt.http.Http2StreamManagerOptions;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
 import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.http.HttpRequestBase;
 import software.amazon.awssdk.crt.http.HttpRequestBodyStream;
-import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpVersion;
 import software.amazon.awssdk.crt.http.HttpStream;
 import software.amazon.awssdk.crt.http.HttpStreamBase;
@@ -54,8 +39,6 @@ import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
 
 public class HttpStreamManagerTest extends HttpRequestResponseFixture {
     private final static String endpoint = "https://httpbin.org";
@@ -204,6 +187,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSanitizerHTTP1() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -217,6 +201,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSanitizerHTTP2() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
@@ -230,6 +215,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSingleHTTP2Requests() throws Exception {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_2)) {
@@ -246,6 +232,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
 
     @Test
     public void testSingleHTTP1Request() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -267,6 +254,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testSingleHTTP1RequestsFailure() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
         try (HttpStreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, HttpVersion.HTTP_1_1)) {
@@ -300,6 +288,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testHTTP1StreamTypeFromAcquireStream() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
 
@@ -347,6 +336,7 @@ public class HttpStreamManagerTest extends HttpRequestResponseFixture {
      */
     @Test
     public void testHTTP2StreamTypeFromAcquireStream() throws Throwable {
+        skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
         CompletableFuture<Void> shutdownComplete = null;
 

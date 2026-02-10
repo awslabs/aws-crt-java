@@ -21,13 +21,13 @@ public class XXHashTest extends CrtTestFixture {
 
         byte[] expected = {(byte)0xc5, (byte)0x00, (byte)0xb0, (byte)0xc9, (byte)0x12, (byte)0xb3, (byte)0x76, (byte)0xd8};
 
-        assertEquals(out, expected);
+        assertArrayEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash64();
         hash.update(input);
         byte[] out2 = hash.digest();
 
-        assertEquals(out2, expected);
+        assertArrayEquals(out2, expected);
     }
 
     @Test
@@ -38,13 +38,13 @@ public class XXHashTest extends CrtTestFixture {
 
         byte[] expected = {(byte)0xb6, (byte)0xac, (byte)0xb9, (byte)0xd8, (byte)0x4a, (byte)0x38, (byte)0xff, (byte)0x74};
 
-        assertEquals(out, expected);
+        assertArrayEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash3_64();
         hash.update(input);
         byte[] out2 = hash.digest();
 
-        assertEquals(out2, expected);
+        assertArrayEquals(out2, expected);
     }
 
     @Test
@@ -56,12 +56,12 @@ public class XXHashTest extends CrtTestFixture {
         byte[] expected = {(byte)0x73, (byte)0x51, (byte)0xf8, (byte)0x98, (byte)0x12, (byte)0xf9, (byte)0x73, (byte)0x82, 
             (byte)0xb9, (byte)0x1d, (byte)0x05, (byte)0xb3, (byte)0x1e, (byte)0x04, (byte)0xdd, (byte)0x7f};
 
-        assertEquals(out, expected);
+        assertArrayEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash3_128();
         hash.update(input);
         byte[] out2 = hash.digest();
 
-        assertEquals(out2, expected);
+        assertArrayEquals(out2, expected);
     }
 }

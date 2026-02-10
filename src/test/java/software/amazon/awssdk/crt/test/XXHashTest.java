@@ -23,11 +23,12 @@ public class XXHashTest extends CrtTestFixture {
 
         assertArrayEquals(out, expected);
 
-        XXHash hash = XXHash.newXXHash64();
-        hash.update(input);
-        byte[] out2 = hash.digest();
+        try(XXHash hash = XXHash.newXXHash64()) {
+            hash.update(input);
+            byte[] out2 = hash.digest();
 
-        assertArrayEquals(out2, expected);
+            assertArrayEquals(out2, expected);
+        }
     }
 
     @Test
@@ -40,11 +41,12 @@ public class XXHashTest extends CrtTestFixture {
 
         assertArrayEquals(out, expected);
 
-        XXHash hash = XXHash.newXXHash3_64();
-        hash.update(input);
-        byte[] out2 = hash.digest();
+        try(XXHash hash = XXHash.newXXHash3_64()) {
+            hash.update(input);
+            byte[] out2 = hash.digest();
 
-        assertArrayEquals(out2, expected);
+            assertArrayEquals(out2, expected);
+        }
     }
 
     @Test
@@ -58,10 +60,11 @@ public class XXHashTest extends CrtTestFixture {
 
         assertArrayEquals(out, expected);
 
-        XXHash hash = XXHash.newXXHash3_128();
-        hash.update(input);
-        byte[] out2 = hash.digest();
+        try(XXHash hash = XXHash.newXXHash3_128()) {
+            hash.update(input);
+            byte[] out2 = hash.digest();
 
-        assertArrayEquals(out2, expected);
+            assertArrayEquals(out2, expected);
+        }
     }
 }

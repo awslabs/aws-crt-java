@@ -62,7 +62,7 @@ public class XXHash extends CrtResource {
      * @return new XXHash instance
      */
     static public XXHash newXXHash3_64(long seed) {
-        long nativeHandle = xxHash3_64Create(seed);
+        long nativeHandle = xxHash364Create(seed);
         if (nativeHandle != 0) {
             return new XXHash(nativeHandle);
         }
@@ -75,7 +75,7 @@ public class XXHash extends CrtResource {
      * @return new XXHash instance
      */
     static public XXHash newXXHash3_64() {
-        long nativeHandle = xxHash3_64Create(0);
+        long nativeHandle = xxHash364Create(0);
         if (nativeHandle != 0) {
             return new XXHash(nativeHandle);
         }
@@ -89,7 +89,7 @@ public class XXHash extends CrtResource {
      * @return new XXHash instance
      */
     static public XXHash newXXHash3_128(long seed) {
-        long nativeHandle = xxHash3_128Create(seed);
+        long nativeHandle = xxHash3128Create(seed);
         if (nativeHandle != 0) {
             return new XXHash(nativeHandle);
         }
@@ -102,7 +102,7 @@ public class XXHash extends CrtResource {
      * @return new XXHash instance
      */
     static public XXHash newXXHash3_128() {
-        long nativeHandle = xxHash3_128Create(0);
+        long nativeHandle = xxHash3128Create(0);
         if (nativeHandle != 0) {
             return new XXHash(nativeHandle);
         }
@@ -153,7 +153,7 @@ public class XXHash extends CrtResource {
      * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_64(byte[] message, long seed) {
-        return xxHash3_64Compute(message, seed);
+        return xxHash364Compute(message, seed);
     }
 
     /**
@@ -162,7 +162,7 @@ public class XXHash extends CrtResource {
      * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_64(byte[] message) {
-        return xxHash3_64Compute(message, 0);
+        return xxHash364Compute(message, 0);
     }
 
     /**
@@ -172,7 +172,7 @@ public class XXHash extends CrtResource {
      * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_128(byte[] message, long seed) {
-        return xxHash3_128Compute(message, seed);
+        return xxHash3128Compute(message, seed);
     }
 
     /**
@@ -181,19 +181,19 @@ public class XXHash extends CrtResource {
      * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_128(byte[] message) {
-        return xxHash3_128Compute(message, 0);
+        return xxHash3128Compute(message, 0);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
     private static native byte[] xxHash64Compute(byte[] message, long seed);
-    private static native byte[] xxHash3_64Compute(byte[] message, long seed);
-    private static native byte[] xxHash3_128Compute(byte[] message, long seed);
+    private static native byte[] xxHash364Compute(byte[] message, long seed);
+    private static native byte[] xxHash3128Compute(byte[] message, long seed);
 
     private static native long xxHash64Create(long seed);
-    private static native long xxHash3_64Create(long seed);
-    private static native long xxHash3_128Create(long seed);
+    private static native long xxHash364Create(long seed);
+    private static native long xxHash3128Create(long seed);
     private static native void xxHashRelease(long xxhash);
 
     private static native void xxHashUpdate(long xxhash, byte[] message);

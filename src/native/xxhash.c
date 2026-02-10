@@ -53,7 +53,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     return hash;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_64Compute(
+JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash364Compute(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray message,
@@ -86,7 +86,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     return hash;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Compute(
+JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3128Compute(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray message,
@@ -138,7 +138,7 @@ jlong JNICALL
 
 JNIEXPORT
 jlong JNICALL
-    Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_64Create(JNIEnv *env, jclass jni_class, jlong seed) {
+    Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash364Create(JNIEnv *env, jclass jni_class, jlong seed) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -155,7 +155,7 @@ jlong JNICALL
 
 JNIEXPORT
 jlong JNICALL
-    Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Create(JNIEnv *env, jclass jni_class, jlong seed) {
+    Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3128Create(JNIEnv *env, jclass jni_class, jlong seed) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);

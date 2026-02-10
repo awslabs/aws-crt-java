@@ -97,7 +97,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     struct aws_byte_buf hash_buffer;
     AWS_ZERO_STRUCT(hash_buffer);
 
-    aws_byte_buf_init(&hash_buffer, aws_jni_get_allocator(), 8);
+    aws_byte_buf_init(&hash_buffer, aws_jni_get_allocator(), 16);
 
     struct aws_byte_cursor message_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, message);
     if (message_cursor.ptr == NULL) {

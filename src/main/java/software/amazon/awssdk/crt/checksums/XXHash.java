@@ -30,6 +30,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash64.
+     * @param seed seed to use for the hash
      */
     static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
@@ -55,6 +56,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash3_64.
+     * @param seed seed to use for the hash
      */
     static public XXHash newXXHash3_64(long seed) {
         long nativeHandle = xxHash3_64Create(seed);
@@ -79,6 +81,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash3_128.
+     * @param seed seed to use for the hash
      */
     static public XXHash newXXHash3_128(long seed) {
         long nativeHandle = xxHash3_128Create(seed);
@@ -119,6 +122,9 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash64.
+     * @param message input message to hash
+     * @param seed seed
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash64(byte[] message, long seed) {
         return xxHash64Compute(message, seed);
@@ -126,6 +132,8 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash64.
+     * @param message input message to hash
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash64(byte[] message) {
         return xxHash64Compute(message, 0);
@@ -134,6 +142,9 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash3_64.
+     * @param message input message to hash
+     * @param seed seed
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_64(byte[] message, long seed) {
         return xxHash3_64Compute(message, seed);
@@ -141,6 +152,8 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash3_64.
+     * @param message input message to hash
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_64(byte[] message) {
         return xxHash3_64Compute(message, 0);
@@ -148,6 +161,9 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash3_128.
+     * @param message input message to hash
+     * @param seed seed
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_128(byte[] message, long seed) {
         return xxHash3_128Compute(message, seed);
@@ -155,6 +171,8 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash3_128.
+     * @param message input message to hash
+     * @return xxhash64 hash
      */
     static public byte[] computeXXHash3_128(byte[] message) {
         return xxHash3_128Compute(message, 0);

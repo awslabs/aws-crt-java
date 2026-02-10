@@ -116,7 +116,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash64Create(
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct xxhash *hash = aws_xxhash64_new(aws_jni_get_allocator(), seed);
+    struct aws_xxhash *hash = aws_xxhash64_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
         return (jlong)0;
     }
@@ -135,7 +135,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_64Create(
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct xxhash *hash = aws_xxhash3_64_new(aws_jni_get_allocator(), seed);
+    struct aws_xxhash *hash = aws_xxhash3_64_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
         return (jlong)0;
     }
@@ -154,7 +154,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Create
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct xxhash *hash = aws_xxhash3_128_new(aws_jni_get_allocator(), seed);
+    struct aws_xxhash *hash = aws_xxhash3_128_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
         return (jlong)0;
     }

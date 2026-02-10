@@ -15,52 +15,52 @@ public class XXHashTest extends CrtTestFixture {
 
     @Test
     public void testXXHash64Piping() {
-        byte[] input = "Hello world";
+        byte[] input = "Hello world".getBytes();
 
         byte[] out = XXHash.computeXXHash64(input);
 
-        byte[] expected = {0xc5, 0x00, 0xb0, 0xc9, 0x12, 0xb3, 0x76, 0xd8};
+        byte[] expected = {(byte)0xc5, (byte)0x00, (byte)0xb0, (byte)0xc9, (byte)0x12, (byte)0xb3, (byte)0x76, (byte)0xd8};
 
         assertEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash64();
         hash.update(input);
-        byte[] out2 = hash.finalize();
+        byte[] out2 = hash.digest();
 
         assertEquals(out2, expected);
     }
 
     @Test
     public void testXXHash3_64Piping() {
-        byte[] input = "Hello world";
+        byte[] input = "Hello world".getBytes();
 
         byte[] out = XXHash.computeXXHash3_64(input);
 
-        byte[] expected = {0xb6, 0xac, 0xb9, 0xd8, 0x4a, 0x38, 0xff, 0x74};
+        byte[] expected = {(byte)0xb6, (byte)0xac, (byte)0xb9, (byte)0xd8, (byte)0x4a, (byte)0x38, (byte)0xff, (byte)0x74};
 
         assertEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash3_64();
         hash.update(input);
-        byte[] out2 = hash.finalize();
+        byte[] out2 = hash.digest();
 
         assertEquals(out2, expected);
     }
 
     @Test
     public void testXXHash3_128Piping() {
-        byte[] input = "Hello world";
+        byte[] input = "Hello world".getBytes();
 
         byte[] out = XXHash.computeXXHash3_128(input);
 
-        byte[] expected = {0x73, 0x51, 0xf8, 0x98, 0x12, 0xf9, 0x73, 0x82, 
-            0xb9, 0x1d, 0x05, 0xb3, 0x1e, 0x04, 0xdd, 0x7f};
+        byte[] expected = {(byte)0x73, (byte)0x51, (byte)0xf8, (byte)0x98, (byte)0x12, (byte)0xf9, (byte)0x73, (byte)0x82, 
+            (byte)0xb9, (byte)0x1d, (byte)0x05, (byte)0xb3, (byte)0x1e, (byte)0x04, (byte)0xdd, (byte)0x7f};
 
         assertEquals(out, expected);
 
         XXHash hash = XXHash.newXXHash3_128();
         hash.update(input);
-        byte[] out2 = hash.finalize();
+        byte[] out2 = hash.digest();
 
         assertEquals(out2, expected);
     }

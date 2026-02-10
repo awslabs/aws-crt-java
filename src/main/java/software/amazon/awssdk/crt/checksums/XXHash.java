@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 package software.amazon.awssdk.crt.checksums;
+import software.amazon.awssdk.crt.CrtResource;
 
-public class XXHash implements AutoCloseable {
+public class XXHash extends CrtResource {
     
     private XXHash(long nativeHandle) {
         acquireNativeHandle(nativeHandle);
@@ -33,7 +34,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -46,7 +47,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash64() {
         long nativeHandle = xxHash64Create(0);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -58,7 +59,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash3_64(long seed) {
         long nativeHandle = xxHash3_64Create(seed);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -70,7 +71,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash3_64() {
         long nativeHandle = xxHash3_64Create(0);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -82,7 +83,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash3_128(long seed) {
         long nativeHandle = xxHash3_128Create(seed);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -94,7 +95,7 @@ public class XXHash implements AutoCloseable {
     static public XXHash newXXHash3_128() {
         long nativeHandle = xxHash3_128Create(0);
         if (nativeHandle != 0) {
-            return new EccKeyPair(nativeHandle);
+            return new XXHash(nativeHandle);
         }
 
         return null;
@@ -109,10 +110,10 @@ public class XXHash implements AutoCloseable {
     }
 
     /**
-     * Finalize the state of the hash
+     * Return digest for the current state of hash.
      * @return hash as bytes in big endian
      */
-    public byte[] finalize() {
+    public byte[] digest() {
         return xxHashFinalize(getNativeHandle());
     }
 

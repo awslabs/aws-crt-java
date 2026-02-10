@@ -167,7 +167,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Create
 JNIEXPORT
 void JNICALL
     Java_software_amazon_awssdk_crt_cal_EccKeyPair_xxHashRelease(JNIEnv *env, jclass jni_class, jlong hash_ptr) {
-    (void)jni_ekp;
+    (void)jni_class;
     aws_cache_jni_ids(env);
 
     struct aws_xxhash *hash = (struct aws_xxhash *)hash_ptr;
@@ -221,7 +221,7 @@ jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashFinali
         aws_jni_throw_runtime_exception(env, "XXHash.xxHashFinalize: failed to finalize hash");
     } else {
         struct aws_byte_cursor hash_cursor = aws_byte_cursor_from_buf(&hash_buffer);
-        hashhash_out = aws_jni_byte_array_from_cursor(env, &hash_cursor);
+        hash_out = aws_jni_byte_array_from_cursor(env, &hash_cursor);
     }
 
     aws_byte_buf_clean_up(&hash_buffer);

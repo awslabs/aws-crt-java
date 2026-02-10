@@ -166,11 +166,11 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Create
 
 JNIEXPORT
 void JNICALL
-    Java_software_amazon_awssdk_crt_cal_EccKeyPair_xxHashRelease(JNIEnv *env, jclass jni_class, jlong hash) {
+    Java_software_amazon_awssdk_crt_cal_EccKeyPair_xxHashRelease(JNIEnv *env, jclass jni_class, jlong hash_ptr) {
     (void)jni_ekp;
     aws_cache_jni_ids(env);
 
-    struct aws_xxhash *hash = (struct aws_xxhash *)hash;
+    struct aws_xxhash *hash = (struct aws_xxhash *)hash_ptr;
 
     aws_xxhash_destroy(hash);
 }
@@ -179,13 +179,13 @@ JNIEXPORT
 void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     JNIEnv *env,
     jclass jni_class,
-    jlong hash,
+    jlong hash_ptr,
     jbyteArray message) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct aws_xxhash *hash = (struct aws_xxhash *)hash;
+    struct aws_xxhash *hash = (struct aws_xxhash *)hash_ptr;
 
     struct aws_byte_cursor message_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, message);
     if (message_cursor.ptr == NULL) {
@@ -204,12 +204,12 @@ JNIEXPORT
 jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashFinalize(
     JNIEnv *env,
     jclass jni_class,
-    jlong hash) {
+    jlong hash_ptr) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
 
-    struct aws_xxhash *hash = (struct aws_xxhash *)hash;
+    struct aws_xxhash *hash = (struct aws_xxhash *)hash_ptr;
 
     struct aws_byte_buf hash_buffer;
     AWS_ZERO_STRUCT(hash_buffer);

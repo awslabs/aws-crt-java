@@ -8,7 +8,7 @@
 
 #include <aws/checksums/xxhash.h>
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash64Compute(
+JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash64Compute(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray message, 
@@ -41,7 +41,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash64
     return hash;
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_64Compute(
+JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_64Compute(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray message, 
@@ -74,7 +74,7 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_
     return hash;
 }
 
-JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Compute(
+JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3_128Compute(
     JNIEnv *env,
     jclass jni_class,
     jbyteArray message, 
@@ -176,7 +176,7 @@ void JNICALL
 }
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
+void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     JNIEnv *env,
     jclass jni_class,
     jlong hash,
@@ -190,7 +190,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     struct aws_byte_cursor message_cursor = aws_jni_byte_cursor_from_jbyteArray_acquire(env, message);
     if (message_cursor.ptr == NULL) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHashUpdate: failed to pin message bytes");
-        return NULL;
+        return;
     }
 
     if (aws_xxhash_update(hash, message_cursor)) {
@@ -201,7 +201,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
 }
 
 JNIEXPORT
-jlong JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashFinalize(
+jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashFinalize(
     JNIEnv *env,
     jclass jni_class,
     jlong hash) {

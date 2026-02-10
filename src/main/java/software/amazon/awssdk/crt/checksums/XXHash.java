@@ -119,14 +119,14 @@ public class XXHash implements AutoCloseable {
     /**
      * Oneshot compute XXHash64.
      */
-    static public byte[] xxHash64Compute(byte[] message, long seed) {
+    static public byte[] computeXXHash64(byte[] message, long seed) {
         return xxHash64Compute(message, seed);
     }
 
     /**
      * Oneshot compute XXHash64.
      */
-    static public byte[] xxHash64Compute(byte[] message) {
+    static public byte[] computeXXHash64(byte[] message) {
         return xxHash64Compute(message, 0);
     }
 
@@ -134,28 +134,28 @@ public class XXHash implements AutoCloseable {
     /**
      * Oneshot compute XXHash3_64.
      */
-    static public byte[] xxHash3_64Compute(byte[] message, long seed) {
+    static public byte[] computeXXHash3_64(byte[] message, long seed) {
         return xxHash3_64Compute(message, seed);
     }
 
     /**
      * Oneshot compute XXHash3_64.
      */
-    static public byte[] xxHash3_64Compute(byte[] message) {
+    static public byte[] computeXXHash3_64(byte[] message) {
         return xxHash3_64Compute(message, 0);
     }
 
     /**
      * Oneshot compute XXHash3_128.
      */
-    static public byte[] xxHash3_128Compute(byte[] message, long seed) {
+    static public byte[] computeXXHash3_128(byte[] message, long seed) {
         return xxHash3_128Compute(message, seed);
     }
 
     /**
      * Oneshot compute XXHash3_128.
      */
-    static public byte[] xxHash3_128Compute(byte[] message) {
+    static public byte[] computeXXHash3_128(byte[] message) {
         return xxHash3_128Compute(message, 0);
     }
 

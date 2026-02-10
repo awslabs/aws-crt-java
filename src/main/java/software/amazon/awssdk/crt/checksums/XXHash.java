@@ -31,6 +31,7 @@ public class XXHash extends CrtResource {
     /**
      * Create new streaming XXHash64.
      * @param seed seed to use for the hash
+     * @return new XXHash instance
      */
     static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
@@ -44,6 +45,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash64.
+     * @return new XXHash instance
      */
     static public XXHash newXXHash64() {
         long nativeHandle = xxHash64Create(0);
@@ -57,6 +59,7 @@ public class XXHash extends CrtResource {
     /**
      * Create new streaming XXHash3_64.
      * @param seed seed to use for the hash
+     * @return new XXHash instance
      */
     static public XXHash newXXHash3_64(long seed) {
         long nativeHandle = xxHash3_64Create(seed);
@@ -69,6 +72,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash3_64.
+     * @return new XXHash instance
      */
     static public XXHash newXXHash3_64() {
         long nativeHandle = xxHash3_64Create(0);
@@ -82,6 +86,7 @@ public class XXHash extends CrtResource {
     /**
      * Create new streaming XXHash3_128.
      * @param seed seed to use for the hash
+     * @return new XXHash instance
      */
     static public XXHash newXXHash3_128(long seed) {
         long nativeHandle = xxHash3_128Create(seed);
@@ -94,6 +99,7 @@ public class XXHash extends CrtResource {
 
     /**
      * Create new streaming XXHash3_128.
+     * @return new XXHash instance
      */
     static public XXHash newXXHash3_128() {
         long nativeHandle = xxHash3_128Create(0);

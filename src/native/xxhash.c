@@ -196,11 +196,10 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
-        return NULL;
-    }
-
-    if (aws_xxhash_update(hash, c_byte_array)) {
-        aws_jni_throw_runtime_exception(env, "XXHash.xxHashUpdate: failed to update hash");
+    } else {
+        if (aws_xxhash_update(hash, c_byte_array)) {
+            aws_jni_throw_runtime_exception(env, "XXHash.xxHashUpdate: failed to update hash");
+        }
     }
 
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);

@@ -30,8 +30,21 @@ public class XXHash implements AutoCloseable {
     /**
      * Create new streaming XXHash64.
      */
-    static public XXHash newXXHash64(long seed = 0) {
+    static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
+        if (nativeHandle != 0) {
+            return new EccKeyPair(nativeHandle);
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Create new streaming XXHash64.
+     */
+    static public XXHash newXXHash64() {
+        long nativeHandle = xxHash64Create(0);
         if (nativeHandle != 0) {
             return new EccKeyPair(nativeHandle);
         }
@@ -42,8 +55,20 @@ public class XXHash implements AutoCloseable {
     /**
      * Create new streaming XXHash3_64.
      */
-    static public XXHash newXXHash3_64(long seed = 0) {
+    static public XXHash newXXHash3_64(long seed) {
         long nativeHandle = xxHash3_64Create(seed);
+        if (nativeHandle != 0) {
+            return new EccKeyPair(nativeHandle);
+        }
+
+        return null;
+    }
+
+    /**
+     * Create new streaming XXHash3_64.
+     */
+    static public XXHash newXXHash3_64() {
+        long nativeHandle = xxHash3_64Create(0);
         if (nativeHandle != 0) {
             return new EccKeyPair(nativeHandle);
         }
@@ -54,8 +79,20 @@ public class XXHash implements AutoCloseable {
     /**
      * Create new streaming XXHash3_128.
      */
-    static public XXHash newXXHash3_128(long seed = 0) {
+    static public XXHash newXXHash3_128(long seed) {
         long nativeHandle = xxHash3_128Create(seed);
+        if (nativeHandle != 0) {
+            return new EccKeyPair(nativeHandle);
+        }
+
+        return null;
+    }
+
+    /**
+     * Create new streaming XXHash3_128.
+     */
+    static public XXHash newXXHash3_128() {
+        long nativeHandle = xxHash3_128Create(0);
         if (nativeHandle != 0) {
             return new EccKeyPair(nativeHandle);
         }
@@ -82,22 +119,44 @@ public class XXHash implements AutoCloseable {
     /**
      * Oneshot compute XXHash64.
      */
-    static public byte[] xxHash64Compute(byte[] message, long seed = 0) {
-        return xxHash64Compute(seed);
+    static public byte[] xxHash64Compute(byte[] message, long seed) {
+        return xxHash64Compute(message, seed);
+    }
+
+    /**
+     * Oneshot compute XXHash64.
+     */
+    static public byte[] xxHash64Compute(byte[] message) {
+        return xxHash64Compute(message, 0);
+    }
+
+
+    /**
+     * Oneshot compute XXHash3_64.
+     */
+    static public byte[] xxHash3_64Compute(byte[] message, long seed) {
+        return xxHash3_64Compute(message, seed);
     }
 
     /**
      * Oneshot compute XXHash3_64.
      */
-    static public byte[] xxHash3_64Compute(byte[] message, long seed = 0) {
-        return xxHash3_64Compute(seed);
+    static public byte[] xxHash3_64Compute(byte[] message) {
+        return xxHash3_64Compute(message, 0);
     }
 
     /**
      * Oneshot compute XXHash3_128.
      */
-    static public byte[] xxHash3_128Compute(byte[] message, long seed = 0) {
-        return xxHash3_128Compute(seed);
+    static public byte[] xxHash3_128Compute(byte[] message, long seed) {
+        return xxHash3_128Compute(message, seed);
+    }
+
+    /**
+     * Oneshot compute XXHash3_128.
+     */
+    static public byte[] xxHash3_128Compute(byte[] message) {
+        return xxHash3_128Compute(message, 0);
     }
 
     /*******************************************************************************

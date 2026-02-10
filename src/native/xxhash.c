@@ -23,7 +23,7 @@
 JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash64Compute(
     JNIEnv *env,
     jclass jni_class,
-    jbyteArray message,
+    jbyteArray input,
     jlong seed) {
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -33,9 +33,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
 
     aws_byte_buf_init(&hash_buffer, aws_jni_get_allocator(), 8);
 
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, message);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
-        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin message bytes");
+        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
         return NULL;
     }
 
@@ -56,7 +56,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
 JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash364Compute(
     JNIEnv *env,
     jclass jni_class,
-    jbyteArray message,
+    jbyteArray input,
     jlong seed) {
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -66,9 +66,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
 
     aws_byte_buf_init(&hash_buffer, aws_jni_get_allocator(), 8);
 
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, message);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
-        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin message bytes");
+        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
         return NULL;
     }
 
@@ -89,7 +89,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
 JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHash3128Compute(
     JNIEnv *env,
     jclass jni_class,
-    jbyteArray message,
+    jbyteArray input,
     jlong seed) {
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -99,9 +99,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
 
     aws_byte_buf_init(&hash_buffer, aws_jni_get_allocator(), 16);
 
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, message);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
-        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin message bytes");
+        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
         return NULL;
     }
 
@@ -186,16 +186,16 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     JNIEnv *env,
     jclass jni_class,
     jlong hash_ptr,
-    jbyteArray message) {
+    jbyteArray input) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
 
     struct aws_xxhash *hash = (struct aws_xxhash *)hash_ptr;
 
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, message);
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
-        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin message bytes");
+        aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
         return NULL;
     }
 

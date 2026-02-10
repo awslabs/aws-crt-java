@@ -111,11 +111,11 @@ public class XXHash extends CrtResource {
     }
 
     /**
-     * Update xxhash state from message
-     * @param message message to update with
+     * Update xxhash state from input
+     * @param input input to update with
      */
-    public void update(byte[] message) {
-        xxHashUpdate(getNativeHandle(), message);
+    public void update(byte[] input) {
+        xxHashUpdate(getNativeHandle(), input);
     }
 
     /**
@@ -128,74 +128,74 @@ public class XXHash extends CrtResource {
 
     /**
      * Oneshot compute XXHash64.
-     * @param message input message to hash
+     * @param input input input to hash
      * @param seed seed
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash64(byte[] message, long seed) {
-        return xxHash64Compute(message, seed);
+    static public byte[] computeXXHash64(byte[] input, long seed) {
+        return xxHash64Compute(input, seed);
     }
 
     /**
      * Oneshot compute XXHash64.
-     * @param message input message to hash
+     * @param input input input to hash
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash64(byte[] message) {
-        return xxHash64Compute(message, 0);
+    static public byte[] computeXXHash64(byte[] input) {
+        return xxHash64Compute(input, 0);
     }
 
 
     /**
      * Oneshot compute XXHash3_64.
-     * @param message input message to hash
+     * @param input input input to hash
      * @param seed seed
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash3_64(byte[] message, long seed) {
-        return xxHash364Compute(message, seed);
+    static public byte[] computeXXHash3_64(byte[] input, long seed) {
+        return xxHash364Compute(input, seed);
     }
 
     /**
      * Oneshot compute XXHash3_64.
-     * @param message input message to hash
+     * @param input input input to hash
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash3_64(byte[] message) {
-        return xxHash364Compute(message, 0);
+    static public byte[] computeXXHash3_64(byte[] input) {
+        return xxHash364Compute(input, 0);
     }
 
     /**
      * Oneshot compute XXHash3_128.
-     * @param message input message to hash
+     * @param input input input to hash
      * @param seed seed
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash3_128(byte[] message, long seed) {
-        return xxHash3128Compute(message, seed);
+    static public byte[] computeXXHash3_128(byte[] input, long seed) {
+        return xxHash3128Compute(input, seed);
     }
 
     /**
      * Oneshot compute XXHash3_128.
-     * @param message input message to hash
+     * @param input input input to hash
      * @return xxhash64 hash
      */
-    static public byte[] computeXXHash3_128(byte[] message) {
-        return xxHash3128Compute(message, 0);
+    static public byte[] computeXXHash3_128(byte[] input) {
+        return xxHash3128Compute(input, 0);
     }
 
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native byte[] xxHash64Compute(byte[] message, long seed);
-    private static native byte[] xxHash364Compute(byte[] message, long seed);
-    private static native byte[] xxHash3128Compute(byte[] message, long seed);
+    private static native byte[] xxHash64Compute(byte[] input, long seed);
+    private static native byte[] xxHash364Compute(byte[] input, long seed);
+    private static native byte[] xxHash3128Compute(byte[] input, long seed);
 
     private static native long xxHash64Create(long seed);
     private static native long xxHash364Create(long seed);
     private static native long xxHash3128Create(long seed);
     private static native void xxHashRelease(long xxhash);
 
-    private static native void xxHashUpdate(long xxhash, byte[] message);
+    private static native void xxHashUpdate(long xxhash, byte[] input);
     private static native byte[] xxHashFinalize(long xxhash);
 }

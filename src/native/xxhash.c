@@ -172,7 +172,7 @@ jlong JNICALL
 
 JNIEXPORT
 void JNICALL
-    Java_software_amazon_awssdk_crt_cal_EccKeyPair_xxHashRelease(JNIEnv *env, jclass jni_class, jlong hash_ptr) {
+    Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashRelease(JNIEnv *env, jclass jni_class, jlong hash_ptr) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 

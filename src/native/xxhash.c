@@ -74,7 +74,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     }
 
     jbyteArray hash = NULL;
-    int result = aws_xxhash64_compute(seed, c_byte_array, &hash_buffer);
+    int result = aws_xxhash3_64_compute(seed, c_byte_array, &hash_buffer);
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash3_64Compute: failed to compute hash");
@@ -108,7 +108,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     }
 
     jbyteArray hash = NULL;
-    int result = aws_xxhash64_compute(seed, c_byte_array, &hash_buffer);
+    int result = aws_xxhash3_128_compute(seed, c_byte_array, &hash_buffer);
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     if (result != AWS_OP_SUCCESS) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash3_128Compute: failed to compute hash");

@@ -35,7 +35,7 @@ public class XXHash extends CrtResource {
      */
     static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
-        return return new XXHash(nativeHandle);;
+        return new XXHash(nativeHandle);
     }
 
 

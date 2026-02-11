@@ -35,11 +35,7 @@ public class XXHash extends CrtResource {
      */
     static public XXHash newXXHash64(long seed) {
         long nativeHandle = xxHash64Create(seed);
-        if (nativeHandle != 0) {
-            return new XXHash(nativeHandle);
-        }
-
-        return null;
+        return return new XXHash(nativeHandle);;
     }
 
 
@@ -49,11 +45,7 @@ public class XXHash extends CrtResource {
      */
     static public XXHash newXXHash64() {
         long nativeHandle = xxHash64Create(0);
-        if (nativeHandle != 0) {
-            return new XXHash(nativeHandle);
-        }
-
-        return null;
+        return new XXHash(nativeHandle);
     }
 
     /**
@@ -63,11 +55,7 @@ public class XXHash extends CrtResource {
      */
     static public XXHash newXXHash3_64(long seed) {
         long nativeHandle = xxHash364Create(seed);
-        if (nativeHandle != 0) {
-            return new XXHash(nativeHandle);
-        }
-
-        return null;
+        return new XXHash(nativeHandle);
     }
 
     /**

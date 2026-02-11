@@ -138,8 +138,6 @@ jlong JNICALL
         return (jlong)0;
     }
 
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
-
     return (jlong)hash;
 }
 
@@ -156,8 +154,6 @@ jlong JNICALL
         return (jlong)0;
     }
 
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
-
     return (jlong)hash;
 }
 
@@ -173,8 +169,6 @@ jlong JNICALL
         aws_jni_throw_runtime_exception(env, "XXHash.XXHash3_128Create: create xxhash3_128 instance failed");
         return (jlong)0;
     }
-
-    AWS_FATAL_ASSERT(!(*env)->ExceptionCheck(env));
 
     return (jlong)hash;
 }

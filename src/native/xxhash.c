@@ -107,7 +107,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash3_128Compute: failed to pin input bytes");
-       goto on_done;
+        goto on_done;
     }
 
     int result = aws_xxhash3_128_compute(seed, c_byte_array, &hash_buffer);
@@ -134,6 +134,7 @@ jlong JNICALL
 
     struct aws_xxhash *hash = aws_xxhash64_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
+        aws_jni_throw_runtime_exception(env, "XXHash.XXHash64Create: create xxhash64 instance failed");
         return (jlong)0;
     }
 
@@ -151,6 +152,7 @@ jlong JNICALL
 
     struct aws_xxhash *hash = aws_xxhash3_64_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
+        aws_jni_throw_runtime_exception(env, "XXHash.XXHash3_64Create: create xxhash3_64 instance failed");
         return (jlong)0;
     }
 
@@ -168,6 +170,7 @@ jlong JNICALL
 
     struct aws_xxhash *hash = aws_xxhash3_128_new(aws_jni_get_allocator(), seed);
     if (hash == NULL) {
+        aws_jni_throw_runtime_exception(env, "XXHash.XXHash3_128Create: create xxhash3_128 instance failed");
         return (jlong)0;
     }
 

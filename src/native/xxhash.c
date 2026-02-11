@@ -12,7 +12,7 @@
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(push)
-#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'jni_tls_ctx_options *' */
+#        pragma warning(disable : 4305) /* 'type cast': truncation from 'jlong' to 'aws_xxhash *' */
 #    else
 #        pragma GCC diagnostic push
 #        pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
@@ -28,6 +28,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     (void)jni_class;
     aws_cache_jni_ids(env);
 
+    jbyteArray hash = NULL;
     struct aws_byte_buf hash_buffer;
     AWS_ZERO_STRUCT(hash_buffer);
 
@@ -36,10 +37,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
-        return NULL;
+        goto on_done;
     }
 
-    jbyteArray hash = NULL;
     int result = aws_xxhash64_compute(seed, c_byte_array, &hash_buffer);
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     if (result != AWS_OP_SUCCESS) {
@@ -49,6 +49,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
         hash = aws_jni_byte_array_from_cursor(env, &hash_cursor);
     }
 
+on_done:
     aws_byte_buf_clean_up(&hash_buffer);
 
     return hash;
@@ -62,6 +63,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     (void)jni_class;
     aws_cache_jni_ids(env);
 
+    jbyteArray hash = NULL;
     struct aws_byte_buf hash_buffer;
     AWS_ZERO_STRUCT(hash_buffer);
 
@@ -70,10 +72,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash3_64Compute: failed to pin input bytes");
-        return NULL;
+        goto on_done;
     }
 
-    jbyteArray hash = NULL;
     int result = aws_xxhash3_64_compute(seed, c_byte_array, &hash_buffer);
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     if (result != AWS_OP_SUCCESS) {
@@ -83,6 +84,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
         hash = aws_jni_byte_array_from_cursor(env, &hash_cursor);
     }
 
+on_done:
     aws_byte_buf_clean_up(&hash_buffer);
 
     return hash;
@@ -96,6 +98,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     (void)jni_class;
     aws_cache_jni_ids(env);
 
+    jbyteArray hash = NULL;
     struct aws_byte_buf hash_buffer;
     AWS_ZERO_STRUCT(hash_buffer);
 
@@ -104,10 +107,9 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
     struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash3_128Compute: failed to pin input bytes");
-        return NULL;
+       goto on_done;
     }
 
-    jbyteArray hash = NULL;
     int result = aws_xxhash3_128_compute(seed, c_byte_array, &hash_buffer);
     aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     if (result != AWS_OP_SUCCESS) {
@@ -117,6 +119,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xx
         hash = aws_jni_byte_array_from_cursor(env, &hash_cursor);
     }
 
+on_done:
     aws_byte_buf_clean_up(&hash_buffer);
 
     return hash;

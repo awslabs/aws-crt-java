@@ -1130,7 +1130,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
         aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(env, aws_jni_get_allocator(), jni_metrics);
 
     if (aws_mqtt_client_connection_set_metrics(connection->client_connection, &iot_sdk_metrics_java_jni->metrics)) {
-        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_metrics: Failed to set metrics");
+        error = aws_last_error();
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "MqttClientConnection.mqtt_set_metrics fail with error code %d(%s)",
+            error,
+            aws_error_str(error));
     }
 
     aws_mqtt_iot_sdk_metrics_java_jni_destroy(env, aws_jni_get_allocator(), iot_sdk_metrics_java_jni);

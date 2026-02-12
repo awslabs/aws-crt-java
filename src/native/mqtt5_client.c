@@ -2121,24 +2121,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     /* Check if metrics are enabled and set metrics value */
     jboolean metrics_enabled =
         (*env)->GetBooleanField(env, jni_options, mqtt5_client_options_properties.metrics_enabled_field_id);
-    if (aws_jni_check_and_clear_exception(env)) {
-        s_aws_mqtt5_client_log_and_throw_exception(
-            env, "MQTT5 client new: error getting metrics enabled", AWS_ERROR_INVALID_STATE);
-        goto clean_up;
-    }
+    bool metrics_has_error = aws_jni_check_and_clear_exception(env);
 
-    if (metrics_enabled) {
+    if (!metrics_has_error && metrics_enabled) {
         jobject jni_iot_device_sdk_metrics =
             (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
-        if (aws_jni_check_and_clear_exception(env)) {
-            s_aws_mqtt5_client_log_and_throw_exception(
-                env, "MQTT5 client new: error getting IoT device SDK metrics", AWS_ERROR_INVALID_STATE);
-            goto clean_up;
+        if (!aws_jni_check_and_clear_exception(env)) {
+            iot_device_sdk_metrics =
+                aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(env, allocator, jni_iot_device_sdk_metrics);
+            client_options.metrics = iot_device_sdk_metrics ? &iot_device_sdk_metrics->metrics : NULL;
+        } else {
+            AWS_LOGF_DEBUG(
+                AWS_LS_MQTT5_CLIENT, "MQTT5 client new: Was unable to set metrics, continuing with no metrics.");
         }
-
-        iot_device_sdk_metrics =
-            aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(env, allocator, jni_iot_device_sdk_metrics);
-        client_options.metrics = &iot_device_sdk_metrics->metrics;
     }
 
     /* Make the MQTT5 client */

@@ -1131,7 +1131,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
 
     if (aws_mqtt_client_connection_set_metrics(connection->client_connection, &iot_sdk_metrics_java_jni->metrics)) {
         error = aws_last_error();
-        AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "MqttClientConnection.mqtt_set_metrics fail with error code %d(%s)",
+        AWS_LOGF_DEBUG(
+            AWS_LS_MQTT_CLIENT,
+            "MqttClientConnection.mqtt_set_metrics fail with error code %d(%s)",
             error,
             aws_error_str(error));
     }

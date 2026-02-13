@@ -12,10 +12,10 @@
 
 static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
 
-void aws_mqtt_iot_sdk_metrics_java_jni_destroy(
+void aws_mqtt_iot_metrics_java_jni_destroy(
     JNIEnv *env,
     struct aws_allocator *allocator,
-    struct aws_mqtt_iot_sdk_metrics_java_jni *java_metrics) {
+    struct aws_mqtt_iot_metrics_java_jni *java_metrics) {
     (void)env;
 
     if (!java_metrics) {
@@ -30,13 +30,13 @@ void aws_mqtt_iot_sdk_metrics_java_jni_destroy(
     aws_mem_release(allocator, java_metrics);
 }
 
-struct aws_mqtt_iot_sdk_metrics_java_jni *aws_mqtt_iot_sdk_metrics_java_jni_create_from_java(
+struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_java(
     JNIEnv *env,
     struct aws_allocator *allocator,
     jobject java_iot_device_sdk_metrics) {
 
-    struct aws_mqtt_iot_sdk_metrics_java_jni *java_metrics =
-        aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_iot_sdk_metrics_java_jni));
+    struct aws_mqtt_iot_metrics_java_jni *java_metrics =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_iot_metrics_java_jni));
     if (java_metrics == NULL) {
         AWS_LOGF_ERROR(
             AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics create_from_java: Creating new IoTDeviceSDKMetrics failed");
@@ -62,12 +62,12 @@ struct aws_mqtt_iot_sdk_metrics_java_jni *aws_mqtt_iot_sdk_metrics_java_jni_crea
 
 on_error:
     /* Clean up */
-    aws_mqtt_iot_sdk_metrics_java_jni_destroy(env, allocator, java_metrics);
+    aws_mqtt_iot_metrics_java_jni_destroy(env, allocator, java_metrics);
     return NULL;
 }
 
-struct aws_mqtt_iot_sdk_metrics *aws_mqtt_iot_sdk_metrics_java_jni_get_metrics(
-    struct aws_mqtt_iot_sdk_metrics_java_jni *java_metrics) {
+struct aws_mqtt_iot_metrics *aws_mqtt_iot_metrics_java_jni_get_metrics(
+    struct aws_mqtt_iot_metrics_java_jni *java_metrics) {
     if (java_metrics) {
         return &java_metrics->metrics;
     } else {

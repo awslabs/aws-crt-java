@@ -208,9 +208,9 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
         if (aws_xxhash_update(hash, cursor)) {
             aws_jni_throw_runtime_exception(env, "XXHash.xxHashUpdate: failed to update hash");
         }
-    }
 
-    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
+        aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
+    }
 }
 
 JNIEXPORT

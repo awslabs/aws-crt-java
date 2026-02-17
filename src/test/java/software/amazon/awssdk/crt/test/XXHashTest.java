@@ -25,8 +25,8 @@ public class XXHashTest extends CrtTestFixture {
 
         byte[] input2 = "llo world".getBytes();
         try(XXHash hash = XXHash.newXXHash64()) {
-            hash.update((int)"H");
-            hash.update((int)"e");
+            hash.update('H'.getBytes(););
+            hash.update(('e'.getBytes());
             hash.update(input2);
             byte[] out2 = hash.digest();
 

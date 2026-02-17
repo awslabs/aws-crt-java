@@ -189,7 +189,7 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     JNIEnv *env,
     jclass jni_class,
     jlong hash_ptr,
-    jbyteArray input, 
+    jbyteArray input,
     jint offset,
     jint length) {
 

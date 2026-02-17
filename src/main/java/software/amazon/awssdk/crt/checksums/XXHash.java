@@ -103,7 +103,36 @@ public class XXHash extends CrtResource {
      * @param input input to update with
      */
     public void update(byte[] input) {
-        xxHashUpdate(getNativeHandle(), input);
+        this.update(b, 0, b.length);
+        
+    }
+
+    /**
+     * Update xxhash state with a single byte
+     * @param b input to update with
+     */
+    public void update(int b) {
+        if (b < 0 || b > 0xff) {
+            throw new IllegalArgumentException();
+        }
+        byte[] buf = { (byte) (b & 0x000000ff) };
+        this.update(buf);
+    }
+
+    /**
+     * Update xxhash state with a subrange of input
+     * @param input input to update with
+     * @param offset to start update with
+     * @param length of data
+     */
+    public void update(byte[] input, int offset, int length) {
+        if (input == null) {
+            throw new NullPointerException();
+        }
+        if (offset < 0 || length < 0 || off > b.length - length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        xxHashUpdate(getNativeHandle(), input, offset, length);
     }
 
     /**
@@ -184,6 +213,6 @@ public class XXHash extends CrtResource {
     private static native long xxHash3128Create(long seed);
     private static native void xxHashRelease(long xxhash);
 
-    private static native void xxHashUpdate(long xxhash, byte[] input);
+    private static native void xxHashUpdate(long xxhash, byte[] input, int offset, int length);
     private static native byte[] xxHashFinalize(long xxhash);
 }

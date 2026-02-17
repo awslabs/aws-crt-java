@@ -103,7 +103,7 @@ public class XXHash extends CrtResource {
      * @param input input to update with
      */
     public void update(byte[] input) {
-        this.update(b, 0, b.length);
+        this.update(input, 0, input.length);
         
     }
 

@@ -129,7 +129,7 @@ public class XXHash extends CrtResource {
         if (input == null) {
             throw new NullPointerException();
         }
-        if (offset < 0 || length < 0 || offset > b.length - length) {
+        if (offset < 0 || length < 0 || offset > input.length - length) {
             throw new ArrayIndexOutOfBoundsException();
         }
         xxHashUpdate(getNativeHandle(), input, offset, length);

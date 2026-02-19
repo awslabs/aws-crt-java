@@ -28,6 +28,7 @@
 #include "crt.h"
 
 #include "http_request_utils.h"
+#include "iot_device_sdk_metrics.h"
 #include "java_class_ids.h"
 #include "mqtt5_client_jni.h"
 #include "mqtt_connection.h"
@@ -1109,6 +1110,35 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     if (password.len > 0) {
         aws_jni_byte_cursor_from_jstring_release(env, jni_pass, password);
     }
+}
+
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection_mqttClientConnectionSetMetrics(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_connection,
+    jobject jni_metrics) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct mqtt_jni_connection *connection = (struct mqtt_jni_connection *)jni_connection;
+    if (!connection) {
+        aws_jni_throw_runtime_exception(env, "MqttClientConnection.mqtt_set_metrics: Invalid connection");
+        return;
+    }
+
+    struct aws_mqtt_iot_metrics_java_jni *iot_metrics_java_jni =
+        aws_mqtt_iot_metrics_java_jni_create_from_java(env, aws_jni_get_allocator(), jni_metrics);
+
+    if (aws_mqtt_client_connection_set_metrics(connection->client_connection, &iot_metrics_java_jni->metrics)) {
+        int error = aws_last_error();
+        AWS_LOGF_DEBUG(
+            AWS_LS_MQTT_CLIENT,
+            "MqttClientConnection.mqtt_set_metrics fail with error code %d(%s)",
+            error,
+            aws_error_str(error));
+    }
+
+    aws_mqtt_iot_metrics_java_jni_destroy(env, aws_jni_get_allocator(), iot_metrics_java_jni);
 }
 
 JNIEXPORT void JNICALL

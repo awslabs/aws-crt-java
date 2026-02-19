@@ -23,8 +23,11 @@ public class XXHashTest extends CrtTestFixture {
 
         assertArrayEquals(out, expected);
 
+        byte[] input2 = "llo world".getBytes();
         try(XXHash hash = XXHash.newXXHash64()) {
-            hash.update(input);
+            hash.update((byte)'H');
+            hash.update((byte)'e');
+            hash.update(input2);
             byte[] out2 = hash.digest();
 
             assertArrayEquals(out2, expected);
@@ -42,7 +45,7 @@ public class XXHashTest extends CrtTestFixture {
         assertArrayEquals(out, expected);
 
         try(XXHash hash = XXHash.newXXHash3_64()) {
-            hash.update(input);
+            hash.update(input, 0, 11);
             byte[] out2 = hash.digest();
 
             assertArrayEquals(out2, expected);

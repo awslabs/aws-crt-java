@@ -94,5 +94,5 @@ public class CRC64NVME implements Checksum, Cloneable {
     /*******************************************************************************
      * native methods
      ******************************************************************************/
-    private static native long crc64nvme(byte[] input, long previous, int offset, int length);;
+    private static native long crc64nvme(byte[] input, long previous, int offset, int length);
 }

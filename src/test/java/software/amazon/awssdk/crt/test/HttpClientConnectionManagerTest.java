@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -304,6 +306,21 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         // IPv6 localhost with brackets - same as HOST but using [::1] instead of localhost
         URI uri = new URI("https://[::1]:8082");
         String bodyToSend = "test IPv6 echo body";
+        final ByteBuffer bodyBytes = ByteBuffer.wrap(bodyToSend.getBytes(UTF8));
+
+        HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer outBuffer) {
+                ByteBufferUtils.transferData(bodyBytes, outBuffer);
+                return bodyBytes.remaining() == 0;
+            }
+
+            @Override
+            public boolean resetPosition() {
+                bodyBytes.position(0);
+                return true;
+            }
+        };
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
              HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -326,7 +343,7 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
                     new HttpHeader("Host", uri.getHost()),
                     new HttpHeader("Content-Length", Integer.toString(bodyToSend.getBytes(UTF8).length))
                 };
-                HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, null);
+                HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, bodyStream);
 
                 CompletableFuture<Integer> statusFuture = new CompletableFuture<>();
                 HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {

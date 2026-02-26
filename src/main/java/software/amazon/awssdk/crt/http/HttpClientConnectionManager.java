@@ -62,6 +62,11 @@ public class HttpClientConnectionManager extends CrtResource {
                 if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
             }
         }
+        /* Defensive check to ensure we are not passing brackets in with host name */
+        String host = uri.getHost();
+        if (host.startsWith("[") && host.endsWith("]")) {
+            host = host.substring(1, host.length() - 1);
+        }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
 
@@ -115,7 +120,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                             useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
                                             useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                                             windowSize,
-                                            uri.getHost().getBytes(UTF8),
+                                            host.getBytes(UTF8),
                                             port,
                                             maxConnections,
                                             proxyConnectionType,

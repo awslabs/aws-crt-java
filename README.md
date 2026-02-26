@@ -298,3 +298,6 @@ To debug native code with VSCode or CLion or any other IDE:
 3. Set the parameters to be the ones used by the ```mvn``` script, as per above
 4. Set the working directory to the `aws-crt-java` directory
 5. On windows, you will need to manually load the PDB via the Modules window in Visual Studio, as it is not embedded in the JAR. It will be in the ```target/cmake-build/lib/windows/<arch>``` folder.
+
+## Attribution
+This library exposes native XXHash implementation (https://github.com/Cyan4973/xxHash) through JNI interface.

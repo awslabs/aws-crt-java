@@ -294,4 +294,47 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             conn.close();
         }
     }
+
+    @Test
+    public void testIPv6URIBracketsStripped() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        // IPv6 localhost with brackets - same as HOST but using [::1] instead of localhost
+        URI uri = new URI("https://[::1]:8082");
+        String bodyToSend = "test IPv6 echo body";
+
+        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, 1)) {
+            HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
+
+            HttpHeader[] requestHeaders = new HttpHeader[]{
+                new HttpHeader("Host", uri.getHost()),
+                new HttpHeader("Content-Length", Integer.toString(bodyToSend.getBytes(UTF8).length))
+            };
+            HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, null);
+
+            CompletableFuture<Integer> statusFuture = new CompletableFuture<>();
+            HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                    statusFuture.complete(responseStatusCode);
+                }
+                @Override
+                public void onResponseComplete(HttpStream stream, int errorCode) {
+                    if (!statusFuture.isDone()) {
+                        statusFuture.completeExceptionally(new RuntimeException("Request failed with error: " + errorCode));
+                    }
+                    stream.close();
+                    connectionPool.releaseConnection(conn);
+                }
+            });
+            stream.activate();
+
+            int status = statusFuture.get(60, TimeUnit.SECONDS);
+            Assert.assertEquals(200, status);
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

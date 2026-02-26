@@ -22,6 +22,7 @@ import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.Log;
 
@@ -304,34 +305,49 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
         URI uri = new URI("https://[::1]:8082");
         String bodyToSend = "test IPv6 echo body";
 
-        try (HttpClientConnectionManager connectionPool = createConnectionManager(uri, 1, 1)) {
-            HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+             SocketOptions sockOpts = new SocketOptions();
+             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withVerifyPeer(false);
+             TlsContext tlsContext = new TlsContext(tlsOpts)) {
 
-            HttpHeader[] requestHeaders = new HttpHeader[]{
-                new HttpHeader("Host", uri.getHost()),
-                new HttpHeader("Content-Length", Integer.toString(bodyToSend.getBytes(UTF8).length))
-            };
-            HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, null);
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                    .withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(1);
 
-            CompletableFuture<Integer> statusFuture = new CompletableFuture<>();
-            HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
-                    statusFuture.complete(responseStatusCode);
-                }
-                @Override
-                public void onResponseComplete(HttpStream stream, int errorCode) {
-                    if (!statusFuture.isDone()) {
-                        statusFuture.completeExceptionally(new RuntimeException("Request failed with error: " + errorCode));
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
+
+                HttpHeader[] requestHeaders = new HttpHeader[]{
+                    new HttpHeader("Host", uri.getHost()),
+                    new HttpHeader("Content-Length", Integer.toString(bodyToSend.getBytes(UTF8).length))
+                };
+                HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, null);
+
+                CompletableFuture<Integer> statusFuture = new CompletableFuture<>();
+                HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                        statusFuture.complete(responseStatusCode);
                     }
-                    stream.close();
-                    connectionPool.releaseConnection(conn);
-                }
-            });
-            stream.activate();
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        if (!statusFuture.isDone()) {
+                            statusFuture.completeExceptionally(new RuntimeException("Request failed with error: " + errorCode));
+                        }
+                        stream.close();
+                        connectionPool.releaseConnection(conn);
+                    }
+                });
+                stream.activate();
 
-            int status = statusFuture.get(60, TimeUnit.SECONDS);
-            Assert.assertEquals(200, status);
+                int status = statusFuture.get(60, TimeUnit.SECONDS);
+                Assert.assertEquals(200, status);
+            }
         }
 
         CrtResource.logNativeResources();

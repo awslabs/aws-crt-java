@@ -62,7 +62,12 @@ public class HttpClientConnectionManager extends CrtResource {
                 if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
             }
         }
-        /* Defensive check to ensure we are not passing brackets in with host name */
+        /*
+         * Defensive check to ensure we are not passing brackets in with host name.
+         * This check is primarily for ipv6 as the spec requires passing brackets but
+         * CRT expects host names without brackets and we found inconsistent behaviors
+         * between different languages while getting hostname from uri using native parsers.
+         */
         String host = uri.getHost();
         if (host.startsWith("[") && host.endsWith("]")) {
             host = host.substring(1, host.length() - 1);

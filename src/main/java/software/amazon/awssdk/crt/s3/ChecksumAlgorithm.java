@@ -22,7 +22,7 @@ public enum ChecksumAlgorithm {
 
     SHA256(4),
 
-    CRC64NVME(5);
+    CRC64NVME(5),
 
     SHA512(6),
 
@@ -30,7 +30,7 @@ public enum ChecksumAlgorithm {
 
     XXHASH3_64(8),
 
-    XXHASH3_128(9),
+    XXHASH3_128(9);
 
     ChecksumAlgorithm(int nativeValue) {
         this.nativeValue = nativeValue;

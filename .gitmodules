@@ -28,9 +28,10 @@
 [submodule "crt/aws-checksums"]
 	path = crt/aws-checksums
 	url = https://github.com/awslabs/aws-checksums.git
-[submodule "crt/aws-c-s3"]
+[submodule "crt/aws-c-s3-staging"]
 	path = crt/aws-c-s3
-	url = https://github.com/awslabs/aws-c-s3.git
+	url = https://github.com/awslabs/aws-c-s3-staging.git
+	branch = xxhash
 [submodule "aws-lc"]
 	path = crt/aws-lc
 	url = https://github.com/awslabs/aws-lc.git

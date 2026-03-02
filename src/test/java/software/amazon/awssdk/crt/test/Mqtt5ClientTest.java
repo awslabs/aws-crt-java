@@ -360,6 +360,78 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
+    /**
+     * ============================================================
+     * METRICS TEST CASES
+     * ============================================================
+     */
+
+    private void doConnDC_Metrics_EnabledTest() {
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
+                    AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
+            builder.withLifecycleEvents(events);
+            // Metrics are enabled by default (metricsEnabled = true)
+            // This should cause connection failure because metrics appends to username,
+            // corrupting basic auth credentials
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
+            builder.withConnectOptions(connectOptions.build());
+
+            bool exceptionOccurred = false;
+            bool foundExpectedError = false;
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+
+                client.start();
+
+                try {
+                    events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    exceptionOccurred = true;
+                    if (events.connectFailureCode == 5150) {
+                        foundExpectedError = true;
+                    } else {
+                        System.out.println("EXCEPTION: " + ex);
+                        System.out.println(ex.getMessage() + " \n");
+                    }
+                }
+
+                if (foundExpectedError == false) {
+                    System.out.println("Error code was not AWS_ERROR_MQTT5_CONNACK_CONNECTION_REFUSED like expected! There was an exception though");
+                }
+                if (exceptionOccurred == false) {
+                    fail("No exception occurred!");
+                }
+
+                client.stop();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Test that connection fails with basic auth when metrics are enabled (default).
+     * When metrics are enabled, the SDK appends metrics info to the username field,
+     * which corrupts basic authentication credentials and causes connection failure.
+     */
+    @Test
+    public void ConnDC_Metrics_Enabled() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+
+        doConnDC_Metrics_EnabledTest();
+
+        CrtResource.waitForNoResources();
+    }
+
     private void doConnDC_UC3Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
             tlsOptions.withVerifyPeer(false);

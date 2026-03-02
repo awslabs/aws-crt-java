@@ -269,6 +269,49 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         }
      }
 
+    /**
+     * ============================================================
+     * METRICS TEST CASES
+     * ============================================================
+     */
+
+    /**
+     * Test that connection fails with basic auth when metrics are enabled (default).
+     * When metrics are enabled, the SDK appends metrics info to the username field,
+     * which corrupts basic authentication credentials and causes connection failure.
+     */
+    @Test
+    public void testConnDC_Metrics_BasicAuth_Enabled() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT311_BASIC_AUTH_USERNAME, AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD);
+
+        boolean connectionFailed = false;
+        try {
+            // Metrics are enabled by default (metricsEnabled = true)
+            // This should cause connection failure because metrics appends to username,
+            // corrupting basic auth credentials
+            connectDirect(
+                null,  // No TLS context for basic auth
+                AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST,
+                Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT),
+                AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
+                AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
+                null,
+                true);  // Metrics enabled
+        } catch (Exception ex) {
+            // Expected - connection should fail with metrics enabled and basic auth
+        }
+
+        OnConnectionFailureReturn result = waitForConnectFailure();
+        assertTrue("Connection error callback was empty", result != null);
+        assertTrue("Error code was success when it should not be", result.getErrorCode() != 0);
+
+        close();
+        CrtResource.waitForNoResources();
+    }
+
      /* This scenario once led to memory leaks, so this test primarily checks that there is no memory leaks. */
      @Test
      public void testMultipleFailedAttemptsOnSingleConnection() {

@@ -1360,9 +1360,13 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
             ArrayList<ChecksumAlgorithm> algorList = new ArrayList<ChecksumAlgorithm>();
+            algorList.add(ChecksumAlgorithm.XXHASH3_128);
+            algorList.add(ChecksumAlgorithm.XXHASH3_64);
             algorList.add(ChecksumAlgorithm.CRC64NVME);
             algorList.add(ChecksumAlgorithm.CRC32C);
             algorList.add(ChecksumAlgorithm.CRC32);
+            algorList.add(ChecksumAlgorithm.XXHASH64);
+            algorList.add(ChecksumAlgorithm.SHA512);
             algorList.add(ChecksumAlgorithm.SHA1);
             algorList.add(ChecksumAlgorithm.SHA256);
             ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true)

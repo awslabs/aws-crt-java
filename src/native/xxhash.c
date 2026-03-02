@@ -189,7 +189,9 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     JNIEnv *env,
     jclass jni_class,
     jlong hash_ptr,
-    jbyteArray input) {
+    jbyteArray input,
+    jint offset,
+    jint length) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -200,12 +202,15 @@ void JNICALL Java_software_amazon_awssdk_crt_checksums_XXHash_xxHashUpdate(
     if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
         aws_jni_throw_runtime_exception(env, "XXHash.xxHash64Compute: failed to pin input bytes");
     } else {
-        if (aws_xxhash_update(hash, c_byte_array)) {
+        struct aws_byte_cursor cursor = c_byte_array;
+        aws_byte_cursor_advance(&cursor, offset);
+        cursor.len = aws_min_size(length, cursor.len);
+        if (aws_xxhash_update(hash, cursor)) {
             aws_jni_throw_runtime_exception(env, "XXHash.xxHashUpdate: failed to update hash");
         }
-    }
 
-    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
+        aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
+    }
 }
 
 JNIEXPORT

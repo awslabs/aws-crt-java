@@ -304,9 +304,13 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
             // Expected - connection should fail with metrics enabled and basic auth
         }
 
-        OnConnectionFailureReturn result = waitForConnectFailure();
-        assertTrue("Connection error callback was empty", result != null);
-        assertTrue("Error code was success when it should not be", result.getErrorCode() != 0);
+        try {
+            OnConnectionFailureReturn result = waitForConnectFailure();
+            assertTrue("Connection error callback was empty", result != null);
+            assertTrue("Error code was success when it should not be", result.getErrorCode() != 0);
+        } catch (Exception ex) {
+            fail(ex.toString());
+        }
 
         close();
         CrtResource.waitForNoResources();

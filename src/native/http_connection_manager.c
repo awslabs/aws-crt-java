@@ -96,7 +96,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     jlong jni_tls_ctx,
     jlong jni_tls_connection_options,
     jlong jni_window_size,
-    jbyteArray jni_endpoint,
+    jbyteArray jni_host,
     jint jni_port,
     jint jni_max_conns,
     jint jni_proxy_connection_type,
@@ -141,7 +141,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
-    struct aws_byte_cursor endpoint = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
+    struct aws_byte_cursor host = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_host);
 
     size_t window_size;
     if (aws_size_t_from_java(env, &window_size, jni_window_size, "Initial window size")) {
@@ -161,7 +161,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     AWS_ZERO_STRUCT(tls_conn_options);
     if (new_tls_conn_opts) {
         aws_tls_connection_options_init_from_ctx(&tls_conn_options, tls_ctx);
-        aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &endpoint);
+        aws_tls_connection_options_set_server_name(&tls_conn_options, allocator, &host);
         tls_connection_options = &tls_conn_options;
     }
 
@@ -180,7 +180,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     manager_options.initial_window_size = window_size;
     manager_options.socket_options = socket_options;
     manager_options.tls_connection_options = tls_connection_options;
-    manager_options.host = endpoint;
+    manager_options.host = host;
     manager_options.port = port;
     manager_options.max_connections = (size_t)jni_max_conns;
     manager_options.shutdown_complete_callback = &s_on_http_conn_manager_shutdown_complete_callback;
@@ -257,7 +257,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnectio
     }
 
 cleanup:
-    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_endpoint, endpoint);
+    aws_jni_byte_cursor_from_jbyteArray_release(env, jni_host, host);
 
     if (binding->manager == NULL) {
         s_destroy_manager_binding(binding, env);

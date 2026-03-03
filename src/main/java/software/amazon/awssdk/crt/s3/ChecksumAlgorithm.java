@@ -28,9 +28,9 @@ public enum ChecksumAlgorithm {
 
     XXHASH64(7),
 
-    XXHASH3_64(8),
+    XXHASH3(8),
 
-    XXHASH3_128(9);
+    XXHASH128(9);
 
     ChecksumAlgorithm(int nativeValue) {
         this.nativeValue = nativeValue;
@@ -59,8 +59,8 @@ public enum ChecksumAlgorithm {
         enumMapping.put(CRC64NVME.getNativeValue(), CRC64NVME);
         enumMapping.put(SHA512.getNativeValue(), SHA512);
         enumMapping.put(XXHASH64.getNativeValue(), XXHASH64);
-        enumMapping.put(XXHASH3_64.getNativeValue(), XXHASH3_64);
-        enumMapping.put(XXHASH3_128.getNativeValue(), XXHASH3_128);
+        enumMapping.put(XXHASH3.getNativeValue(), XXHASH3);
+        enumMapping.put(XXHASH128.getNativeValue(), XXHASH128);
         return enumMapping;
     }
 

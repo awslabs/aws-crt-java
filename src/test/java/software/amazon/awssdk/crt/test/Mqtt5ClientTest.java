@@ -382,8 +382,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
 
-            bool exceptionOccurred = false;
-            bool foundExpectedError = false;
+            boolean exceptionOccurred = false;
+            boolean foundExpectedError = false;
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
 

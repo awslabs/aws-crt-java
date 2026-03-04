@@ -38,6 +38,12 @@ struct aws_mqtt5_client_publish_return_data {
     jobject jni_publish_future;
 };
 
+/* Context for manual PUBACK control. Valid only during the publish received callback. */
+struct manual_puback_control_context {
+    struct aws_mqtt5_client *client;
+    const struct aws_mqtt5_packet_publish_view *publish_packet;
+};
+
 struct aws_mqtt5_client_subscribe_return_data {
     struct aws_mqtt5_client_java_jni *java_client;
     jobject jni_subscribe_future;
@@ -538,6 +544,9 @@ static void s_aws_mqtt5_client_java_publish_received(
         /* One reference is needed for the PublishReturn */
         references_needed += 1;
 
+        /* One reference is needed for the long[] context pointer holder array */
+        references_needed += 1;
+
         /* A Publish packet will need 5 references at minimum */
         references_needed += 5;
         /* Optionals */
@@ -577,12 +586,38 @@ static void s_aws_mqtt5_client_java_publish_received(
         goto clean_up;
     }
 
-    /* Make the PublishReturn struct that will hold all of the data that is passed to Java */
+    /* Create manual PUBACK control context (valid only during this callback)
+     * We clean this before clean_up since we don't want to create this early and we can be sure to
+     * hit the aws_mem_release AFTER we return from the publish events callback.
+     */
+    struct manual_puback_control_context *control_context =
+        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct manual_puback_control_context));
+
+    /*
+     * Create a single-element long[] array to hold the native context pointer.
+     * This allows native code to invalidate the pointer after the callback returns
+     * using SetLongArrayRegion(array, 0, 1, &zero) without using an extra JNI method ID.
+     */
+    jlongArray context_ptr_holder = NULL;
+    control_context->client = java_client->client;
+    control_context->publish_packet = publish;
+
+    context_ptr_holder = (*env)->NewLongArray(env, 1);
+    /* If allocation failed, Java will throw IllegalStateException on acquirePubackControl(). */
+    if (context_ptr_holder != NULL) {
+        jlong context_ptr_value = (jlong)(uintptr_t)control_context;
+        /* Assigning the pointer to the allocated manual_puback_control_context to the single-element of the array */
+        (*env)->SetLongArrayRegion(env, context_ptr_holder, 0, 1, &context_ptr_value);
+    }
+
+    /* Make the PublishReturn struct that will hold all of the data that is passed to Java.
+     * The constructor takes (PublishPacket, long[]) where long[0] is the native context pointer. */
     publish_packet_return_data = (*env)->NewObject(
         env,
         mqtt5_publish_return_properties.return_class,
         mqtt5_publish_return_properties.return_constructor_id,
-        publish_packet_data);
+        publish_packet_data,
+        context_ptr_holder);
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     if (java_client->jni_publish_events) {
@@ -594,6 +629,22 @@ static void s_aws_mqtt5_client_java_publish_received(
             publish_packet_return_data);
         aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
     }
+
+    /*
+     * Invalidate the context pointer in the long[] array now that the callback has returned.
+     * This prevents use-after-free if acquirePubackControl() is called after the callback.
+     * SetLongArrayRegion requires no extra JNI method ID.
+     */
+    if (context_ptr_holder != NULL) {
+        jlong zero = 0;
+        (*env)->SetLongArrayRegion(env, context_ptr_holder, 0, 1, &zero);
+    }
+
+    /* Free the context. The publish_packet pointer is no longer valid after this callback returns */
+    if (control_context != NULL) {
+        aws_mem_release(aws_jni_get_allocator(), control_context);
+    }
+
     goto clean_up;
 
 clean_up:
@@ -2166,6 +2217,78 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         aws_mqtt5_client_release(java_client->client);
     } else {
         aws_mqtt5_client_java_destroy(env, allocator, java_client);
+    }
+}
+
+/*******************************************************************************
+ * Manual PUBACK Control Functions
+ ******************************************************************************/
+
+/**
+ * Called from PublishReturn.mqtt5AcquirePubackControl(long nativeContextPtr).
+ * Calls aws_mqtt5_client_acquire_puback to take manual control of the PUBACK
+ * for the received PUBLISH packet. Returns the puback_control_id as a jlong.
+ *
+ * This must be called within the onMessageReceived callback while the
+ * native context pointer is still valid.
+ */
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_PublishReturn_mqtt5AcquirePubackControl(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong native_context_ptr) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    if (native_context_ptr == 0) {
+        aws_jni_throw_runtime_exception(
+            env,
+            "PublishReturn.acquirePubackControl: context is no longer valid. "
+            "acquirePubackControl() must be called within the onMessageReceived callback.");
+        return 0;
+    }
+
+    struct manual_puback_control_context *context =
+        (struct manual_puback_control_context *)(uintptr_t)native_context_ptr;
+
+    if (!context->client || !context->publish_packet) {
+        aws_jni_throw_runtime_exception(
+            env, "PublishReturn.acquirePubackControl: invalid native PUBACK control context");
+        return 0;
+    }
+
+    uint64_t control_id = aws_mqtt5_client_acquire_puback(context->client, context->publish_packet);
+    return (jlong)control_id;
+}
+
+/**
+ * Called from Mqtt5Client.mqtt5ClientInternalInvokePuback(long client, long controlId).
+ * Calls aws_mqtt5_client_invoke_puback to send the PUBACK for a previously acquired
+ * manual PUBACK control handle.
+ */
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5ClientInternalInvokePuback(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_client,
+    jlong control_id) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
+    if (!java_client) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.invokePuback: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
+        return;
+    }
+    if (!java_client->client) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.invokePuback: Invalid/null native client", AWS_ERROR_INVALID_ARGUMENT);
+        return;
+    }
+
+    int result = aws_mqtt5_client_invoke_puback(java_client->client, (uint64_t)control_id, NULL);
+    if (result != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.invokePuback: aws_mqtt5_client_invoke_puback failed!", aws_last_error());
     }
 }
 

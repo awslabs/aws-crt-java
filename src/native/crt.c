@@ -709,7 +709,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
 }
 
 JNIEXPORT
-bool JNICALL
+jboolean JNICALL
     Java_software_amazon_awssdk_crt_CRT_awsIsTransientError(JNIEnv *env, jclass jni_crt_class, jint error_code) {
     (void)env;
     (void)jni_crt_class;

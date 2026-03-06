@@ -492,16 +492,16 @@ public final class CRT {
      * Given an error code, get a boolean to check if an error is transient or not.
      *
      * Transient errors are defined as IO level errors where we are unable to read an HTTP response.
-     * This can occur due to connect timeouts, read timeouts, or the server closing the connection without 
+     * This can occur due to connect timeouts, read timeouts, or the server closing the connection without
      * sending a response. This method helps identify CRT error codes that are not generic or widely adopted.
      *
-     * This is not the complete logic to identify transient or retryable errors, this includes only IO level 
+     * This is not the complete logic to identify transient or retryable errors, this includes only IO level
      * errors that are transient.
      *
      * @param errorCode An error code returned from an exception or other native function call
      * @return A boolean for if the error is transient or not
      */
-    public static native Boolean awsIsTransientError(int errorCode);
+    public static native boolean awsIsTransientError(int errorCode);
 
     /**
      * @return The number of bytes allocated in native resources. If

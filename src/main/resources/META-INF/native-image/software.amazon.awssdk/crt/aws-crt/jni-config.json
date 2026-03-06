@@ -1257,6 +1257,14 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics",
+    "fields": [
+      {
+        "name": "libraryName"
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions",
     "fields": [
       {
@@ -1306,6 +1314,12 @@
       },
       {
         "name": "topicAliasingOptions"
+      },
+      {
+        "name": "iotDeviceSDKMetrics"
+      },
+      {
+        "name": "metricsEnabled"
       }
     ],
     "methods": [

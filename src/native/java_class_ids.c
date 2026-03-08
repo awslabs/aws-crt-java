@@ -2248,12 +2248,17 @@ static void s_cache_mqtt5_publish_return(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     mqtt5_publish_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_class);
-    // Functions
+    /*
+     * Constructor: PublishReturn(PublishPacket, long[])
+     * The long[] is a single-element array holding the native context pointer.
+     * Native code sets [0] to 0 via SetLongArrayRegion after the callback returns,
+     * requiring no extra JNI method ID.
+     */
     mqtt5_publish_return_properties.return_constructor_id = (*env)->GetMethodID(
         env,
         mqtt5_publish_return_properties.return_class,
         "<init>",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;[J)V");
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
 }
 

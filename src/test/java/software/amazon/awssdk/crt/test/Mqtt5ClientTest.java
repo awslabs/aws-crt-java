@@ -72,8 +72,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 assertNotNull(client);
             }
@@ -89,73 +89,83 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void New_UC2() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                SocketOptions socketOptions = new SocketOptions();
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                    SocketOptions socketOptions = new SocketOptions();) {
 
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
+                        "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT")
-                .withKeepAliveIntervalSeconds(1000L)
-                .withMaximumPacketSizeBytes(1000L)
-                .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
-                .withReceiveMaximum(1000L)
-                .withRequestProblemInformation(true)
-                .withRequestResponseInformation(true)
-                .withSessionExpiryIntervalSeconds(1000L)
-                .withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
-                .withWill(willPacketBuilder.build())
-                .withWillDelayIntervalSeconds(1000L);
+                        .withKeepAliveIntervalSeconds(1000L)
+                        .withMaximumPacketSizeBytes(1000L)
+                        .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
+                        .withReceiveMaximum(1000L)
+                        .withRequestProblemInformation(true)
+                        .withRequestResponseInformation(true)
+                        .withSessionExpiryIntervalSeconds(1000L)
+                        .withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
+                        .withWill(willPacketBuilder.build())
+                        .withWillDelayIntervalSeconds(1000L);
 
                 ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
                 userProperties.add(new UserProperty("Hello", "World"));
                 connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                        AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                        Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
                 builder.withBootstrap(bootstrap)
-                .withConnackTimeoutMs(100L)
-                .withConnectOptions(connectBuilder.build())
-                .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
-                .withLifecycleEvents(new LifecycleEvents() {
-                    @Override
-                    public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
+                        .withConnackTimeoutMs(100L)
+                        .withConnectOptions(connectBuilder.build())
+                        .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
+                        .withLifecycleEvents(new LifecycleEvents() {
+                            @Override
+                            public void onAttemptingConnect(Mqtt5Client client,
+                                    OnAttemptingConnectReturn onAttemptingConnectReturn) {
+                            }
 
-                    @Override
-                    public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
+                            @Override
+                            public void onConnectionSuccess(Mqtt5Client client,
+                                    OnConnectionSuccessReturn onConnectionSuccessReturn) {
+                            }
 
-                    @Override
-                    public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
+                            @Override
+                            public void onConnectionFailure(Mqtt5Client client,
+                                    OnConnectionFailureReturn onConnectionFailureReturn) {
+                            }
 
-                    @Override
-                    public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
+                            @Override
+                            public void onDisconnection(Mqtt5Client client,
+                                    OnDisconnectionReturn onDisconnectionReturn) {
+                            }
 
-                    @Override
-                    public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
-                })
-                .withMaxReconnectDelayMs(1000L)
-                .withMinConnectedTimeToResetReconnectDelayMs(1000L)
-                .withMinReconnectDelayMs(1000L)
-                .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-                .withAckTimeoutSeconds(1000L)
-                .withPingTimeoutMs(1000L)
-                .withPublishEvents(new PublishEvents() {
-                    @Override
-                    public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
-                })
-                .withRetryJitterMode(JitterMode.Default)
-                .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                .withSocketOptions(socketOptions);
+                            @Override
+                            public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
+                            }
+                        })
+                        .withMaxReconnectDelayMs(1000L)
+                        .withMinConnectedTimeToResetReconnectDelayMs(1000L)
+                        .withMinReconnectDelayMs(1000L)
+                        .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
+                        .withAckTimeoutSeconds(1000L)
+                        .withPingTimeoutMs(1000L)
+                        .withPublishEvents(new PublishEvents() {
+                            @Override
+                            public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                            }
+                        })
+                        .withRetryJitterMode(JitterMode.Default)
+                        .withSessionBehavior(ClientSessionBehavior.CLEAN)
+                        .withSocketOptions(socketOptions);
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
@@ -183,8 +193,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 assertNotNull(client);
             }
@@ -200,17 +210,17 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void New_UC4() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                SocketOptions socketOptions = new SocketOptions();
-            ) {
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                    SocketOptions socketOptions = new SocketOptions();) {
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
+                        "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT");
@@ -230,41 +240,51 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                        AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                        Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
                 builder.withBootstrap(bootstrap)
-                .withConnackTimeoutMs(1000L)
-                .withConnectOptions(connectBuilder.build())
-                .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
-                .withLifecycleEvents(new LifecycleEvents() {
-                    @Override
-                    public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
+                        .withConnackTimeoutMs(1000L)
+                        .withConnectOptions(connectBuilder.build())
+                        .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
+                        .withLifecycleEvents(new LifecycleEvents() {
+                            @Override
+                            public void onAttemptingConnect(Mqtt5Client client,
+                                    OnAttemptingConnectReturn onAttemptingConnectReturn) {
+                            }
 
-                    @Override
-                    public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
+                            @Override
+                            public void onConnectionSuccess(Mqtt5Client client,
+                                    OnConnectionSuccessReturn onConnectionSuccessReturn) {
+                            }
 
-                    @Override
-                    public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
+                            @Override
+                            public void onConnectionFailure(Mqtt5Client client,
+                                    OnConnectionFailureReturn onConnectionFailureReturn) {
+                            }
 
-                    @Override
-                    public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}
+                            @Override
+                            public void onDisconnection(Mqtt5Client client,
+                                    OnDisconnectionReturn onDisconnectionReturn) {
+                            }
 
-                    @Override
-                    public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {}
-                })
-                .withMaxReconnectDelayMs(1000L)
-                .withMinConnectedTimeToResetReconnectDelayMs(1000L)
-                .withMinReconnectDelayMs(1000L)
-                .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
-                .withAckTimeoutSeconds(1000L)
-                .withPingTimeoutMs(1000L)
-                .withPublishEvents(new PublishEvents() {
-                    @Override
-                    public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
-                })
-                .withRetryJitterMode(JitterMode.Default)
-                .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                .withSocketOptions(socketOptions);
+                            @Override
+                            public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
+                            }
+                        })
+                        .withMaxReconnectDelayMs(1000L)
+                        .withMinConnectedTimeToResetReconnectDelayMs(1000L)
+                        .withMinReconnectDelayMs(1000L)
+                        .withOfflineQueueBehavior(ClientOfflineQueueBehavior.FAIL_ALL_ON_DISCONNECT)
+                        .withAckTimeoutSeconds(1000L)
+                        .withPingTimeoutMs(1000L)
+                        .withPublishEvents(new PublishEvents() {
+                            @Override
+                            public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                            }
+                        })
+                        .withRetryJitterMode(JitterMode.Default)
+                        .withSessionBehavior(ClientSessionBehavior.CLEAN)
+                        .withSocketOptions(socketOptions);
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
@@ -317,7 +337,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -332,7 +353,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withLifecycleEvents(events);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
+            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
+                    .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -350,10 +372,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_UC2() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+                AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -385,7 +408,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -393,7 +417,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doConnDC_UC4Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-            TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(events);
@@ -413,18 +437,20 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ConnDC_UC4() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnDC_UC5Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-             TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
                     AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT));
@@ -457,21 +483,23 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_UC5() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_DIRECT_MQTT_TLS_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_TLS_PORT,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC5Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC5Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnDC_UC6Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            SocketOptions socketOptions = new SocketOptions()) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                SocketOptions socketOptions = new SocketOptions()) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
-            PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
+                    "Hello World".getBytes());
 
             ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
             connectBuilder.withClientId("MQTT5 CRT" + UUID.randomUUID().toString());
@@ -506,12 +534,14 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     .withPingTimeoutMs(1000L)
                     .withPublishEvents(new PublishEvents() {
                         @Override
-                        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
+                        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                        }
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
                     .withSocketOptions(socketOptions);
-            // Skip websocket, proxy options, and TLS options - those are all different tests
+            // Skip websocket, proxy options, and TLS options - those are all different
+            // tests
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -526,13 +556,14 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     /* Maximum options set connection test */
     @Test
-    public void ConnDC_UC6() throws Exception{
+    public void ConnDC_UC6() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+                AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnDC_UC6Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_UC6Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -545,8 +576,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     private void doConnWS_UC1Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
 
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -579,15 +610,16 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_HOST, AWS_TEST_MQTT5_WS_MQTT_PORT);
 
-        TestUtils.doRetryableTest(this::doConnWS_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnWS_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnWS_UC2Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
                     AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT));
@@ -603,7 +635,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withWebsocketHandshakeTransform(websocketTransform);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
+            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
+                    .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -618,22 +651,23 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     /* Websocket connection with basic authentication */
     @Test
-    public void ConnWS_UC2() throws Exception{
+    public void ConnWS_UC2() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+                AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnWS_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnWS_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnWS_UC3Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
 
             tlsOptions.withVerifyPeer(false);
             try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -669,16 +703,17 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT);
 
-        TestUtils.doRetryableTest(this::doConnWS_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnWS_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnWS_UC5Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-             HostResolver hr = new HostResolver(elg);
-             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-             TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient()) {
 
             tlsOptions.withVerifyPeer(false);
             try (TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -719,23 +754,25 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnWS_UC5() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
-            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+                AWS_TEST_MQTT5_WS_MQTT_TLS_HOST, AWS_TEST_MQTT5_WS_MQTT_TLS_PORT,
+                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
 
-        TestUtils.doRetryableTest(this::doConnWS_UC5Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnWS_UC5Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnWS_UC6Test() {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-            HostResolver hr = new HostResolver(elg);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            SocketOptions socketOptions = new SocketOptions()) {
-            PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                SocketOptions socketOptions = new SocketOptions()) {
+            PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
+                    "Hello World".getBytes());
 
             ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
-            connectBuilder.withClientId("MQTT5 CRT"+UUID.randomUUID().toString());
+            connectBuilder.withClientId("MQTT5 CRT" + UUID.randomUUID().toString());
             connectBuilder.withKeepAliveIntervalSeconds(1000L);
             connectBuilder.withMaximumPacketSizeBytes(1000L);
             connectBuilder.withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -768,7 +805,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     .withPingTimeoutMs(1000L)
                     .withPublishEvents(new PublishEvents() {
                         @Override
-                        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {}
+                        public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                        }
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
@@ -798,10 +836,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnWS_UC6() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
-            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+                AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_WS_MQTT_BASIC_AUTH_PORT,
+                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnWS_UC6Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnWS_UC6Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -824,7 +863,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                "_test", Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    "_test", Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
             builder.withLifecycleEvents(events);
             builder.withMinReconnectDelayMs(1000L);
 
@@ -844,7 +883,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 if (foundExpectedError == false) {
-                    System.out.println("Error code was not AWS_IO_DNS_INVALID_NAME like expected! There was an exception though");
+                    System.out.println(
+                            "Error code was not AWS_IO_DNS_INVALID_NAME like expected! There was an exception though");
                 }
                 if (exceptionOccurred == false) {
                     fail("No exception occurred!");
@@ -882,7 +922,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 if (foundExpectedError == false) {
-                    System.out.println("Error code was not AWS_IO_SOCKET_CONNECTION_REFUSED like expected! There was an exception though");
+                    System.out.println(
+                            "Error code was not AWS_IO_SOCKET_CONNECTION_REFUSED like expected! There was an exception though");
                 }
                 if (exceptionOccurred == false) {
                     fail("No exception occurred!");
@@ -905,7 +946,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         try {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                AWS_TEST_MQTT5_DIRECT_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
+                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
             builder.withLifecycleEvents(events);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -921,7 +962,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 }
 
                 if (foundExpectedError == false) {
-                    System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
+                    System.out.println(
+                            "Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
                 }
                 if (exceptionOccurred == false) {
                     fail("No exception occurred!");
@@ -945,10 +987,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_WS_MQTT_HOST, 444L);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
@@ -974,7 +1015,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     }
 
                     if (foundExpectedError == false) {
-                        System.out.println("Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
+                        System.out.println(
+                                "Error code was not AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR like expected! There was an exception though");
                     }
                     if (exceptionOccurred == false) {
                         fail("No exception occurred!");
@@ -998,13 +1040,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                        AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
 
@@ -1028,7 +1069,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     }
 
                     if (foundExpectedError == false) {
-                        System.out.println("Error code was not AWS_ERROR_SYS_CALL_FAILURE (occurs right after AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR for Websockets) like expected! There was an exception though");
+                        System.out.println(
+                                "Error code was not AWS_ERROR_SYS_CALL_FAILURE (occurs right after AWS_ERROR_MQTT5_DECODE_PROTOCOL_ERROR for Websockets) like expected! There was an exception though");
                     }
                     if (exceptionOccurred == false) {
                         fail("No exception occurred!");
@@ -1051,11 +1093,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                SocketOptions options = new SocketOptions();
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                    SocketOptions options = new SocketOptions();) {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("www.example.com", 81L);
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
@@ -1075,7 +1116,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         }
                     }
                     if (foundExpectedError == false) {
-                        System.out.println("Error code was not AWS_IO_SOCKET_TIMEOUT like expected! There was an exception though");
+                        System.out.println(
+                                "Error code was not AWS_IO_SOCKET_TIMEOUT like expected! There was an exception though");
                     }
                     if (exceptionOccurred == false) {
                         fail("No exception occurred!");
@@ -1100,13 +1142,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
             try (
-                EventLoopGroup elg = new EventLoopGroup(1);
-                HostResolver hr = new HostResolver(elg);
-                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-            ) {
+                    EventLoopGroup elg = new EventLoopGroup(1);
+                    HostResolver hr = new HostResolver(elg);
+                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);) {
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
+                        AWS_TEST_MQTT5_WS_MQTT_HOST, Long.parseLong(AWS_TEST_MQTT5_WS_MQTT_PORT));
                 builder.withLifecycleEvents(events);
                 builder.withBootstrap(bootstrap);
 
@@ -1130,7 +1171,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         }
                     }
                     if (foundExpectedError == false) {
-                        System.out.println("Error code was not AWS_ERROR_UNKNOWN like expected! There was an exception though");
+                        System.out.println(
+                                "Error code was not AWS_ERROR_UNKNOWN like expected! There was an exception though");
                     }
                     if (exceptionOccurred == false) {
                         fail("No exception occurred!");
@@ -1152,7 +1194,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         String client_name = "";
 
         @Override
-        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
+        public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {
+        }
 
         @Override
         public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {
@@ -1161,9 +1204,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
-            // failing the connected future here is not valid from a race condition standpoint.  It is possible that
-            // the interrupting client itself gets interrupted and fails to fully connect due to the original client
-            // interrupting it.  Eventually it will succeed (briefly) as the two clients fight over the client id
+            // failing the connected future here is not valid from a race condition
+            // standpoint. It is possible that
+            // the interrupting client itself gets interrupted and fails to fully connect
+            // due to the original client
+            // interrupting it. Eventually it will succeed (briefly) as the two clients
+            // fight over the client id
             // with increasing reconnect backoff.
         }
 
@@ -1181,14 +1227,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doConnNegativeID_UC7Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             String testUUID = UUID.randomUUID().toString();
             LifecycleEvents_DoubleClientID eventsOne = new LifecycleEvents_DoubleClientID();
             LifecycleEvents_DoubleClientID eventsTwo = new LifecycleEvents_DoubleClientID();
             eventsOne.client_name = "client_one";
             eventsTwo.client_name = "client_two";
 
-            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder().withClientId("test/MQTT5_Java_Double_ClientIDFail_" + testUUID);
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder()
+                    .withClientId("test/MQTT5_Java_Double_ClientIDFail_" + testUUID);
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(eventsOne);
@@ -1203,7 +1250,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withTlsContext(tlsContext);
             builderTwo.withTlsContext(tlsContext);
             try (Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-                 Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());) {
+                    Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build());) {
                 clientOne.start();
                 eventsOne.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
@@ -1215,7 +1262,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Make sure a disconnection for client 1 happened
                 eventsOne.disconnectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Stop the clients from disconnecting each other. If we do not do this, then the clients will
+                // Stop the clients from disconnecting each other. If we do not do this, then
+                // the clients will
                 // attempt to reconnect endlessly, making a never ending loop.
                 clientOne.stop();
                 clientTwo.stop();
@@ -1229,9 +1277,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ConnNegativeID_UC7() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doConnNegativeID_UC7Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnNegativeID_UC7Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1246,7 +1296,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC1() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientCreationFailed = false;
 
         try {
@@ -1257,8 +1308,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withConnectOptions(connectOptions.build());
 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-                TlsContext tlsContext = new TlsContext(tlsOptions);) {
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    TlsContext tlsContext = new TlsContext(tlsOptions);) {
                 builder.withTlsContext(tlsContext);
 
                 clientCreationFailed = false;
@@ -1332,7 +1383,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC1_ALT() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean clientCreationFailed = false;
 
         try {
@@ -1342,9 +1394,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             connectOptions.withKeepAliveIntervalSeconds(2147483647L);
             builder.withConnectOptions(connectOptions.build());
 
-            try(TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+            try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
                 builder.withTlsContext(tlsContext);
 
@@ -1405,7 +1457,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNewNegative_UC2Test(DisconnectPacketBuilder disconnectBuilder) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -1439,12 +1491,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC2() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
         disconnectBuilder.withSessionExpiryIntervalSeconds(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC2Test(disconnectBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1453,12 +1508,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC2_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         DisconnectPacketBuilder disconnectBuilder = new DisconnectPacketBuilder();
         disconnectBuilder.withSessionExpiryIntervalSeconds(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC2Test(disconnectBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC2Test(disconnectBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1466,7 +1524,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNewNegative_UC3Test(PublishPacketBuilder publishBuilder) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -1500,13 +1558,16 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC3() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         PublishPacketBuilder publishBuilder = new PublishPacketBuilder();
         publishBuilder.withPayload("Hello World".getBytes()).withTopic("test/topic");
         publishBuilder.withMessageExpiryIntervalSeconds(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC3Test(publishBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1515,12 +1576,16 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC3_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+        PublishPacketBuilder publishBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
+                "Hello World".getBytes());
         publishBuilder.withMessageExpiryIntervalSeconds(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC3Test(publishBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC3Test(publishBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1528,7 +1593,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNewNegative_UC4Test(SubscribePacketBuilder subscribeBuilder) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(events);
@@ -1561,12 +1626,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC4() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
         subscribeBuilder.withSubscriptionIdentifier(-100L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC4Test(subscribeBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1575,12 +1643,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void NewNegative_UC4_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder("test/topic", QOS.AT_LEAST_ONCE);
         subscribeBuilder.withSubscriptionIdentifier(9223372036854775807L);
 
-        TestUtils.doRetryableTest(() -> { this.doNewNegative_UC4Test(subscribeBuilder); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doNewNegative_UC4Test(subscribeBuilder);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1594,7 +1665,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNegotiated_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -1611,9 +1682,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 // TODO: Add support for this in the future
                 // assertEquals(
-                //     "Negotiated Settings session expiry interval does not match sent session expiry interval",
-                //     events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
-                //     600000L);
+                // "Negotiated Settings session expiry interval does not match sent session
+                // expiry interval",
+                // events.connectSuccessSettings.getSessionExpiryIntervalSeconds(),
+                // 600000L);
 
                 client.stop();
             }
@@ -1626,9 +1698,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Negotiated_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doNegotiated_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doNegotiated_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1636,7 +1710,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNegotiated_UC2Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -1682,9 +1756,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Negotiated_UC2() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doNegotiated_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doNegotiated_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1692,7 +1768,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doNegotiated_Rejoin_AlwaysTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -1758,9 +1834,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Negotiated_Rejoin_Always() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doNegotiated_Rejoin_AlwaysTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doNegotiated_Rejoin_AlwaysTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1774,7 +1852,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOp_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -1786,7 +1864,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             PublishEvents_Futured publishEvents = new PublishEvents_Futured();
             builder.withPublishEvents(publishEvents);
 
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                    "Hello World".getBytes());
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder(testTopic);
@@ -1821,9 +1900,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Op_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOp_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOp_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1831,10 +1912,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOp_UC2Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions);
-             TlsContextOptions tlsOptionsTwo = TlsContextOptions.createWithMtlsFromPath(
-                     AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContextTwo = new TlsContext(tlsOptionsTwo)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+                TlsContextOptions tlsOptionsTwo = TlsContextOptions.createWithMtlsFromPath(
+                        AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                TlsContext tlsContextTwo = new TlsContext(tlsOptionsTwo)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -1844,7 +1925,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withTlsContext(tlsContext);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            PublishPacketBuilder willPacket = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            PublishPacketBuilder willPacket = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                    "Hello World".getBytes());
             connectOptions.withWill(willPacket.build());
             connectOptions.withWillDelayIntervalSeconds(0L);
             builder.withConnectOptions(connectOptions.build());
@@ -1859,7 +1941,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             SubscribePacketBuilder subscribeOptions = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             try (Mqtt5Client clientOne = new Mqtt5Client(builder.build());
-                 Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build())) {
+                    Mqtt5Client clientTwo = new Mqtt5Client(builderTwo.build())) {
                 clientOne.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 clientTwo.start();
@@ -1883,9 +1965,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Op_UC2() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOp_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOp_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1893,7 +1977,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOp_UC3Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -1910,7 +1994,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             Random random = new Random();
             random.nextBytes(randomBytes);
 
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, randomBytes);
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                    randomBytes);
 
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
@@ -1937,9 +2022,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Op_UC3() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOp_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOp_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -1947,7 +2034,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOp_UC4Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -1970,7 +2057,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
 
             ConnectPacketBuilder connectPacketBuilder = new ConnectPacketBuilder();
-            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                    "Hello World".getBytes());
             connectPacketBuilder.withWill(publishPacketBuilder.build());
             connectPacketBuilder.withKeepAliveIntervalSeconds(4l);
             builder.withConnectOptions(connectPacketBuilder.build());
@@ -1980,7 +2068,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             disconnectPacketBuilder.withReasonCode(DisconnectReasonCode.DISCONNECT_WITH_WILL_MESSAGE);
 
             try (Mqtt5Client publisher = new Mqtt5Client(builder.build());
-                 Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build())) {
+                    Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build())) {
 
                 publisher.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1989,7 +2077,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Paranoid about service-side eventual consistency.  Add a wait to reduce chances of a missed will publish.
+                // Paranoid about service-side eventual consistency. Add a wait to reduce
+                // chances of a missed will publish.
                 TestUtils.sleepForAtLeastMilliseconds(2000);
 
                 publisher.stop(disconnectPacketBuilder.build());
@@ -2006,9 +2095,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Op_UC4() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOp_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOp_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2016,7 +2107,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOp_SharedSubscriptionTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             int messageCount = 10;
             String testUUID = UUID.randomUUID().toString();
@@ -2024,7 +2115,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             String sharedTopicfilter = "$share/crttest/test/MQTT5_Binding_Java_" + testUUID;
 
             // Publisher builder
-            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder publisherBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST,
+                    8883l);
             LifecycleEvents_Futured publisherLCEvents = new LifecycleEvents_Futured();
             publisherBuilder.withLifecycleEvents(publisherLCEvents);
             publisherBuilder.withTlsContext(tlsContext);
@@ -2033,14 +2125,16 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             publishEvents.desiredPublishCount = messageCount;
 
             // SubscriberOne builder
-            Mqtt5ClientOptionsBuilder subscriberOneBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder subscriberOneBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST,
+                    8883l);
             LifecycleEvents_Futured subscriberOneLCEvents = new LifecycleEvents_Futured();
             subscriberOneBuilder.withLifecycleEvents(subscriberOneLCEvents);
             subscriberOneBuilder.withTlsContext(tlsContext);
             subscriberOneBuilder.withPublishEvents(publishEvents);
 
             // SubscriberTwo builder
-            Mqtt5ClientOptionsBuilder subscriberTwoBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder subscriberTwoBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST,
+                    8883l);
             LifecycleEvents_Futured subscriberTwoLCEvents = new LifecycleEvents_Futured();
             subscriberTwoBuilder.withLifecycleEvents(subscriberTwoLCEvents);
             subscriberTwoBuilder.withTlsContext(tlsContext);
@@ -2052,11 +2146,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
 
             // SubscribePacketBuilder
-            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(sharedTopicfilter, QOS.AT_LEAST_ONCE);
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(sharedTopicfilter,
+                    QOS.AT_LEAST_ONCE);
 
             try (Mqtt5Client publisherClient = new Mqtt5Client(publisherBuilder.build());
-                Mqtt5Client subscriberOneClient = new Mqtt5Client(subscriberOneBuilder.build());
-                Mqtt5Client subscriberTwoClient = new Mqtt5Client(subscriberTwoBuilder.build())) {
+                    Mqtt5Client subscriberOneClient = new Mqtt5Client(subscriberOneBuilder.build());
+                    Mqtt5Client subscriberTwoClient = new Mqtt5Client(subscriberTwoBuilder.build())) {
 
                 publisherClient.start();
                 subscriberOneClient.start();
@@ -2066,8 +2161,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscriberOneLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriberTwoLCEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME,
+                        TimeUnit.SECONDS);
+                subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME,
+                        TimeUnit.SECONDS);
 
                 TestUtils.sleepForAtLeastMilliseconds(4000);
 
@@ -2078,7 +2175,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Wait a little longer just to ensure that no packets beyond expectations are arrived.
+                // Wait a little longer just to ensure that no packets beyond expectations are
+                // arrived.
                 publishEvents.afterCompletionFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 subscriberOneClient.stop();
@@ -2094,9 +2192,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Op_SharedSubscription() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOp_SharedSubscriptionTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOp_SharedSubscriptionTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2110,7 +2210,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withLifecycleEvents(events);
 
             TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
-                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                    AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
             TlsContext tlsContext = new TlsContext(tlsOptions);
             tlsOptions.close();
             builder.withTlsContext(tlsContext);
@@ -2137,9 +2237,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertEquals(
-                    "Publish after unsubscribe still arrived!",
-                    publishEvents.publishPacket,
-                    null);
+                        "Publish after unsubscribe still arrived!",
+                        publishEvents.publishPacket,
+                        null);
 
                 client.stop();
             }
@@ -2154,11 +2254,118 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     }
 
     @Test
-    public void Op_DirectPacketBuilders()  throws Exception {
+    public void Op_DirectPacketBuilders() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-    
-        TestUtils.doRetryableTest(this::doOp_DirectPacketBuilders, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doOp_DirectPacketBuilders, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    /* Full Publish Packet Tests */
+    private void doPublishWithFullPacket() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+            String testResponseTopic = "test/MQTT5_Binding_Java_Response_" + testUUID;
+            String testContentType = "application/json";
+            byte[] testPayload = "{\"message\": \"Hello World\"}".getBytes();
+            byte[] testCorrelationData = "correlation-data-12345".getBytes();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            PublishEvents_Futured publishEvents = new PublishEvents_Futured();
+            builder.withPublishEvents(publishEvents);
+
+            // Build a publish packet with all available fields populated
+            PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder();
+            publishPacketBuilder.withTopic(testTopic);
+            publishPacketBuilder.withQOS(QOS.AT_LEAST_ONCE);
+            publishPacketBuilder.withPayload(testPayload);
+            publishPacketBuilder.withRetain(false);
+            publishPacketBuilder.withPayloadFormat(PublishPacket.PayloadFormatIndicator.UTF8);
+            publishPacketBuilder.withMessageExpiryIntervalSeconds(60L);
+            publishPacketBuilder.withResponseTopic(testResponseTopic);
+            publishPacketBuilder.withCorrelationData(testCorrelationData);
+            publishPacketBuilder.withContentType(testContentType);
+
+            ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
+            userProperties.add(new UserProperty("test-name-1", "test-value-1"));
+            userProperties.add(new UserProperty("test-name-2", "test-value-2"));
+            publishPacketBuilder.withUserProperties(userProperties);
+
+            SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Subscribe to the topic first
+                client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Publish the message with all fields
+                client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait for the publish to be received
+                publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Verify the received publish packet has the expected fields
+                PublishPacket receivedPacket = publishEvents.publishPacket;
+                assertNotNull("Received publish packet should not be null", receivedPacket);
+
+                // Verify topic
+                assertEquals("Topic should match", testTopic, receivedPacket.getTopic());
+
+                // Verify QoS
+                assertEquals("QoS should match", QOS.AT_LEAST_ONCE, receivedPacket.getQOS());
+
+                // Verify payload
+                assertTrue("Payload should match", java.util.Arrays.equals(testPayload, receivedPacket.getPayload()));
+
+                // Verify payload format indicator
+                assertEquals("Payload format should match",
+                        PublishPacket.PayloadFormatIndicator.UTF8, receivedPacket.getPayloadFormat());
+
+                // Verify response topic
+                assertEquals("Response topic should match", testResponseTopic, receivedPacket.getResponseTopic());
+
+                // Verify correlation data
+                assertTrue("Correlation data should match",
+                        java.util.Arrays.equals(testCorrelationData, receivedPacket.getCorrelationData()));
+
+                // Verify content type
+                assertEquals("Content type should match", testContentType, receivedPacket.getContentType());
+
+                // Verify user properties
+                assertNotNull("User properties should not be null", receivedPacket.getUserProperties());
+                assertEquals("User properties count should match", 2, receivedPacket.getUserProperties().size());
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Publish with full packet - all fields populated */
+    @Test
+    public void Op_PublishWithFullPacket() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doPublishWithFullPacket, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2172,7 +2379,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doErrorOp_UC1Test(PublishPacket publish) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             boolean didExceptionOccur = false;
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2204,9 +2411,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(null); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC1Test(null);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2215,10 +2425,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC1_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         PublishPacket publish = new PublishPacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC1Test(publish); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC1Test(publish);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2226,7 +2439,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doErrorOp_UC2Test(SubscribePacket subscribe) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             boolean didExceptionOccur = false;
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2257,9 +2470,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC2() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(null); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC2Test(null);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2268,10 +2484,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC2_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         SubscribePacket subscribe = new SubscribePacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC2Test(subscribe); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC2Test(subscribe);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2279,7 +2498,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doErrorOp_UC3Test(UnsubscribePacket unsubscribe) {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             boolean didExceptionOccur = false;
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2311,9 +2530,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC3() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(null); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC3Test(null);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2322,10 +2544,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC3_ALT() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         UnsubscribePacket unsubscribe = new UnsubscribePacketBuilder().build();
-        TestUtils.doRetryableTest(() -> { this.doErrorOp_UC3Test(unsubscribe); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(() -> {
+            this.doErrorOp_UC3Test(unsubscribe);
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2334,7 +2559,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void ErrorOp_UC4() {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
         boolean didExceptionOccur = false;
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2343,7 +2569,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                     AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                    TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
                 builder.withTlsContext(tlsContext);
 
@@ -2383,7 +2609,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doQoS1_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             int messageCount = 10;
             String testUUID = UUID.randomUUID().toString();
@@ -2404,16 +2630,18 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builderTwo.withTlsContext(tlsContext);
 
             try (Mqtt5Client publisher = new Mqtt5Client(builder.build());
-                Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build())) {
+                    Mqtt5Client subscriber = new Mqtt5Client(builderTwo.build())) {
                 publisher.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriber.start();
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic,
+                        QOS.AT_LEAST_ONCE);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                        "Hello World".getBytes());
 
                 for (int i = 0; i < messageCount; i++) {
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2434,9 +2662,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void QoS1_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doQoS1_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doQoS1_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2449,22 +2679,25 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doRetain_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/retained_topic/MQTT5_Binding_Java_" + testUUID;
 
-            Mqtt5ClientOptionsBuilder publisherEventsBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder publisherEventsBuilder = new Mqtt5ClientOptionsBuilder(
+                    AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured publisherEvents = new LifecycleEvents_Futured();
             publisherEventsBuilder.withLifecycleEvents(publisherEvents);
 
-            Mqtt5ClientOptionsBuilder successSubscriberBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder successSubscriberBuilder = new Mqtt5ClientOptionsBuilder(
+                    AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured successSubscriberEvents = new LifecycleEvents_Futured();
             PublishEvents_Futured successSubscriberPublishEvents = new PublishEvents_Futured();
             successSubscriberBuilder.withLifecycleEvents(successSubscriberEvents);
             successSubscriberBuilder.withPublishEvents(successSubscriberPublishEvents);
 
-            Mqtt5ClientOptionsBuilder unsuccessSubscriberBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            Mqtt5ClientOptionsBuilder unsuccessSubscriberBuilder = new Mqtt5ClientOptionsBuilder(
+                    AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured unsuccessfulSubscriberEvents = new LifecycleEvents_Futured();
             PublishEvents_Futured unsuccessfulSubscriberPublishEvents = new PublishEvents_Futured();
             unsuccessSubscriberBuilder.withLifecycleEvents(unsuccessfulSubscriberEvents);
@@ -2475,12 +2708,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             unsuccessSubscriberBuilder.withTlsContext(tlsContext);
 
             try (Mqtt5Client publisher = new Mqtt5Client(publisherEventsBuilder.build());
-                Mqtt5Client successSubscriber = new Mqtt5Client(successSubscriberBuilder.build());
-                Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(unsuccessSubscriberBuilder.build())) {
+                    Mqtt5Client successSubscriber = new Mqtt5Client(successSubscriberBuilder.build());
+                    Mqtt5Client unsuccessfulSubscriber = new Mqtt5Client(unsuccessSubscriberBuilder.build())) {
                 // Connect and publish a retained message
                 publisher.start();
                 publisherEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                        "Hello World".getBytes());
                 publishPacketBuilder.withRetain(true);
                 publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
@@ -2499,9 +2733,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 // Subscribe and verify the retained message
                 SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
-                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
+                subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true,
+                        RetainHandlingType.SEND_ON_SUBSCRIBE);
                 try {
-                    successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                    successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME,
+                            TimeUnit.SECONDS);
                 } catch (Exception ex) {
                     // Clear the retained message
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2524,7 +2760,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Connect the unsuccessful subscriber
                 unsuccessfulSubscriber.start();
                 unsuccessfulSubscriberEvents.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                unsuccessfulSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME,
+                        TimeUnit.SECONDS);
                 // Make sure we do NOT get a publish
                 boolean didExceptionOccur = false;
                 try {
@@ -2554,9 +2791,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Retain_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doRetain_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doRetain_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2570,7 +2809,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doInterrupt_Sub_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2582,7 +2821,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic,
+                        QOS.AT_LEAST_ONCE);
 
                 try {
                     CompletableFuture<SubAckPacket> subscribeResult = client.subscribe(subscribePacketBuilder.build());
@@ -2608,9 +2848,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Interrupt_Sub_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doInterrupt_Sub_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doInterrupt_Sub_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2618,7 +2860,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doInterrupt_Unsub_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2634,7 +2876,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder(testTopic);
 
                 try {
-                    CompletableFuture<UnsubAckPacket> unsubscribeResult = client.unsubscribe(unsubscribePacketBuilder.build());
+                    CompletableFuture<UnsubAckPacket> unsubscribeResult = client
+                            .unsubscribe(unsubscribePacketBuilder.build());
                     client.stop();
                     UnsubAckPacket packet = unsubscribeResult.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 } catch (Exception ex) {
@@ -2657,9 +2900,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Interrupt_Unsub_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doInterrupt_Unsub_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doInterrupt_Unsub_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2667,7 +2912,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doInterrupt_Publish_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
@@ -2680,7 +2925,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.start();
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "null".getBytes());
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                        "null".getBytes());
 
                 try {
                     CompletableFuture<PublishResult> publishResult = client.publish(publishPacketBuilder.build());
@@ -2706,9 +2952,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void Interrupt_Publish_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doInterrupt_Publish_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doInterrupt_Publish_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2722,7 +2970,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doOperationStatistics_UC1Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
-             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             int messageCount = 10;
             String testUUID = UUID.randomUUID().toString();
@@ -2751,7 +2999,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     fail("Unacked operation size was not zero!");
                 }
 
-                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
+                PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE,
+                        "Hello World".getBytes());
 
                 for (int i = 0; i < messageCount; i++) {
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2783,9 +3032,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     @Test
     public void OperationStatistics_UC1() throws Exception {
         skipIfNetworkUnavailable();
-        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT,
+                AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doOperationStatistics_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doOperationStatistics_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2798,7 +3049,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     private void doConnDC_Cred_UC1Test() {
         try {
-            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT);
+            java.security.KeyStore keyStore = java.security.KeyStore
+                    .getInstance(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT);
             java.io.FileInputStream keyStoreStream = new java.io.FileInputStream(AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE);
             keyStore.load(keyStoreStream, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD.toCharArray());
             keyStoreStream.close();
@@ -2809,7 +3061,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     keyStore,
                     AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS,
                     AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
-                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                    TlsContext tlsContext = new TlsContext(tlsOptions)) {
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
                 builder.withLifecycleEvents(events);
                 builder.withTlsContext(tlsContext);
@@ -2830,11 +3082,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_Cred_UC1() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT,
-            AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD,
-            AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FORMAT,
+                AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_FILE, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_PASSWORD,
+                AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_ALIAS, AWS_TEST_MQTT5_IOT_CORE_KEYSTORE_CERT_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnDC_Cred_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_Cred_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2843,7 +3096,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs12(
                 AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
                 AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
-            TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             builder.withLifecycleEvents(events);
@@ -2864,10 +3117,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_Cred_UC2() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
-            AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
+                AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
 
-        TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2875,7 +3129,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     private void doConnDC_Cred_UC3Test() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsWindowsCertStorePath(
                 AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
-            TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2897,18 +3151,21 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_Cred_UC3() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS,
-            AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS,
+                AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE);
 
-        TestUtils.doRetryableTest(this::doConnDC_Cred_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_Cred_UC3Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
     private void doConnDC_Cred_UC4Test() {
-        // The published Softhsm package on muslc (Alpine) crashes if we don't call C_Finalize at the end.
-        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB, Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
-            TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)) {
+        // The published Softhsm package on muslc (Alpine) crashes if we don't call
+        // C_Finalize at the end.
+        try (Pkcs11Lib pkcs11Lib = new Pkcs11Lib(AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB,
+                Pkcs11Lib.InitializeFinalizeBehavior.STRICT);
+                TlsContextPkcs11Options pkcs11Options = new TlsContextPkcs11Options(pkcs11Lib)) {
 
             pkcs11Options.withTokenLabel(AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL);
             pkcs11Options.withUserPin(AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN);
@@ -2916,7 +3173,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             pkcs11Options.withCertificateFilePath(AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
 
             try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsPkcs11(pkcs11Options);
-                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                    TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
                 LifecycleEvents_Futured events = new LifecycleEvents_Futured();
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
@@ -2939,11 +3196,12 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnDC_Cred_UC4() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB,
-            AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN,
-            AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS11_LIB,
+                AWS_TEST_MQTT5_IOT_CORE_PKCS11_TOKEN_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_PIN,
+                AWS_TEST_MQTT5_IOT_CORE_PKCS11_PKEY_LABEL, AWS_TEST_MQTT5_IOT_CORE_PKCS11_CERT_FILE);
 
-        TestUtils.doRetryableTest(this::doConnDC_Cred_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doConnDC_Cred_UC4Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2956,13 +3214,14 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     private void doWebsocketIotCoreConnectionTest(Function<ClientBootstrap, CredentialsProvider> providerBuilder) {
         try (EventLoopGroup elg = new EventLoopGroup(1);
-             HostResolver hr = new HostResolver(elg);
-             ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-             TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
-             TlsContext tlsContext = new TlsContext(tlsOptions);
-             AwsSigningConfig signingConfig = new AwsSigningConfig();
-             Mqtt5ClientTestSigv4HandshakeTransformer transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(signingConfig);
-             CredentialsProvider provider = providerBuilder.apply(bootstrap)) {
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                TlsContext tlsContext = new TlsContext(tlsOptions);
+                AwsSigningConfig signingConfig = new AwsSigningConfig();
+                Mqtt5ClientTestSigv4HandshakeTransformer transformer = new Mqtt5ClientTestSigv4HandshakeTransformer(
+                        signingConfig);
+                CredentialsProvider provider = providerBuilder.apply(bootstrap)) {
 
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
 
@@ -2994,20 +3253,22 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnWS_Cred_UC1() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
-            AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY, AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY,
-            AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+                AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY, AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY,
+                AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN);
 
-        TestUtils.doRetryableTest(() -> { this.doWebsocketIotCoreConnectionTest(
-            (bootstrap) -> {
-                StaticCredentialsProviderBuilder credentialsBuilder = new StaticCredentialsProviderBuilder();
-                credentialsBuilder.withAccessKeyId(AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY.getBytes());
-                credentialsBuilder.withSecretAccessKey(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.getBytes());
-                credentialsBuilder.withSessionToken(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.getBytes());
+        TestUtils.doRetryableTest(() -> {
+            this.doWebsocketIotCoreConnectionTest(
+                    (bootstrap) -> {
+                        StaticCredentialsProviderBuilder credentialsBuilder = new StaticCredentialsProviderBuilder();
+                        credentialsBuilder.withAccessKeyId(AWS_TEST_MQTT5_ROLE_CREDENTIAL_ACCESS_KEY.getBytes());
+                        credentialsBuilder
+                                .withSecretAccessKey(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SECRET_ACCESS_KEY.getBytes());
+                        credentialsBuilder.withSessionToken(AWS_TEST_MQTT5_ROLE_CREDENTIAL_SESSION_TOKEN.getBytes());
 
-                return credentialsBuilder.build();
-            }
-        ); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+                        return credentialsBuilder.build();
+                    });
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -3019,14 +3280,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION);
 
-        TestUtils.doRetryableTest(() -> { this.doWebsocketIotCoreConnectionTest(
-            (bootstrap) -> {
-                DefaultChainCredentialsProviderBuilder credentialsBuilder = new DefaultChainCredentialsProviderBuilder();
-                credentialsBuilder.withClientBootstrap(bootstrap);
+        TestUtils.doRetryableTest(() -> {
+            this.doWebsocketIotCoreConnectionTest(
+                    (bootstrap) -> {
+                        DefaultChainCredentialsProviderBuilder credentialsBuilder = new DefaultChainCredentialsProviderBuilder();
+                        credentialsBuilder.withClientBootstrap(bootstrap);
 
-                return credentialsBuilder.build();
-            }
-        ); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+                        return credentialsBuilder.build();
+                    });
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -3038,23 +3300,24 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnWS_Cred_UC3() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
-            AWS_TEST_MQTT5_COGNITO_ENDPOINT, AWS_TEST_MQTT5_COGNITO_IDENTITY);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+                AWS_TEST_MQTT5_COGNITO_ENDPOINT, AWS_TEST_MQTT5_COGNITO_IDENTITY);
 
-        TestUtils.doRetryableTest(() -> { this.doWebsocketIotCoreConnectionTest(
-                (bootstrap) -> {
-                    try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
-                         TlsContext tlsContext = new TlsContext(tlsOptions)) {
-                        CognitoCredentialsProviderBuilder credentialsBuilder = new CognitoCredentialsProviderBuilder();
-                        credentialsBuilder.withClientBootstrap(bootstrap);
-                        credentialsBuilder.withTlsContext(tlsContext);
-                        credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_COGNITO_ENDPOINT);
-                        credentialsBuilder.withIdentity(AWS_TEST_MQTT5_COGNITO_IDENTITY);
+        TestUtils.doRetryableTest(() -> {
+            this.doWebsocketIotCoreConnectionTest(
+                    (bootstrap) -> {
+                        try (TlsContextOptions tlsOptions = TlsContextOptions.createDefaultClient();
+                                TlsContext tlsContext = new TlsContext(tlsOptions)) {
+                            CognitoCredentialsProviderBuilder credentialsBuilder = new CognitoCredentialsProviderBuilder();
+                            credentialsBuilder.withClientBootstrap(bootstrap);
+                            credentialsBuilder.withTlsContext(tlsContext);
+                            credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_COGNITO_ENDPOINT);
+                            credentialsBuilder.withIdentity(AWS_TEST_MQTT5_COGNITO_IDENTITY);
 
-                        return credentialsBuilder.build();
-                    }
-                }
-        ); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+                            return credentialsBuilder.build();
+                        }
+                    });
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -3064,27 +3327,28 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void ConnWS_Cred_UC4() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-            AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
-            AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY,
-            AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT, AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS,
-            AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
+                AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_REGION,
+                AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY,
+                AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT, AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS,
+                AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
 
-        TestUtils.doRetryableTest(() -> { this.doWebsocketIotCoreConnectionTest(
-                (bootstrap) -> {
-                    try (TlsContextOptions x509ContextOptions = TlsContextOptions.createWithMtlsFromPath(
-                            AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY);
-                        TlsContext x509Context = new TlsContext(x509ContextOptions)) {
-                        X509CredentialsProviderBuilder credentialsBuilder = new X509CredentialsProviderBuilder();
-                        credentialsBuilder.withClientBootstrap(bootstrap);
-                        credentialsBuilder.withTlsContext(x509Context);
-                        credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT);
-                        credentialsBuilder.withRoleAlias(AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS);
-                        credentialsBuilder.withThingName(AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
+        TestUtils.doRetryableTest(() -> {
+            this.doWebsocketIotCoreConnectionTest(
+                    (bootstrap) -> {
+                        try (TlsContextOptions x509ContextOptions = TlsContextOptions.createWithMtlsFromPath(
+                                AWS_TEST_MQTT5_IOT_CORE_X509_CERT, AWS_TEST_MQTT5_IOT_CORE_X509_KEY);
+                                TlsContext x509Context = new TlsContext(x509ContextOptions)) {
+                            X509CredentialsProviderBuilder credentialsBuilder = new X509CredentialsProviderBuilder();
+                            credentialsBuilder.withClientBootstrap(bootstrap);
+                            credentialsBuilder.withTlsContext(x509Context);
+                            credentialsBuilder.withEndpoint(AWS_TEST_MQTT5_IOT_CORE_X509_ENDPOINT);
+                            credentialsBuilder.withRoleAlias(AWS_TEST_MQTT5_IOT_CORE_X509_ROLE_ALIAS);
+                            credentialsBuilder.withThingName(AWS_TEST_MQTT5_IOT_CORE_X509_THING_NAME);
 
-                        return credentialsBuilder.build();
-                    }
-                }
-        ); }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+                            return credentialsBuilder.build();
+                        }
+                    });
+        }, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

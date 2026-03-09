@@ -72,8 +72,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT);
         try {
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 assertNotNull(client);
             }
@@ -89,59 +89,53 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
     public void New_UC2() {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(
-                AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
-                AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
-                AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
+            AWS_TEST_MQTT5_DIRECT_MQTT_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD,
+            AWS_TEST_MQTT5_PROXY_HOST, AWS_TEST_MQTT5_PROXY_PORT);
         try {
 
             try (
-                    EventLoopGroup elg = new EventLoopGroup(1);
-                    HostResolver hr = new HostResolver(elg);
-                    ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
-                    SocketOptions socketOptions = new SocketOptions();) {
+                EventLoopGroup elg = new EventLoopGroup(1);
+                HostResolver hr = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hr);
+                SocketOptions socketOptions = new SocketOptions();
+            ) {
 
-                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE,
-                        "Hello World".getBytes());
+                PublishPacketBuilder willPacketBuilder = new PublishPacketBuilder("test/topic", QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
                 ConnectPacketBuilder connectBuilder = new ConnectPacketBuilder();
                 connectBuilder.withClientId("MQTT5 CRT")
-                        .withKeepAliveIntervalSeconds(1000L)
-                        .withMaximumPacketSizeBytes(1000L)
-                        .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
-                        .withReceiveMaximum(1000L)
-                        .withRequestProblemInformation(true)
-                        .withRequestResponseInformation(true)
-                        .withSessionExpiryIntervalSeconds(1000L)
-                        .withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
-                        .withWill(willPacketBuilder.build())
-                        .withWillDelayIntervalSeconds(1000L);
+                .withKeepAliveIntervalSeconds(1000L)
+                .withMaximumPacketSizeBytes(1000L)
+                .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
+                .withReceiveMaximum(1000L)
+                .withRequestProblemInformation(true)
+                .withRequestResponseInformation(true)
+                .withSessionExpiryIntervalSeconds(1000L)
+                .withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
+                .withWill(willPacketBuilder.build())
+                .withWillDelayIntervalSeconds(1000L);
 
                 ArrayList<UserProperty> userProperties = new ArrayList<UserProperty>();
                 userProperties.add(new UserProperty("Hello", "World"));
                 connectBuilder.withUserProperties(userProperties);
 
                 Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
-                        AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
-                        Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
+                    AWS_TEST_MQTT5_DIRECT_MQTT_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_PORT));
                 builder.withBootstrap(bootstrap)
-                        .withConnackTimeoutMs(100L)
-                        .withConnectOptions(connectBuilder.build())
-                        .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
-                        .withLifecycleEvents(new LifecycleEvents() {
-                            @Override
-                            public void onAttemptingConnect(Mqtt5Client client,
-                                    OnAttemptingConnectReturn onAttemptingConnectReturn) {
-                            }
+                .withConnackTimeoutMs(100L)
+                .withConnectOptions(connectBuilder.build())
+                .withExtendedValidationAndFlowControlOptions(ExtendedValidationAndFlowControlOptions.NONE)
+                .withLifecycleEvents(new LifecycleEvents() {
+                    @Override
+                    public void onAttemptingConnect(Mqtt5Client client, OnAttemptingConnectReturn onAttemptingConnectReturn) {}
 
-                            @Override
-                            public void onConnectionSuccess(Mqtt5Client client,
-                                    OnConnectionSuccessReturn onConnectionSuccessReturn) {
-                            }
+                    @Override
+                    public void onConnectionSuccess(Mqtt5Client client, OnConnectionSuccessReturn onConnectionSuccessReturn) {}
 
-                            @Override
-                            public void onConnectionFailure(Mqtt5Client client,
-                                    OnConnectionFailureReturn onConnectionFailureReturn) {
-                            }
+                    @Override
+                    public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {}
 
                     @Override
                     public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {}

@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -45,6 +46,11 @@ public class Mqtt5ClientOptions {
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
     private TopicAliasingOptions topicAliasingOptions;
+    // Indicates whether AWS IoT Metrics are enabled for this client, default to true.
+    // We don't expose this setting in the builder for now.
+    private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
+    private boolean metricsEnabled = true;
+    
 
     /**
      * Returns the host name of the MQTT server to connect to.
@@ -264,6 +270,24 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns whether AWS IoT Device SDK metrics collection is enabled
+     *
+     * @return true if metrics are enabled, false otherwise
+     */
+    public boolean getMetricsEnabled() {
+        return this.metricsEnabled;
+    }
+
+    /**
+     * Enables or disables IoT Device SDK metrics collection
+     *
+     * @param enabled true to enable metrics, false to disable
+     */
+    public void setMetricsEnabled(boolean enabled) {
+        this.metricsEnabled = enabled;
+    }
+
+    /**
      * Creates a Mqtt5ClientOptionsBuilder instance
      * @param builder The builder to get the Mqtt5ClientOptions values from
      */
@@ -289,6 +313,8 @@ public class Mqtt5ClientOptions {
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
         this.topicAliasingOptions = builder.topicAliasingOptions;
+        this.metricsEnabled = builder.metricsEnabled;
+        this.iotDeviceSDKMetrics = new IoTDeviceSDKMetrics();
     }
 
     /*******************************************************************************
@@ -583,6 +609,7 @@ public class Mqtt5ClientOptions {
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
         private TopicAliasingOptions topicAliasingOptions;
+        private boolean metricsEnabled = true;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -847,6 +874,17 @@ public class Mqtt5ClientOptions {
          */
         public Mqtt5ClientOptionsBuilder withTopicAliasingOptions(TopicAliasingOptions options) {
             this.topicAliasingOptions = options;
+            return this;
+        }
+
+        /**
+         * Enables or disables IoT Device SDK metrics collection
+         *
+         * @param enabled true to enable metrics, false to disable
+         * @return The Mqtt5ClientOptionsBuilder after setting the metrics option
+         */
+        public Mqtt5ClientOptionsBuilder withMetricsEnabled(boolean enabled) {
+            this.metricsEnabled = enabled;
             return this;
         }
 

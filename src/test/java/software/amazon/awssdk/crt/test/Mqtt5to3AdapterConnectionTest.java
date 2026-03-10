@@ -303,7 +303,8 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)
                     .withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes())
                     .withClientId("test/MQTT5to3Adapter" + UUID.randomUUID().toString());
-            builder.withConnectOptions(connectOptions.build());
+            builder.withConnectOptions(connectOptions.build())
+                .withMetricsEnabled(false);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build());
                     MqttClientConnection connection = new MqttClientConnection(client, null);) {
@@ -496,6 +497,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                     AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
                     Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
             builder.withLifecycleEvents(events);
+            builder.withMetricsEnabled(false);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME)

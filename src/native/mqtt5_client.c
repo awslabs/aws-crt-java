@@ -11,6 +11,7 @@
 
 #include <crt.h>
 #include <http_request_utils.h>
+#include <iot_device_sdk_metrics.h>
 #include <java_class_ids.h>
 #include <jni.h>
 #include <mqtt5_client_jni.h>
@@ -1702,6 +1703,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     struct aws_mqtt5_client_options client_options;
     AWS_ZERO_STRUCT(client_options);
     struct aws_http_proxy_options_java_jni *java_http_proxy_options = NULL;
+    struct aws_mqtt_iot_metrics_java_jni *iot_device_sdk_metrics = NULL;
     struct aws_byte_buf host_name_buf;
 
     /* Needed to track if optionals are set or not */
@@ -2116,6 +2118,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     client_options.client_termination_handler = &s_aws_mqtt5_client_java_termination;
     client_options.client_termination_handler_user_data = (void *)java_client;
 
+    /* Check if metrics are enabled and set metrics value */
+    jboolean metrics_enabled =
+        (*env)->GetBooleanField(env, jni_options, mqtt5_client_options_properties.metrics_enabled_field_id);
+    bool metrics_has_error = aws_jni_check_and_clear_exception(env);
+
+    if (!metrics_has_error && metrics_enabled) {
+        jobject jni_iot_device_sdk_metrics =
+            (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
+        if (!aws_jni_check_and_clear_exception(env)) {
+            iot_device_sdk_metrics =
+                aws_mqtt_iot_metrics_java_jni_create_from_java(env, allocator, jni_iot_device_sdk_metrics);
+            client_options.metrics = iot_device_sdk_metrics ? &iot_device_sdk_metrics->metrics : NULL;
+        } else {
+            AWS_LOGF_DEBUG(
+                AWS_LS_MQTT5_CLIENT, "MQTT5 client new: Was unable to set metrics, continuing with no metrics.");
+        }
+    }
+
     /* Make the MQTT5 client */
     java_client->client = aws_mqtt5_client_new(allocator, &client_options);
     /* Did we successfully make a client? If not, then throw an exception */
@@ -2133,6 +2153,7 @@ clean_up:
 
     aws_mqtt5_packet_connect_view_java_destroy(env, allocator, connect_options);
     s_aws_mqtt5_http_proxy_options_java_destroy(env, allocator, java_http_proxy_options);
+    aws_mqtt_iot_metrics_java_jni_destroy(env, allocator, iot_device_sdk_metrics);
     if (aws_byte_buf_is_valid(&host_name_buf)) {
         aws_byte_buf_clean_up(&host_name_buf);
     }

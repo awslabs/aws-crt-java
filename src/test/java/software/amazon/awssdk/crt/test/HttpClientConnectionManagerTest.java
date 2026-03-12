@@ -1,6 +1,7 @@
 package software.amazon.awssdk.crt.test;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,11 +18,13 @@ import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.Log;
 
@@ -293,5 +296,78 @@ public class HttpClientConnectionManagerTest extends HttpClientTestFixture  {
             HttpClientConnection conn = thirdAcquisition.get(500, TimeUnit.MILLISECONDS);
             conn.close();
         }
+    }
+
+    @Test
+    public void testIPv6URIBracketsStripped() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        // IPv6 localhost with brackets - same as HOST but using [::1] instead of localhost
+        URI uri = new URI("https://[::1]:8082");
+        String bodyToSend = "test IPv6 echo body";
+        final ByteBuffer bodyBytes = ByteBuffer.wrap(bodyToSend.getBytes(UTF8));
+
+        HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer outBuffer) {
+                ByteBufferUtils.transferData(bodyBytes, outBuffer);
+                return bodyBytes.remaining() == 0;
+            }
+
+            @Override
+            public boolean resetPosition() {
+                bodyBytes.position(0);
+                return true;
+            }
+        };
+
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+             HostResolver resolver = new HostResolver(eventLoopGroup);
+             ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+             SocketOptions sockOpts = new SocketOptions();
+             TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withVerifyPeer(false);
+             TlsContext tlsContext = new TlsContext(tlsOpts)) {
+
+            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
+                    .withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(1);
+
+            try (HttpClientConnectionManager connectionPool = HttpClientConnectionManager.create(options)) {
+                HttpClientConnection conn = connectionPool.acquireConnection().get(60, TimeUnit.SECONDS);
+
+                HttpHeader[] requestHeaders = new HttpHeader[]{
+                    new HttpHeader("Host", uri.getHost()),
+                    new HttpHeader("Content-Length", Integer.toString(bodyToSend.getBytes(UTF8).length))
+                };
+                HttpRequest request = new HttpRequest("POST", "/echo", requestHeaders, bodyStream);
+
+                CompletableFuture<Integer> statusFuture = new CompletableFuture<>();
+                HttpStream stream = conn.makeRequest(request, new HttpStreamResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType, HttpHeader[] nextHeaders) {
+                        statusFuture.complete(responseStatusCode);
+                    }
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        if (!statusFuture.isDone()) {
+                            statusFuture.completeExceptionally(new RuntimeException("Request failed with error: " + errorCode));
+                        }
+                        stream.close();
+                        connectionPool.releaseConnection(conn);
+                    }
+                });
+                stream.activate();
+
+                int status = statusFuture.get(60, TimeUnit.SECONDS);
+                Assert.assertEquals(200, status);
+            }
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 }

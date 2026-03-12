@@ -62,6 +62,24 @@ public class HttpClientConnectionManager extends CrtResource {
                 if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
             }
         }
+        /**
+         * Per RFC 3986 Section 3.2.2, IPv6 addresses in URIs MUST be enclosed in square brackets
+         * (e.g., "http://[2001:db8::1]:8080/path"). However, when connecting to a host, the brackets
+         * must be removed to get the actual IPv6 address.
+         * 
+         * Since Java's URI.getHost() returns IPv6 addresses WITH brackets (e.g., "[2001:db8::1]"),
+         * but the underlying CRT library expects the hostname WITHOUT brackets (e.g., "2001:db8::1").
+         * Manually strip the brackets before passing the hostname to CRT.
+         * 
+         * Note: Different language implementations handle bracket stripping inconsistently eg: Python
+         * (urlparse().hostname) strip brackets automatically, while Java (URI.getHost()) keeps brackets, 
+         * thus we strip the brackets based on the language behavior.
+         */
+
+        String host = uri.getHost();
+        if (host.startsWith("[") && host.endsWith("]")) {
+            host = host.substring(1, host.length() - 1);
+        }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
 
@@ -115,7 +133,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                             useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
                                             useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                                             windowSize,
-                                            uri.getHost().getBytes(UTF8),
+                                            host.getBytes(UTF8),
                                             port,
                                             maxConnections,
                                             proxyConnectionType,

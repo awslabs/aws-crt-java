@@ -112,8 +112,9 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     int result = AWS_OP_SUCCESS;
     if (aws_jni_check_and_clear_exception(env)) {
         result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-        (*env)->DeleteLocalRef(env, direct_buffer);
-        break;
+    } else {
+        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
+        dest->len += amt_written;
     }
 
     (*env)->DeleteLocalRef(env, direct_buffer);

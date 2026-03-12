@@ -109,6 +109,7 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     impl->body_done = (*env)->CallBooleanMethod(
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
 
+    int result = AWS_OP_SUCCESS;
     if (aws_jni_check_and_clear_exception(env)) {
         result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
         (*env)->DeleteLocalRef(env, direct_buffer);

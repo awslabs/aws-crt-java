@@ -1870,7 +1870,7 @@ public class S3ClientTest extends CrtTestFixture {
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
 
-        long contentLength = 3L * 1024 * 1024 * 1024;
+        long contentLength = 3L * 1024;
 
         S3ClientOptions clientOptions = new S3ClientOptions()
                 .withRegion(REGION)

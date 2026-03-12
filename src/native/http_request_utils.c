@@ -94,8 +94,17 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     }
 
     size_t out_remaining = dest->capacity - dest->len;
+    size_t chunk_size = 1024;
+    /* Newer updates allow part sizes up to 5GB. Since number of bytes required for a 5GB part is
+    greater than INT_MAX, it would cause a bug where the java does not allocate memory and return a null buffer
+    since Java natively does not support direct allocation of buffers of capacity > Integer.MAX_VALUE.
+    Since C handles recursively calling for more data, we read up to chunk size or out_remaining (whichever is lower)
+    and return the C. */
+    if (out_remaining <= chunk_size) {
+        chunk_size = out_remaining;
+    }
 
-    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
+    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, chunk_size);
 
     impl->body_done = (*env)->CallBooleanMethod(
         env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);

@@ -18,6 +18,7 @@ public class PublishReturn {
      * Single-element long array holding the native manual PUBACK control context pointer.
      * Element [0] is the pointer value, valid only during the
      * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback.
+     * QoS 0 results in this being set to 0.
      * Native code sets [0] to 0 after the callback returns (via SetLongArrayRegion,
      * requiring no extra JNI method ID).
      */

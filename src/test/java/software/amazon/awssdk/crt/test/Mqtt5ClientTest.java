@@ -2884,7 +2884,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
                     // For QoS 0, acquirePubackControl() should throw IllegalStateException
-                    // because there is no PUBACK context (nativeContextPtrHolder is null or 0)
+                    // because the native layer passes a null context pointer for QoS 0 publishes.
                     try {
                         publishReturn.acquirePubackControl();
                         resultFuture.complete("no_error"); // Should not reach here
@@ -2904,7 +2904,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Publish at QoS 0, no PUBACK involved
+                // Publish at QoS 0, there is no PUBACK involved
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_MOST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 

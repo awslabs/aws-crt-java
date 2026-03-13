@@ -605,7 +605,11 @@ static void s_aws_mqtt5_client_java_publish_received(
     context_ptr_holder = (*env)->NewLongArray(env, 1);
     /* If allocation failed, Java will throw IllegalStateException on acquirePubackControl(). */
     if (context_ptr_holder != NULL) {
-        jlong context_ptr_value = (jlong)(uintptr_t)control_context;
+        /*
+         * Only expose the context pointer for QoS 1 publishes. For QoS 0, there is no PUBACK
+         * to send, so acquirePubackControl() should throw IllegalStateException. We pass 0 (null).
+         */
+        jlong context_ptr_value = (publish->qos == AWS_MQTT5_QOS_AT_MOST_ONCE) ? 0 : (jlong)(uintptr_t)control_context;
         /* Assigning the pointer to the allocated manual_puback_control_context to the single-element of the array */
         (*env)->SetLongArrayRegion(env, context_ptr_holder, 0, 1, &context_ptr_value);
     }

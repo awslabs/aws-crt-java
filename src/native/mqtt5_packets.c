@@ -1136,7 +1136,7 @@ struct aws_mqtt5_packet_publish_view_java_jni *aws_mqtt5_packet_publish_view_cre
             mqtt5_publish_packet_properties.publish_payload_field_id,
             s_publish_packet_string,
             "payload",
-            &java_packet->correlation_data_buf,
+            &java_packet->payload_buf,
             &java_packet->payload_cursor,
             true,
             &was_value_set) == AWS_OP_ERR) {

@@ -542,7 +542,7 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Enables or disables IoT Device SDK metrics collection
+     * Enables or disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
      *
      * @param enabled true to enable metrics, false to disable
      */

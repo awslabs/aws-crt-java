@@ -203,17 +203,20 @@ public class Mqtt5Client extends CrtResource {
     }
 
     /**
-     * Sends a PUBACK packet for a QoS 1 PUBLISH that was previously acquired for manual control.
+     * Sends a publish acknowledgement for a QoS 1 PUBLISH that was previously acquired
+     * for manual control.
      *
-     * <p>To use manual PUBACK control, call {@link PublishReturn#acquirePubackControl()} within
-     * the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback of a QoS 1 PUBLISH to 
-     * obtain a {@link Mqtt5PubackControlHandle}. Then call this method to send the PUBACK.</p>
+     * <p>To use manual publish acknowledgement control, call
+     * {@link PublishReturn#acquirePublishAcknowledgementControl()} within the
+     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback of a QoS 1 PUBLISH to obtain a
+     * {@link Mqtt5PublishAcknowledgementControlHandle}. Then call this method to send the PUBACK.</p>
      *
-     * @param pubackControlHandle An opaque handle obtained from {@link PublishReturn#acquirePubackControl()}.
-     * @throws CrtRuntimeException If the native client returns an error when invoking the PUBACK.
+     * @param publishAcknowledgementControlHandle An opaque handle obtained from
+     *        {@link PublishReturn#acquirePublishAcknowledgementControl()}.
+     * @throws CrtRuntimeException If the native client returns an error when invoking the publish acknowledgement.
      */
-    public void invokePuback(Mqtt5PubackControlHandle pubackControlHandle) throws CrtRuntimeException {
-        mqtt5ClientInternalInvokePuback(getNativeHandle(), pubackControlHandle.getControlId());
+    public void invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle publishAcknowledgementControlHandle) throws CrtRuntimeException {
+        mqtt5ClientInternalInvokePublishAcknowledgement(getNativeHandle(), publishAcknowledgementControlHandle.getControlId());
     }
 
     /**
@@ -291,5 +294,5 @@ public class Mqtt5Client extends CrtResource {
     private static native void mqtt5ClientInternalUnsubscribe(long client, UnsubscribePacket unsubscribe_options, CompletableFuture<UnsubAckPacket> unsubscribe_suback);
     private static native void mqtt5ClientInternalWebsocketHandshakeComplete(long connection, byte[] marshalledRequest, Throwable throwable, long nativeUserData) throws CrtRuntimeException;
     private static native Mqtt5ClientOperationStatistics mqtt5ClientInternalGetOperationStatistics(long client);
-    private static native void mqtt5ClientInternalInvokePuback(long client, long controlId);
+    private static native void mqtt5ClientInternalInvokePublishAcknowledgement(long client, long controlId);
 }

@@ -2548,11 +2548,11 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     /**
      * ============================================================
-     * Manual PUBACK Tests
+     * Manual Publish Acknowledgement Tests
      * ============================================================
      */
 
-    private void doManualPuback_HoldTest() {
+    private void doManualPublishAcknowledgement_HoldTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2565,7 +2565,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
             CompletableFuture<byte[]> firstDeliveryFuture = new CompletableFuture<>();
             CompletableFuture<byte[]> redeliveryFuture = new CompletableFuture<>();
-            Mqtt5PubackControlHandle[] pubackHandleHolder = new Mqtt5PubackControlHandle[1];
+            Mqtt5PublishAcknowledgementControlHandle[] publishAckHandleHolder = new Mqtt5PublishAcknowledgementControlHandle[1];
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2573,7 +2573,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withTlsContext(tlsContext);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            connectOptions.withClientId("test/MQTT5_ManualPuback_Java_" + testUUID);
+            connectOptions.withClientId("test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
 
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
@@ -2581,8 +2581,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
                     byte[] receivedPayload = publishReturn.getPublishPacket().getPayload();
                     if (!firstDeliveryFuture.isDone()) {
-                        // First delivery: acquire manual PUBACK control to hold the PUBACK
-                        pubackHandleHolder[0] = publishReturn.acquirePubackControl();
+                        // First delivery: acquire manual publish acknowledgement control to hold the PUBACK
+                        publishAckHandleHolder[0] = publishReturn.acquirePublishAcknowledgementControl();
                         firstDeliveryFuture.complete(receivedPayload);
                     } else if (!redeliveryFuture.isDone()) {
                         // Second delivery: broker re-sent because no PUBACK was received
@@ -2606,7 +2606,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Wait for the first delivery and confirm PUBACK was held
                 byte[] firstPayload = firstDeliveryFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 assertTrue("First delivery payload should match", java.util.Arrays.equals(firstPayload, payload));
-                assertNotNull("acquirePubackControl() should have returned a handle", pubackHandleHolder[0]);
+                assertNotNull("acquirePublishAcknowledgementControl() should have returned a handle", publishAckHandleHolder[0]);
 
                 // Wait up to 60 seconds for the broker to re-deliver the message (no PUBACK was sent)
                 byte[] redeliveredPayload = redeliveryFuture.get(PUBACK_HOLD_TIMEOUT_SEC, TimeUnit.SECONDS);
@@ -2614,7 +2614,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                         java.util.Arrays.equals(redeliveredPayload, payload));
 
                 // Release the held PUBACK now that we've confirmed re-delivery
-                client.invokePuback(pubackHandleHolder[0]);
+                client.invokePublishAcknowledgement(publishAckHandleHolder[0]);
 
                 client.stop();
                 events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2624,31 +2624,31 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual PUBACK hold test: hold PUBACK and verify broker re-delivers the message */
+    /* Manual publish acknowledgement hold test: hold PUBACK and verify broker re-delivers the message */
     @Test
     public void ManualPuback_Hold() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPuback_HoldTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_HoldTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPuback_InvokeTest() {
+    private void doManualPublishAcknowledgement_InvokeTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
 
             String testUUID = UUID.randomUUID().toString();
-            String testTopic = "test/MQTT5_ManualPuback_Java_" + testUUID;
+            String testTopic = "test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID;
             byte[] payload = testUUID.getBytes();
 
             final long NO_REDELIVERY_WAIT_SEC = 60L;
 
             CompletableFuture<byte[]> firstDeliveryFuture = new CompletableFuture<>();
             CompletableFuture<byte[]> unexpectedRedeliveryFuture = new CompletableFuture<>();
-            Mqtt5PubackControlHandle[] pubackHandleHolder = new Mqtt5PubackControlHandle[1];
+            Mqtt5PublishAcknowledgementControlHandle[] publishAckHandleHolder = new Mqtt5PublishAcknowledgementControlHandle[1];
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2656,7 +2656,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withTlsContext(tlsContext);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
-            connectOptions.withClientId("test/MQTT5_ManualPuback_Java_" + testUUID);
+            connectOptions.withClientId("test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID);
             builder.withConnectOptions(connectOptions.build());
 
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
@@ -2664,8 +2664,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
                     byte[] receivedPayload = publishReturn.getPublishPacket().getPayload();
                     if (!firstDeliveryFuture.isDone()) {
-                        // First delivery: acquire manual PUBACK control, then immediately invoke it
-                        pubackHandleHolder[0] = publishReturn.acquirePubackControl();
+                        // First delivery: acquire manual publish acknowledgement control, then immediately invoke it
+                        publishAckHandleHolder[0] = publishReturn.acquirePublishAcknowledgementControl();
                         firstDeliveryFuture.complete(receivedPayload);
                     } else if (java.util.Arrays.equals(receivedPayload, payload) && !unexpectedRedeliveryFuture.isDone()) {
                         // A second delivery of the same payload means the broker re-sent. This should NOT happen
@@ -2686,13 +2686,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Wait for the first delivery and confirm PUBACK handle was acquired
+                // Wait for the first delivery and confirm publish acknowledgement handle was acquired
                 byte[] firstPayload = firstDeliveryFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 assertTrue("First delivery payload should match", java.util.Arrays.equals(firstPayload, payload));
-                assertNotNull("acquirePubackControl() should have returned a handle", pubackHandleHolder[0]);
+                assertNotNull("acquirePublishAcknowledgementControl() should have returned a handle", publishAckHandleHolder[0]);
 
-                // Immediately invoke the PUBACK using the acquired handle
-                client.invokePuback(pubackHandleHolder[0]);
+                // Immediately invoke the publish acknowledgement using the acquired handle
+                client.invokePublishAcknowledgement(publishAckHandleHolder[0]);
 
                 // Wait 60 seconds and confirm the broker does NOT re-deliver the message
                 boolean redelivered = false;
@@ -2702,7 +2702,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 } catch (java.util.concurrent.TimeoutException ex) {
                     redelivered = false;
                 }
-                assertTrue("Broker should NOT re-deliver the message after invokePuback() was called",
+                assertTrue("Broker should NOT re-deliver the message after invokePublishAcknowledgement() was called",
                         !redelivered);
 
                 client.stop();
@@ -2713,18 +2713,18 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual PUBACK invoke test: acquire and immediately invoke PUBACK, verify no re-delivery */
+    /* Manual publish acknowledgement invoke test: acquire and immediately invoke, verify no re-delivery */
     @Test
     public void ManualPuback_Invoke() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPuback_InvokeTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_InvokeTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPuback_AcquireDoubleCallRaisesTest() {
+    private void doManualPublishAcknowledgement_AcquireDoubleCallRaisesTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2745,10 +2745,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
                     try {
                         // First call should succeed
-                        Mqtt5PubackControlHandle handle = publishReturn.acquirePubackControl();
+                        Mqtt5PublishAcknowledgementControlHandle handle = publishReturn.acquirePublishAcknowledgementControl();
                         // Second call on the same message should throw IllegalStateException
                         try {
-                            publishReturn.acquirePubackControl();
+                            publishReturn.acquirePublishAcknowledgementControl();
                             resultFuture.complete("no_error"); // Should not reach here
                         } catch (IllegalStateException ex) {
                             resultFuture.complete("double_call_raised");
@@ -2784,18 +2784,18 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual PUBACK double-call test: calling acquirePubackControl() twice raises IllegalStateException */
+    /* Manual publish acknowledgement double-call test: calling acquirePublishAcknowledgementControl() twice raises IllegalStateException */
     @Test
     public void ManualPuback_AcquireDoubleCallRaises() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPuback_AcquireDoubleCallRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquireDoubleCallRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPuback_AcquirePostCallbackRaisesTest() {
+    private void doManualPublishAcknowledgement_AcquirePostCallbackRaisesTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2815,7 +2815,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-                    // Save the PublishReturn but do NOT call acquirePubackControl() within the callback
+                    // Save the PublishReturn but do NOT call acquirePublishAcknowledgementControl() within the callback
                     savedPublishReturnHolder[0] = publishReturn;
                     callbackDoneFuture.complete(null);
                 }
@@ -2834,15 +2834,15 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Wait for the callback to complete
                 callbackDoneFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Call acquirePubackControl() after the callback has returned, this should throw IllegalStateException
+                // Call acquirePublishAcknowledgementControl() after the callback has returned, this should throw IllegalStateException
                 assertNotNull("savedPublishReturn should have been set", savedPublishReturnHolder[0]);
                 boolean exceptionThrown = false;
                 try {
-                    savedPublishReturnHolder[0].acquirePubackControl();
+                    savedPublishReturnHolder[0].acquirePublishAcknowledgementControl();
                 } catch (IllegalStateException ex) {
                     exceptionThrown = true;
                 }
-                assertTrue("acquirePubackControl() should throw IllegalStateException after callback returns",
+                assertTrue("acquirePublishAcknowledgementControl() should throw IllegalStateException after callback returns",
                         exceptionThrown);
 
                 client.stop();
@@ -2853,13 +2853,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual PUBACK post-callback test: calling acquirePubackControl() after callback returns raises IllegalStateException */
+    /* Manual publish acknowledgement post-callback test: calling acquirePublishAcknowledgementControl() after callback returns raises IllegalStateException */
     @Test
     public void ManualPuback_AcquirePostCallbackRaises() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPuback_AcquirePostCallbackRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquirePostCallbackRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -2883,10 +2883,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-                    // For QoS 0, acquirePubackControl() should throw IllegalStateException
+                    // For QoS 0, acquirePublishAcknowledgementControl() should throw IllegalStateException
                     // because the native layer passes a null context pointer for QoS 0 publishes.
                     try {
-                        publishReturn.acquirePubackControl();
+                        publishReturn.acquirePublishAcknowledgementControl();
                         resultFuture.complete("no_error"); // Should not reach here
                     } catch (IllegalStateException ex) {
                         resultFuture.complete("threw_illegal_state");
@@ -2909,7 +2909,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 String result = resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                assertEquals("acquirePubackControl() should throw IllegalStateException for QoS 0 messages, got: " + result,
+                assertEquals("acquirePublishAcknowledgementControl() should throw IllegalStateException for QoS 0 messages, got: " + result,
                         "threw_illegal_state", result);
 
                 client.stop();
@@ -2920,7 +2920,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual PUBACK QoS 0 test: acquirePubackControl() throws IllegalStateException for QoS 0 messages */
+    /* Manual publish acknowledgement QoS 0 test: acquirePublishAcknowledgementControl() throws IllegalStateException for QoS 0 messages */
     @Test
     public void ManualPuback_Qos0AcquireThrows() throws Exception {
         skipIfNetworkUnavailable();

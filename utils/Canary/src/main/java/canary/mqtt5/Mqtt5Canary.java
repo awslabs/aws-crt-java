@@ -77,6 +77,7 @@ public class Mqtt5Canary {
     static int operationFutureWaitTime = 30;
 
     private static final int MAX_PAYLOAD_SIZE = 65535; // Use UINT64_MAX for the payload size
+    private static final long MEMORY_CHECK_INTERVAL_SECONDS = 600; // 10 minutes
 
     static void printUsage() {
         System.out.println(
@@ -205,6 +206,17 @@ public class Mqtt5Canary {
         if (configLogAWS == true) {
             Log.log(configLogAWSLevel, LogSubject.MqttClient, "[CANARY] " + message);
         }
+    }
+
+    static void PrintMemoryUsageReport(long elapsedSeconds, long operationsExecuted) {
+        long nativeMemoryBytes = CRT.nativeMemory();
+        StringBuilder report = new StringBuilder();
+        report.append("\n=== Memory Usage Report ===\n");
+        report.append("   Elapsed time: ").append(elapsedSeconds).append(" seconds\n");
+        report.append("   Native memory (bytes): ").append(nativeMemoryBytes).append("\n");
+        report.append("   Operations executed: ").append(operationsExecuted).append("\n");
+        report.append("===========================\n");
+        PrintLog(report.toString());
     }
 
     static void exitWithError(int errorCode) {
@@ -715,16 +727,26 @@ public class Mqtt5Canary {
         // ====================
         PrintLog("Starting canary test loop...");
 
+        // Print initial memory usage report
+        PrintMemoryUsageReport(0, 0);
+
         boolean done = false;
         java.time.LocalDateTime nowDateTime = java.time.LocalDateTime.now();
         long secondsDifference = 0;
         long operationsExecuted = 0;
+        long nextMemoryCheckSeconds = MEMORY_CHECK_INTERVAL_SECONDS;
         while (!done) {
             try {
                 nowDateTime = java.time.LocalDateTime.now();
                 secondsDifference = startDateTime.until(java.time.LocalDateTime.now(), ChronoUnit.SECONDS);
                 if (secondsDifference >= configSeconds) {
                     done = true;
+                }
+
+                // Check if it's time to print memory usage report
+                if (secondsDifference >= nextMemoryCheckSeconds) {
+                    PrintMemoryUsageReport(secondsDifference, operationsExecuted * configClients);
+                    nextMemoryCheckSeconds += MEMORY_CHECK_INTERVAL_SECONDS;
                 }
             } catch (ArithmeticException ex) {
                 // Time overflow - exit with an error!
@@ -743,6 +765,9 @@ public class Mqtt5Canary {
         }
 
         PrintLog("Test loop operations complete: Total=" + (operationsExecuted * configClients) + " Cycles=" + operationsExecuted);
+
+        // Print final memory usage report
+        PrintMemoryUsageReport(secondsDifference, operationsExecuted * configClients);
 
         // Stop all the clients and close them to clean their memory
         for (int i = 0; i < clients.size(); i++) {

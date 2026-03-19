@@ -6,8 +6,7 @@
 package software.amazon.awssdk.crt.test;
 
 import org.junit.Test;
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
+
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.EventLoopGroup;
 import software.amazon.awssdk.crt.io.HostResolver;
@@ -18,7 +17,7 @@ import static org.junit.Assert.*;
 
 public class ClientBootstrapTest extends CrtTestFixture {
     public ClientBootstrapTest() {}
-    
+
     @Test
     public void testCreateDestroy() throws ExecutionException, InterruptedException {
         EventLoopGroup elg = new EventLoopGroup(1);

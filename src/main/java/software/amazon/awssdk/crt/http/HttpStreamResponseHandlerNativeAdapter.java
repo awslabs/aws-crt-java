@@ -41,9 +41,7 @@ class HttpStreamResponseHandlerNativeAdapter {
         }
     }
 
-    int onResponseBody(HttpStreamBase stream, ByteBuffer bodyBytesIn) {
-        byte[] body = new byte[bodyBytesIn.limit()];
-        bodyBytesIn.get(body);
+    int onResponseBody(HttpStreamBase stream, byte[] body) {
         if (this.responseBaseHandler != null) {
             return responseBaseHandler.onResponseBody(stream, body);
         } else {

@@ -157,7 +157,7 @@ public class SDKNettyClientCanary {
     public static void main(String[] args) throws Exception {
         SDKNettyClientCanary canary = new SDKNettyClientCanary();
 
-        canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:8443/echo"));
+        canary.uri = new URI(System.getProperty("aws.crt.http.canary.uri", "https://localhost:3443/echo"));
         canary.maxConnections = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxConnections", "8"));
         canary.maxStreams = Integer.parseInt(System.getProperty("aws.crt.http.canary.maxStreams", "20"));
         canary.nettyResultPath = System.getProperty("aws.crt.http.canary.nettyResultPath", "netty_result.txt");

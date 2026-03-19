@@ -329,27 +329,27 @@ jobs:
     - name: Configure local host
       run: |
         python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
+        cd crt/aws-c-http/tests/mock_server/
+        python3 h2tls_mock_server.py &
+        python3 h2non_tls_server.py &
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-canary -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-canary-mac:
-    runs-on: macos-11 # latest
+    runs-on: macos-15 # latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Configure local host
       run: |
         python3 -m pip install h2
-        cd crt/aws-c-http/tests/py_localhost/
-        python3 server.py &
-        python3 non_tls_server.py &
+        cd crt/aws-c-http/tests/mock_server/
+        python3 h2tls_mock_server.py &
+        python3 h2non_tls_server.py &
     - name: Build and test
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
@@ -357,10 +357,10 @@ jobs:
         ./builder localhost-canary -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   localhost-canary-win:
-    runs-on: windows-2022 # latest
+    runs-on: windows-2025 # latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Configure local host
@@ -368,9 +368,9 @@ jobs:
         python -m pip install h2
     - name: Build and test
       run: |
-        cd crt/aws-c-http/tests/py_localhost/
-        Start-Process -NoNewWindow python .\server.py
-        Start-Process -NoNewWindow python .\non_tls_server.py
+        cd crt/aws-c-http/tests/mock_server/
+        Start-Process -NoNewWindow python .\h2tls_mock_server.py
+        Start-Process -NoNewWindow python .\h2non_tls_server.py
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz localhost-canary -p ${{ env.PACKAGE_NAME }} downstream
 

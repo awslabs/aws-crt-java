@@ -67,7 +67,7 @@ public abstract class ClientConnectionContinuationHandler implements AutoCloseab
     @Override
     public void close() {
         if (continuation != null) {
-            continuation.decRef();
+            continuation.decRef("close() called");
             continuation = null;
         }
     }

@@ -25,6 +25,9 @@ public class Http2Stream extends HttpStreamBase {
      * @param errorCode aws_http2_error_code. Reason to reset the stream.
      */
     public void resetStream(final Http2ClientConnection.Http2ErrorCode errorCode) {
+        if (isNull()) {
+            throw new IllegalStateException("Http2Stream has been closed.");
+        }
         http2StreamResetStream(getNativeHandle(), errorCode.getValue());
     }
 

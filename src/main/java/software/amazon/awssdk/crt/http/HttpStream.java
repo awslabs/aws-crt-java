@@ -43,6 +43,10 @@ public class HttpStream extends HttpStreamBase {
      */
     public void writeChunk(final byte[] chunkData, boolean isFinalChunk,
             final HttpStreamWriteChunkCompletionCallback chunkCompletionCallback) {
+        if (isNull()) {
+            throw new IllegalStateException("HttpStream has been closed.");
+        }
+
         if (chunkCompletionCallback == null) {
             throw new IllegalArgumentException("You must supply a chunkCompletionCallback");
         }

@@ -27,12 +27,13 @@ public class ServerListener extends CrtResource {
      * @param hostName name of the host to listen on. Can be a dns name, ip address, or unix
      *                 domain socket (or named pipe on windows) name.
      * @param port port to listen on. Ignored for local domain sockets.
+     *             For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param socketOptions socket options to apply to the listening socket.
      * @param tlsContext optional tls context to apply to the connection if you want to use TLS.
      * @param serverBootstrap bootstrap object for handling connections.
      * @param handler functor interface for handling incoming connections and connection closures.
      */
-    public ServerListener(final String hostName, short port, final SocketOptions socketOptions,
+    public ServerListener(final String hostName, int port, final SocketOptions socketOptions,
                           final ServerTlsContext tlsContext, final ServerBootstrap serverBootstrap,
                           final ServerListenerHandler handler) {
 
@@ -67,6 +68,8 @@ public class ServerListener extends CrtResource {
 
     /**
      * @return the port which the listener socket is bound to.
+     * Note that two's complement is used for 32bit values exceeding
+     * Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getBoundPort() {
         return boundPort;
@@ -87,7 +90,7 @@ public class ServerListener extends CrtResource {
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     private static native long serverListenerNew(ServerListener serverListener, byte[] hostName,
-                                                 short port, long socketOptionsHandle,
+                                                 int port, long socketOptionsHandle,
                                                  long tlsContextHandle, long bootstrapHandle,
                                                  ServerListenerHandler handler);
     private static native int getBoundPort(long serverListener);

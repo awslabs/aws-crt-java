@@ -1,0 +1,22 @@
+version: 0.2
+phases:
+  install:
+    commands:
+  pre_build:
+    commands:
+      - export CC=gcc
+  build:
+    commands:
+      - cd aws-crt-java
+      - ./codebuild/cd/musl-linux-build.sh aws-crt-alpine-3.16-arm64 linux-aarch_64-musl linux/aarch64
+
+  post_build:
+    commands:
+
+artifacts:
+  files:
+    - 'dist/**/*'
+
+cache:
+  paths:
+    - '/root/.m2/**/*'

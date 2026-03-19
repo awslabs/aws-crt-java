@@ -8,6 +8,7 @@
 #include <aws/io/tls_channel_handler.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -30,6 +31,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnect
     jint jni_timeout_ms,
     jlong native_context) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_tls_ctx *ctx = (struct aws_tls_ctx *)native_context;
     if (!ctx) {
         aws_jni_throw_illegal_argument_exception(env, "TlsContext cannot be null for TlsConnectionOptions");
@@ -77,8 +80,9 @@ void JNICALL Java_software_amazon_awssdk_crt_io_TlsConnectionOptions_tlsConnecti
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options) {
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_tls_connection_options *options = (struct aws_tls_connection_options *)jni_options;
     if (!options) {
         return;

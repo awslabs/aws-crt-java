@@ -19,6 +19,7 @@ public class HttpProxyOptions {
     private TlsContext tlsContext;
     private HttpProxyAuthorizationType authorizationType;
     private HttpProxyConnectionType connectionType;
+    private String noProxyHosts;
 
     /**
      * what kind of authentication, if any, to use when connecting to a proxy server
@@ -115,7 +116,8 @@ public class HttpProxyOptions {
     public String getHost() { return host; }
 
     /**
-     * Sets the proxy port to connect through
+     * Sets the proxy port to connect through.
+     * For 32bit values exceeding Integer.MAX_VALUE use two's complement (i.e. -1 == 0xFFFFFFFF).
      * @param port proxy port to connect through
      */
     public void setPort(int port) {
@@ -123,7 +125,9 @@ public class HttpProxyOptions {
     }
 
     /**
-     * @return the proxy port to connect through
+     * @return the proxy port to connect through.
+     *         Note that two's complement is used for 32bit values exceeding
+     *         Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getPort() { return port; }
 
@@ -179,4 +183,24 @@ public class HttpProxyOptions {
      */
     public TlsContext getTlsContext() { return tlsContext; }
 
+    /**
+     * @return the nonProxyHosts setting for the proxy connection.
+     */
+    public String getNoProxyHosts() {
+        return noProxyHosts;
+    }
+
+    /**
+     * Sets the list of hosts for which not to use a proxy. This should be a comma seperated list
+     * of domain names, host names, or IP Addresses following the format used by CURL.
+     * The only wildcard available is a single "*" character, which matches all hosts,
+     * and effectively disables the proxy.
+     * IP addresses specified to this option can be provided using CIDR notation: an appended slash and number
+     * specifies the number of "network bits" out of the address to use in the comparison.
+     *
+     * @param noProxyHosts comma seperated list of hosts to skip proxy for.
+     */
+    public void setNoProxyHosts(String noProxyHosts) {
+        this.noProxyHosts = noProxyHosts;
+    }
 }

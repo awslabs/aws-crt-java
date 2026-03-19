@@ -78,6 +78,7 @@ public class Http2StreamManager extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
         HttpProxyOptions proxyOptions = connectionManagerOptions.getProxyOptions();
 
         if (proxyOptions != null) {
@@ -88,6 +89,7 @@ public class Http2StreamManager extends CrtResource {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
         }
 
         HttpMonitoringOptions monitoringOptions = connectionManagerOptions.getMonitoringOptions();
@@ -113,7 +115,9 @@ public class Http2StreamManager extends CrtResource {
                 proxyAuthorizationType,
                 proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                 proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
                 connectionManagerOptions.isManualWindowManagement(),
+                connectionManagerOptions.getWindowSize(),
                 monitoringThroughputThresholdInBytesPerSecond,
                 monitoringFailureIntervalInSeconds,
                 maxConnections,
@@ -155,9 +159,8 @@ public class Http2StreamManager extends CrtResource {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    private CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
-            HttpStreamBaseResponseHandler streamHandler) {
-
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+        HttpStreamBaseResponseHandler streamHandler) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {
@@ -175,6 +178,23 @@ public class Http2StreamManager extends CrtResource {
             completionFuture.completeExceptionally(ex);
         }
         return completionFuture;
+    }
+
+    /**
+     * @return maximum number of connections this connection manager will pool
+     */
+    public int getMaxConnections() {
+        return maxConnections;
+    }
+
+    /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        return http2StreamManagerFetchMetrics(getNativeHandle());
     }
 
     /**
@@ -237,7 +257,9 @@ public class Http2StreamManager extends CrtResource {
             int proxyAuthorizationType,
             byte[] proxyAuthorizationUsername,
             byte[] proxyAuthorizationPassword,
+            byte[] noProxyHosts,
             boolean isManualWindowManagement,
+            long windowSize,
             long monitoringThroughputThresholdInBytesPerSecond,
             int monitoringFailureIntervalInSeconds,
             int maxConns,
@@ -255,4 +277,6 @@ public class Http2StreamManager extends CrtResource {
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
             AsyncCallback completedCallback) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics http2StreamManagerFetchMetrics(long stream_manager) throws CrtRuntimeException;
 }

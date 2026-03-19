@@ -1,45 +1,16 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9...3.31)
 
 project(aws-crt-jni C)
 option(BUILD_DEPS "Builds aws common runtime dependencies as part of build" ON)
+option(CRT_FIPS "Whether to build aws-lc with FIPS compliance" OFF)
 
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW) # Enable LTO/IPO if available in the compiler, see AwsCFlags
-endif()
-
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 NEW) # Enable options to get their values from normal variables
-endif()
-
-if (DEFINED CMAKE_PREFIX_PATH)
-    file(TO_CMAKE_PATH "${CMAKE_PREFIX_PATH}" CMAKE_PREFIX_PATH)
-endif()
-
-if (DEFINED CMAKE_INSTALL_PREFIX)
-    file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
-endif()
-
-if (UNIX AND NOT APPLE)
-    include(GNUInstallDirs)
-elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-    set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-
-if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
-    set(FIND_LIBRARY_USE_LIB64_PATHS true)
-endif()
+include(GNUInstallDirs)
 
 if (NOT WIN32 AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-
-# This is required in order to append /lib/cmake to each element in CMAKE_PREFIX_PATH
-set(AWS_MODULE_DIR "/${CMAKE_INSTALL_LIBDIR}/cmake")
-string(REPLACE ";" "${AWS_MODULE_DIR};" AWS_MODULE_PATH "${CMAKE_PREFIX_PATH}${AWS_MODULE_DIR}")
-# Append that generated list to the module search path
-list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 
 # Local CMake scripts
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -59,30 +30,47 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
     if (UNIX AND NOT APPLE)
-        set(BUILD_LIBSSL OFF CACHE BOOL "Don't need libssl, only need libcrypto")
-        set(DISABLE_PERL ON CACHE BOOL "Disable codegen")
-        set(DISABLE_GO ON CACHE BOOL "Disable codegen")
+        include(AwsPrebuildDependency)
 
-        # temporarily disable certain warnings as errors for the aws-lc build
-        set(OLD_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        if (NOT MSVC)
-            check_c_compiler_flag(-Wno-stringop-overflow HAS_WNO_STRINGOP_OVERFLOW)
-            if (HAS_WNO_STRINGOP_OVERFLOW)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
-            endif()
+        set(AWSLC_CMAKE_ARGUMENTS
+            -DBUILD_LIBSSL=OFF
+            -DBUILD_TESTING=OFF
+        )
 
-            check_c_compiler_flag(-Wno-array-parameter HAS_WNO_ARRAY_PARAMETER)
-            if (HAS_WNO_ARRAY_PARAMETER)
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-parameter")
+        message("Build with FIPS: " ${CRT_FIPS})
+        if (CRT_FIPS)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DFIPS=ON)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=OFF)
+
+            # Pick up GO_PATH env-var, set by aws-crt-builder when cross-compiling, see:
+            # https://github.com/awslabs/aws-crt-builder/blob/31307c808ed9f2ea1eb16503b25a9b582f886481/builder/imports/golang.py#L84
+            # https://github.com/awslabs/aws-crt-builder/blob/31307c808ed9f2ea1eb16503b25a9b582f886481/builder/actions/cmake.py#L110
+            if (DEFINED ENV{GO_PATH})
+                list(APPEND AWSLC_CMAKE_ARGUMENTS -DGO_EXECUTABLE=$ENV{GO_PATH}/go)
+                message(STATUS "Overriding GO_EXECUTABLE to ${GO_EXECUTABLE}")
             endif()
+        else()
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_PERL=ON)  # Disable codegen
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DDISABLE_GO=ON)  # Disable codegen
         endif()
 
-        add_subdirectory(crt/aws-lc)
+        if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
+            # Disable AVX512 on old GCC that not supports it
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
+        endif()
 
-        # restore previous build flags
-        set(CMAKE_C_FLAGS "${OLD_CMAKE_C_FLAGS}")
+        if (ANDROID)
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
+        endif()
 
-        set(SEARCH_LIBCRYPTO OFF CACHE BOOL "Let S2N use libcrypto from AWS-LC.")
+        # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
+        aws_prebuild_dependency(
+            DEPENDENCY_NAME AWSLC
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/aws-lc
+            CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
+        )
+
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
         add_subdirectory(crt/s2n)
     endif()
@@ -97,6 +85,9 @@ if (BUILD_DEPS)
     add_subdirectory(crt/aws-c-event-stream)
     add_subdirectory(crt/aws-c-s3)
 else()
+    # this is required so we can use aws-c-common's CMake modules
+    find_package(aws-c-common REQUIRED)
+
     include(AwsFindPackage)
     include(AwsCFlags)
     set(IN_SOURCE_BUILD OFF)
@@ -105,6 +96,13 @@ endif()
 include(UseJava)
 include(AwsPlatformDetect)
 include(AwsSharedLibSetup)
+include(AwsCRuntime)
+
+if (CRT_FIPS AND NOT AWSLC_PREBUILT)
+    message(FATAL_ERROR "CRT_FIPS can only be set when build with aws-lc.")
+endif()
+
+aws_determine_local_c_runtime(AWS_C_RUNTIME)
 
 file(GLOB AWS_CRT_JAVA_HEADERS
         "include/aws/jni/*.h"
@@ -156,13 +154,14 @@ file(GLOB CRT_JAVA_SRC
 # figure out the target platform info and output the lib there
 aws_detect_target_platform(TARGET_OS TARGET_ARCH)
 message(STATUS "Compiling for ${TARGET_OS}-${TARGET_ARCH}")
-set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}")
+set(TARGET_LIB_DIR "${AWS_LIBRARY_OUTPUT_DIR}/${TARGET_OS}/${TARGET_ARCH}/${AWS_C_RUNTIME}")
 
 # shared lib that contains the CRT and JNI bindings, to be loaded by java
 add_library(${PROJECT_NAME} SHARED ${CRT_JAVA_HEADERS} ${CRT_JAVA_SRC})
-aws_use_package(aws-c-http)
+
+# link the high-level libraries that will recursively pull in the rest
+# (don't repeat dependencies here, or the linker will spit out warnings)
 aws_use_package(aws-c-mqtt)
-aws_use_package(aws-c-auth)
 aws_use_package(aws-c-event-stream)
 aws_use_package(aws-c-s3)
 
@@ -203,6 +202,21 @@ if (NOT ANDROID)
         file(TO_CMAKE_PATH "$ENV{OVERRIDE_JAVA_HOME}" OVERRIDE_JAVA_HOME)
         set(JAVA_HOME "${OVERRIDE_JAVA_HOME}")
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
+
+        if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
+            # Convert to absolute path if it isn't already. 
+            # CMAKE_FIND_ROOT_PATH seems to require path to be absolute
+            get_filename_component(ABSOLUTE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
+        endif()
+
+        # Note: dockcross images come without java installed. 
+        # we download java manually for the target architecture, but the since its not an
+        # artifact generated within dockcross, it gets ignored during cross compilation 
+        # (due to recent changes in which cross compile flags dockcross is passing to cmake)
+        # Specifically, CMAKE_FIND_ROOT_PATH_MODE_LIBRARY/INCLUDE changed from BOTH to ONLY,
+        # which makes CMake only check `CMAKE_FIND_ROOT_PATH` for dependencies. 
+        # Add java artifacts as additional cross compile dep.
+        list(APPEND CMAKE_FIND_ROOT_PATH "${ABSOLUTE_JAVA_HOME}")
     endif()
     message(STATUS "JAVA_HOME=$ENV{JAVA_HOME}")
     find_package(JNI REQUIRED)

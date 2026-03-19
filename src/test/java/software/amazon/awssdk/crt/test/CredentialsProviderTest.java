@@ -26,15 +26,17 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 public class CredentialsProviderTest extends CrtTestFixture {
     static private String ACCESS_KEY_ID = "access_key_id";
     static private String SECRET_ACCESS_KEY = "secret_access_key";
     static private String SESSION_TOKEN = "session_token";
 
-    private static String COGNITO_IDENTITY = System.getenv("AWS_TESTING_COGNITO_IDENTITY");
-    private static String TEST_HTTP_PROXY_HOST = System.getenv("AWS_TEST_HTTP_PROXY_HOST");
-    private static String TEST_HTTP_PROXY_PORT = System.getenv("AWS_TEST_HTTP_PROXY_PORT");
+    private static String COGNITO_ENDPOINT = System.getProperty("AWS_TEST_MQTT311_COGNITO_ENDPOINT");
+    private static String COGNITO_IDENTITY = System.getProperty("AWS_TEST_MQTT311_COGNITO_IDENTITY");
+    private static String TEST_HTTP_PROXY_HOST = System.getProperty("AWS_TEST_HTTP_PROXY_HOST");
+    private static String TEST_HTTP_PROXY_PORT = System.getProperty("AWS_TEST_HTTP_PROXY_PORT");
 
     private boolean isCIEnvironmentSetUp() {
         if (COGNITO_IDENTITY == null ) {
@@ -156,12 +158,13 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testDelegate() {
+        final long expireTime = 123456;
         DelegateCredentialsProvider.DelegateCredentialsProviderBuilder builder = new DelegateCredentialsProvider.DelegateCredentialsProviderBuilder();
         DelegateCredentialsHandler credentialsHandler = new DelegateCredentialsHandler() {
             @Override
             public Credentials getCredentials() {
                 return new Credentials(ACCESS_KEY_ID.getBytes(), SECRET_ACCESS_KEY.getBytes(),
-                        SESSION_TOKEN.getBytes());
+                        SESSION_TOKEN.getBytes(), expireTime);
             }
         };
         builder.withHandler(credentialsHandler);
@@ -171,6 +174,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             assertTrue(Arrays.equals(credentials.getAccessKeyId(), ACCESS_KEY_ID.getBytes()));
             assertTrue(Arrays.equals(credentials.getSecretAccessKey(), SECRET_ACCESS_KEY.getBytes()));
             assertTrue(Arrays.equals(credentials.getSessionToken(), SESSION_TOKEN.getBytes()));
+            assertEquals(expireTime, credentials.getExpirationTimePointSecs());
         } catch (Exception ex) {
             fail(ex.getMessage());
         }
@@ -304,8 +308,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 Throwable innerException = e.getCause();
 
                 // Check that the right exception type caused the completion error in the future
-                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-                assertEquals(RuntimeException.class, innerException.getClass());
+                assertTrue(innerException.getMessage().contains("Parser encountered an error"));
+                assertEquals(CrtRuntimeException.class, innerException.getClass());
             }
         } finally {
             Files.deleteIfExists(credsPath);
@@ -314,7 +318,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
     }
 
     @Ignore // Enable this test if/when https://github.com/awslabs/aws-c-auth/issues/142 has
-            // been resolved
+            // been resolved.
     @Test
     public void testCreateDestroyEcs_ValidCreds()
             throws IOException, ExecutionException, InterruptedException, TimeoutException {
@@ -369,10 +373,9 @@ public class CredentialsProviderTest extends CrtTestFixture {
             } catch (CompletionException e) {
                 assertNotNull(e.getCause());
                 Throwable innerException = e.getCause();
+                assertEquals(CrtRuntimeException.class, innerException.getClass());
+                // The way that this fails is different per platform, so we can't dig further at the moment.
 
-                // Check that the right exception type caused the completion error in the future
-                assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-                assertEquals(RuntimeException.class, innerException.getClass());
             }
         }
     }
@@ -427,8 +430,8 @@ public class CredentialsProviderTest extends CrtTestFixture {
             Throwable innerException = e.getCause();
 
             // Check that the right exception type caused the completion error in the future
-            assertEquals("Failed to get a valid set of credentials", innerException.getMessage());
-            assertEquals(RuntimeException.class, innerException.getClass());
+            assertEquals("Unsuccessful status code returned from credentials-fetching http request", innerException.getMessage());
+            assertEquals(CrtRuntimeException.class, innerException.getClass());
         }
     }
 
@@ -441,7 +444,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
              TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
 
@@ -452,6 +455,165 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 assertNotNull(credentials.getAccessKeyId());
                 assertNotNull(credentials.getSecretAccessKey());
                 assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithSyncDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+                    tokens.add(new CognitoCredentialsProvider.CognitoLoginTokenPair("token", "value"));
+
+                    tokenFuture.complete(tokens);
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with fake login tokens should have failed");
+            } catch (ExecutionException ex) {
+                // passing in fake tokens causes Cognito to reject the request
+                assertTrue(ex.getCause().getMessage().contains("Unsuccessful status code returned from credentials-fetching http request"));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithAsyncDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+                            tokens.add(new CognitoCredentialsProvider.CognitoLoginTokenPair("token", "value"));
+
+                            tokenFuture.complete(tokens);
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with fake login tokens should have failed");
+            } catch (ExecutionException ex) {
+                // passing in fake tokens causes Cognito to reject the request
+                assertTrue(ex.getCause().getMessage().contains("Unsuccessful status code returned from credentials-fetching http request"));
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithEmptyDynamicLoginTokens() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            ArrayList<CognitoCredentialsProvider.CognitoLoginTokenPair> tokens = new ArrayList<>();
+
+                            tokenFuture.complete(tokens);
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                Credentials credentials = future.get();
+
+                assertNotNull(credentials.getAccessKeyId());
+                assertNotNull(credentials.getSecretAccessKey());
+                assertNotNull(credentials.getSessionToken());
+            } catch (Exception ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testGetCredentialsCognitoWithDynamicLoginTokensException() {
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(isCIEnvironmentSetUp());
+
+        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+            builder.withEndpoint(COGNITO_ENDPOINT);
+            builder.withIdentity(COGNITO_IDENTITY);
+            builder.withTlsContext(tlsContext);
+            builder.withLoginTokenSource(new CognitoLoginTokenSource() {
+                @Override
+                public void startLoginTokenFetch(CompletableFuture<List<CognitoCredentialsProvider.CognitoLoginTokenPair>> tokenFuture) {
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            tokenFuture.completeExceptionally(new RuntimeException("Oh no"));
+                        }
+                    });
+                }
+            });
+
+            try (CognitoCredentialsProvider provider = builder.build()) {
+                CompletableFuture<Credentials> future = provider.getCredentials();
+                future.get();
+
+                fail("Cognito credentials request with failing login token source resolution should have failed");
+            } catch (ExecutionException ex) {
+                assertTrue(ex.getCause().getMessage().contains("Valid credentials could not be sourced by the cognito provider"));
             } catch (Exception ex) {
                 fail(ex.getMessage());
             }
@@ -472,7 +634,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             proxyOptions.setPort(Integer.parseInt(TEST_HTTP_PROXY_PORT));
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
             builder.withHttpProxyOptions(proxyOptions);
@@ -499,7 +661,7 @@ public class CredentialsProviderTest extends CrtTestFixture {
             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
             CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint("cognito-identity.us-east-1.amazonaws.com");
+            builder.withEndpoint(COGNITO_ENDPOINT);
             builder.withIdentity(COGNITO_IDENTITY);
             builder.withTlsContext(tlsContext);
             builder.withLogin(new CognitoCredentialsProvider.CognitoLoginTokenPair("test", "token"));

@@ -6,11 +6,7 @@ package software.amazon.awssdk.crt.http;
 
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
@@ -28,7 +24,7 @@ public class HttpClientConnectionManager extends CrtResource {
     private static final int DEFAULT_HTTPS_PORT = 443;
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
 
-    private final int windowSize;
+    private final long windowSize;
     private final URI uri;
     private final int port;
     private final int maxConnections;
@@ -55,7 +51,7 @@ public class HttpClientConnectionManager extends CrtResource {
         TlsContext tlsContext = options.getTlsContext();
         TlsConnectionOptions tlsConnectionOptions = options.getTlsConnectionOptions();
 
-        int windowSize = options.getWindowSize();
+        long windowSize = options.getWindowSize();
         int maxConnections = options.getMaxConnections();
         int port = options.getPort();
         if (port == -1) {
@@ -65,6 +61,24 @@ public class HttpClientConnectionManager extends CrtResource {
                 if (HTTP.equals(uri.getScheme()))  { port = DEFAULT_HTTP_PORT; }
                 if (HTTPS.equals(uri.getScheme())) { port = DEFAULT_HTTPS_PORT; }
             }
+        }
+        /**
+         * Per RFC 3986 Section 3.2.2, IPv6 addresses in URIs MUST be enclosed in square brackets
+         * (e.g., "http://[2001:db8::1]:8080/path"). However, when connecting to a host, the brackets
+         * must be removed to get the actual IPv6 address.
+         * 
+         * Since Java's URI.getHost() returns IPv6 addresses WITH brackets (e.g., "[2001:db8::1]"),
+         * but the underlying CRT library expects the hostname WITHOUT brackets (e.g., "2001:db8::1").
+         * Manually strip the brackets before passing the hostname to CRT.
+         * 
+         * Note: Different language implementations handle bracket stripping inconsistently eg: Python
+         * (urlparse().hostname) strip brackets automatically, while Java (URI.getHost()) keeps brackets, 
+         * thus we strip the brackets based on the language behavior.
+         */
+
+        String host = uri.getHost();
+        if (host.startsWith("[") && host.endsWith("]")) {
+            host = host.substring(1, host.length() - 1);
         }
 
         HttpProxyOptions proxyOptions = options.getProxyOptions();
@@ -82,6 +96,7 @@ public class HttpClientConnectionManager extends CrtResource {
         int proxyAuthorizationType = 0;
         String proxyAuthorizationUsername = null;
         String proxyAuthorizationPassword = null;
+        String noProxyHosts = null;
 
         if (proxyOptions != null) {
             proxyConnectionType = proxyOptions.getConnectionType().getValue();
@@ -91,6 +106,17 @@ public class HttpClientConnectionManager extends CrtResource {
             proxyAuthorizationType = proxyOptions.getAuthorizationType().getValue();
             proxyAuthorizationUsername = proxyOptions.getAuthorizationUsername();
             proxyAuthorizationPassword = proxyOptions.getAuthorizationPassword();
+            noProxyHosts = proxyOptions.getNoProxyHosts();
+        }
+
+        int environmentVariableProxyConnectionType = 0;
+        TlsConnectionOptions environmentVariableProxyTlsConnectionOptions = null;
+        int environmentVariableType = 0;
+        HttpProxyEnvironmentVariableSetting environmentVariableSetting = options.getHttpProxyEnvironmentVariableSetting();
+        if (environmentVariableSetting != null) {
+            environmentVariableProxyConnectionType = environmentVariableSetting.getConnectionType().getValue();
+            environmentVariableProxyTlsConnectionOptions = environmentVariableSetting.getTlsConnectionOptions();
+            environmentVariableType = environmentVariableSetting.getEnvironmentVariableType().getValue();
         }
 
         HttpMonitoringOptions monitoringOptions = options.getMonitoringOptions();
@@ -107,7 +133,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                             useTls && tlsContext!=null ? tlsContext.getNativeHandle() : 0,
                                             useTls && tlsConnectionOptions!=null ? tlsConnectionOptions.getNativeHandle() : 0,
                                             windowSize,
-                                            uri.getHost().getBytes(UTF8),
+                                            host.getBytes(UTF8),
                                             port,
                                             maxConnections,
                                             proxyConnectionType,
@@ -117,11 +143,20 @@ public class HttpClientConnectionManager extends CrtResource {
                                             proxyAuthorizationType,
                                             proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
                                             proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                                            noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
+                                            environmentVariableProxyConnectionType,
+                                            environmentVariableProxyTlsConnectionOptions != null
+                                                    ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
+                                                    : 0,
+                                            environmentVariableType,
                                             options.isManualWindowManagement(),
                                             options.getMaxConnectionIdleInMilliseconds(),
                                             monitoringThroughputThresholdInBytesPerSecond,
                                             monitoringFailureIntervalInSeconds,
-                                            expectedHttpVersion.getValue()));
+                                            expectedHttpVersion.getValue(),
+                                            options.getMaxPendingConnectionAcquisitions(),
+                                            options.getConnectionAcquisitionTimeoutInMilliseconds(),
+                                            options.getResponseFirstByteTimeoutInMilliseconds()));
 
         /* we don't need to add a reference to socketOptions since it's copied during connection manager construction */
          addReferenceTo(clientBootstrap);
@@ -144,10 +179,9 @@ public class HttpClientConnectionManager extends CrtResource {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
 
-        CompletableFuture<HttpClientConnection> connRequest = new CompletableFuture<>();
-
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), connRequest);
-        return connRequest;
+        CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
+        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
+        return returnedFuture;
     }
 
     /**
@@ -203,9 +237,19 @@ public class HttpClientConnectionManager extends CrtResource {
     }
 
     /**
+     * @return concurrency metrics for the current manager
+     */
+    public HttpManagerMetrics getManagerMetrics() {
+        if (isNull()) {
+            throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
+        }
+        return httpConnectionManagerFetchMetrics(getNativeHandle());
+    }
+
+    /**
      * @return size of the per-connection streaming read window for response handling
      */
-    public int getWindowSize() {
+    public long getWindowSize() {
         return windowSize;
     }
 
@@ -225,7 +269,7 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         long socketOptions,
                                                         long tlsContext,
                                                         long tlsConnectionOptions,
-                                                        int windowSize,
+                                                        long windowSize,
                                                         byte[] endpoint,
                                                         int port,
                                                         int maxConns,
@@ -236,14 +280,23 @@ public class HttpClientConnectionManager extends CrtResource {
                                                         int proxyAuthorizationType,
                                                         byte[] proxyAuthorizationUsername,
                                                         byte[] proxyAuthorizationPassword,
+                                                        byte[] noProxyHosts,
+                                                        int environmentVariableProxyConnectionType,
+                                                        long environmentVariableProxyTlsConnectionOptions,
+                                                        int environmentVariableSetting,
                                                         boolean isManualWindowManagement,
                                                         long maxConnectionIdleInMilliseconds,
                                                         long monitoringThroughputThresholdInBytesPerSecond,
                                                         int monitoringFailureIntervalInSeconds,
-                                                        int expectedProtocol) throws CrtRuntimeException;
+                                                        int expectedProtocol,
+                                                        long maxPendingConnectionAcquisitions,
+                                                        long connectionAcquisitionTimeoutInMilliseconds,
+                                                        long responseFirstByteTimeoutInMilliseconds) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerRelease(long conn_manager) throws CrtRuntimeException;
 
     private static native void httpClientConnectionManagerAcquireConnection(long conn_manager, CompletableFuture<HttpClientConnection> acquireFuture) throws CrtRuntimeException;
+
+    private static native HttpManagerMetrics httpConnectionManagerFetchMetrics(long conn_manager) throws CrtRuntimeException;
 
 }

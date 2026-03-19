@@ -7,6 +7,7 @@
 #include <aws/io/host_resolver.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -27,6 +28,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostReso
     jint max_entries) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_event_loop_group *el_group = (struct aws_event_loop_group *)jni_elg;
@@ -61,6 +63,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_io_HostResolver_hostResol
     jlong jni_host_resolver) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_host_resolver *resolver = (struct aws_host_resolver *)jni_host_resolver;
     if (!resolver) {

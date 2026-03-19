@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.auth.credentials;
 
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 
 /**
@@ -41,11 +42,13 @@ public class CredentialsProvider extends CrtResource {
      * @param future the future that the credentials should be applied to
      * @param credentials the fetched credentials, if successful
      */
-    private void onGetCredentialsComplete(CompletableFuture<Credentials> future, Credentials credentials) {
+    private void onGetCredentialsComplete(CompletableFuture<Credentials> future, int errorCode, Credentials credentials) {
         if (credentials != null) {
             future.complete(credentials);
+        } else if (errorCode != 0) {
+            future.completeExceptionally(new CrtRuntimeException(errorCode));
         } else {
-            future.completeExceptionally(new RuntimeException("Failed to get a valid set of credentials"));
+            future.completeExceptionally(new CrtRuntimeException("Failed to get a valid set of credentials"));
         }
     }
 

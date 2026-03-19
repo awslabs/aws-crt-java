@@ -12,7 +12,7 @@ import software.amazon.awssdk.crt.CRT;
  * JNI bindings to the AWS Common Runtime
  */
 public class HttpException extends RuntimeException {
-    private int errorCode;
+    private final int errorCode;
 
     /**
      * Constructs a new HttpException
@@ -24,11 +24,11 @@ public class HttpException extends RuntimeException {
     }
 
     /**
-     * Returns the error code captured when the exception occurred. This can be fed to {@link CRT.awsErrorString} to
+     * Returns the error code captured when the exception occurred. This can be fed to CRT.awsErrorString() to
      * get a user-friendly error string
      * @return The error code associated with this exception
      */
-    int getErrorCode() {
+    public int getErrorCode() {
         return errorCode;
     }
 }

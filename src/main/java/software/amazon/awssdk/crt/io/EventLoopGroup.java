@@ -95,7 +95,7 @@ public final class EventLoopGroup extends CrtResource {
     public static void closeStaticDefault() {
         synchronized (EventLoopGroup.class) {
             if (staticDefaultEventLoopGroup != null) {
-                staticDefaultEventLoopGroup.close();
+                staticDefaultEventLoopGroup.close("closeStaticDefault");
             }
             staticDefaultEventLoopGroup = null;
         }

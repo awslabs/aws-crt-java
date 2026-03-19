@@ -1,6 +1,4 @@
 version: 0.2
-#this build spec assumes the manylinux CentOS5 custom image
-#additional packages we installed: cmake 3.5, libcrypto 1.1.0j, gcc 4.8.4, openjdk8, maven 3.6.0, gnupg 2.0.10
 phases:
   install:
     commands:
@@ -11,17 +9,14 @@ phases:
     commands:
       - cd aws-crt-java
       - git submodule update --init
-      - JAVA_HOME=/opt/java-se-8u40-ri/ mvn -B compile
+      - mvn -B package -DskipTests -Dcrt.classifier=linux-x86_64
+
   post_build:
     commands:
-      # get the shared libs from the native build
-      - mkdir -p ../dist
-      - cp -rv target/cmake-build/lib ../dist/
-
-artifacts:
-  files:
-    - 'dist/**/*' 
-
+      # upload artifacts to S3
+      - export GIT_TAG=$(git describe --tags)
+      - aws s3 cp --recursive --exclude "*" --include "*.so" ./target/cmake-build/lib s3://aws-crt-java-pipeline/${GIT_TAG}/lib
+      - aws s3 cp --recursive --exclude "*" --include "aws-crt*.jar" ./target s3://aws-crt-java-pipeline/${GIT_TAG}/jar
 cache:
   paths:
     - '/root/.m2/**/*'

@@ -25,7 +25,10 @@ public class EccKeyPairTest extends CrtTestFixture {
     @Test
     public void testSignMessage() {
         try (EccKeyPair keyPair = EccKeyPair.newDeriveFromCredentials(credentials, EccKeyPair.AwsEccCurve.AWS_ECDSA_P256)) {
-            byte[] signatureBytes = keyPair.signMessage("".getBytes());
+            /**
+             * TODO: windows stop supporting signing empty string, and the signing SHOULD take a hash digest, which SHOULD never be empty.
+             **/
+            byte[] signatureBytes = keyPair.signMessage("1".getBytes());
             assertTrue(signatureBytes.length > 0);
         }
     }

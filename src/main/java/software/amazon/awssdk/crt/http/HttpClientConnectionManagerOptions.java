@@ -4,36 +4,40 @@
  */
 package software.amazon.awssdk.crt.http;
 
-import java.net.URI;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.io.TlsConnectionOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
+import java.net.URI;
 
 /**
  * Contains all the configuration options for a HttpConnectionPoolManager instance
  */
 public class HttpClientConnectionManagerOptions {
     public static final int DEFAULT_MAX_BUFFER_SIZE = 16 * 1024;
-    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
+    public static final long DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX_CONNECTIONS = 2;
 
     private ClientBootstrap clientBootstrap;
     private SocketOptions socketOptions;
     private TlsContext tlsContext;
     private TlsConnectionOptions tlsConnectionOptions;
-    private int windowSize = DEFAULT_MAX_WINDOW_SIZE;
+    private long windowSize = DEFAULT_MAX_WINDOW_SIZE;
     private int bufferSize = DEFAULT_MAX_BUFFER_SIZE;
     private URI uri;
     private int port = -1;
     private int maxConnections = DEFAULT_MAX_CONNECTIONS;
     private HttpProxyOptions proxyOptions;
+    private HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting;
     private boolean manualWindowManagement = false;
     private HttpMonitoringOptions monitoringOptions;
     private long maxConnectionIdleInMilliseconds = 0;
     private HttpVersion expectedHttpVersion = HttpVersion.HTTP_1_1;
+    private long connectionAcquisitionTimeoutInMilliseconds;
+    private long maxPendingConnectionAcquisitions;
+    private long responseFirstByteTimeoutInMilliseconds;
 
-    private static final String HTTP = "http";
+	private static final String HTTP = "http";
     private static final String HTTPS = "https";
 
     /**
@@ -106,19 +110,22 @@ public class HttpClientConnectionManagerOptions {
     public TlsConnectionOptions getTlsConnectionOptions() { return tlsConnectionOptions; }
 
     /**
-     * Sets the IO channel window size to use for connections in the connection pool
-     * @param windowSize The initial window size to use for each connection
+     * Sets the starting size of each HTTP stream's flow-control window.
+     * This is only used when "manual window management" is enabled.
+     *
+     * @param windowSize The initial window size for each HTTP stream
      * @return this
+     * @see #withManualWindowManagement
      */
-    public HttpClientConnectionManagerOptions withWindowSize(int windowSize) {
+    public HttpClientConnectionManagerOptions withWindowSize(long windowSize) {
         this.windowSize = windowSize;
         return this;
     }
 
     /**
-     * @return the IO channel window size to use for connections in the connection pool
+     * @return The starting size of each HTTP stream's flow-control window.
      */
-    public int getWindowSize() { return windowSize; }
+    public long getWindowSize() { return windowSize; }
 
     /**
      * @deprecated Sets the IO buffer size to use for connections in the connection pool
@@ -152,7 +159,9 @@ public class HttpClientConnectionManagerOptions {
     public URI getUri() { return uri; }
 
     /**
-     * Sets the port to connect to for connections in the connection pool
+     * Sets the port to connect to for connections in the connection pool.
+     * For 32bit values exceeding Integer.MAX_VALUE use two's complement
+     * (i.e. -1 == 0xFFFFFFFF).
      * @param port The port to connect to
      * @return this
      */
@@ -164,6 +173,8 @@ public class HttpClientConnectionManagerOptions {
     /**
      * @return the port to connect to for connections in the connection pool.
      *         Returns -1 if none has been explicitly set.
+     *         Note that two's complement is used for 32bit values exceeding
+     *         Integer.MAX_VALUE (i.e. -1 == 0xFFFFFFFF).
      */
     public int getPort() { return port; }
 
@@ -198,23 +209,49 @@ public class HttpClientConnectionManagerOptions {
     public HttpProxyOptions getProxyOptions() { return proxyOptions; }
 
     /**
-     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
-     * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
-     * putting the data into a queue for another thread to process and need to make sure the memory
-     * usage is bounded (e.g. reactive streams).
-     * If this is enabled, you must call HttpStream.UpdateWindow() for every
-     * byte read from the OnIncomingBody callback.
+     * Optional.
+     * Sets how proxy is fetched from the environment.
+     * Reading proxy configuration from environment is disabled if this is NULL for backward compatibility.
+     * Only works when proxyOptions is not set. The proxy settings follow the following precedence
+     * 1. Configured Proxy Setting
+     * 2. Environment (if enabled)
+     * 3. No proxy
+     * @param httpProxyEnvironmentVariableSetting  for this connection manager
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withProxyEnvironmentVariableSetting(
+            HttpProxyEnvironmentVariableSetting httpProxyEnvironmentVariableSetting) {
+        this.httpProxyEnvironmentVariableSetting = httpProxyEnvironmentVariableSetting;
+        return this;
+    }
+
+    /**
+     * @return the proxy environment variable setting
+     */
+    public HttpProxyEnvironmentVariableSetting getHttpProxyEnvironmentVariableSetting() {
+        return httpProxyEnvironmentVariableSetting;
+    }
+
+    /**
      * @return true if manual window management is used, false otherwise
+     * @see #withManualWindowManagement
      */
     public boolean isManualWindowManagement() { return manualWindowManagement; }
 
     /**
-     * If set to true, then the TCP read back pressure mechanism will be enabled. You should
+     * If set to true, then you must manage the read backpressure mechanism. You should
      * only use this if you're allowing http response body data to escape the callbacks. E.g. you're
      * putting the data into a queue for another thread to process and need to make sure the memory
      * usage is bounded (e.g. reactive streams).
-     * If this is enabled, you must call HttpStream.UpdateWindow() for every
-     * byte read from the OnIncomingBody callback.
+     * <p>
+     * When enabled, each HttpStream has a flow-control window that shrinks as response body data is downloaded
+     * (headers do not affect the window). {@link #withWindowSize} determines the starting size of each
+     * HttpStream's window, in bytes. Data stops downloading whenever the window reaches zero.
+     * Increment the window to keep data flowing by calling {@link HttpStreamBase#incrementWindow},
+     * or by returning a size from {@link HttpStreamResponseHandler#onResponseBody}.
+     * Maintain a larger window to keep up a high download throughput,
+     * or use a smaller window to limit how much data could get buffered in memory.
+     *
      * @param manualWindowManagement true to enable manual window management, false to use automatic window management
      * @return this
      */
@@ -253,6 +290,48 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
+     * @return Return the connection acquisition timeout in miliseconds
+     */
+    public long getConnectionAcquisitionTimeoutInMilliseconds() {
+		return connectionAcquisitionTimeoutInMilliseconds;
+	}
+
+
+     /**
+     * If set, {@link HttpClientConnectionManager#acquireConnection()}
+     * will give up after waiting this long for a connection from the pool,
+     * failing with error AWS_ERROR_HTTP_CONNECTION_MANAGER_ACQUISITION_TIMEOUT.
+     * @param connectionAcquisitionTimeoutInMilliseconds timeout in milliseconds. 
+     * @return this
+     */
+	public HttpClientConnectionManagerOptions withConnectionAcquisitionTimeoutInMilliseconds(long connectionAcquisitionTimeoutInMilliseconds) {
+		this.connectionAcquisitionTimeoutInMilliseconds = connectionAcquisitionTimeoutInMilliseconds;
+        return this;
+	}
+
+
+    /**
+     * @return Return the max pending connection acquisitions 
+     */
+    public long getMaxPendingConnectionAcquisitions() {
+		return maxPendingConnectionAcquisitions;
+	}
+
+
+    /**
+     * If set, {@link HttpClientConnectionManager#acquireConnection()} will fail with
+     * AWS_ERROR_HTTP_CONNECTION_MANAGER_MAX_PENDING_ACQUISITIONS_EXCEEDED if there are already pending acquisitions
+     * equal to `maxPendingConnectionAcquisitions`.
+     *
+     * @param maxPendingConnectionAcquisitions maximum pending acquisitions allowed 
+     * @return this
+     */
+	public HttpClientConnectionManagerOptions withMaxPendingConnectionAcquisitions(long maxPendingConnectionAcquisitions) {
+		this.maxPendingConnectionAcquisitions = maxPendingConnectionAcquisitions;
+        return this;
+	}
+
+    /**
      * @return How long to allow connections to be idle before reaping them
      */
     public long getMaxConnectionIdleInMilliseconds() { return maxConnectionIdleInMilliseconds; }
@@ -271,6 +350,27 @@ public class HttpClientConnectionManagerOptions {
      * @return the monitoring options for connections in the connection pool
      */
     public HttpMonitoringOptions getMonitoringOptions() { return monitoringOptions; }
+
+    /**
+     * @return the response first byte timeout in milliseconds 
+     */
+    public long getResponseFirstByteTimeoutInMilliseconds() {
+        return responseFirstByteTimeoutInMilliseconds;
+    }
+
+    /**
+     * Sets the responseFirstByteTimeoutInMilliseconds.
+     * After a request is fully sent, if the server does not begin responding within N milliseconds,
+     * then fail with AWS_ERROR_HTTP_RESPONSE_FIRST_BYTE_TIMEOUT.
+     *
+     * @param responseFirstByteTimeoutInMilliseconds first byte timeout in milliseconds
+     * @return this
+     */
+    public HttpClientConnectionManagerOptions withResponseFirstByteTimeoutInMilliseconds(long responseFirstByteTimeoutInMilliseconds) {
+        this.responseFirstByteTimeoutInMilliseconds = responseFirstByteTimeoutInMilliseconds;
+        return this;
+    }
+
 
     /**
      * Validate the connection manager options are valid to use. Throw exceptions if not.

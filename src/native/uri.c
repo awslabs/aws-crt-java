@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 #include "crt.h"
+#include "java_class_ids.h"
 #include <aws/io/uri.h>
 #include <jni.h>
 
@@ -36,6 +37,8 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_io_Uri_appendEncodi
     jbyteArray encoded,
     jbyteArray path) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_encoding_common(env, encoded, path, aws_byte_buf_append_encoding_uri_path);
 }
 
@@ -45,6 +48,8 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_io_Uri_appendEncodi
     jbyteArray encoded,
     jbyteArray param) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_encoding_common(env, encoded, param, aws_byte_buf_append_encoding_uri_param);
 }
 
@@ -54,5 +59,7 @@ JNIEXPORT jbyteArray JNICALL Java_software_amazon_awssdk_crt_io_Uri_appendDecodi
     jbyteArray base,
     jbyteArray encoded) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     return s_encoding_common(env, base, encoded, aws_byte_buf_append_decoding_uri);
 }

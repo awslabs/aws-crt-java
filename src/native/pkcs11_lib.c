@@ -8,6 +8,7 @@
 #include <aws/io/pkcs11.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -28,6 +29,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_io_Pkcs11Lib_pkcs11LibNe
     jint jni_initialize_finalize_behavior) {
 
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_pkcs11_lib *pkcs11_lib = NULL;
     struct aws_pkcs11_lib_options options;
@@ -64,6 +66,7 @@ JNIEXPORT void JNICALL
 
     (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
 
     struct aws_pkcs11_lib *pkcs11_lib = (struct aws_pkcs11_lib *)jni_pkcs11_lib;
     aws_pkcs11_lib_release(pkcs11_lib);

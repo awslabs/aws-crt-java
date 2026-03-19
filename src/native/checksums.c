@@ -7,25 +7,31 @@
 #include <aws/checksums/crc.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
-jint crc_common(
+/**
+ * Note: we use critical mem access in below functions to speed up checksums.
+ * This approach is the same as what OpenJDK uses for their checksum implementation.
+ * Think twice before using similar approach elsewhere as it can lead to stalling.
+ */
+
+jint crc32_common(
     JNIEnv *env,
     jbyteArray input,
     jint previous,
     const size_t start,
     size_t length,
-    uint32_t (*checksum_fn)(const uint8_t *, int, uint32_t)) {
-    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_acquire(env, input);
+    uint32_t (*checksum_fn)(const uint8_t *, size_t, uint32_t)) {
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
+    if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
+        return previous;
+    }
+
     struct aws_byte_cursor cursor = c_byte_array;
     aws_byte_cursor_advance(&cursor, start);
     cursor.len = aws_min_size(length, cursor.len);
-    uint32_t res = (uint32_t)previous;
-    while (cursor.len > INT_MAX) {
-        res = checksum_fn(cursor.ptr, INT_MAX, res);
-        aws_byte_cursor_advance(&cursor, INT_MAX);
-    }
-    jint res_signed = (jint)checksum_fn(cursor.ptr, (int)cursor.len, res);
-    aws_jni_byte_cursor_from_jbyteArray_release(env, input, c_byte_array);
+    jint res_signed = (jint)checksum_fn(cursor.ptr, cursor.len, previous);
+    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
     return res_signed;
 }
 
@@ -37,7 +43,9 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32_crc32(
     jint offset,
     jint length) {
     (void)jni_class;
-    return crc_common(env, input, previous, offset, length, aws_checksums_crc32);
+    aws_cache_jni_ids(env);
+
+    return crc32_common(env, input, previous, offset, length, aws_checksums_crc32_ex);
 }
 
 JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32C_crc32c(
@@ -48,5 +56,30 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_checksums_CRC32C_crc32c(
     jint offset,
     jint length) {
     (void)jni_class;
-    return crc_common(env, input, previous, offset, length, aws_checksums_crc32c);
+    aws_cache_jni_ids(env);
+
+    return crc32_common(env, input, previous, offset, length, aws_checksums_crc32c_ex);
+}
+
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_checksums_CRC64NVME_crc64nvme(
+    JNIEnv *env,
+    jclass jni_class,
+    jbyteArray input,
+    jlong previous,
+    jint offset,
+    jint length) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_byte_cursor c_byte_array = aws_jni_byte_cursor_from_jbyteArray_critical_acquire(env, input);
+    if (AWS_UNLIKELY(c_byte_array.ptr == NULL)) {
+        return previous;
+    }
+
+    struct aws_byte_cursor cursor = c_byte_array;
+    aws_byte_cursor_advance(&cursor, offset);
+    cursor.len = aws_min_size(length, cursor.len);
+    jlong res_signed = (jlong)aws_checksums_crc64nvme_ex(cursor.ptr, cursor.len, previous);
+    aws_jni_byte_cursor_from_jbyteArray_critical_release(env, input, c_byte_array);
+    return res_signed;
 }

@@ -8,6 +8,7 @@
 #include <aws/io/socket.h>
 
 #include "crt.h"
+#include "java_class_ids.h"
 
 /* on 32-bit platforms, casting pointers to longs throws a warning we don't need */
 #if UINTPTR_MAX == 0xffffffff
@@ -29,9 +30,12 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     jint type,
     jint connect_timeout_ms,
     jint keep_alive_interval_secs,
-    jint keep_alive_timeout_secs) {
-    (void)env;
+    jint keep_alive_timeout_secs,
+    jint keep_alive_max_failed_probes,
+    jboolean keep_alive) {
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_allocator *allocator = aws_jni_get_allocator();
     struct aws_socket_options *options =
         (struct aws_socket_options *)aws_mem_calloc(allocator, 1, sizeof(struct aws_socket_options));
@@ -40,8 +44,10 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     options->domain = domain;
     options->type = type;
     options->connect_timeout_ms = connect_timeout_ms;
-    options->keep_alive_interval_sec = (short)keep_alive_interval_secs;
-    options->keep_alive_timeout_sec = (short)keep_alive_timeout_secs;
+    options->keep_alive_interval_sec = (uint16_t)keep_alive_interval_secs;
+    options->keep_alive_timeout_sec = (uint16_t)keep_alive_timeout_secs;
+    options->keep_alive_max_failed_probes = (uint16_t)keep_alive_max_failed_probes;
+    options->keepalive = keep_alive;
 
     return (jlong)options;
 }
@@ -51,8 +57,9 @@ void JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsDestr
     JNIEnv *env,
     jclass jni_class,
     jlong jni_options) {
-    (void)env;
     (void)jni_class;
+    aws_cache_jni_ids(env);
+
     struct aws_socket_options *options = (struct aws_socket_options *)jni_options;
     if (!options) {
         return;

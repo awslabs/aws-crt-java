@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.junit.Assert.*;
 
 public class EventStreamClientConnectionTest extends CrtTestFixture {
+    private static final int TEST_TIMEOUT_SECONDS = 3;
     public EventStreamClientConnectionTest() {}
 
     @Test
@@ -96,7 +97,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -204,7 +205,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -339,7 +340,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -486,7 +487,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         socketOptions.close();
     }
 
@@ -655,7 +656,7 @@ public class EventStreamClientConnectionTest extends CrtTestFixture {
         clientBootstrap.close();
         clientBootstrap.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
         elGroup.close();
-        elGroup.getShutdownCompleteFuture().get(1, TimeUnit.SECONDS);
+        elGroup.getShutdownCompleteFuture().get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         socketOptions.close();
     }
 }

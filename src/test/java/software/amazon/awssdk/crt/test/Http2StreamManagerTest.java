@@ -4,55 +4,33 @@
  */
 package software.amazon.awssdk.crt.test;
 
+import org.junit.Assert;
+import org.junit.Test;
+import software.amazon.awssdk.crt.CRT;
+import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.Log;
+import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.io.*;
+
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
-import software.amazon.awssdk.crt.CRT;
-import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.http.Http2StreamManager;
-import software.amazon.awssdk.crt.http.Http2Request;
-import software.amazon.awssdk.crt.http.Http2Stream;
-import software.amazon.awssdk.crt.http.Http2StreamManagerOptions;
-import software.amazon.awssdk.crt.http.HttpClientConnection;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
-import software.amazon.awssdk.crt.http.HttpClientConnectionManagerOptions;
-import software.amazon.awssdk.crt.http.HttpHeader;
-import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.http.HttpRequest;
-import software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler;
-import software.amazon.awssdk.crt.http.HttpStreamBase;
-import software.amazon.awssdk.crt.io.ClientBootstrap;
-import software.amazon.awssdk.crt.io.EventLoopGroup;
-import software.amazon.awssdk.crt.io.HostResolver;
-import software.amazon.awssdk.crt.io.SocketOptions;
-import software.amazon.awssdk.crt.io.TlsContext;
-import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.Log;
 
 public class Http2StreamManagerTest extends HttpClientTestFixture {
     private final static Charset UTF8 = StandardCharsets.UTF_8;
     private final static int NUM_THREADS = 10;
     private final static int NUM_CONNECTIONS = 20;
     private final static int NUM_REQUESTS = 60;
-    private final static int NUM_ITERATIONS = 10;
-    private final static int GROWTH_PER_THREAD = 0; // expected VM footprint growth per thread
     private final static int EXPECTED_HTTP_STATUS = 200;
     private final static String endpoint = "https://d1cz66xoahf9cl.cloudfront.net/"; // Use cloudfront for HTTP/2
     private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
 
-    private Http2StreamManager createStreamManager(URI uri, int numConnections) {
+    private Http2StreamManager createStreamManager(URI uri, int numConnections, int maxStreams) {
 
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -61,6 +39,10 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
                 TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
                 TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
             Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            if (maxStreams != 0) {
+                options.withMaxConcurrentStreamsPerConnection(maxStreams)
+                        .withIdealConcurrentStreamsPerConnection(maxStreams);
+            }
             HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
             connectionManagerOptions.withClientBootstrap(bootstrap)
                     .withSocketOptions(sockOpts)
@@ -150,12 +132,13 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         Assert.assertTrue(numStreamsFailures.get() <= allowedFailures);
     }
 
+    @Override
     public void testParallelRequests(int numThreads, int numRequests) throws Exception {
         skipIfNetworkUnavailable();
 
         URI uri = new URI(endpoint);
 
-        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
             Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
             testParallelStreams(streamManager, request, 1, numRequests);
         }
@@ -164,38 +147,12 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
-    public void testParallelRequestsWithLeakCheck(int numThreads, int numRequests) throws Exception {
-        skipIfNetworkUnavailable();
-        Callable<Void> fn = () -> {
-            testParallelRequests(numThreads, numRequests);
-            Thread.sleep(2000); // wait for async shutdowns to complete
-            return null;
-        };
-
-        // Dalvik is SUPER STOCHASTIC about when it frees JVM memory, it has no
-        // observable correlation
-        // to when System.gc() is called. Therefore, we cannot reliably sample it, so we
-        // don't bother.
-        // If we have a leak, we should have it on all platforms, and we'll catch it
-        // elsewhere.
-        if (CRT.getOSIdentifier() != "android") {
-            int fixedGrowth = CrtMemoryLeakDetector.expectedFixedGrowth();
-            fixedGrowth += (numThreads * GROWTH_PER_THREAD);
-            // On Mac, JVM seems to expand by about 4K no matter how careful we are. With
-            // the workload
-            // we're running, 8K worth of growth (an additional 4K for an increased healthy
-            // margin)
-            // in the JVM only is acceptable.
-            fixedGrowth = Math.max(fixedGrowth, 8192);
-            CrtMemoryLeakDetector.leakCheck(NUM_ITERATIONS, fixedGrowth, fn);
-        }
-    }
-
     @Test
     public void testSanitizer() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         URI uri = new URI(endpoint);
-        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS)) {
+        try (Http2StreamManager streamManager = createStreamManager(uri, NUM_CONNECTIONS, 0)) {
         }
 
         CrtResource.logNativeResources();
@@ -204,13 +161,34 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
     @Test
     public void testSerialRequests() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(1, NUM_REQUESTS / NUM_THREADS);
     }
 
     @Test
     public void testMaxParallelRequests() throws Exception {
+        skipIfAndroid();
         skipIfNetworkUnavailable();
         testParallelRequestsWithLeakCheck(NUM_THREADS, NUM_REQUESTS);
+    }
+
+    @Test
+    public void testStreamManagerMetrics() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        URI uri = new URI(endpoint);
+        int maxStreams = 3;
+
+        try (Http2StreamManager streamManager = createStreamManager(uri, 1, maxStreams)) {
+            HttpManagerMetrics metrics = streamManager.getManagerMetrics();
+            Assert.assertNotNull(metrics);
+            Assert.assertEquals(0, metrics.getAvailableConcurrency());
+            Assert.assertEquals(0, metrics.getLeasedConcurrency());
+            Assert.assertEquals(0, metrics.getPendingConcurrencyAcquires());
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
     }
 }

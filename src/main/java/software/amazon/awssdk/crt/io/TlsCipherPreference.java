@@ -76,7 +76,12 @@ public enum TlsCipherPreference {
      * This security policy was the system default before PQ was enabled by default, specifically
      * aws-c-io's AWS_IO_TLS_CIPHER_PREF_TLSV1_0_2023_06.
      */
-    TLS_CIPHER_PREF_TLSv1_0_2023(10);
+    TLS_CIPHER_PREF_TLSv1_0_2023(10),
+
+    /**
+     * The latest recommended non-Post-quantum enabled TLS Policy. This policy may change over time.
+     */
+    TLS_CIPHER_NON_PQ_DEFAULT(11);
 
     private int val;
 

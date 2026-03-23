@@ -745,7 +745,6 @@ public class Mqtt5Canary {
 
                 // Check if it's time to print memory usage report
                 if (secondsDifference >= nextMemoryCheckSeconds) {
-                    PrintMemoryUsageReport(secondsDifference, operationsExecuted * configClients);
                     nextMemoryCheckSeconds += MEMORY_CHECK_INTERVAL_SECONDS;
                 }
             } catch (ArithmeticException ex) {

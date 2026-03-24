@@ -1550,8 +1550,16 @@
         "name": "<init>",
         "parameterTypes": [
           "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket",
-          "long[]"
+          "long"
         ]
+      },
+      {
+        "name": "wasControlAcquired",
+        "parameterTypes": []
+      },
+      {
+        "name": "invalidateAfterCallback",
+        "parameterTypes": []
       }
     ]
   },

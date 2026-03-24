@@ -17,7 +17,7 @@ public class PublishReturn {
     /**
      * The already-acquired publish acknowledgement control ID, eagerly acquired by native code
      * before the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback is invoked.
-     * For QoS 0 messages this is 0 (no PUBACK needed).
+     * For QoS 0 messages this is 0 (no publish acknowledgement required).
      * After {@code acquirePublishAcknowledgementControl()} is called, this is set to 0 to prevent
      * double-use.
      */
@@ -27,7 +27,7 @@ public class PublishReturn {
      * Set to true when {@code acquirePublishAcknowledgementControl()} is called, indicating that
      * the user has taken manual control of the publish acknowledgement. Native code reads this
      * via {@code wasControlAcquired()} after the callback returns to decide whether to
-     * auto-invoke the PUBACK.
+     * auto-invoke the publish acknowledgement.
      */
     private boolean controlAcquired;
 
@@ -100,8 +100,8 @@ public class PublishReturn {
 
     /**
      * This is only called in JNI to make a new PublishReturn with a PUBLISH packet.
-     * The controlId is the already-acquired publish acknowledgement control ID (eagerly acquired
-     * by native code before the callback fires). It is 0 for QoS 0 messages.
+     * The controlId is eagerly acquired by native code prior to
+     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} being called.
      *
      * @param newPublishPacket The PublishPacket data received from the server.
      * @param controlId The pre-acquired publish acknowledgement control ID (0 for QoS 0 messages).

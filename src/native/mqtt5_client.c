@@ -617,13 +617,19 @@ static void s_aws_mqtt5_client_java_publish_received(
     }
 
     /*
-     * After the callback returns, check whether the user called acquirePublishAcknowledgementControl()
-     * by calling wasControlAcquired() on the PublishReturn object.
-     *
-     * If wasControlAcquired() returns false (or an exception occurred), the user did NOT take
-     * manual control of the PUBACK, so we auto-invoke it to avoid losing it.
+     * After the callback returns:
+     * 1. Call invalidateAfterCallback() to zero out controlId in the PublishReturn, preventing
+     *    any post-callback call to acquirePublishAcknowledgementControl() from succeeding.
+     * 2. Call wasControlAcquired() to check whether the user took manual control during the
+     *    callback. If they did NOT, auto-invoke the PUBACK to avoid losing it.
      */
     if (control_id != 0 && publish_packet_return_data != NULL) {
+        /* Invalidate the PublishReturn to prevent post-callback use */
+        (*env)->CallVoidMethod(
+            env, publish_packet_return_data, mqtt5_publish_return_properties.return_invalidate_after_callback_id);
+        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
+
+        /* Check whether the user called acquirePublishAcknowledgementControl() during the callback */
         jboolean user_acquired_control = (*env)->CallBooleanMethod(
             env, publish_packet_return_data, mqtt5_publish_return_properties.return_was_control_acquired_id);
         aws_jni_check_and_clear_exception(env); /* To hide JNI warning */

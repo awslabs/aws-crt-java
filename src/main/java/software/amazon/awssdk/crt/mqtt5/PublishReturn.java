@@ -40,13 +40,10 @@ public class PublishReturn {
     }
 
     /**
-     * Acquires manual control over the publish acknowledgement (PUBACK) for this PUBLISH message,
+     * Acquires manual control over the publish acknowledgement for this PUBLISH message,
      * preventing the client from automatically sending an acknowledgement. The returned handle can be
      * passed to {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)}
-     * at a later time to send the PUBACK to the broker.
-     *
-     * <p>The PUBACK control is eagerly acquired by the native layer as soon as the publish is received,
-     * before this callback is invoked. Calling this method retrieves the pre-acquired control handle.</p>
+     * at a later time to send the publish acknowledgement to the broker.
      *
      * <p><b>Important:</b> This method must be called within the
      * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback. Calling it after the
@@ -55,8 +52,8 @@ public class PublishReturn {
      * <p>This method may only be called once per received PUBLISH. Subsequent calls will throw
      * an {@link IllegalStateException}.</p>
      *
-     * <p>If this method is not called, the client will automatically send a PUBACK for QoS 1
-     * messages when the callback returns.</p>
+     * <p>If this method is not called, the client will automatically send a publish acknowledgment
+     * for QoS 1 messages when the callback returns.</p>
      *
      * @return A {@link Mqtt5PublishAcknowledgementControlHandle} that can be used to manually send the acknowledgement.
      * @throws IllegalStateException if called outside the onMessageReceived callback, called more than once,
@@ -85,7 +82,7 @@ public class PublishReturn {
      *
      * @return {@code true} if the user acquired manual control of the PUBACK, {@code false} otherwise.
      */
-    boolean wasControlAcquired() {
+    private boolean wasControlAcquired() {
         return controlAcquired;
     }
 
@@ -97,7 +94,7 @@ public class PublishReturn {
      * <p>Zeroes out {@code controlId} so that any saved reference to this {@code PublishReturn}
      * cannot call {@code acquirePublishAcknowledgementControl()} after the callback has returned.</p>
      */
-    synchronized void invalidateAfterCallback() {
+    private synchronized void invalidateAfterCallback() {
         controlId = 0;
     }
 

@@ -2248,7 +2248,7 @@ static void s_cache_mqtt5_publish_return(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     mqtt5_publish_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_class);
-    /* Constructor: PublishReturn(PublishPacket, long) */
+    // Functions
     mqtt5_publish_return_properties.return_constructor_id = (*env)->GetMethodID(
         env,
         mqtt5_publish_return_properties.return_class,

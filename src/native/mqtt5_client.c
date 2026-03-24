@@ -627,12 +627,10 @@ static void s_aws_mqtt5_client_java_publish_received(
         /* Invalidate the PublishReturn to prevent post-callback use */
         (*env)->CallVoidMethod(
             env, publish_packet_return_data, mqtt5_publish_return_properties.return_invalidate_after_callback_id);
-        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
         /* Check whether the user called acquirePublishAcknowledgementControl() during the callback */
         jboolean user_acquired_control = (*env)->CallBooleanMethod(
             env, publish_packet_return_data, mqtt5_publish_return_properties.return_was_control_acquired_id);
-        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
         if (!user_acquired_control) {
             /* User did NOT call acquirePublishAcknowledgementControl(); auto-invoke the PUBACK */

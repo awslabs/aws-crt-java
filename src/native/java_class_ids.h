@@ -926,7 +926,8 @@ extern struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_prop
 /* mqtt5.PublishReturn */
 struct java_aws_mqtt5_publish_return_properties {
     jclass return_class;
-    jmethodID return_constructor_id; /* (PublishPacket, long[]) - long[0] holds native context ptr */
+    jmethodID return_constructor_id;
+    jmethodID return_was_control_acquired_id;
 };
 extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
 

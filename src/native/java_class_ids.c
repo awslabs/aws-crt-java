@@ -2248,18 +2248,21 @@ static void s_cache_mqtt5_publish_return(JNIEnv *env) {
     AWS_FATAL_ASSERT(cls);
     mqtt5_publish_return_properties.return_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_class);
-    /*
-     * Constructor: PublishReturn(PublishPacket, long[])
-     * The long[] is a single-element array holding the native context pointer.
-     * Native code sets [0] to 0 via SetLongArrayRegion after the callback returns,
-     * requiring no extra JNI method ID.
-     */
+    /* Constructor: PublishReturn(PublishPacket, long) */
     mqtt5_publish_return_properties.return_constructor_id = (*env)->GetMethodID(
         env,
         mqtt5_publish_return_properties.return_class,
         "<init>",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;[J)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;J)V");
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
+    /*
+     * wasControlAcquired() - called by native code after onMessageReceived returns to determine
+     * whether the user called acquirePublishAcknowledgementControl() during the callback.
+     * Returns true if the user took manual control of the PUBACK, false otherwise.
+     */
+    mqtt5_publish_return_properties.return_was_control_acquired_id =
+        (*env)->GetMethodID(env, mqtt5_publish_return_properties.return_class, "wasControlAcquired", "()Z");
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_was_control_acquired_id);
 }
 
 struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;

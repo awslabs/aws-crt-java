@@ -345,7 +345,15 @@ public class Mqtt5ClientOptions {
      */
     public interface PublishEvents {
         /**
-         * Called when an MQTT PUBLISH packet is received by the client
+         * Called when an MQTT PUBLISH packet is received by the client.
+         *
+         * <p>To take manual control of the PUBACK for a QoS 1 message, call
+         * {@link PublishReturn#acquirePublishAcknowledgementControl()} within this callback. If you do so,
+         * the client will NOT automatically send the PUBACK; you are responsible for calling
+         * {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)} later.</p>
+         *
+         * <p>If you do not call {@code acquirePublishAcknowledgementControl()}, the client will automatically
+         * send the PUBACK after this callback returns.</p>
          *
          * @param client The client that has received the message
          * @param publishReturn All of the data that was received from the server

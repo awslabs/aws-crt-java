@@ -38,12 +38,6 @@ struct aws_mqtt5_client_publish_return_data {
     jobject jni_publish_future;
 };
 
-/* Context for manual publish acknowledgement control. Valid only during the publish received callback. */
-struct manual_publish_acknowledgement_control_context {
-    struct aws_mqtt5_client *client;
-    const struct aws_mqtt5_packet_publish_view *publish_packet;
-};
-
 struct aws_mqtt5_client_subscribe_return_data {
     struct aws_mqtt5_client_java_jni *java_client;
     jobject jni_subscribe_future;
@@ -544,9 +538,6 @@ static void s_aws_mqtt5_client_java_publish_received(
         /* One reference is needed for the PublishReturn */
         references_needed += 1;
 
-        /* One reference is needed for the long[] context pointer holder array */
-        references_needed += 1;
-
         /* A Publish packet will need 5 references at minimum */
         references_needed += 5;
         /* Optionals */
@@ -586,43 +577,33 @@ static void s_aws_mqtt5_client_java_publish_received(
         goto clean_up;
     }
 
-    /* Create manual publish acknowledgement control context (valid only during this callback).
-     * We clean this before clean_up since we don't want to create this early and we can be sure to
-     * hit the aws_mem_release AFTER we return from the publish events callback.
-     */
-    struct manual_publish_acknowledgement_control_context *control_context =
-        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct manual_publish_acknowledgement_control_context));
-
     /*
-     * Create a single-element long[] array to hold the native context pointer.
-     * This allows native code to invalidate the pointer after the callback returns
-     * using SetLongArrayRegion(array, 0, 1, &zero) without using an extra JNI method ID.
+     * For QoS 1 messages, eagerly acquire the publish acknowledgement control before invoking
+     * the Java callback. The control ID is passed directly as a long to the PublishReturn
+     * constructor.
+     *
+     * After the callback returns, we call wasControlAcquired() on the PublishReturn object to
+     * determine whether the user called acquirePublishAcknowledgementControl() during the callback:
+     *   - If wasControlAcquired() returns true, the user took manual control and is responsible
+     *     for calling invokePublishAcknowledgement() later.
+     *   - If wasControlAcquired() returns false (or an exception occurred), the user did NOT take
+     *     control, so we auto-invoke the PUBACK to avoid losing it.
      */
-    jlongArray context_ptr_holder = NULL;
-    control_context->client = java_client->client;
-    control_context->publish_packet = publish;
-
-    context_ptr_holder = (*env)->NewLongArray(env, 1);
-    /* If allocation failed, Java will throw IllegalStateException on acquirePublishAcknowledgementControl(). */
-    if (context_ptr_holder != NULL) {
-        /*
-         * Only expose the context pointer for QoS 1 publishes. For QoS 0, there is no publish
-         * acknowledgement to send, so acquirePublishAcknowledgementControl() should throw
-         * IllegalStateException. We pass 0 (null).
-         */
-        jlong context_ptr_value = (publish->qos == AWS_MQTT5_QOS_AT_MOST_ONCE) ? 0 : (jlong)(uintptr_t)control_context;
-        /* Assigning the pointer to the allocated manual_publish_acknowledgement_control_context to the array */
-        (*env)->SetLongArrayRegion(env, context_ptr_holder, 0, 1, &context_ptr_value);
+    uint64_t control_id = 0;
+    if (publish->qos == AWS_MQTT5_QOS_AT_LEAST_ONCE) {
+        /* Eagerly acquire the PUBACK control before invoking the Java callback */
+        control_id = aws_mqtt5_client_acquire_publish_acknowledgement(java_client->client, publish);
     }
 
     /* Make the PublishReturn struct that will hold all of the data that is passed to Java.
-     * The constructor takes (PublishPacket, long[]) where long[0] is the native context pointer. */
+     * The constructor takes (PublishPacket, long) where the long is the pre-acquired control ID
+     * (0 for QoS 0 messages). */
     publish_packet_return_data = (*env)->NewObject(
         env,
         mqtt5_publish_return_properties.return_class,
         mqtt5_publish_return_properties.return_constructor_id,
         publish_packet_data,
-        context_ptr_holder);
+        (jlong)control_id);
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     if (java_client->jni_publish_events) {
@@ -636,18 +617,21 @@ static void s_aws_mqtt5_client_java_publish_received(
     }
 
     /*
-     * Invalidate the context pointer in the long[] array now that the callback has returned.
-     * This prevents use-after-free if acquirePublishAcknowledgementControl() is called after the callback.
-     * SetLongArrayRegion requires no extra JNI method ID.
+     * After the callback returns, check whether the user called acquirePublishAcknowledgementControl()
+     * by calling wasControlAcquired() on the PublishReturn object.
+     *
+     * If wasControlAcquired() returns false (or an exception occurred), the user did NOT take
+     * manual control of the PUBACK, so we auto-invoke it to avoid losing it.
      */
-    if (context_ptr_holder != NULL) {
-        jlong zero = 0;
-        (*env)->SetLongArrayRegion(env, context_ptr_holder, 0, 1, &zero);
-    }
+    if (control_id != 0 && publish_packet_return_data != NULL) {
+        jboolean user_acquired_control = (*env)->CallBooleanMethod(
+            env, publish_packet_return_data, mqtt5_publish_return_properties.return_was_control_acquired_id);
+        aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
-    /* Free the context. The publish_packet pointer is no longer valid after this callback returns */
-    if (control_context != NULL) {
-        aws_mem_release(aws_jni_get_allocator(), control_context);
+        if (!user_acquired_control) {
+            /* User did NOT call acquirePublishAcknowledgementControl(); auto-invoke the PUBACK */
+            aws_mqtt5_client_invoke_publish_acknowledgement(java_client->client, control_id, NULL);
+        }
     }
 
     goto clean_up;
@@ -2228,44 +2212,6 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
 /*******************************************************************************
  * Manual Publish Acknowledgement Control Functions
  ******************************************************************************/
-
-/**
- * Called from PublishReturn.mqtt5AcquirePublishAcknowledgementControl(long nativeContextPtr).
- * Calls aws_mqtt5_client_acquire_publish_acknowledgement to take manual control of the publish
- * acknowledgement (PUBACK) for the received PUBLISH packet. Returns the pub_ack_control_id as a jlong.
- *
- * This must be called within the onMessageReceived callback while the
- * native context pointer is still valid.
- */
-JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_PublishReturn_mqtt5AcquirePublishAcknowledgementControl(
-    JNIEnv *env,
-    jclass jni_class,
-    jlong native_context_ptr) {
-    (void)jni_class;
-    aws_cache_jni_ids(env);
-
-    if (native_context_ptr == 0) {
-        aws_jni_throw_runtime_exception(
-            env,
-            "PublishReturn.acquirePublishAcknowledgementControl: context is no longer valid. "
-            "acquirePublishAcknowledgementControl() must be called within the onMessageReceived callback.");
-        return 0;
-    }
-
-    struct manual_publish_acknowledgement_control_context *context =
-        (struct manual_publish_acknowledgement_control_context *)(uintptr_t)native_context_ptr;
-
-    if (!context->client || !context->publish_packet) {
-        aws_jni_throw_runtime_exception(
-            env,
-            "PublishReturn.acquirePublishAcknowledgementControl: invalid native publish acknowledgement control "
-            "context");
-        return 0;
-    }
-
-    uint64_t control_id = aws_mqtt5_client_acquire_publish_acknowledgement(context->client, context->publish_packet);
-    return (jlong)control_id;
-}
 
 /**
  * Called from Mqtt5Client.mqtt5ClientInternalInvokePublishAcknowledgement(long client, long controlId).

@@ -15,14 +15,21 @@ public class PublishReturn {
     private PublishPacket publishPacket;
 
     /**
-     * Single-element long array holding the native manual publish acknowledgement control context pointer.
-     * Element [0] is the pointer value, valid only during the
-     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback.
-     * QoS 0 results in this being set to 0.
-     * Native code sets [0] to 0 after the callback returns (via SetLongArrayRegion,
-     * requiring no extra JNI method ID).
+     * The already-acquired publish acknowledgement control ID, eagerly acquired by native code
+     * before the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback is invoked.
+     * For QoS 0 messages this is 0 (no PUBACK needed).
+     * After {@code acquirePublishAcknowledgementControl()} is called, this is set to 0 to prevent
+     * double-use.
      */
-    private final long[] nativeContextPtrHolder;
+    private long controlId;
+
+    /**
+     * Set to true when {@code acquirePublishAcknowledgementControl()} is called, indicating that
+     * the user has taken manual control of the publish acknowledgement. Native code reads this
+     * via {@code wasControlAcquired()} after the callback returns to decide whether to
+     * auto-invoke the PUBACK.
+     */
+    private boolean controlAcquired;
 
     /**
      * Returns the PublishPacket returned from the server or Null if none was returned.
@@ -34,9 +41,12 @@ public class PublishReturn {
 
     /**
      * Acquires manual control over the publish acknowledgement (PUBACK) for this PUBLISH message,
-     * preventing the client from automatically sending a acknowledgement. The returned handle can be passed to
-     * {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)} at a later
-     * time to send the PUBACK to the broker.
+     * preventing the client from automatically sending an acknowledgement. The returned handle can be
+     * passed to {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)}
+     * at a later time to send the PUBACK to the broker.
+     *
+     * <p>The PUBACK control is eagerly acquired by the native layer as soon as the publish is received,
+     * before this callback is invoked. Calling this method retrieves the pre-acquired control handle.</p>
      *
      * <p><b>Important:</b> This method must be called within the
      * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback. Calling it after the
@@ -53,34 +63,43 @@ public class PublishReturn {
      *                               or called on a QoS 0 message.
      */
     public synchronized Mqtt5PublishAcknowledgementControlHandle acquirePublishAcknowledgementControl() {
-        if (nativeContextPtrHolder == null || nativeContextPtrHolder[0] == 0) {
+        if (controlId == 0) {
             throw new IllegalStateException(
                 "acquirePublishAcknowledgementControl() must be called within the onMessageReceived callback and may only be called once.");
         }
-        long controlId = mqtt5AcquirePublishAcknowledgementControl(nativeContextPtrHolder[0]);
-        /* We set the array element to 0 so it can't be double-called */
-        nativeContextPtrHolder[0] = 0;
-        return new Mqtt5PublishAcknowledgementControlHandle(controlId);
+        long acquiredControlId = controlId;
+        /* Zero out so it can't be double-called */
+        controlId = 0;
+        controlAcquired = true;
+        return new Mqtt5PublishAcknowledgementControlHandle(acquiredControlId);
+    }
+
+    /**
+     * Returns whether the user called {@link #acquirePublishAcknowledgementControl()} during the
+     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback.
+     *
+     * <p>This is called by native/JNI code after the callback returns to determine whether to
+     * automatically invoke the publish acknowledgement (PUBACK). If this returns {@code false},
+     * native code will auto-invoke the PUBACK; if {@code true}, the user is responsible for
+     * calling {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)}.</p>
+     *
+     * @return {@code true} if the user acquired manual control of the PUBACK, {@code false} otherwise.
+     */
+    boolean wasControlAcquired() {
+        return controlAcquired;
     }
 
     /**
      * This is only called in JNI to make a new PublishReturn with a PUBLISH packet.
-     * The nativeContextPtrHolder is a single-element long array; native code sets [0] to 0
-     * after the onMessageReceived callback returns to prevent use-after-free.
+     * The controlId is the already-acquired publish acknowledgement control ID (eagerly acquired
+     * by native code before the callback fires). It is 0 for QoS 0 messages.
      *
      * @param newPublishPacket The PublishPacket data received from the server.
-     * @param nativeContextPtrHolder Single-element long[] holding the native publish acknowledgement control
-     *                               context pointer.
+     * @param controlId The pre-acquired publish acknowledgement control ID (0 for QoS 0 messages).
      */
-    private PublishReturn(PublishPacket newPublishPacket, long[] nativeContextPtrHolder) {
+    private PublishReturn(PublishPacket newPublishPacket, long controlId) {
         this.publishPacket = newPublishPacket;
-        this.nativeContextPtrHolder = nativeContextPtrHolder;
+        this.controlId = controlId;
+        this.controlAcquired = false;
     }
-
-    /**
-     * Calls the native aws_mqtt5_client_acquire_publish_acknowledgement function.
-     * @param nativeContextPtr Pointer to the native manual publish acknowledgement control context.
-     * @return The native publish acknowledgement control ID.
-     */
-    private static native long mqtt5AcquirePublishAcknowledgementControl(long nativeContextPtr);
 }

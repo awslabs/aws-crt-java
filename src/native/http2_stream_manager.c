@@ -113,6 +113,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jint jni_max_conns,
     jint jni_ideal_concurrent_streams_per_connection,
     jint jni_max_concurrent_streams_per_connection,
+    jint jni_max_concurrent_streams,
     jboolean jni_prior_knowledge,
     jboolean jni_close_connection_on_server_error,
     jint jni_connection_ping_period_ms,
@@ -207,6 +208,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         .ideal_concurrent_streams_per_connection = (size_t)jni_ideal_concurrent_streams_per_connection,
         .max_concurrent_streams_per_connection = (size_t)jni_max_concurrent_streams_per_connection,
         .max_connections = (size_t)jni_max_conns,
+        .max_concurrent_streams = (size_t)jni_max_concurrent_streams,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;

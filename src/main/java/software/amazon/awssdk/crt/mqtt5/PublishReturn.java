@@ -90,6 +90,18 @@ public class PublishReturn {
     }
 
     /**
+     * Called by native/JNI code after the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived}
+     * callback returns to prevent post-callback use of
+     * {@link #acquirePublishAcknowledgementControl()}.
+     *
+     * <p>Zeroes out {@code controlId} so that any saved reference to this {@code PublishReturn}
+     * cannot call {@code acquirePublishAcknowledgementControl()} after the callback has returned.</p>
+     */
+    synchronized void invalidateAfterCallback() {
+        controlId = 0;
+    }
+
+    /**
      * This is only called in JNI to make a new PublishReturn with a PUBLISH packet.
      * The controlId is the already-acquired publish acknowledgement control ID (eagerly acquired
      * by native code before the callback fires). It is 0 for QoS 0 messages.

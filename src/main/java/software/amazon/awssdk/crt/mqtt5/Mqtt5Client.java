@@ -203,19 +203,18 @@ public class Mqtt5Client extends CrtResource {
     }
 
     /**
-     * Sends a publish acknowledgement for a QoS 1 PUBLISH that was previously acquired
+     * Sends a publish acknowledgement packet for a QoS 1 PUBLISH that was previously acquired
      * for manual control.
      *
      * <p>To use manual publish acknowledgement control, call
      * {@link PublishReturn#acquirePublishAcknowledgementControl()} within the
      * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback of a QoS 1 PUBLISH to obtain a
-     * {@link Mqtt5PublishAcknowledgementControlHandle}. Then call this method to send the PUBACK.</p>
+     * {@link Mqtt5PublishAcknowledgementControlHandle}. Then call this method to send the publish acknowledgement.</p>
      *
      * @param publishAcknowledgementControlHandle An opaque handle obtained from
      *        {@link PublishReturn#acquirePublishAcknowledgementControl()}.
-     * @throws CrtRuntimeException If the native client returns an error when invoking the publish acknowledgement.
      */
-    public void invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle publishAcknowledgementControlHandle) throws CrtRuntimeException {
+    public void invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle publishAcknowledgementControlHandle) {
         mqtt5ClientInternalInvokePublishAcknowledgement(getNativeHandle(), publishAcknowledgementControlHandle.getControlId());
     }
 

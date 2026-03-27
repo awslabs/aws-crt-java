@@ -25,7 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HttpRequestResponseTest extends HttpRequestResponseFixture {
-    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be
+    // run locally for testing.
     private final static String HOST = "https://localhost:8082";
     private final int MAX_TEST_RETRIES = 5;
     private final int TEST_RETRY_SLEEP_MILLIS = 2000;
@@ -93,7 +94,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
         Assert.assertNotEquals(-1, response.blockType);
 
-
         if (response.statusCode < 500) { // if the server errored, not our fault
             Assert.assertEquals("Expected and Actual Status Codes don't match", expectedStatus, response.statusCode);
         }
@@ -135,18 +135,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         Assert.assertEquals(TEST_DOC_SHA256, calculateBodyHash(body));
     }
 
-    /**
-     * Removes trailing commas, and trims quote characters from a string.
-     *
-     * @param input
-     * @return
-     */
-    private String extractValueFromJson(String input) {
-        return input.trim() // Remove spaces from front and back
-                .replaceAll(",$", "") // Remove comma if it's the last character
-                .replaceAll("^\"|\"$", ""); // Remove quotes from front and back
-    }
-
     private void testHttpUpload(boolean chunked) throws Exception {
         skipIfAndroid();
         String bodyToSend = TEST_DOC_LINE;
@@ -176,7 +164,8 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
          *
          */
 
-        // The response is a JSON object, extract the "data" field using proper JSON parsing
+        // The response is a JSON object, extract the "data" field using proper JSON
+        // parsing
         String echoedBody = null;
 
         // Find the "data" field in the JSON response
@@ -222,15 +211,10 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
     }
 
     private void doHttpRequestUnActivatedTest() {
-        // postman-echo.com in now requires TLS1.3,
-        // but our Mac implementation doesn't support TLS1.3 yet.
-        // The work has been planned to Dec. 2025 to support TLS1.3,
-        // so disable the test for now. And reenable it afterward
-        skipIfMac();
         try {
             URI uri = new URI(HOST);
 
-            HttpHeader[] requestHeaders = new HttpHeader[]{new HttpHeader("Host", uri.getHost())};
+            HttpHeader[] requestHeaders = new HttpHeader[] { new HttpHeader("Host", uri.getHost()) };
 
             HttpRequest request = new HttpRequest("GET", "/get", requestHeaders, null);
 
@@ -242,7 +226,7 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
                     HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
                         @Override
                         public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                                                      HttpHeader[] nextHeaders) {
+                                HttpHeader[] nextHeaders) {
                             // do nothing
                         }
 
@@ -281,7 +265,8 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doHttpRequestUnActivatedTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES,
+                TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
@@ -292,4 +277,63 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
         HttpRequest request = new HttpRequest("GET", "/?ሴ=bar");
         request.marshalForJni();
     }
+
+    @Test
+    public void testStreamCancel() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        try {
+            URI uri = new URI(HOST);
+
+            HttpHeader[] requestHeaders = new HttpHeader[] {
+                    new HttpHeader("Host", uri.getHost()),
+                    new HttpHeader("Transfer-encoding", "chunked"),
+            };
+
+            HttpRequest request = new HttpRequest("Post", "/echo", requestHeaders, null);
+            final int expectedErrorCode = 0x0832; // Some random error code
+            final CompletableFuture<Integer> requestCompleteFuture = new CompletableFuture<>();
+
+            CompletableFuture<Void> shutdownComplete = null;
+            try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri,
+                    HttpVersion.HTTP_1_1)) {
+                shutdownComplete = connPool.getShutdownCompleteFuture();
+                try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+                    HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
+                            // do nothing
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStream stream,
+                                int errorCode) {
+                            requestCompleteFuture.complete(errorCode);
+                        }
+                    };
+
+                    HttpStream stream = conn.makeRequest(request, streamHandler);
+                    stream.activate();
+                    stream.cancel(expectedErrorCode);
+
+                    // Wait for the request to complete
+                    int actualErrorCode = requestCompleteFuture.get(5, TimeUnit.SECONDS);
+
+                    // The stream should complete with the exact error code we provided to cancel()
+                    Assert.assertEquals("Error code should match the code provided to cancel()",
+                            expectedErrorCode, actualErrorCode);
+
+                    stream.close();
+                }
+            }
+
+            if (shutdownComplete != null) {
+                shutdownComplete.get();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

@@ -210,8 +210,8 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
             Http2StreamManagerOptions options = new Http2StreamManagerOptions();
             options.withMaxConcurrentStreams(maxConcurrentStreams)
-                   .withMaxConcurrentStreamsPerConnection(100)
-                   .withIdealConcurrentStreamsPerConnection(100);
+                    .withMaxConcurrentStreamsPerConnection(100)
+                    .withIdealConcurrentStreamsPerConnection(100);
 
             HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
             connectionManagerOptions.withClientBootstrap(bootstrap)
@@ -274,13 +274,15 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
                 // (allowing small margin for timing)
                 int observedMax = maxConcurrentActive.get();
                 Log.log(Log.LogLevel.Info, Log.LogSubject.HttpConnectionManager,
-                        String.format("Max concurrent streams observed: %d (limit: %d)", observedMax, maxConcurrentStreams));
+                        String.format("Max concurrent streams observed: %d (limit: %d)", observedMax,
+                                maxConcurrentStreams));
 
-                // The observed max should be close to our limit (allowing some flexibility for race conditions)
+                // The observed max should be close to our limit (allowing some flexibility for
+                // race conditions)
                 Assert.assertTrue(
-                    String.format("Expected max concurrent streams around %d, but observed %d",
-                                  maxConcurrentStreams, observedMax),
-                    observedMax <= maxConcurrentStreams);
+                        String.format("Expected max concurrent streams around %d, but observed %d",
+                                maxConcurrentStreams, observedMax),
+                        observedMax <= maxConcurrentStreams);
 
             } finally {
                 streamManager.close();

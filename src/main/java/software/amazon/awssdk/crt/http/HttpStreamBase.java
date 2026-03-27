@@ -5,11 +5,7 @@
 
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An base class represents a single Http Request/Response for both HTTP/1.1 and
@@ -100,6 +96,25 @@ public class HttpStreamBase extends CrtResource {
         throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
+    /**
+     * Cancels the stream.
+     * <p>
+     * For HTTP/1.1 streams, this is equivalent to closing the connection.
+     * For HTTP/2 streams, this sends a RST_STREAM frame with AWS_HTTP2_ERR_CANCEL.
+     * <p>
+     * The stream will complete with the provided error code, unless the stream is
+     * already completing for other reasons, or the stream is not activated,
+     * in which case this call will have no effect.
+     *
+     * @param errorCode The CRT error code to use when completing the stream.
+     *                  Use CRT.awsErrorCode() to convert AWS error codes.
+     */
+    public void cancel(int errorCode) {
+        if (!isNull()) {
+            httpStreamBaseCancel(getNativeHandle(), errorCode);
+        }
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -111,4 +126,6 @@ public class HttpStreamBase extends CrtResource {
     private static native void httpStreamBaseActivate(long http_stream, HttpStreamBase streamObj);
 
     private static native int httpStreamBaseGetResponseStatusCode(long http_stream);
+
+    private static native void httpStreamBaseCancel(long http_stream, int error_code);
 }

@@ -44,7 +44,8 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
-    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be
+    // run locally for testing.
     private static final int LOCAL_HTTPS_PORT = 3443;
     private static final int LOCAL_HTTP_PORT = 3280;
 
@@ -208,7 +209,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                     }
 
                     @Override
-                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                         String bodyString = new String(bodyBytesIn);
                         // Parse {"bytes": 123456} manually
                         int start = bodyString.indexOf("\"bytes\":") + 8;
@@ -255,33 +256,34 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final long expectedLength = bodyLength;
-            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                              HttpHeader[] nextHeaders) {
+            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
+                    new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
 
-                    Assert.assertTrue(responseStatusCode == 200);
-                }
+                            Assert.assertTrue(responseStatusCode == 200);
+                        }
 
-                @Override
-                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-                    String bodyString = new String(bodyBytesIn);
-                    // Parse {"bytes": 123456} manually
-                    int start = bodyString.indexOf("\"bytes\":") + 8;
-                    int end = bodyString.indexOf("}", start);
-                    String bytesStr = bodyString.substring(start, end).trim();
-                    long receivedLength = Long.parseLong(bytesStr);
-                    Assert.assertTrue(receivedLength == expectedLength);
-                    return bodyString.length();
-                }
+                        @Override
+                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                            String bodyString = new String(bodyBytesIn);
+                            // Parse {"bytes": 123456} manually
+                            int start = bodyString.indexOf("\"bytes\":") + 8;
+                            int end = bodyString.indexOf("}", start);
+                            String bytesStr = bodyString.substring(start, end).trim();
+                            long receivedLength = Long.parseLong(bytesStr);
+                            Assert.assertTrue(receivedLength == expectedLength);
+                            return bodyString.length();
+                        }
 
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                    requestCompleteFuture.complete(null);
-                }
-            });
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                            stream.close();
+                            requestCompleteFuture.complete(null);
+                        }
+                    });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             requestCompleteFuture.get(5, TimeUnit.MINUTES);
@@ -305,34 +307,76 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final AtomicLong receivedLength = new AtomicLong(0);
-            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                              HttpHeader[] nextHeaders) {
+            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
+                    new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
 
-                    Assert.assertTrue(responseStatusCode == 200);
-                }
+                            Assert.assertTrue(responseStatusCode == 200);
+                        }
 
-                @Override
-                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-                    receivedLength.addAndGet(bodyBytesIn.length);
+                        @Override
+                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                            receivedLength.addAndGet(bodyBytesIn.length);
 
-                    return bodyBytesIn.length;
-                }
+                            return bodyBytesIn.length;
+                        }
 
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
 
-                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                    requestCompleteFuture.complete(null);
-                }
-            });
+                            Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                            stream.close();
+                            requestCompleteFuture.complete(null);
+                        }
+                    });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             requestCompleteFuture.get(5, TimeUnit.MINUTES);
 
             Assert.assertTrue(receivedLength.get() == bodyLength);
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2StreamCancel() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
+            long bodyLength = 250000L;
+
+            Http2Request request = createHttp2Request("GET", uri, 0);
+            request.addHeader(new HttpHeader("x-repeat-data", String.valueOf(bodyLength)));
+            /* Get a slow response to make sure we cancel before finishes */
+            request.addHeader(new HttpHeader("x-slow-response", "true"));
+
+            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
+            final int expectedErrorCode = 0x0832; // Some Random error code
+            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
+                    new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
+                            // Cancel the HTTP/2 stream immediately upon receiving headers with specific
+                            // error code
+                            stream.cancel(expectedErrorCode);
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+
+                            Assert.assertTrue(errorCode == expectedErrorCode);
+                            stream.close();
+                            requestCompleteFuture.complete(null);
+                        }
+                    });
+
+            acquireCompleteFuture.get(3, TimeUnit.SECONDS);
+            requestCompleteFuture.get(10, TimeUnit.SECONDS);
         }
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();

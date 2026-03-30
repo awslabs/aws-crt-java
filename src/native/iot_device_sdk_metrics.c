@@ -50,13 +50,12 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
             s_iot_device_sdk_metrics_string,
             "library name",
             &java_metrics->library_name_buf,
-            &java_metrics->library_name_cursor,
+            &java_metrics->metrics.library_name,
             false,
             NULL) == AWS_OP_ERR) {
         AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics create_from_java: No library name found");
         goto on_error;
     }
-    java_metrics->metrics.library_name = java_metrics->library_name_cursor;
 
     return java_metrics;
 
@@ -64,13 +63,4 @@ on_error:
     /* Clean up */
     aws_mqtt_iot_metrics_java_jni_destroy(env, allocator, java_metrics);
     return NULL;
-}
-
-struct aws_mqtt_iot_metrics *aws_mqtt_iot_metrics_java_jni_get_metrics(
-    struct aws_mqtt_iot_metrics_java_jni *java_metrics) {
-    if (java_metrics) {
-        return &java_metrics->metrics;
-    } else {
-        return NULL;
-    }
 }

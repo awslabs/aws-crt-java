@@ -1129,6 +1129,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt_MqttClientConnection
     struct aws_mqtt_iot_metrics_java_jni *iot_metrics_java_jni =
         aws_mqtt_iot_metrics_java_jni_create_from_java(env, aws_jni_get_allocator(), jni_metrics);
 
+    if (iot_metrics_java_jni == NULL) {
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_CLIENT, "MqttClientConnection failed to create metrics.");
+        return;
+    }
+
     if (aws_mqtt_client_connection_set_metrics(connection->client_connection, &iot_metrics_java_jni->metrics)) {
         int error = aws_last_error();
         AWS_LOGF_DEBUG(

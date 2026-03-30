@@ -210,11 +210,26 @@ public class Mqtt5Canary {
 
     static void PrintMemoryUsageReport(long elapsedSeconds, long operationsExecuted) {
         long nativeMemoryBytes = CRT.nativeMemory();
+        
+        // Java heap usage
+        Runtime runtime = Runtime.getRuntime();
+        long maxHeapBytes = runtime.maxMemory();
+        long totalHeapBytes = runtime.totalMemory();
+        long freeHeapBytes = runtime.freeMemory();
+        long usedHeapBytes = totalHeapBytes - freeHeapBytes;
+        
         StringBuilder report = new StringBuilder();
         report.append("\n=== Memory Usage Report ===\n");
         report.append("   Elapsed time: ").append(elapsedSeconds).append(" seconds\n");
-        report.append("   Native memory (bytes): ").append(nativeMemoryBytes).append("\n");
         report.append("   Operations executed: ").append(operationsExecuted).append("\n");
+        report.append("   --- Native Memory ---\n");
+        report.append("   Native memory (bytes): ").append(nativeMemoryBytes).append("\n");
+        report.append("   --- Java Heap ---\n");
+        report.append("   Max heap (bytes): ").append(maxHeapBytes).append("\n");
+        report.append("   Total heap (bytes): ").append(totalHeapBytes).append("\n");
+        report.append("   Used heap (bytes): ").append(usedHeapBytes).append("\n");
+        report.append("   Free heap (bytes): ").append(freeHeapBytes).append("\n");
+        report.append("   Heap usage: ").append(String.format("%.2f", (usedHeapBytes * 100.0 / maxHeapBytes))).append("%\n");
         report.append("===========================\n");
         PrintLog(report.toString());
     }
@@ -382,16 +397,16 @@ public class Mqtt5Canary {
 
     public static void setupOperations() {
         // For now have everything evenly distributed
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_STOP);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_STOP);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_SUBSCRIBE);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE_BAD);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE_BAD);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_QOS0);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_QOS1);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS0);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS1);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SHARED_TOPIC_QOS0);
-        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SHARED_TOPIC_QOS1);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS0);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SUBSCRIBED_TOPIC_QOS1);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SHARED_TOPIC_QOS0);
+        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_PUBLISH_TO_SHARED_TOPIC_QOS1);
     }
 
     // ================================================================================
@@ -624,10 +639,8 @@ public class Mqtt5Canary {
 
     public static void PerformRandomOperation() {
         int randomIdx = random.nextInt(clientsOperationsList.size());
-        for (int i = 0; i < clients.size(); i++) {
-            PerformOperation(clientsOperationsList.get(randomIdx), i);
-            randomIdx = random.nextInt(clientsOperationsList.size());
-        }
+        int clientIdx = random.nextInt(clients.size());
+        PerformOperation(clientsOperationsList.get(randomIdx), clientIdx);
     }
 
     public static void PerformOperation(CANARY_OPERATIONS operation, int clientIdx) {
@@ -746,6 +759,7 @@ public class Mqtt5Canary {
                 // Check if it's time to print memory usage report
                 if (secondsDifference >= nextMemoryCheckSeconds) {
                     nextMemoryCheckSeconds += MEMORY_CHECK_INTERVAL_SECONDS;
+                    PrintMemoryUsageReport(secondsDifference, operationsExecuted);
                 }
             } catch (ArithmeticException ex) {
                 // Time overflow - exit with an error!
@@ -763,10 +777,10 @@ public class Mqtt5Canary {
             }
         }
 
-        PrintLog("Test loop operations complete: Total=" + (operationsExecuted * configClients) + " Cycles=" + operationsExecuted);
+        PrintLog("Test loop operations complete: Total=" + (operationsExecuted));
 
         // Print final memory usage report
-        PrintMemoryUsageReport(secondsDifference, operationsExecuted * configClients);
+        PrintMemoryUsageReport(secondsDifference, operationsExecuted);
 
         // Stop all the clients and close them to clean their memory
         for (int i = 0; i < clients.size(); i++) {

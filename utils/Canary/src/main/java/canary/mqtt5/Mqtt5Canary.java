@@ -277,12 +277,12 @@ public class Mqtt5Canary {
             int clientIdx = clients.indexOf(client);
 
             if (connAckData.getReasonCode() == ConnAckPacket.ConnectReasonCode.SUCCESS) {
-                PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
+                // PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection success...");
                 clientsData.get(clientIdx).clientId = negotiatedSettings.getAssignedClientID();
                 clientsData.get(clientIdx).connectedFuture.complete(null);
                 clientsData.get(clientIdx).stopFuture = new CompletableFuture<>();
             } else {
-                PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnAckPacket code: " + connAckData.getReasonCode().toString());
+                // PrintLog("[Lifecycle event] Client ID " + clientIdx + " ConnAckPacket code: " + connAckData.getReasonCode().toString());
                 clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
             }
         }
@@ -290,7 +290,7 @@ public class Mqtt5Canary {
         @Override
         public void onConnectionFailure(Mqtt5Client client, OnConnectionFailureReturn onConnectionFailureReturn) {
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed with errorCode : " + onConnectionFailureReturn.getErrorCode());
+            // PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection failed with errorCode : " + onConnectionFailureReturn.getErrorCode());
             clientsData.get(clientIdx).connectedFuture.completeExceptionally(new Exception("Connection failure"));
             clientsData.get(clientIdx).subscribedToTopics = false;
         }
@@ -298,8 +298,8 @@ public class Mqtt5Canary {
         @Override
         public void onDisconnection(Mqtt5Client client, OnDisconnectionReturn onDisconnectionReturn) {
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()));
+            // PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection disconnected...");
+            // PrintLog("[Lifecycle event] Client ID " + clientIdx + " Disconnection error code: " + Integer.toString(onDisconnectionReturn.getErrorCode()));
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
             clientsData.get(clientIdx).subscribedToTopics = false;
         }
@@ -307,7 +307,7 @@ public class Mqtt5Canary {
         @Override
         public void onStopped(Mqtt5Client client, OnStoppedReturn onStoppedReturn) {
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection stopped...");
+            // PrintLog("[Lifecycle event] Client ID " + clientIdx + " connection stopped...");
             clientsData.get(clientIdx).connectedFuture = new CompletableFuture<>();
             clientsData.get(clientIdx).stopFuture.complete(null);
             clientsData.get(clientIdx).subscribedToTopics = false;
@@ -319,8 +319,8 @@ public class Mqtt5Canary {
         public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
             PublishPacket publishPacket = publishReturn.getPublishPacket();
             int clientIdx = clients.indexOf(client);
-            PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
-                    "  Topic: " + publishPacket.getTopic() + "\n");
+            // PrintLog("[Publish event] Client ID " + clientIdx + " message received:\n" +
+            //        "  Topic: " + publishPacket.getTopic() + "\n");
         }
     }
 
@@ -415,68 +415,68 @@ public class Mqtt5Canary {
 
     public static void OperationNull(int clientIdx) {
         // Do nothing!
-        PrintLog("[OP] Null called for client ID " + clientIdx);
+        // PrintLog("[OP] Null called for client ID " + clientIdx);
         return;
     }
 
     public static void OperationStart(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Start called for client ID " + clientIdx + " but already has operation...");
+            // PrintLog("[OP] Start called for client ID " + clientIdx + " but already has operation...");
             return;
         }
         if (client.getIsConnected() == true) {
-            PrintLog("[OP] Start called for client ID " + clientIdx + " but is already connected/started!");
+            // PrintLog("[OP] Start called for client ID " + clientIdx + " but is already connected/started!");
             return;
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to start client ID " + clientIdx);
+        // PrintLog("[OP] About to start client ID " + clientIdx);
         client.start();
         try {
             clientsData.get(clientIdx).connectedFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Start had an exception! Exception: " + ex);
+            // PrintLog("[OP] Start had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
-        PrintLog("[OP] Started client ID " + clientIdx);
+        // PrintLog("[OP] Started client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationStop(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Stop called for client ID " + clientIdx + " but already has operation...");
+            // PrintLog("[OP] Stop called for client ID " + clientIdx + " but already has operation...");
             return;
         }
         if (client.getIsConnected() == false) {
-            PrintLog("[OP] Stop called for client ID " + clientIdx + " but is already disconnected/stopped!");
+            // PrintLog("[OP] Stop called for client ID " + clientIdx + " but is already disconnected/stopped!");
             return;
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to stop client ID " + clientIdx);
+        // PrintLog("[OP] About to stop client ID " + clientIdx);
         client.stop();
         try {
             clientsData.get(clientIdx).stopFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Stop had an exception! Exception: " + ex);
+            // PrintLog("[OP] Stop had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
-        PrintLog("[OP] Stopped client ID " + clientIdx);
+        // PrintLog("[OP] Stopped client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationSubscribe(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Subscribe called for client ID " + clientIdx + " but already has operation...");
+            // PrintLog("[OP] Subscribe called for client ID " + clientIdx + " but already has operation...");
             return;
         }
         if (client.getIsConnected() == false) {
@@ -488,28 +488,28 @@ public class Mqtt5Canary {
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to subscribe client ID " + clientIdx);
+        // PrintLog("[OP] About to subscribe client ID " + clientIdx);
         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId, QOS.AT_LEAST_ONCE);
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic, QOS.AT_LEAST_ONCE);
         try {
             client.subscribe(subscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Subscribe had an exception! Exception: " + ex);
+            // PrintLog("[OP] Subscribe had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
         clientsData.get(clientIdx).subscribedToTopics = true;
-        PrintLog("[OP] Subscribed client ID " + clientIdx);
+        // PrintLog("[OP] Subscribed client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationUnsubscribe(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Unsubscribe called for client ID " + clientIdx + " but already has operation...");
+            // PrintLog("[OP] Unsubscribe called for client ID " + clientIdx + " but already has operation...");
             return;
         }
         if (client.getIsConnected() == false) {
@@ -521,28 +521,28 @@ public class Mqtt5Canary {
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to unsubscribe client ID " + clientIdx);
+        // PrintLog("[OP] About to unsubscribe client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId);
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic);
         try {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
+            // PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
-        PrintLog("[OP] Unsubscribed client ID " + clientIdx);
+        // PrintLog("[OP] Unsubscribed client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
     public static void OperationUnsubscribeBad(int clientIdx) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Unsubscribe bad called for client ID " + clientIdx + " but already has operation...");
+            // PrintLog("[OP] Unsubscribe bad called for client ID " + clientIdx + " but already has operation...");
             return;
         }
         if (client.getIsConnected() == false) {
@@ -551,18 +551,18 @@ public class Mqtt5Canary {
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
+        // PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("Non_existent_topic_here");
         try {
             client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Unsubscribe (bad) had an exception! Exception: " + ex);
+            // PrintLog("[OP] Unsubscribe (bad) had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
-        PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
+        // PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
@@ -570,7 +570,7 @@ public class Mqtt5Canary {
     public static void OperationPublish(int clientIdx, QOS qos, String topic) {
         Mqtt5Client client = clients.get(clientIdx);
         if (clientsData.get(clientIdx).isWaitingForOperation == true) {
-            PrintLog("[OP] Publish called for client ID " + clientIdx + " with QoS" + qos + " with topic " + topic + " - but already has operation...");
+            // PrintLog("[OP] Publish called for client ID " + clientIdx + " with QoS" + qos + " with topic " + topic + " - but already has operation...");
             return;
         }
         if (client.getIsConnected() == false) {
@@ -579,7 +579,7 @@ public class Mqtt5Canary {
         }
 
         clientsData.get(clientIdx).isWaitingForOperation = true;
-        PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
+        // PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
 
         int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
         byte[] payload_bytes = new byte[payload_size];
@@ -599,13 +599,13 @@ public class Mqtt5Canary {
         try {
             client.publish(publishPacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
         } catch (Exception ex) {
-            PrintLog("[OP] Publish with QoS " + qos + " with topic " + topic + " had an exception! Exception: " + ex);
+            // PrintLog("[OP] Publish with QoS " + qos + " with topic " + topic + " had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
                 ex.printStackTrace(configFilePrinter);
             }
         }
-        PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
+        // PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
 
@@ -682,7 +682,7 @@ public class Mqtt5Canary {
                 OperationPublishToSharedTopicQoS1(clientIdx);
                 break;
             default:
-                PrintLog("Client ID " + clientIdx + " ERROR - Unknown operation! Performing null");
+                // PrintLog("Client ID " + clientIdx + " ERROR - Unknown operation! Performing null");
                 OperationNull(clientIdx);
                 break;
         }
@@ -738,7 +738,7 @@ public class Mqtt5Canary {
 
         // Test loop
         // ====================
-        PrintLog("Starting canary test loop...");
+        // PrintLog("Starting canary test loop...");
 
         // Print initial memory usage report
         PrintMemoryUsageReport(0, 0);
@@ -772,7 +772,7 @@ public class Mqtt5Canary {
             try {
                 Thread.sleep(configTps);
             } catch (Exception ex) {
-                PrintLog("[OP] Could not sleep for " + (configTps) + " seconds due to exception! Exception: " + ex);
+                // PrintLog("[OP] Could not sleep for " + (configTps) + " seconds due to exception! Exception: " + ex);
                 exitWithError(1);
             }
         }

@@ -47,9 +47,10 @@ public class Mqtt5ClientOptions {
     private PublishEvents publishEvents;
     private TopicAliasingOptions topicAliasingOptions;
     // Indicates whether AWS IoT Metrics are enabled for this client, default to true.
-    // We don't expose this setting in the builder for now.
-    private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
+    // We don't expose iotDeviceSDKMetrics in the builder, and only allow setting
+    // metricsEnabled for now.
     private boolean metricsEnabled = true;
+    private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
     
 
     /**

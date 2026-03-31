@@ -112,24 +112,6 @@ public class HttpStreamBase extends CrtResource {
         }
     }
 
-    /**
-     * Cancels the stream with a specific error code.
-     * <p>
-     * For HTTP/1.1 streams, this is equivalent to closing the connection.
-     * For HTTP/2 streams, this sends a RST_STREAM frame with AWS_HTTP2_ERR_CANCEL.
-     * <p>
-     * The stream will complete with the provided error code, unless the stream is
-     * already completing for other reasons, or the stream is not activated,
-     * in which case this call will have no effect.
-     *
-     * @param errorCode The CRT error code to use when completing the stream.
-     */
-    public void cancel(int errorCode) {
-        if (!isNull()) {
-            httpStreamBaseCancel(getNativeHandle(), errorCode);
-        }
-    }
-
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -143,6 +125,4 @@ public class HttpStreamBase extends CrtResource {
     private static native int httpStreamBaseGetResponseStatusCode(long http_stream);
 
     private static native void httpStreamBaseCancelDefaultError(long http_stream);
-
-    private static native void httpStreamBaseCancel(long http_stream, int error_code);
 }

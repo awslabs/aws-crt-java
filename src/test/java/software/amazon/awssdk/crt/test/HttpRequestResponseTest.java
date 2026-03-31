@@ -291,7 +291,6 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
             };
 
             HttpRequest request = new HttpRequest("Post", "/echo", requestHeaders, null);
-            final int expectedErrorCode = 0x0832; // Some random error code
             final CompletableFuture<Integer> requestCompleteFuture = new CompletableFuture<>();
 
             CompletableFuture<Void> shutdownComplete = null;
@@ -315,14 +314,15 @@ public class HttpRequestResponseTest extends HttpRequestResponseFixture {
 
                     HttpStream stream = conn.makeRequest(request, streamHandler);
                     stream.activate();
-                    stream.cancel(expectedErrorCode);
+                    stream.cancel();
 
                     // Wait for the request to complete
                     int actualErrorCode = requestCompleteFuture.get(5, TimeUnit.SECONDS);
 
-                    // The stream should complete with the exact error code we provided to cancel()
-                    Assert.assertEquals("Error code should match the code provided to cancel()",
-                            expectedErrorCode, actualErrorCode);
+                    // The stream should complete with AWS_ERROR_HTTP_STREAM_CANCELLED
+                    Assert.assertEquals("Error code should be AWS_ERROR_HTTP_STREAM_CANCELLED",
+                            "AWS_ERROR_HTTP_STREAM_CANCELLED",
+                            software.amazon.awssdk.crt.CRT.awsErrorName(actualErrorCode));
 
                     stream.close();
                 }

@@ -293,4 +293,48 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
+
+    @Test
+    public void testHttp2StreamCancel() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(endpoint);
+        String large_file_path = "/crt-canary-obj.txt";
+        int maxConcurrentStreams = 20;
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100, maxConcurrentStreams)) {
+
+            Http2Request request = createHttp2Request("GET", endpoint, large_file_path, EMPTY_BODY);
+
+            final CompletableFuture<Integer> requestCompleteFuture = new CompletableFuture<>();
+
+            streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Cancel the HTTP/2 stream using the default error code (AWS_ERROR_HTTP_STREAM_CANCELLED)
+                    stream.cancel();
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    requestCompleteFuture.complete(errorCode);
+                    stream.close();
+                }
+            }).whenComplete((stream, throwable) -> {
+                if (throwable != null) {
+                    requestCompleteFuture.completeExceptionally(throwable);
+                }
+            });
+
+
+            int actualErrorCode = requestCompleteFuture.get(60, TimeUnit.SECONDS);
+
+            // The HTTP/2 stream should complete with AWS_ERROR_HTTP_STREAM_CANCELLED
+            Assert.assertEquals("Error code should be AWS_ERROR_HTTP_STREAM_CANCELLED",
+                    "AWS_ERROR_HTTP_STREAM_CANCELLED", CRT.awsErrorName(actualErrorCode));
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

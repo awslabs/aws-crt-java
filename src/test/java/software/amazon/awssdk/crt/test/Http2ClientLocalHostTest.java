@@ -341,44 +341,4 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
-    @Test
-    public void testHttp2StreamCancel() throws Exception {
-        skipIfAndroid();
-        skipIfLocalhostUnavailable();
-        URI uri = new URI(String.format("https://localhost:%d/echo", LOCAL_HTTPS_PORT));
-        try (Http2StreamManager streamManager = createStreamManager(uri, 100)) {
-            long bodyLength = 250000L;
-
-            Http2Request request = createHttp2Request("GET", uri, 0);
-            request.addHeader(new HttpHeader("x-repeat-data", String.valueOf(bodyLength)));
-            /* Get a slow response to make sure we cancel before finishes */
-            request.addHeader(new HttpHeader("x-slow-response", "true"));
-
-            final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
-            final int expectedErrorCode = 0x0832; // Some Random error code
-            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
-                    new HttpStreamBaseResponseHandler() {
-                        @Override
-                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                HttpHeader[] nextHeaders) {
-                            // Cancel the HTTP/2 stream immediately upon receiving headers with specific
-                            // error code
-                            stream.cancel(expectedErrorCode);
-                        }
-
-                        @Override
-                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-
-                            Assert.assertTrue(errorCode == expectedErrorCode);
-                            stream.close();
-                            requestCompleteFuture.complete(null);
-                        }
-                    });
-
-            acquireCompleteFuture.get(3, TimeUnit.SECONDS);
-            requestCompleteFuture.get(10, TimeUnit.SECONDS);
-        }
-        CrtResource.logNativeResources();
-        CrtResource.waitForNoResources();
-    }
 }

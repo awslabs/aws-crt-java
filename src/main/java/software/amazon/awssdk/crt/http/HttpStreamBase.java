@@ -97,7 +97,23 @@ public class HttpStreamBase extends CrtResource {
     }
 
     /**
-     * Cancels the stream.
+     * Cancels the stream with the default error code (AWS_ERROR_HTTP_STREAM_CANCELLED).
+     * <p>
+     * For HTTP/1.1 streams, this is equivalent to closing the connection.
+     * For HTTP/2 streams, this sends a RST_STREAM frame with AWS_HTTP2_ERR_CANCEL.
+     * <p>
+     * The stream will complete with AWS_ERROR_HTTP_STREAM_CANCELLED, unless the stream is
+     * already completing for other reasons, or the stream is not activated,
+     * in which case this call will have no effect.
+     */
+    public void cancel() {
+        if (!isNull()) {
+            httpStreamBaseCancelDefaultError(getNativeHandle());
+        }
+    }
+
+    /**
+     * Cancels the stream with a specific error code.
      * <p>
      * For HTTP/1.1 streams, this is equivalent to closing the connection.
      * For HTTP/2 streams, this sends a RST_STREAM frame with AWS_HTTP2_ERR_CANCEL.
@@ -107,7 +123,6 @@ public class HttpStreamBase extends CrtResource {
      * in which case this call will have no effect.
      *
      * @param errorCode The CRT error code to use when completing the stream.
-     *                  Use CRT.awsErrorCode() to convert AWS error codes.
      */
     public void cancel(int errorCode) {
         if (!isNull()) {
@@ -126,6 +141,8 @@ public class HttpStreamBase extends CrtResource {
     private static native void httpStreamBaseActivate(long http_stream, HttpStreamBase streamObj);
 
     private static native int httpStreamBaseGetResponseStatusCode(long http_stream);
+
+    private static native void httpStreamBaseCancelDefaultError(long http_stream);
 
     private static native void httpStreamBaseCancel(long http_stream, int error_code);
 }

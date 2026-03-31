@@ -300,6 +300,7 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         skipIfLocalhostUnavailable();
 
         URI uri = new URI(endpoint);
+        // Use a large object to make the request outlive the cancel stage and let cancel happen as expected.
         String large_file_path = "/crt-canary-obj.txt";
         int maxConcurrentStreams = 20;
         try (Http2StreamManager streamManager = createStreamManager(uri, 100, maxConcurrentStreams)) {

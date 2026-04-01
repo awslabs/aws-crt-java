@@ -153,7 +153,6 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         assertTrue(HttpClientConnection.isErrorRetryable(exception));
     }
 
-
     /**
      * This test exercises the noProxyHosts configuration.  It is included here
      * rather than in ProxyTests because a successful test connects to the configured

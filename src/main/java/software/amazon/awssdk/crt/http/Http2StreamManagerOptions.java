@@ -9,9 +9,7 @@ import java.net.URI;
  * instance
  */
 public class Http2StreamManagerOptions {
-    public static final int DEFAULT_MAX_WINDOW_SIZE = Integer.MAX_VALUE;
     public static final int DEFAULT_MAX = Integer.MAX_VALUE;
-    public static final int DEFAULT_MAX_CONNECTIONS = 2;
     public static final int DEFAULT_CONNECTION_PING_TIMEOUT_MS = 3000;
     private static final String HTTPS = "https";
 
@@ -20,6 +18,7 @@ public class Http2StreamManagerOptions {
     private int idealConcurrentStreamsPerConnection = 100;
     private boolean connectionManualWindowManagement = false;
     private int maxConcurrentStreamsPerConnection = DEFAULT_MAX;
+    private int maxConcurrentStreams = 0;
 
     private boolean priorKnowledge = false;
     private boolean closeConnectionOnServerError = false;
@@ -106,6 +105,28 @@ public class Http2StreamManagerOptions {
      */
     public int getMaxConcurrentStreamsPerConnection() {
         return maxConcurrentStreamsPerConnection;
+    }
+
+    /**
+     * The max number of concurrent streams that can be active across all connections
+     * at the same time. 0 means no limit (default). When this limit is reached, the
+     * stream manager will wait for existing streams to complete before creating new
+     * ones, even if connections have available capacity.
+     *
+     * @param maxConcurrentStreams The max number of concurrent streams across all connections
+     * @return this
+     */
+    public Http2StreamManagerOptions withMaxConcurrentStreams(int maxConcurrentStreams) {
+        this.maxConcurrentStreams = maxConcurrentStreams;
+        return this;
+    }
+
+    /**
+     * @return The max number of concurrent streams across all connections.
+     *         0 means no limit (default).
+     */
+    public int getMaxConcurrentStreams() {
+        return maxConcurrentStreams;
     }
 
     /**

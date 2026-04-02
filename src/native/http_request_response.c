@@ -706,6 +706,26 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     aws_http_stream_update_window(stream, window_update);
 }
 
+JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseCancelDefaultError(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_binding) {
+
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct http_stream_binding *binding = (struct http_stream_binding *)jni_binding;
+    struct aws_http_stream *stream = binding->native_stream;
+
+    if (stream == NULL) {
+        aws_jni_throw_runtime_exception(env, "HttpStream is null.");
+        return;
+    }
+
+    AWS_LOGF_TRACE(AWS_LS_HTTP_STREAM, "Cancelling Stream with default error. stream: %p", (void *)stream);
+    aws_http_stream_cancel_default_error(stream);
+}
+
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2Stream_http2StreamResetStream(
     JNIEnv *env,
     jclass jni_class,

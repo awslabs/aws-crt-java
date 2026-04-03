@@ -120,7 +120,7 @@ public class XXHash extends CrtResource {
     }
 
     /**
-     * Update xxhash state with a subrange of input
+     * Update xxhash state with a subrange of input.
      * @param input input to update with
      * @param offset to start update with
      * @param length of data

@@ -191,4 +191,151 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
+
+    @Test
+    public void testMaxConcurrentStreamsEnforcement() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        URI uri = new URI(endpoint);
+        int maxConcurrentStreams = 1;
+        int numRequestsToMake = 20;
+
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
+
+            Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            options.withMaxConcurrentStreams(maxConcurrentStreams)
+                    .withMaxConcurrentStreamsPerConnection(100)
+                    .withIdealConcurrentStreamsPerConnection(100);
+
+            HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
+            connectionManagerOptions.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(2);
+            options.withConnectionManagerOptions(connectionManagerOptions);
+
+            Http2StreamManager streamManager = Http2StreamManager.create(options);
+
+            try {
+                Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
+
+                final AtomicInteger completedRequests = new AtomicInteger(0);
+                final AtomicInteger maxConcurrentActive = new AtomicInteger(0);
+                final AtomicInteger currentActive = new AtomicInteger(0);
+                final CountDownLatch allRequestsComplete = new CountDownLatch(numRequestsToMake);
+
+                // Acquire multiple streams rapidly
+                for (int i = 0; i < numRequestsToMake; i++) {
+                    streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
+                            // Track concurrent active streams
+                            int active = currentActive.incrementAndGet();
+                            int prevMax = maxConcurrentActive.get();
+                            while (active > prevMax) {
+                                if (maxConcurrentActive.compareAndSet(prevMax, active)) {
+                                    break;
+                                }
+                                prevMax = maxConcurrentActive.get();
+                            }
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            currentActive.decrementAndGet();
+                            completedRequests.incrementAndGet();
+                            stream.close();
+                            allRequestsComplete.countDown();
+                        }
+                    }).whenComplete((stream, throwable) -> {
+                        if (throwable != null) {
+                            allRequestsComplete.countDown();
+                        }
+                    });
+                }
+
+                // Wait for all requests to complete (with timeout)
+                boolean completed = allRequestsComplete.await(60, TimeUnit.SECONDS);
+                Assert.assertTrue("Requests did not complete within timeout", completed);
+
+                // Verify all requests completed
+                Assert.assertEquals(numRequestsToMake, completedRequests.get());
+
+                // Verify that max concurrent streams limit was respected
+                // The actual concurrent count should not exceed our limit significantly
+                // (allowing small margin for timing)
+                int observedMax = maxConcurrentActive.get();
+                Log.log(Log.LogLevel.Info, Log.LogSubject.HttpConnectionManager,
+                        String.format("Max concurrent streams observed: %d (limit: %d)", observedMax,
+                                maxConcurrentStreams));
+
+                // The observed max should be close to our limit (allowing some flexibility for
+                // race conditions)
+                Assert.assertTrue(
+                        String.format("Expected max concurrent streams around %d, but observed %d",
+                                maxConcurrentStreams, observedMax),
+                        observedMax <= maxConcurrentStreams);
+
+            } finally {
+                streamManager.close();
+                streamManager.getShutdownCompleteFuture().get(60, TimeUnit.SECONDS);
+            }
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2StreamCancel() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(endpoint);
+        // Use a large object to make the request outlive the cancel stage and let cancel happen as expected.
+        String large_file_path = "/crt-canary-obj.txt";
+        int maxConcurrentStreams = 20;
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100, maxConcurrentStreams)) {
+
+            Http2Request request = createHttp2Request("GET", endpoint, large_file_path, EMPTY_BODY);
+
+            final CompletableFuture<Integer> requestCompleteFuture = new CompletableFuture<>();
+
+            streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Cancel the HTTP/2 stream using the default error code (AWS_ERROR_HTTP_STREAM_CANCELLED)
+                    stream.cancel();
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    requestCompleteFuture.complete(errorCode);
+                    stream.close();
+                }
+            }).whenComplete((stream, throwable) -> {
+                if (throwable != null) {
+                    requestCompleteFuture.completeExceptionally(throwable);
+                }
+            });
+
+
+            int actualErrorCode = requestCompleteFuture.get(60, TimeUnit.SECONDS);
+
+            // The HTTP/2 stream should complete with AWS_ERROR_HTTP_STREAM_CANCELLED
+            Assert.assertEquals("Error code should be AWS_ERROR_HTTP_STREAM_CANCELLED",
+                    "AWS_ERROR_HTTP_STREAM_CANCELLED", CRT.awsErrorName(actualErrorCode));
+        }
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
 }

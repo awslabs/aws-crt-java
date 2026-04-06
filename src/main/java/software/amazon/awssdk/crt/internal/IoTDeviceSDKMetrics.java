@@ -6,7 +6,7 @@ package software.amazon.awssdk.crt.internal;
 
 /**
  * @internal
- * IoT Device SDK Metrics Structure
+ * IoT Device SDK Metrics Structure. Not for external usage. 
  */
 public class IoTDeviceSDKMetrics {
     private String libraryName;

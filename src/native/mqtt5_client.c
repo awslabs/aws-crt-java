@@ -2126,7 +2126,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     if (!metrics_has_error && metrics_enabled) {
         jobject jni_iot_device_sdk_metrics =
             (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
-        if (!aws_jni_check_and_clear_exception(env)) {
+        if (!aws_jni_check_and_clear_exception(env) && jni_iot_device_sdk_metrics != NULL) {
             iot_device_sdk_metrics =
                 aws_mqtt_iot_metrics_java_jni_create_from_java(env, allocator, jni_iot_device_sdk_metrics);
             client_options.metrics = iot_device_sdk_metrics ? &iot_device_sdk_metrics->metrics : NULL;

@@ -1748,6 +1748,15 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         "topicAliasingOptions",
         "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
+    mqtt5_client_options_properties.metrics_enabled_field_id =
+        (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "metricsEnabled", "Z");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.metrics_enabled_field_id);
+    mqtt5_client_options_properties.iot_device_sdk_metrics_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "iotDeviceSDKMetrics",
+        "Lsoftware/amazon/awssdk/crt/internal/IoTDeviceSDKMetrics;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
 }
 
 struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
@@ -2635,6 +2644,19 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
     AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
 
+struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
+
+static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/internal/IoTDeviceSDKMetrics");
+    AWS_FATAL_ASSERT(cls);
+    iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class);
+
+    iot_device_sdk_metrics_properties.library_name_field_id = (*env)->GetFieldID(
+        env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "libraryName", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.library_name_field_id);
+}
+
 // Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
@@ -2752,6 +2774,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_consumer_properties(env);
     s_cache_cognito_login_token_source(env);
     s_cache_cognito_credentials_provider(env);
+    s_cache_iot_device_sdk_metrics(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

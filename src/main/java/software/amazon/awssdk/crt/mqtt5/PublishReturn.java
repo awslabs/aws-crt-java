@@ -24,6 +24,13 @@ public class PublishReturn {
     private long controlId;
 
     /**
+     * The threadID of the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback.
+     * This is set at the beginning of the callback and then used to verify 
+     * {@code acquirePublishAcknowledgementControl()} is being called from within.
+     */
+    private long threadID;
+
+    /**
      * Set to true when {@code acquirePublishAcknowledgementControl()} is called, indicating that
      * the user has taken manual control of the publish acknowledgement. Native code reads this
      * via {@code wasControlAcquired()} after the callback returns to decide whether to
@@ -60,7 +67,7 @@ public class PublishReturn {
      *                               or called on a QoS 0 message.
      */
     public synchronized Mqtt5PublishAcknowledgementControlHandle acquirePublishAcknowledgementControl() {
-        if (controlId == 0) {
+        if (controlId == 0 || threadID != Thread.currentThread().getId()) {
             throw new IllegalStateException(
                 "acquirePublishAcknowledgementControl() must be called within the onMessageReceived callback and may only be called once.");
         }
@@ -110,5 +117,6 @@ public class PublishReturn {
         this.publishPacket = newPublishPacket;
         this.controlId = controlId;
         this.controlAcquired = false;
+        this.threadID = Thread.currentThread().getId();
     }
 }

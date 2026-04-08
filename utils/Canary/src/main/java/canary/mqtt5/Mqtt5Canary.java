@@ -525,13 +525,11 @@ public class Mqtt5Canary {
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder();
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId);
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic);
-        try {
-            client.unsubscribe(unsubscribePacketBuilder.build());
-            // PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
-            ex.printStackTrace();
-            if (configFilePrinter != null) {
-                ex.printStackTrace(configFilePrinter);
-            }
+        client.unsubscribe(unsubscribePacketBuilder.build());
+        // PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
+        ex.printStackTrace();
+        if (configFilePrinter != null) {
+            ex.printStackTrace(configFilePrinter);
         }
         clientsData.get(clientIdx).subscribedToTopics = false;
         // PrintLog("[OP] Unsubscribed client ID " + clientIdx);

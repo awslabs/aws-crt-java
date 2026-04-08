@@ -493,7 +493,7 @@ public class Mqtt5Canary {
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId, QOS.AT_LEAST_ONCE);
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic, QOS.AT_LEAST_ONCE);
         try {
-            client.subscribe(subscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
+            client.subscribe(subscribePacketBuilder.build());
         } catch (Exception ex) {
             // PrintLog("[OP] Subscribe had an exception! Exception: " + ex);
             ex.printStackTrace();
@@ -526,8 +526,7 @@ public class Mqtt5Canary {
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId);
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic);
         try {
-            client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
-        } catch (Exception ex) {
+            client.unsubscribe(unsubscribePacketBuilder.build());
             // PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
             ex.printStackTrace();
             if (configFilePrinter != null) {
@@ -554,7 +553,7 @@ public class Mqtt5Canary {
         // PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("Non_existent_topic_here");
         try {
-            client.unsubscribe(unsubscribePacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
+            client.unsubscribe(unsubscribePacketBuilder.build());
         } catch (Exception ex) {
             // PrintLog("[OP] Unsubscribe (bad) had an exception! Exception: " + ex);
             ex.printStackTrace();
@@ -597,7 +596,7 @@ public class Mqtt5Canary {
         publishPacketBuilder.withUserProperties(propertyList);
 
         try {
-            client.publish(publishPacketBuilder.build()).get(operationFutureWaitTime, TimeUnit.SECONDS);
+            client.publish(publishPacketBuilder.build());
         } catch (Exception ex) {
             // PrintLog("[OP] Publish with QoS " + qos + " with topic " + topic + " had an exception! Exception: " + ex);
             ex.printStackTrace();

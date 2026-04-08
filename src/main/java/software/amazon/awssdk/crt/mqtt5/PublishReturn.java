@@ -109,6 +109,9 @@ public class PublishReturn {
      * This is only called in JNI to make a new PublishReturn with a PUBLISH packet.
      * The controlId is eagerly acquired by native code prior to
      * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} being called.
+     * The threadID is set to the calling thread and is used when
+     * {@link #acquirePublishAcknowledgementControl()} is called to guarantee the result
+     * is accurate and enforces the requirement of calling it from within the callback.
      *
      * @param newPublishPacket The PublishPacket data received from the server.
      * @param controlId The pre-acquired publish acknowledgement control ID (0 for QoS 0 messages).

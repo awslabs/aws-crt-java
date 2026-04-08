@@ -15,7 +15,7 @@ public class Mqtt5PublishAcknowledgementControlHandle {
     private final long controlId;
 
     /**
-     * Creates a new Mqtt5PublishAcknowledgementControlHandle. Only called from native/JNI code.
+     * Creates a new Mqtt5PublishAcknowledgementControlHandle.
      *
      * @param controlId The native publish acknowledgement control ID returned by
      *                  aws_mqtt5_client_acquire_publish_acknowledgement.
@@ -25,7 +25,9 @@ public class Mqtt5PublishAcknowledgementControlHandle {
     }
 
     /**
-     * Returns the native publish acknowledgement control ID. Used internally by JNI.
+     * Returns the native publish acknowledgement control ID, used by
+     * {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)}
+     * to pass the control ID to native code.
      *
      * @return The native publish acknowledgement control ID.
      */

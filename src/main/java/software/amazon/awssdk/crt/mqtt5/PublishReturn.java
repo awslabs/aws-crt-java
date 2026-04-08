@@ -82,7 +82,7 @@ public class PublishReturn {
      *
      * @return {@code true} if the user acquired manual control of the PUBACK, {@code false} otherwise.
      */
-    private boolean wasControlAcquired() {
+    private synchronized boolean wasControlAcquired() {
         return controlAcquired;
     }
 

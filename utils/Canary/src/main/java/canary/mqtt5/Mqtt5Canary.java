@@ -76,6 +76,8 @@ public class Mqtt5Canary {
 
     static int operationFutureWaitTime = 30;
 
+    static byte[] payload_bytes;
+
     private static final int MAX_PAYLOAD_SIZE = 65535; // Use UINT64_MAX for the payload size
     private static final long MEMORY_CHECK_INTERVAL_SECONDS = 600; // 10 minutes
 
@@ -433,15 +435,6 @@ public class Mqtt5Canary {
         clientsData.get(clientIdx).isWaitingForOperation = true;
         // PrintLog("[OP] About to start client ID " + clientIdx);
         client.start();
-        try {
-            clientsData.get(clientIdx).connectedFuture.get(operationFutureWaitTime, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-            // PrintLog("[OP] Start had an exception! Exception: " + ex);
-            ex.printStackTrace();
-            if (configFilePrinter != null) {
-                ex.printStackTrace(configFilePrinter);
-            }
-        }
         // PrintLog("[OP] Started client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
@@ -492,15 +485,9 @@ public class Mqtt5Canary {
         SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder();
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).clientId, QOS.AT_LEAST_ONCE);
         subscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic, QOS.AT_LEAST_ONCE);
-        try {
-            client.subscribe(subscribePacketBuilder.build());
-        } catch (Exception ex) {
-            // PrintLog("[OP] Subscribe had an exception! Exception: " + ex);
-            ex.printStackTrace();
-            if (configFilePrinter != null) {
-                ex.printStackTrace(configFilePrinter);
-            }
-        }
+        
+        client.subscribe(subscribePacketBuilder.build());
+       
         clientsData.get(clientIdx).subscribedToTopics = true;
         // PrintLog("[OP] Subscribed client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -527,10 +514,6 @@ public class Mqtt5Canary {
         unsubscribePacketBuilder.withSubscription(clientsData.get(clientIdx).sharedTopic);
         client.unsubscribe(unsubscribePacketBuilder.build());
         // PrintLog("[OP] Unsubscribe had an exception! Exception: " + ex);
-        ex.printStackTrace();
-        if (configFilePrinter != null) {
-            ex.printStackTrace(configFilePrinter);
-        }
         clientsData.get(clientIdx).subscribedToTopics = false;
         // PrintLog("[OP] Unsubscribed client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
@@ -550,15 +533,7 @@ public class Mqtt5Canary {
         clientsData.get(clientIdx).isWaitingForOperation = true;
         // PrintLog("[OP] About to unsubscribe (bad) client ID " + clientIdx);
         UnsubscribePacketBuilder unsubscribePacketBuilder = new UnsubscribePacketBuilder("Non_existent_topic_here");
-        try {
-            client.unsubscribe(unsubscribePacketBuilder.build());
-        } catch (Exception ex) {
-            // PrintLog("[OP] Unsubscribe (bad) had an exception! Exception: " + ex);
-            ex.printStackTrace();
-            if (configFilePrinter != null) {
-                ex.printStackTrace(configFilePrinter);
-            }
-        }
+        client.unsubscribe(unsubscribePacketBuilder.build());
         // PrintLog("[OP] Unsubscribed (bad) client ID " + clientIdx);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
@@ -578,12 +553,6 @@ public class Mqtt5Canary {
         clientsData.get(clientIdx).isWaitingForOperation = true;
         // PrintLog("[OP] About to publish client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
 
-        int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
-        byte[] payload_bytes = new byte[payload_size];
-        for (int i = 0; i < payload_size; i++) {
-            payload_bytes[i] = (byte)random.nextInt(128);
-        }
-
         PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(topic, qos, payload_bytes);
 
         // Add user properties!
@@ -593,15 +562,9 @@ public class Mqtt5Canary {
         propertyList.add(new UserProperty("red", "blue"));
         publishPacketBuilder.withUserProperties(propertyList);
 
-        try {
-            client.publish(publishPacketBuilder.build());
-        } catch (Exception ex) {
-            // PrintLog("[OP] Publish with QoS " + qos + " with topic " + topic + " had an exception! Exception: " + ex);
-            ex.printStackTrace();
-            if (configFilePrinter != null) {
-                ex.printStackTrace(configFilePrinter);
-            }
-        }
+       
+        client.publish(publishPacketBuilder.build());
+       
         // PrintLog("[OP] Published client ID " + clientIdx + " with QoS " + qos + " with topic " + topic);
         clientsData.get(clientIdx).isWaitingForOperation = false;
     }
@@ -688,6 +651,12 @@ public class Mqtt5Canary {
     public static void main(String[] args) {
 
         System.out.println("Setting up Canary...");
+
+        int payload_size = random.nextInt(MAX_PAYLOAD_SIZE);
+        payload_bytes = new byte[payload_size];
+        for (int i = 0; i < payload_size; i++) {
+            payload_bytes[i] = (byte)random.nextInt(128);
+        }
 
         // Setup
         // ====================

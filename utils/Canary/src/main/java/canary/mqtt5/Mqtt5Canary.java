@@ -399,7 +399,7 @@ public class Mqtt5Canary {
 
     public static void setupOperations() {
         // For now have everything evenly distributed
-        // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_STOP);
+        clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_STOP);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_SUBSCRIBE);
         clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE);
         // clientsOperationsList.add(CANARY_OPERATIONS.OPERATION_UNSUBSCRIBE_BAD);

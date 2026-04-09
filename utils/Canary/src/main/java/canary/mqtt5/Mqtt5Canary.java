@@ -79,7 +79,7 @@ public class Mqtt5Canary {
     static byte[] payload_bytes;
 
     private static final int MAX_PAYLOAD_SIZE = 65535; // Use UINT64_MAX for the payload size
-    private static final long MEMORY_CHECK_INTERVAL_SECONDS = 600; // 10 minutes
+    private static final long MEMORY_CHECK_INTERVAL_SECONDS = 60; // 10 minutes
 
     static void printUsage() {
         System.out.println(

@@ -578,12 +578,33 @@ static void s_aws_mqtt5_client_java_publish_received(
         goto clean_up;
     }
 
-    /* Make the PublishReturn struct that will hold all of the data that is passed to Java */
+    /*
+     * For QoS 1 messages, eagerly acquire the publish acknowledgement control before invoking
+     * the Java callback. The control ID is passed directly as a long to the PublishReturn
+     * constructor.
+     *
+     * After the callback returns, we call wasControlAcquired() on the PublishReturn object to
+     * determine whether the user called acquirePublishAcknowledgementControl() during the callback:
+     *   - If wasControlAcquired() returns true, the user took manual control and is responsible
+     *     for calling invokePublishAcknowledgement() later.
+     *   - If wasControlAcquired() returns false (or an exception occurred), the user did NOT take
+     *     control, so we auto-invoke the PUBACK to avoid losing it.
+     */
+    uint64_t control_id = 0;
+    if (publish->qos == AWS_MQTT5_QOS_AT_LEAST_ONCE) {
+        /* Eagerly acquire the PUBACK control before invoking the Java callback */
+        control_id = aws_mqtt5_client_acquire_publish_acknowledgement(java_client->client, publish);
+    }
+
+    /* Make the PublishReturn struct that will hold all of the data that is passed to Java.
+     * The constructor takes (PublishPacket, long) where the long is the pre-acquired control ID
+     * (0 for QoS 0 messages). */
     publish_packet_return_data = (*env)->NewObject(
         env,
         mqtt5_publish_return_properties.return_class,
         mqtt5_publish_return_properties.return_constructor_id,
-        publish_packet_data);
+        publish_packet_data,
+        (jlong)control_id);
     aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
 
     if (java_client->jni_publish_events) {
@@ -595,6 +616,28 @@ static void s_aws_mqtt5_client_java_publish_received(
             publish_packet_return_data);
         aws_jni_check_and_clear_exception(env); /* To hide JNI warning */
     }
+
+    /*
+     * After the callback returns, call acquirePublishAcknowledgementControl() on the PublishReturn.
+     * - If the user already called it during the callback, controlId was zeroed out and the
+     *   method returns null. The user is responsible for invoking the PUBACK.
+     * - If the user did NOT call it, controlId is still non-zero and we get a non-null handle
+     *   back. We then auto-invoke the PUBACK to avoid losing it.
+     */
+    if (control_id != 0 && publish_packet_return_data != NULL) {
+        jobject handle = (*env)->CallObjectMethod(
+            env,
+            publish_packet_return_data,
+            mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id);
+        aws_jni_check_and_clear_exception(env);
+
+        if (handle != NULL) {
+            /* User did NOT call acquirePublishAcknowledgementControl() during the callback;
+             * auto-invoke the PUBACK. */
+            aws_mqtt5_client_invoke_publish_acknowledgement(java_client->client, control_id, NULL);
+        }
+    }
+
     goto clean_up;
 
 clean_up:
@@ -2187,6 +2230,45 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
         aws_mqtt5_client_release(java_client->client);
     } else {
         aws_mqtt5_client_java_destroy(env, allocator, java_client);
+    }
+}
+
+/*******************************************************************************
+ * Manual Publish Acknowledgement Control Functions
+ ******************************************************************************/
+
+/**
+ * Called from Mqtt5Client.mqtt5ClientInternalInvokePublishAcknowledgement(long client, long controlId).
+ * Calls aws_mqtt5_client_invoke_publish_acknowledgement to send the publish acknowledgement (PUBACK)
+ * for a previously acquired manual publish acknowledgement control handle.
+ */
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5ClientInternalInvokePublishAcknowledgement(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_client,
+        jlong control_id) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct aws_mqtt5_client_java_jni *java_client = (struct aws_mqtt5_client_java_jni *)jni_client;
+    if (!java_client) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.invokePublishAcknowledgement: Invalid/null client", AWS_ERROR_INVALID_ARGUMENT);
+        return;
+    }
+    if (!java_client->client) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env, "Mqtt5Client.invokePublishAcknowledgement: Invalid/null native client", AWS_ERROR_INVALID_ARGUMENT);
+        return;
+    }
+
+    int result = aws_mqtt5_client_invoke_publish_acknowledgement(java_client->client, (uint64_t)control_id, NULL);
+    if (result != AWS_OP_SUCCESS) {
+        s_aws_mqtt5_client_log_and_throw_exception(
+            env,
+            "Mqtt5Client.invokePublishAcknowledgement: aws_mqtt5_client_invoke_publish_acknowledgement failed!",
+            aws_last_error());
     }
 }
 

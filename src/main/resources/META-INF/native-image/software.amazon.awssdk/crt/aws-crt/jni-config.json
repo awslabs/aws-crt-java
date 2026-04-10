@@ -1563,8 +1563,13 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket"
+          "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket",
+          "long"
         ]
+      },
+      {
+        "name": "acquirePublishAcknowledgementControl",
+        "parameterTypes": []
       }
     ]
   },

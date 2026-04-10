@@ -3,6 +3,7 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -2870,7 +2871,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPublishAcknowledgement_AcquirePostCallbackRaisesTest() {
+    private void doManualPublishAcknowledgement_AcquirePostCallbackReturnsNullTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2890,7 +2891,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-                    // Save the PublishReturn but do NOT call acquirePublishAcknowledgementControl() within the callback
+                    // Save the PublishReturn but do NOT call acquirePublishAcknowledgementControl() within the callback.
+                    // Native code will call it after the callback returns (auto-invoking the PUBACK), zeroing controlId.
                     savedPublishReturnHolder[0] = publishReturn;
                     callbackDoneFuture.complete(null);
                 }
@@ -2909,16 +2911,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Wait for the callback to complete
                 callbackDoneFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                // Call acquirePublishAcknowledgementControl() after the callback has returned, this should throw IllegalStateException
+                // Call acquirePublishAcknowledgementControl() after the callback has returned.
+                // Native code already called it (zeroing controlId), so this returns null due to wrong thread or controlID being zero.
                 assertNotNull("savedPublishReturn should have been set", savedPublishReturnHolder[0]);
-                boolean exceptionThrown = false;
-                try {
-                    savedPublishReturnHolder[0].acquirePublishAcknowledgementControl();
-                } catch (IllegalStateException ex) {
-                    exceptionThrown = true;
-                }
-                assertTrue("acquirePublishAcknowledgementControl() should throw IllegalStateException after callback returns",
-                        exceptionThrown);
+                Mqtt5PublishAcknowledgementControlHandle handle =
+                        savedPublishReturnHolder[0].acquirePublishAcknowledgementControl();
+                assertNull("acquirePublishAcknowledgementControl() should return null after callback returns",
+                        handle);
 
                 client.stop();
                 events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2928,18 +2927,18 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual publish acknowledgement post-callback test: calling acquirePublishAcknowledgementControl() after callback returns raises IllegalStateException */
+    /* Manual publish acknowledgement post-callback test: calling acquirePublishAcknowledgementControl() after callback returns returns null */
     @Test
-    public void ManualPuback_AcquirePostCallbackRaises() throws Exception {
+    public void ManualPuback_AcquirePostCallbackReturnsNull() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquirePostCallbackRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquirePostCallbackReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPuback_Qos0AcquireThrowsTest() {
+    private void doManualPuback_Qos0AcquireReturnsNullTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2948,7 +2947,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
             byte[] payload = testUUID.getBytes();
 
-            CompletableFuture<String> resultFuture = new CompletableFuture<>();
+            CompletableFuture<Mqtt5PublishAcknowledgementControlHandle> resultFuture = new CompletableFuture<>();
 
             Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
             LifecycleEvents_Futured events = new LifecycleEvents_Futured();
@@ -2958,16 +2957,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-                    // For QoS 0, acquirePublishAcknowledgementControl() should throw IllegalStateException
-                    // because the native layer passes a null context pointer for QoS 0 publishes.
-                    try {
-                        publishReturn.acquirePublishAcknowledgementControl();
-                        resultFuture.complete("no_error"); // Should not reach here
-                    } catch (IllegalStateException ex) {
-                        resultFuture.complete("threw_illegal_state");
-                    } catch (Exception ex) {
-                        resultFuture.complete("unexpected_error: " + ex.getMessage());
-                    }
+                    // For QoS 0, controlId is 0, so acquirePublishAcknowledgementControl() returns null.
+                    Mqtt5PublishAcknowledgementControlHandle handle =
+                            publishReturn.acquirePublishAcknowledgementControl();
+                    resultFuture.complete(handle);
                 }
             });
 
@@ -2983,9 +2976,10 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_MOST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
-                String result = resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                assertEquals("acquirePublishAcknowledgementControl() should throw IllegalStateException for QoS 0 messages, got: " + result,
-                        "threw_illegal_state", result);
+                Mqtt5PublishAcknowledgementControlHandle handle =
+                        resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertNull("acquirePublishAcknowledgementControl() should return null for QoS 0 messages",
+                        handle);
 
                 client.stop();
                 events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2995,13 +2989,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual publish acknowledgement QoS 0 test: acquirePublishAcknowledgementControl() throws IllegalStateException for QoS 0 messages */
+    /* Manual publish acknowledgement QoS 0 test: acquirePublishAcknowledgementControl() returns null for QoS 0 messages */
     @Test
-    public void ManualPuback_Qos0AcquireThrows() throws Exception {
+    public void ManualPuback_Qos0AcquireReturnsNull() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPuback_Qos0AcquireThrowsTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPuback_Qos0AcquireReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

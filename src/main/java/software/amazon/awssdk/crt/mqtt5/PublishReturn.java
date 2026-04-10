@@ -31,14 +31,6 @@ public class PublishReturn {
     private long threadID;
 
     /**
-     * Set to true when {@code acquirePublishAcknowledgementControl()} is called, indicating that
-     * the user has taken manual control of the publish acknowledgement. Native code reads this
-     * via {@code wasControlAcquired()} after the callback returns to decide whether to
-     * auto-invoke the publish acknowledgement.
-     */
-    private boolean controlAcquired;
-
-    /**
      * Returns the PublishPacket returned from the server or Null if none was returned.
      * @return The PublishPacket returned from the server.
      */
@@ -53,56 +45,27 @@ public class PublishReturn {
      * at a later time to send the publish acknowledgement to the broker.
      *
      * <p><b>Important:</b> This method must be called within the
-     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback. Calling it after the
-     * callback returns will throw an {@link IllegalStateException}.</p>
+     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback. Calling it outside the
+     * callback (wrong thread) or after it has already been called will return {@code null}.</p>
      *
-     * <p>This method may only be called once per received PUBLISH. Subsequent calls will throw
-     * an {@link IllegalStateException}.</p>
+     * <p>This method may only be called once per received PUBLISH. Subsequent calls will return
+     * {@code null}.</p>
      *
      * <p>If this method is not called, the client will automatically send a publish acknowledgment
      * for QoS 1 messages when the callback returns.</p>
      *
-     * @return A {@link Mqtt5PublishAcknowledgementControlHandle} that can be used to manually send the acknowledgement.
-     * @throws IllegalStateException if called outside the onMessageReceived callback, called more than once,
-     *                               or called on a QoS 0 message.
+     * @return A {@link Mqtt5PublishAcknowledgementControlHandle} that can be used to manually send
+     *         the acknowledgement, or {@code null} if called outside the callback, called more than
+     *         once, or called on a QoS 0 message.
      */
     public synchronized Mqtt5PublishAcknowledgementControlHandle acquirePublishAcknowledgementControl() {
         if (controlId == 0 || threadID != Thread.currentThread().getId()) {
-            throw new IllegalStateException(
-                "acquirePublishAcknowledgementControl() must be called within the onMessageReceived callback and may only be called once.");
+            return null;
         }
         long acquiredControlId = controlId;
         /* Zero out so it can't be double-called */
         controlId = 0;
-        controlAcquired = true;
         return new Mqtt5PublishAcknowledgementControlHandle(acquiredControlId);
-    }
-
-    /**
-     * Returns whether the user called {@link #acquirePublishAcknowledgementControl()} during the
-     * {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived} callback.
-     *
-     * <p>This is called by native/JNI code after the callback returns to determine whether to
-     * automatically invoke the publish acknowledgement (PUBACK). If this returns {@code false},
-     * native code will auto-invoke the PUBACK; if {@code true}, the user is responsible for
-     * calling {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)}.</p>
-     *
-     * @return {@code true} if the user acquired manual control of the PUBACK, {@code false} otherwise.
-     */
-    private synchronized boolean wasControlAcquired() {
-        return controlAcquired;
-    }
-
-    /**
-     * Called by native/JNI code after the {@link Mqtt5ClientOptions.PublishEvents#onMessageReceived}
-     * callback returns to prevent post-callback use of
-     * {@link #acquirePublishAcknowledgementControl()}.
-     *
-     * <p>Zeroes out {@code controlId} so that any saved reference to this {@code PublishReturn}
-     * cannot call {@code acquirePublishAcknowledgementControl()} after the callback has returned.</p>
-     */
-    private synchronized void invalidateAfterCallback() {
-        controlId = 0;
     }
 
     /**
@@ -119,7 +82,6 @@ public class PublishReturn {
     private PublishReturn(PublishPacket newPublishPacket, long controlId) {
         this.publishPacket = newPublishPacket;
         this.controlId = controlId;
-        this.controlAcquired = false;
         this.threadID = Thread.currentThread().getId();
     }
 }

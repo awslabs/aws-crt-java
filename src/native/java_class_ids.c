@@ -2265,20 +2265,17 @@ static void s_cache_mqtt5_publish_return(JNIEnv *env) {
         "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;J)V");
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
     /*
-     * wasControlAcquired() called by native code after onMessageReceived returns to determine
-     * whether the user called acquirePublishAcknowledgementControl() during the callback.
-     * Returns true if the user took manual control of the PUBACK, false otherwise.
+     * acquirePublishAcknowledgementControl() called by native code after onMessageReceived returns
+     * to check whether the user took manual control during the callback. Returns a non-null handle
+     * if control was not yet acquired (native then auto-invokes the PUBACK), or null if the user
+     * already called it during the callback (user is responsible for invoking the PUBACK).
      */
-    mqtt5_publish_return_properties.return_was_control_acquired_id =
-        (*env)->GetMethodID(env, mqtt5_publish_return_properties.return_class, "wasControlAcquired", "()Z");
-    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_was_control_acquired_id);
-    /*
-     * invalidateAfterCallback() called by native code after onMessageReceived returns to zero
-     * out controlId, preventing post-callback calls to acquirePublishAcknowledgementControl().
-     */
-    mqtt5_publish_return_properties.return_invalidate_after_callback_id =
-        (*env)->GetMethodID(env, mqtt5_publish_return_properties.return_class, "invalidateAfterCallback", "()V");
-    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_invalidate_after_callback_id);
+    mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_return_properties.return_class,
+        "acquirePublishAcknowledgementControl",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5PublishAcknowledgementControlHandle;");
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id);
 }
 
 struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;

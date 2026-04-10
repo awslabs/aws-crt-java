@@ -618,23 +618,22 @@ static void s_aws_mqtt5_client_java_publish_received(
     }
 
     /*
-     * After the callback returns:
-     * 1. Call invalidateAfterCallback() to zero out controlId in the PublishReturn, preventing
-     *    any post-callback call to acquirePublishAcknowledgementControl() from succeeding.
-     * 2. Call wasControlAcquired() to check whether the user took manual control during the
-     *    callback. If they did NOT, auto-invoke the PUBACK to avoid losing it.
+     * After the callback returns, call acquirePublishAcknowledgementControl() on the PublishReturn.
+     * - If the user already called it during the callback, controlId was zeroed out and the
+     *   method returns null. The user is responsible for invoking the PUBACK.
+     * - If the user did NOT call it, controlId is still non-zero and we get a non-null handle
+     *   back. We then auto-invoke the PUBACK to avoid losing it.
      */
     if (control_id != 0 && publish_packet_return_data != NULL) {
-        /* Invalidate the PublishReturn to prevent post-callback use */
-        (*env)->CallVoidMethod(
-            env, publish_packet_return_data, mqtt5_publish_return_properties.return_invalidate_after_callback_id);
+        jobject handle = (*env)->CallObjectMethod(
+            env,
+            publish_packet_return_data,
+            mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id);
+        aws_jni_check_and_clear_exception(env);
 
-        /* Check whether the user called acquirePublishAcknowledgementControl() during the callback */
-        jboolean user_acquired_control = (*env)->CallBooleanMethod(
-            env, publish_packet_return_data, mqtt5_publish_return_properties.return_was_control_acquired_id);
-
-        if (!user_acquired_control) {
-            /* User did NOT call acquirePublishAcknowledgementControl(); auto-invoke the PUBACK */
+        if (handle != NULL) {
+            /* User did NOT call acquirePublishAcknowledgementControl() during the callback;
+             * auto-invoke the PUBACK. */
             aws_mqtt5_client_invoke_publish_acknowledgement(java_client->client, control_id, NULL);
         }
     }

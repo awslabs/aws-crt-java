@@ -928,9 +928,9 @@ extern struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_prop
 /* mqtt5.PublishReturn */
 struct java_aws_mqtt5_publish_return_properties {
     jclass return_class;
-    jmethodID return_constructor_id;               /* (PublishPacket, long) */
-    jmethodID return_was_control_acquired_id;      /* ()Z true if user called acquirePublishAcknowledgementControl() */
-    jmethodID return_invalidate_after_callback_id; /* ()V zeroes controlId to prevent post-callback use */
+    jmethodID return_constructor_id;                             /* (PublishPacket, long) */
+    jmethodID return_acquire_publish_acknowledgement_control_id; /* ()Lsoftware/.../Mqtt5PublishAcknowledgementControlHandle;
+                                                                  */
 };
 extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
 

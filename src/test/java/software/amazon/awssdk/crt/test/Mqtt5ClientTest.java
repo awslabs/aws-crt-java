@@ -2801,7 +2801,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         CrtResource.waitForNoResources();
     }
 
-    private void doManualPublishAcknowledgement_AcquireDoubleCallRaisesTest() {
+    private void doManualPublishAcknowledgement_AcquireDoubleCallReturnsNullTest() {
         try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
                 AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
              TlsContext tlsContext = new TlsContext(tlsOptions)) {
@@ -2820,22 +2820,20 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
                 @Override
                 public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
-                    try {
-                        // First call should succeed
-                        Mqtt5PublishAcknowledgementControlHandle handle = publishReturn.acquirePublishAcknowledgementControl();
-                        // Second call on the same message should throw IllegalStateException
-                        try {
-                            publishReturn.acquirePublishAcknowledgementControl();
-                            resultFuture.complete("no_error"); // Should not reach here
-                        } catch (IllegalStateException ex) {
-                            resultFuture.complete("double_call_raised");
-                        } catch (Exception ex) {
-                            resultFuture.complete("unexpected_error: " + ex.getMessage());
-                        }
-                        // handle is valid but we don't invoke it here; let it be GC'd
-                    } catch (Exception ex) {
-                        resultFuture.complete("first_call_failed: " + ex.getMessage());
+                    // First call should succeed and return a non-null handle
+                    Mqtt5PublishAcknowledgementControlHandle handle = publishReturn.acquirePublishAcknowledgementControl();
+                    if (handle == null) {
+                        resultFuture.complete("first_call_returned_null");
+                        return;
                     }
+                    // Second call on the same message should return null (controlId was zeroed out)
+                    Mqtt5PublishAcknowledgementControlHandle handle2 = publishReturn.acquirePublishAcknowledgementControl();
+                    if (handle2 == null) {
+                        resultFuture.complete("double_call_returned_null");
+                    } else {
+                        resultFuture.complete("double_call_returned_non_null");
+                    }
+                    // handle is valid but we don't invoke it here; let it be GC'd
                 }
             });
 
@@ -2850,8 +2848,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 String result = resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                assertEquals("Expected IllegalStateException on double-call, got: " + result,
-                        "double_call_raised", result);
+                assertEquals("Expected null on double-call, got: " + result,
+                        "double_call_returned_null", result);
 
                 client.stop();
                 events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2861,13 +2859,13 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         }
     }
 
-    /* Manual publish acknowledgement double-call test: calling acquirePublishAcknowledgementControl() twice raises IllegalStateException */
+    /* Manual publish acknowledgement double-call test: calling acquirePublishAcknowledgementControl() twice returns null on the second call */
     @Test
     public void ManualPuback_AcquireDoubleCallRaises() throws Exception {
         skipIfNetworkUnavailable();
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
-        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquireDoubleCallRaisesTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquireDoubleCallReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

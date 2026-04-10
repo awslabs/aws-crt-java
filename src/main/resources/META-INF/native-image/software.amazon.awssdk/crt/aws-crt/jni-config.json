@@ -1568,11 +1568,7 @@
         ]
       },
       {
-        "name": "wasControlAcquired",
-        "parameterTypes": []
-      },
-      {
-        "name": "invalidateAfterCallback",
+        "name": "acquirePublishAcknowledgementControl",
         "parameterTypes": []
       }
     ]

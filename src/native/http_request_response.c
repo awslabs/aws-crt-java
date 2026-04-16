@@ -640,10 +640,7 @@ static void s_write_data_complete(struct aws_http_stream *stream, int error_code
     }
 
     (*env)->CallVoidMethod(
-        env,
-        callback_data->completion_callback,
-        http_stream_write_data_completion_properties.callback,
-        error_code);
+        env, callback_data->completion_callback, http_stream_write_data_completion_properties.callback, error_code);
     aws_jni_check_and_clear_exception(env);
 
     JavaVM *jvm = callback_data->stream_cb_data->jvm;

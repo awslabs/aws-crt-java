@@ -545,8 +545,8 @@ static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
 struct java_http_stream_write_data_completion_properties http_stream_write_data_completion_properties;
 
 static void s_cache_http_stream_write_data_completion_properties(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(
-        env, "software/amazon/awssdk/crt/http/HttpStreamBase$HttpStreamWriteDataCompletionCallback");
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamBase$HttpStreamWriteDataCompletionCallback");
     AWS_FATAL_ASSERT(cls);
 
     http_stream_write_data_completion_properties.callback =

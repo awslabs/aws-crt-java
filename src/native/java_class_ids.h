@@ -246,6 +246,12 @@ struct java_http_stream_write_chunk_completion_properties {
 };
 extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
 
+/* HttpStreamWriteDataCompletionCallback */
+struct java_http_stream_write_data_completion_properties {
+    jmethodID callback;
+};
+extern struct java_http_stream_write_data_completion_properties http_stream_write_data_completion_properties;
+
 /* HtppStreamMetrics */
 struct java_http_stream_metrics_properties {
     jclass http_stream_metrics_class;

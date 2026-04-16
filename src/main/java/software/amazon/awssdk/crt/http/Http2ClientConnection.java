@@ -187,12 +187,33 @@ public class Http2ClientConnection extends HttpClientConnection {
     @Override
     public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler)
             throws CrtRuntimeException {
+        return makeRequest(request, streamHandler, false);
+    }
+
+    /**
+     * Schedules an HttpRequest on the Native EventLoop for this
+     * HttpClientConnection. The HTTP/1.1 request will be transformed to HTTP/2
+     * request under the hood.
+     *
+     * @param request       The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native
+     *                      EventLoop
+     * @param useManualDataWrites When true, request body data will be provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's body stream.
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The Http2Stream that represents this Request/Response Pair. It can be
+     *         closed at any time during the request/response, but must be closed by
+     *         the user thread making this request when it's done.
+     */
+    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler,
+            boolean useManualDataWrites) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");
         }
 
         Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
-                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                useManualDataWrites);
         return stream;
     }
 
@@ -204,7 +225,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      ******************************************************************************/
 
     private static native Http2Stream http2ClientConnectionMakeRequest(long connectionBinding, byte[] marshalledRequest,
-            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler)
+            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler,
+            boolean useManualDataWrites)
             throws CrtRuntimeException;
 
     private static native void http2ClientConnectionUpdateSettings(long connectionBinding,

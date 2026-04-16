@@ -308,6 +308,39 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
+    public void testS3ClientCreateMD5MetaRequest() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
+                .withComputeContentMd5(true)
+                .withMemoryLimitInBytes(5L * 1024 * 1024 * 1024);
+        try (S3Client client = createS3Client(clientOptions)) {
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_1MB_PATH, headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.MD5)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            Assert.assertThrows(IllegalArgumentException.class, () -> { client.makeMetaRequest(metaRequestOptions); });
+        }
+    }
+
+    @Test
     public void testS3Get() {
         skipIfAndroid();
         skipIfNetworkUnavailable();
@@ -1360,9 +1393,13 @@ public class S3ClientTest extends CrtTestFixture {
                 }
             };
             ArrayList<ChecksumAlgorithm> algorList = new ArrayList<ChecksumAlgorithm>();
+            algorList.add(ChecksumAlgorithm.XXHASH128);
+            algorList.add(ChecksumAlgorithm.XXHASH3);
             algorList.add(ChecksumAlgorithm.CRC64NVME);
             algorList.add(ChecksumAlgorithm.CRC32C);
             algorList.add(ChecksumAlgorithm.CRC32);
+            algorList.add(ChecksumAlgorithm.XXHASH64);
+            algorList.add(ChecksumAlgorithm.SHA512);
             algorList.add(ChecksumAlgorithm.SHA1);
             algorList.add(ChecksumAlgorithm.SHA256);
             ChecksumConfig validateChecksumConfig = new ChecksumConfig().withValidateChecksum(true)
@@ -1381,11 +1418,27 @@ public class S3ClientTest extends CrtTestFixture {
     }
 
     @Test
-    public void testS3PutTrailerChecksums() throws Exception {
+    public void testS3PutTrailerChecksumsCRC64() throws Exception {
         skipIfAndroid();
         skipIfNetworkUnavailable();
         Assume.assumeTrue(hasAwsCredentials());
         testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.CRC64NVME, ChecksumLocation.TRAILER, false, false);
+    }
+
+    @Test
+    public void testS3PutTrailerChecksumsSHA512() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.SHA512, ChecksumLocation.TRAILER, false, false);
+    }
+
+    @Test
+    public void testS3PutTrailerChecksumsXXHASH3_64() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        testS3RoundTripWithChecksumHelper(ChecksumAlgorithm.XXHASH3, ChecksumLocation.TRAILER, false, false);
     }
 
     @Test

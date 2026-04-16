@@ -3,6 +3,7 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Assume;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -264,7 +265,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 })
                 .withRetryJitterMode(JitterMode.Default)
                 .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                .withSocketOptions(socketOptions);
+                .withSocketOptions(socketOptions)
+                .withMetricsEnabled(false);
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
@@ -330,6 +332,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
                     Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
             builder.withLifecycleEvents(events);
+            builder.withMetricsEnabled(false);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -354,6 +357,78 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
 
         TestUtils.doRetryableTest(this::doConnDC_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * ============================================================
+     * METRICS TEST CASES
+     * ============================================================
+     */
+
+    private void doConnDC_Metrics_EnabledTest() {
+        try {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(
+                    AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
+                    Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
+            builder.withLifecycleEvents(events);
+            // Metrics are enabled by default (metricsEnabled = true)
+            // This should cause connection failure because metrics appends to username,
+            // corrupting basic auth credentials
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
+            builder.withConnectOptions(connectOptions.build());
+
+            boolean exceptionOccurred = false;
+            boolean foundExpectedError = false;
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+
+                client.start();
+
+                try {
+                    events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    exceptionOccurred = true;
+                    if (events.connectFailureCode == 5150) {
+                        foundExpectedError = true;
+                    } else {
+                        System.out.println("EXCEPTION: " + ex);
+                        System.out.println(ex.getMessage() + " \n");
+                    }
+                }
+
+                if (foundExpectedError == false) {
+                    System.out.println("Error code was not AWS_ERROR_MQTT5_CONNACK_CONNECTION_REFUSED like expected! There was an exception though");
+                }
+                if (exceptionOccurred == false) {
+                    fail("No exception occurred!");
+                }
+
+                client.stop();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Test that connection fails with basic auth when metrics are enabled (default).
+     * When metrics are enabled, the SDK appends metrics info to the username field,
+     * which corrupts basic authentication credentials and causes connection failure.
+     */
+    @Test
+    public void ConnDC_Metrics_Enabled() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT5_BASIC_AUTH_USERNAME, AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD);
+
+        doConnDC_Metrics_EnabledTest();
 
         CrtResource.waitForNoResources();
     }
@@ -510,7 +585,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                    .withSocketOptions(socketOptions);
+                    .withSocketOptions(socketOptions)
+                    .withMetricsEnabled(false);
             // Skip websocket, proxy options, and TLS options - those are all different tests
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -605,6 +681,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
+            builder.withMetricsEnabled(false);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -772,7 +849,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     })
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
-                    .withSocketOptions(socketOptions);
+                    .withSocketOptions(socketOptions)
+                    .withMetricsEnabled(false);
 
             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                 @Override
@@ -2542,6 +2620,382 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
 
         TestUtils.doRetryableTest(this::doQoS1_UC1Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * ============================================================
+     * Manual Publish Acknowledgement Tests
+     * ============================================================
+     */
+
+    private void doManualPublishAcknowledgement_HoldTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_ManualPuback_Java_" + testUUID;
+            byte[] payload = testUUID.getBytes();
+
+            final long PUBACK_HOLD_TIMEOUT_SEC = 60L;
+
+            CompletableFuture<byte[]> firstDeliveryFuture = new CompletableFuture<>();
+            CompletableFuture<byte[]> redeliveryFuture = new CompletableFuture<>();
+            Mqtt5PublishAcknowledgementControlHandle[] publishAckHandleHolder = new Mqtt5PublishAcknowledgementControlHandle[1];
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            connectOptions.withClientId("test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID);
+            builder.withConnectOptions(connectOptions.build());
+
+            builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    byte[] receivedPayload = publishReturn.getPublishPacket().getPayload();
+                    if (!firstDeliveryFuture.isDone()) {
+                        // First delivery: acquire manual publish acknowledgement control to hold the PUBACK
+                        publishAckHandleHolder[0] = publishReturn.acquirePublishAcknowledgementControl();
+                        firstDeliveryFuture.complete(receivedPayload);
+                    } else if (!redeliveryFuture.isDone()) {
+                        // Second delivery: broker re-sent because no PUBACK was received
+                        redeliveryFuture.complete(receivedPayload);
+                    }
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Subscribe to the topic with QoS 1
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Publish a QoS 1 message with a unique UUID payload
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait for the first delivery and confirm PUBACK was held
+                byte[] firstPayload = firstDeliveryFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertTrue("First delivery payload should match", java.util.Arrays.equals(firstPayload, payload));
+                assertNotNull("acquirePublishAcknowledgementControl() should have returned a handle", publishAckHandleHolder[0]);
+
+                // Wait up to 60 seconds for the broker to re-deliver the message (no PUBACK was sent)
+                byte[] redeliveredPayload = redeliveryFuture.get(PUBACK_HOLD_TIMEOUT_SEC, TimeUnit.SECONDS);
+                assertTrue("Re-delivered payload should match the original UUID payload",
+                        java.util.Arrays.equals(redeliveredPayload, payload));
+
+                // Release the held PUBACK now that we've confirmed re-delivery
+                client.invokePublishAcknowledgement(publishAckHandleHolder[0]);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Manual publish acknowledgement hold test: hold PUBACK and verify broker re-delivers the message */
+    @Test
+    public void ManualPuback_Hold() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_HoldTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doManualPublishAcknowledgement_InvokeTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID;
+            byte[] payload = testUUID.getBytes();
+
+            final long NO_REDELIVERY_WAIT_SEC = 60L;
+
+            CompletableFuture<byte[]> firstDeliveryFuture = new CompletableFuture<>();
+            CompletableFuture<byte[]> unexpectedRedeliveryFuture = new CompletableFuture<>();
+            Mqtt5PublishAcknowledgementControlHandle[] publishAckHandleHolder = new Mqtt5PublishAcknowledgementControlHandle[1];
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            connectOptions.withClientId("test/MQTT5_ManualPublishAcknowledgement_Java_" + testUUID);
+            builder.withConnectOptions(connectOptions.build());
+
+            builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    byte[] receivedPayload = publishReturn.getPublishPacket().getPayload();
+                    if (!firstDeliveryFuture.isDone()) {
+                        // First delivery: acquire manual publish acknowledgement control, then immediately invoke it
+                        publishAckHandleHolder[0] = publishReturn.acquirePublishAcknowledgementControl();
+                        firstDeliveryFuture.complete(receivedPayload);
+                    } else if (java.util.Arrays.equals(receivedPayload, payload) && !unexpectedRedeliveryFuture.isDone()) {
+                        // A second delivery of the same payload means the broker re-sent. This should NOT happen
+                        unexpectedRedeliveryFuture.complete(receivedPayload);
+                    }
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Subscribe to the topic with QoS 1
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Publish a QoS 1 message with a unique UUID payload
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait for the first delivery and confirm publish acknowledgement handle was acquired
+                byte[] firstPayload = firstDeliveryFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertTrue("First delivery payload should match", java.util.Arrays.equals(firstPayload, payload));
+                assertNotNull("acquirePublishAcknowledgementControl() should have returned a handle", publishAckHandleHolder[0]);
+
+                // Immediately invoke the publish acknowledgement using the acquired handle
+                client.invokePublishAcknowledgement(publishAckHandleHolder[0]);
+
+                // Wait 60 seconds and confirm the broker does NOT re-deliver the message
+                boolean redelivered = false;
+                try {
+                    unexpectedRedeliveryFuture.get(NO_REDELIVERY_WAIT_SEC, TimeUnit.SECONDS);
+                    redelivered = true;
+                } catch (java.util.concurrent.TimeoutException ex) {
+                    redelivered = false;
+                }
+                assertTrue("Broker should NOT re-deliver the message after invokePublishAcknowledgement() was called",
+                        !redelivered);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Manual publish acknowledgement invoke test: acquire and immediately invoke, verify no re-delivery */
+    @Test
+    public void ManualPuback_Invoke() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_InvokeTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doManualPublishAcknowledgement_AcquireDoubleCallReturnsNullTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+            byte[] payload = testUUID.getBytes();
+
+            CompletableFuture<String> resultFuture = new CompletableFuture<>();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    // First call should succeed and return a non-null handle
+                    Mqtt5PublishAcknowledgementControlHandle handle = publishReturn.acquirePublishAcknowledgementControl();
+                    if (handle == null) {
+                        resultFuture.complete("first_call_returned_null");
+                        return;
+                    }
+                    // Second call on the same message should return null (controlId was zeroed out)
+                    Mqtt5PublishAcknowledgementControlHandle handle2 = publishReturn.acquirePublishAcknowledgementControl();
+                    if (handle2 == null) {
+                        resultFuture.complete("double_call_returned_null");
+                    } else {
+                        resultFuture.complete("double_call_returned_non_null");
+                    }
+                    // handle is valid but we don't invoke it here; let it be GC'd
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                String result = resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertEquals("Expected null on double-call, got: " + result,
+                        "double_call_returned_null", result);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Manual publish acknowledgement double-call test: calling acquirePublishAcknowledgementControl() twice returns null on the second call */
+    @Test
+    public void ManualPuback_AcquireDoubleCallRaises() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquireDoubleCallReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doManualPublishAcknowledgement_AcquirePostCallbackReturnsNullTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+            byte[] payload = testUUID.getBytes();
+
+            CompletableFuture<Void> callbackDoneFuture = new CompletableFuture<>();
+            PublishReturn[] savedPublishReturnHolder = new PublishReturn[1];
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    // Save the PublishReturn but do NOT call acquirePublishAcknowledgementControl() within the callback.
+                    // Native code will call it after the callback returns (auto-invoking the PUBACK), zeroing controlId.
+                    savedPublishReturnHolder[0] = publishReturn;
+                    callbackDoneFuture.complete(null);
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait for the callback to complete
+                callbackDoneFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Call acquirePublishAcknowledgementControl() after the callback has returned.
+                // Native code already called it (zeroing controlId), so this returns null due to wrong thread or controlID being zero.
+                assertNotNull("savedPublishReturn should have been set", savedPublishReturnHolder[0]);
+                Mqtt5PublishAcknowledgementControlHandle handle =
+                        savedPublishReturnHolder[0].acquirePublishAcknowledgementControl();
+                assertNull("acquirePublishAcknowledgementControl() should return null after callback returns",
+                        handle);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Manual publish acknowledgement post-callback test: calling acquirePublishAcknowledgementControl() after callback returns returns null */
+    @Test
+    public void ManualPuback_AcquirePostCallbackReturnsNull() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doManualPublishAcknowledgement_AcquirePostCallbackReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    private void doManualPuback_Qos0AcquireReturnsNullTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_Binding_Java_" + testUUID;
+            byte[] payload = testUUID.getBytes();
+
+            CompletableFuture<Mqtt5PublishAcknowledgementControlHandle> resultFuture = new CompletableFuture<>();
+
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            builder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    // For QoS 0, controlId is 0, so acquirePublishAcknowledgementControl() returns null.
+                    Mqtt5PublishAcknowledgementControlHandle handle =
+                            publishReturn.acquirePublishAcknowledgementControl();
+                    resultFuture.complete(handle);
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Subscribe with QoS 1 so the broker delivers at QoS 0 (publish at QoS 0)
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Publish at QoS 0, there is no PUBACK involved
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_MOST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                Mqtt5PublishAcknowledgementControlHandle handle =
+                        resultFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertNull("acquirePublishAcknowledgementControl() should return null for QoS 0 messages",
+                        handle);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Manual publish acknowledgement QoS 0 test: acquirePublishAcknowledgementControl() returns null for QoS 0 messages */
+    @Test
+    public void ManualPuback_Qos0AcquireReturnsNull() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doManualPuback_Qos0AcquireReturnsNullTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();
     }

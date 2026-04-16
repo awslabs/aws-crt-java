@@ -98,7 +98,8 @@ public class PublishTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             subscribe();
             publishAndCheck(TEST_PAYLOAD.getBytes());
             disconnect();
@@ -130,7 +131,8 @@ public class PublishTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             subscribe();
             publishAndCheck(EMPTY_PAYLOAD.getBytes());
             disconnect();
@@ -162,7 +164,8 @@ public class PublishTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             subscribe();
             publishAndCheck(null);
             disconnect();

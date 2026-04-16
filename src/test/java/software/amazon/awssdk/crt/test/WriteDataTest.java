@@ -18,14 +18,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class WriteDataTest extends HttpRequestResponseFixture {
-    private final static String HOST = "https://localhost:3443";
+    private final static String H2_HOST = "https://localhost:3443";
+    private final static String H1_HOST = "https://localhost:8082";
 
     @Test
     public void testHttp2WriteData() throws Exception {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(HOST);
+        URI uri = new URI(H2_HOST);
         byte[] payload = "hello from writeData".getBytes(StandardCharsets.UTF_8);
 
         HttpHeader[] headers = new HttpHeader[]{
@@ -77,8 +78,12 @@ public class WriteDataTest extends HttpRequestResponseFixture {
 
         Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
         Assert.assertEquals(200, response.statusCode);
+        // /echo returns JSON: {"body": "<sent>", "bytes": <len>}
         String body = response.getBody();
-        Assert.assertEquals("hello from writeData", body);
+        Assert.assertTrue("Response should contain sent body: " + body,
+                body.contains("\"body\": \"hello from writeData\""));
+        Assert.assertTrue("Response should contain byte count: " + body,
+                body.contains("\"bytes\": " + payload.length));
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.waitForNoResources();
@@ -89,7 +94,7 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(HOST);
+        URI uri = new URI(H2_HOST);
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader(":method", "GET"),
@@ -140,6 +145,134 @@ public class WriteDataTest extends HttpRequestResponseFixture {
 
         Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
         Assert.assertEquals(200, response.statusCode);
+        // /echo returns JSON: {"body": "", "bytes": 0}
+        String body = response.getBody();
+        Assert.assertTrue("Response should contain zero bytes: " + body,
+                body.contains("\"bytes\": 0"));
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp1WriteData() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(H1_HOST);
+        byte[] payload = "hello from writeData h1".getBytes(StandardCharsets.UTF_8);
+
+        HttpHeader[] headers = new HttpHeader[]{
+            new HttpHeader("Host", uri.getHost()),
+            new HttpHeader("Content-Length", Integer.toString(payload.length)),
+        };
+        HttpRequest request = new HttpRequest("PUT", "/echo", headers, null);
+
+        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        TestHttpResponse response = new TestHttpResponse();
+
+        CompletableFuture<Void> shutdownComplete;
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+
+                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        response.statusCode = responseStatusCode;
+                        response.headers.addAll(Arrays.asList(nextHeaders));
+                    }
+
+                    @Override
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                        response.bodyBuffer.put(bodyBytesIn);
+                        return bodyBytesIn.length;
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        response.onCompleteErrorCode = errorCode;
+                        reqCompleted.complete(null);
+                    }
+                };
+
+                // Use the unified makeRequest with useManualDataWrites=true
+                try (HttpStreamBase stream = conn.makeRequest(request, streamHandler, true)) {
+                    stream.activate();
+                    stream.writeData(payload, true).get(5, TimeUnit.SECONDS);
+                    reqCompleted.get(60, TimeUnit.SECONDS);
+                }
+            }
+        }
+
+        Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
+        Assert.assertEquals(200, response.statusCode);
+        // H1 /echo returns JSON: {"data": "<sent>"}
+        String body = response.getBody();
+        Assert.assertTrue("Response should contain sent data: " + body,
+                body.contains("\"data\": \"hello from writeData h1\""));
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp1WriteDataEndStreamOnly() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(H1_HOST);
+
+        HttpHeader[] headers = new HttpHeader[]{
+            new HttpHeader("Host", uri.getHost()),
+            new HttpHeader("Content-Length", "0"),
+        };
+        HttpRequest request = new HttpRequest("GET", "/echo", headers, null);
+
+        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        TestHttpResponse response = new TestHttpResponse();
+
+        CompletableFuture<Void> shutdownComplete;
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+
+                HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        response.statusCode = responseStatusCode;
+                        response.headers.addAll(Arrays.asList(nextHeaders));
+                    }
+
+                    @Override
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                        response.bodyBuffer.put(bodyBytesIn);
+                        return bodyBytesIn.length;
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        response.onCompleteErrorCode = errorCode;
+                        reqCompleted.complete(null);
+                    }
+                };
+
+                try (HttpStreamBase stream = conn.makeRequest(request, streamHandler, true)) {
+                    stream.activate();
+                    stream.writeData(null, true).get(5, TimeUnit.SECONDS);
+                    reqCompleted.get(60, TimeUnit.SECONDS);
+                }
+            }
+        }
+
+        Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
+        Assert.assertEquals(200, response.statusCode);
+        // H1 /echo returns JSON: {"data": ""}
+        String body = response.getBody();
+        Assert.assertTrue("Response should contain empty data: " + body,
+                body.contains("\"data\": \"\""));
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.waitForNoResources();

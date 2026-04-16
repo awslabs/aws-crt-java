@@ -73,7 +73,7 @@ public class HttpClientConnection extends CrtResource {
     }
 
     /**
-     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection applies to both HTTP/2 and HTTP/1.1 connection.
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection. Applies to both HTTP/2 and HTTP/1.1 connections.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
@@ -86,7 +86,7 @@ public class HttpClientConnection extends CrtResource {
     }
 
     /**
-     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection applies to both HTTP/2 and HTTP/1.1 connection.
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection. Applies to both HTTP/2 and HTTP/1.1 connections.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop

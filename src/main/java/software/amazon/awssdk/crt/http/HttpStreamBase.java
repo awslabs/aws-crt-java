@@ -128,7 +128,8 @@ public class HttpStreamBase extends CrtResource {
      * The stream must have been created with {@code useManualDataWrites = true}.
      * You must call activate() before using this function.
      *
-     * @param data       data to send, or null to write zero bytes.
+     * @param data       data to send, or null to write zero bytes. Pass null with
+     *                   endStream=true to signal end-of-body without sending additional data.
      * @param endStream  if true, this is the last data to be sent on this stream.
      * @param completionCallback invoked when the data has been flushed or an error occurs.
      */
@@ -153,7 +154,8 @@ public class HttpStreamBase extends CrtResource {
      * The stream must have been created with {@code useManualDataWrites = true}.
      * You must call activate() before using this function.
      *
-     * @param data      data to send, or null to write zero bytes.
+     * @param data      data to send, or null to write zero bytes. Pass null with
+     *                  endStream=true to signal end-of-body without sending additional data.
      * @param endStream if true, this is the last data to be sent on this stream.
      * @return completable future which completes when data is flushed or an error occurs.
      */

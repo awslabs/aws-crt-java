@@ -18,21 +18,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class WriteDataTest extends HttpRequestResponseFixture {
-    private final static String H2_HOST = "https://localhost:3443";
-    private final static String H1_HOST = "https://localhost:8082";
+    private final static String HOST = "https://localhost";
+    private final static int H1_TLS_PORT = 8082;
+    private final static int H2_TLS_PORT = 3443;
 
     @Test
     public void testHttp2WriteData() throws Exception {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(H2_HOST);
+        URI uri = new URI(HOST + ":" + H2_TLS_PORT);
         byte[] payload = "hello from writeData".getBytes(StandardCharsets.UTF_8);
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader(":method", "PUT"),
             new HttpHeader(":path", "/echo"),
-            new HttpHeader(":scheme", uri.getScheme()),
+            new HttpHeader(":scheme", "https"),
             new HttpHeader(":authority", uri.getHost()),
             new HttpHeader("content-length", Integer.toString(payload.length)),
         };
@@ -94,12 +95,12 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(H2_HOST);
+        URI uri = new URI(HOST + ":" + H2_TLS_PORT);
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader(":method", "GET"),
             new HttpHeader(":path", "/echo"),
-            new HttpHeader(":scheme", uri.getScheme()),
+            new HttpHeader(":scheme", "https"),
             new HttpHeader(":authority", uri.getHost()),
         };
         Http2Request request = new Http2Request(headers, null);
@@ -159,7 +160,7 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(H1_HOST);
+        URI uri = new URI(HOST + ":" + H1_TLS_PORT);
         byte[] payload = "hello from writeData h1".getBytes(StandardCharsets.UTF_8);
 
         HttpHeader[] headers = new HttpHeader[]{
@@ -222,7 +223,7 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
 
-        URI uri = new URI(H1_HOST);
+        URI uri = new URI(HOST + ":" + H1_TLS_PORT);
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader("Host", uri.getHost()),

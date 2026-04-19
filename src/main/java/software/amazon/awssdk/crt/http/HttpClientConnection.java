@@ -69,7 +69,9 @@ public class HttpClientConnection extends CrtResource {
                 new HttpStreamResponseHandlerNativeAdapter(streamHandler),
                 useManualDataWrites);
 
-        return (HttpStream)stream;
+        HttpStream h1Stream = (HttpStream)stream;
+        h1Stream.setHasBodyStream(request.getBodyStream() != null);
+        return h1Stream;
     }
 
     /**

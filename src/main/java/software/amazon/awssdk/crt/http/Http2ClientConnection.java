@@ -198,8 +198,24 @@ public class Http2ClientConnection extends HttpClientConnection {
      * @param request       The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native
      *                      EventLoop
-     * @param useManualDataWrites When true, request body data will be provided via
-     *        {@link HttpStreamBase#writeData} instead of from the request's body stream.
+     * @param useManualDataWrites When {@code true}, request body data is provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's
+     *        {@link HttpRequestBodyStream}.
+     *
+     *        <p>By design, CRT supports setting both a body stream and enabling manual
+     *        writes for HTTP/2, but this is not recommended. Body streams are intended
+     *        for requests whose payload is available in full at the time of sending. If
+     *        the stream does not signal end-of-stream promptly, the event loop will
+     *        busy-wait (hot-loop) for more data, wasting CPU time. Manual writes avoid
+     *        this by letting the caller control when data is sent; the event loop only
+     *        processes the request when {@link HttpStreamBase#writeData} is called and is
+     *        free to service other requests in the meantime.
+     *
+     *        <p>When both a body stream and manual writes are enabled, the body stream is
+     *        sent as the first DATA frame and the connection then waits asynchronously for
+     *        subsequent {@code writeData()} calls. However, if the body stream has not
+     *        signalled end-of-stream, the event loop will block synchronously until it
+     *        completes.
      * @throws CrtRuntimeException if stream creation fails
      * @return The Http2Stream that represents this Request/Response Pair. It can be
      *         closed at any time during the request/response, but must be closed by

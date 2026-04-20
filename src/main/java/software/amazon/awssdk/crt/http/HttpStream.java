@@ -18,9 +18,11 @@ public class HttpStream extends HttpStreamBase {
 
     /**
      * Tracks whether this stream was created with a body stream on the request.
-     * Used to guard against calling writeData() on a stream that already has a body
-     * stream — HTTP/1.1 requires exactly one body framing mechanism per message
-     * (RFC 9112, Section 6), so a body stream and manual writes cannot coexist.
+     * Used to guard against calling {@link #writeData} on a stream that already
+     * has a body stream — HTTP/1.1 requires exactly one body framing mechanism
+     * per message, so a body stream and manual writes cannot coexist. See
+     * {@link HttpClientConnection#makeRequest(HttpRequest, HttpStreamResponseHandler, boolean)}
+     * for details.
      */
     private boolean hasBodyStream = false;
 
@@ -42,28 +44,10 @@ public class HttpStream extends HttpStreamBase {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * <b>HTTP/1.1 restriction:</b> An HTTP/1.1 request message body is framed by
-     * exactly one mechanism: either a {@code Content-Length} header declaring the
-     * body size upfront, or {@code Transfer-Encoding: chunked} for streaming
-     * (RFC 9112, Section 6). A sender MUST NOT combine both framing mechanisms
-     * (RFC 9112, Section 6.2: "A sender MUST NOT send a Content-Length header field
-     * in any message that contains a Transfer-Encoding header field").
-     * <p>
-     * Because the framing is committed at the start of the message, a body stream
-     * and manual {@code writeData()} calls cannot coexist on the same HTTP/1.1
-     * stream — doing so would either violate the declared {@code Content-Length} or
-     * require switching transfer-encoding mid-message, which the protocol does not
-     * permit. If the request was created with an {@link HttpRequestBodyStream},
-     * calling this method will throw {@link IllegalStateException}.
-     * <p>
-     * HTTP/2 does not have this restriction. HTTP/2 uses its own DATA frame
-     * framing (RFC 9113, Section 8.1), where the body stream and manual writes
-     * both append DATA frames to the same outgoing queue.
-     * <p>
-     * <b>Migration from writeChunk:</b> This method supersedes the deprecated
-     * {@link #writeChunk} methods. Use {@code writeData} for all manual body data
-     * writes on both HTTP/1.1 and HTTP/2 streams.
+     *
+     * <p>This method supersedes the deprecated {@link #writeChunk} methods.
+     * Calls the base {@code writeData} method after verifying that the stream
+     * was not created with a body stream.
      */
     @Override
     public void writeData(final byte[] data, boolean endStream,

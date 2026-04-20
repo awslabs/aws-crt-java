@@ -49,8 +49,22 @@ public class HttpClientConnection extends CrtResource {
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
-     * @param useManualDataWrites When true, request body data will be provided via
-     *        {@link HttpStreamBase#writeData} instead of from the request's body stream.
+     * @param useManualDataWrites When {@code true}, request body data is provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's
+     *        {@link HttpRequestBodyStream}.
+     *
+     *        <p>By design, CRT does not support setting both a body stream and enabling
+     *        manual writes for HTTP/1.1. Body streams are intended for requests whose
+     *        payload is available in full at the time of sending. If the stream does not
+     *        signal end-of-stream promptly, the event loop will busy-wait (hot-loop) for
+     *        more data, wasting CPU time. Manual writes avoid this by letting the caller
+     *        control when data is sent; the event loop only processes the request when
+     *        {@link HttpStreamBase#writeData} is called and is free to service other
+     *        requests in the meantime.
+     *
+     *        <p>If the request was created with an {@link HttpRequestBodyStream} and this
+     *        parameter is {@code true}, the first call to {@link HttpStreamBase#writeData}
+     *        will throw an {@link IllegalStateException}.
      * @throws CrtRuntimeException if stream creation fails
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.

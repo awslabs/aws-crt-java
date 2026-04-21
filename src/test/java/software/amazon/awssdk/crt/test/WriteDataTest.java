@@ -284,7 +284,7 @@ public class WriteDataTest extends HttpRequestResponseFixture {
      * Tests that makeRequest throws IllegalStateException when called with both
      * a body stream and useManualDataWrites=true on an HTTP/1.1 connection.
      */
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testHttp1MakeRequestWithBodyStreamAndManualWrites() throws Exception {
         skipIfAndroid();
         skipIfLocalhostUnavailable();
@@ -304,46 +304,26 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         // Create request WITH body stream AND useManualDataWrites=true
         HttpRequest request = new HttpRequest("PUT", "/echo", headers, bodyStream);
 
-        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
-        TestHttpResponse response = new TestHttpResponse();
-
-        CompletableFuture<Void> shutdownComplete;
         try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, HttpVersion.HTTP_1_1)) {
-            shutdownComplete = connPool.getShutdownCompleteFuture();
             try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
 
                 HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
                     @Override
                     public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        response.statusCode = responseStatusCode;
-                        response.headers.addAll(Arrays.asList(nextHeaders));
-                    }
-
+                            HttpHeader[] nextHeaders) {}
                     @Override
-                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
-                        response.bodyBuffer.put(bodyBytesIn);
-                        return bodyBytesIn.length;
-                    }
-
+                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) { return bodyBytesIn.length; }
                     @Override
-                    public void onResponseComplete(HttpStream stream, int errorCode) {
-                        response.onCompleteErrorCode = errorCode;
-                        reqCompleted.complete(null);
-                    }
+                    public void onResponseComplete(HttpStream stream, int errorCode) {}
                 };
 
-                HttpStream stream = conn.makeRequest(request, streamHandler, true);
-                stream.activate();
-
-                stream.writeData("hello".getBytes(StandardCharsets.UTF_8), true, null);
-
-                reqCompleted.get(60, TimeUnit.SECONDS);
-                stream.close();
+                try {
+                    conn.makeRequest(request, streamHandler, true);
+                    Assert.fail("Expected IllegalStateException from makeRequest");
+                } catch (IllegalStateException e) {
+                    Assert.assertTrue(e.getMessage().contains("manual data writes"));
+                }
             }
         }
-
-        shutdownComplete.get(60, TimeUnit.SECONDS);
-        CrtResource.waitForNoResources();
     }
 }

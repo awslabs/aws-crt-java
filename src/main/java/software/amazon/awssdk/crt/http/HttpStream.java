@@ -16,50 +16,12 @@ import java.util.concurrent.CompletableFuture;
  */
 public class HttpStream extends HttpStreamBase {
 
-    /**
-     * Tracks whether this stream was created with a body stream on the request.
-     * Used to guard against calling {@link #writeData} on a stream that already
-     * has a body stream — HTTP/1.1 requires exactly one body framing mechanism
-     * per message, so a body stream and manual writes cannot coexist. See
-     * {@link HttpClientConnection#makeRequest(HttpRequest, HttpStreamResponseHandler, boolean)}
-     * for details.
-     */
-    private boolean hasBodyStream = false;
-
     /*
      * Native code will call this constructor during
      * HttpClientConnection.makeRequest()
      */
     protected HttpStream(long ptr) {
         super(ptr);
-    }
-
-    /**
-     * Package-private. Called by HttpClientConnection.makeRequest() to record
-     * whether the originating request had a body stream attached.
-     */
-    void setHasBodyStream(boolean hasBodyStream) {
-        this.hasBodyStream = hasBodyStream;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>This method supersedes the deprecated {@link #writeChunk} methods.
-     * Calls the base {@code writeData} method after verifying that the stream
-     * was not created with a body stream.
-     */
-    @Override
-    public void writeData(final byte[] data, boolean endStream,
-            final HttpStreamWriteDataCompletionCallback completionCallback) {
-        if (hasBodyStream) {
-            throw new IllegalStateException(
-                "Cannot call writeData() on an HTTP/1.1 stream that was created with a body stream. "
-                + "HTTP/1.1 requires exactly one body framing mechanism per message (RFC 9112, Section 6). "
-                + "A body stream and manual writeData() calls cannot coexist. "
-                + "Create the stream with useManualDataWrites=true and no body stream to use writeData().");
-        }
-        super.writeData(data, endStream, completionCallback);
     }
 
     /**

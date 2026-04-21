@@ -214,8 +214,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      *        <p>When both a body stream and manual writes are enabled, the body stream is
      *        sent as the first DATA frame and the connection then waits asynchronously for
      *        subsequent {@code writeData()} calls. However, if the body stream has not
-     *        signalled end-of-stream, the event loop will block synchronously until it
-     *        completes.
+     *        signalled end-of-stream, the event loop will keep getting scheduled for
+     *        requesting more data until it completes.
      * @throws CrtRuntimeException if stream creation fails
      * @return The Http2Stream that represents this Request/Response Pair. It can be
      *         closed at any time during the request/response, but must be closed by

@@ -63,19 +63,24 @@ public class HttpClientConnection extends CrtResource {
      *        requests in the meantime.
      *
      *        <p>If the request was created with an {@link HttpRequestBodyStream} and this
-     *        parameter is {@code true}, the first call to {@link HttpStreamBase#writeData}
-     *        will throw an {@link IllegalStateException}.
+     *        parameter is {@code true}, an {@link IllegalStateException} is thrown
+     *        immediately.
      * @throws CrtRuntimeException if stream creation fails
      * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
     public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler,
-            boolean useManualDataWrites) throws CrtRuntimeException {
+            boolean useManualDataWrites) throws CrtRuntimeException, IllegalStateException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
         if (getVersion() == HttpVersion.HTTP_2) {
             throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
+        }
+        if (useManualDataWrites && request.getBodyStream() != null) {
+            throw new IllegalStateException(
+                "Cannot use manual data writes with a body stream on an HTTP/1.1 request. "
+                + "Either remove the body stream or set useManualDataWrites to false.");
         }
         HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),

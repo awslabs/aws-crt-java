@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.*;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -274,6 +275,73 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         String body = response.getBody();
         Assert.assertTrue("Response should contain empty data: " + body,
                 body.contains("\"data\": \"\""));
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Tests that makeRequest throws IllegalStateException when called with both
+     * a body stream and useManualDataWrites=true on an HTTP/1.1 connection.
+     */
+    @Test(expected = IllegalStateException.class)
+    public void testHttp1MakeRequestWithBodyStreamAndManualWrites() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(HOST + ":" + H1_TLS_PORT);
+
+        HttpRequestBodyStream bodyStream = new HttpRequestBodyStream() {
+            @Override
+            public boolean sendRequestBody(ByteBuffer bodyBytesOut) {
+                return true;
+            }
+        };
+
+        HttpHeader[] headers = new HttpHeader[]{
+            new HttpHeader("Host", uri.getHost()),
+        };
+        // Create request WITH body stream AND useManualDataWrites=true
+        HttpRequest request = new HttpRequest("PUT", "/echo", headers, bodyStream);
+
+        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        TestHttpResponse response = new TestHttpResponse();
+
+        CompletableFuture<Void> shutdownComplete;
+        try (HttpClientConnectionManager connPool = createConnectionPoolManager(uri, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = connPool.getShutdownCompleteFuture();
+            try (HttpClientConnection conn = connPool.acquireConnection().get(60, TimeUnit.SECONDS)) {
+
+                HttpStreamResponseHandler streamHandler = new HttpStreamResponseHandler() {
+                    @Override
+                    public void onResponseHeaders(HttpStream stream, int responseStatusCode, int blockType,
+                            HttpHeader[] nextHeaders) {
+                        response.statusCode = responseStatusCode;
+                        response.headers.addAll(Arrays.asList(nextHeaders));
+                    }
+
+                    @Override
+                    public int onResponseBody(HttpStream stream, byte[] bodyBytesIn) {
+                        response.bodyBuffer.put(bodyBytesIn);
+                        return bodyBytesIn.length;
+                    }
+
+                    @Override
+                    public void onResponseComplete(HttpStream stream, int errorCode) {
+                        response.onCompleteErrorCode = errorCode;
+                        reqCompleted.complete(null);
+                    }
+                };
+
+                HttpStream stream = conn.makeRequest(request, streamHandler, true);
+                stream.activate();
+
+                stream.writeData("hello".getBytes(StandardCharsets.UTF_8), true, null);
+
+                reqCompleted.get(60, TimeUnit.SECONDS);
+                stream.close();
+            }
+        }
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.waitForNoResources();

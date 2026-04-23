@@ -762,6 +762,17 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.http.HttpStreamBase$HttpStreamWriteDataCompletionCallback",
+    "methods": [
+      {
+        "name": "onWriteDataCompleted",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.http.HttpStreamMetrics",
     "methods": [
       {

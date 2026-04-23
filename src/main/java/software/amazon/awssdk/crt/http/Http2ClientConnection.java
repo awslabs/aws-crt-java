@@ -187,12 +187,49 @@ public class Http2ClientConnection extends HttpClientConnection {
     @Override
     public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler)
             throws CrtRuntimeException {
+        return makeRequest(request, streamHandler, false);
+    }
+
+    /**
+     * Schedules an HttpRequest on the Native EventLoop for this
+     * HttpClientConnection. The HTTP/1.1 request will be transformed to HTTP/2
+     * request under the hood.
+     *
+     * @param request       The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native
+     *                      EventLoop
+     * @param useManualDataWrites When {@code true}, request body data is provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's
+     *        {@link HttpRequestBodyStream}.
+     *
+     *        <p>By design, CRT supports setting both a body stream and enabling manual
+     *        writes for HTTP/2, but this is not recommended. Body streams are intended
+     *        for requests whose payload is available in full at the time of sending. If
+     *        the stream does not signal end-of-stream promptly, the event loop will
+     *        busy-wait (hot-loop) for more data, wasting CPU time. Manual writes avoid
+     *        this by letting the caller control when data is sent; the event loop only
+     *        processes the request when {@link HttpStreamBase#writeData} is called and is
+     *        free to service other requests in the meantime.
+     *
+     *        <p>When both a body stream and manual writes are enabled, the body stream is
+     *        sent as the first DATA frame and the connection then waits asynchronously for
+     *        subsequent {@code writeData()} calls. However, if the body stream has not
+     *        signalled end-of-stream, the event loop will keep getting scheduled for
+     *        requesting more data until it completes.
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The Http2Stream that represents this Request/Response Pair. It can be
+     *         closed at any time during the request/response, but must be closed by
+     *         the user thread making this request when it's done.
+     */
+    public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler,
+            boolean useManualDataWrites) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");
         }
 
         Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
-                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                useManualDataWrites);
         return stream;
     }
 
@@ -204,7 +241,8 @@ public class Http2ClientConnection extends HttpClientConnection {
      ******************************************************************************/
 
     private static native Http2Stream http2ClientConnectionMakeRequest(long connectionBinding, byte[] marshalledRequest,
-            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler)
+            HttpRequestBodyStream bodyStream, HttpStreamResponseHandlerNativeAdapter responseHandler,
+            boolean useManualDataWrites)
             throws CrtRuntimeException;
 
     private static native void http2ClientConnectionUpdateSettings(long connectionBinding,

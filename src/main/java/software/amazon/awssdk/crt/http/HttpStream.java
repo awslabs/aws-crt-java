@@ -40,7 +40,10 @@ public class HttpStream extends HttpStreamBase {
      *                                request stream.
      * @param chunkCompletionCallback Invoked upon the data being flushed to the
      *                                wire or an error occurring.
+     * @deprecated Use {@link HttpStreamBase#writeData(byte[], boolean, HttpStreamWriteDataCompletionCallback)} instead.
+     *             writeData() works for both HTTP/1.1 and HTTP/2, whereas writeChunk() is HTTP/1.1 only.
      */
+    @Deprecated
     public void writeChunk(final byte[] chunkData, boolean isFinalChunk,
             final HttpStreamWriteChunkCompletionCallback chunkCompletionCallback) {
         if (isNull()) {
@@ -71,7 +74,10 @@ public class HttpStream extends HttpStreamBase {
      * @param isFinalChunk if set to true, this will terminate the request stream.
      * @return completable future which will complete upon the data being flushed to
      *         the wire or an error occurring.
+     * @deprecated Use {@link HttpStreamBase#writeData(byte[], boolean)} instead.
+     *             writeData() works for both HTTP/1.1 and HTTP/2, whereas writeChunk() is HTTP/1.1 only.
      */
+    @Deprecated
     public CompletableFuture<Void> writeChunk(final byte[] chunkData, boolean isFinalChunk) {
         CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 

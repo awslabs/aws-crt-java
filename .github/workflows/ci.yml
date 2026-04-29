@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUILDER_VERSION: v0.9.84
+  BUILDER_VERSION: v0.9.92
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-java
@@ -67,6 +67,7 @@ jobs:
           - clang-11
           - clang-15
           - clang-17
+          - clang-latest
           - gcc-4.8
           - gcc-5
           - gcc-6

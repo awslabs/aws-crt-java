@@ -29,7 +29,7 @@ if (BUILD_DEPS)
     set(IN_SOURCE_BUILD ON)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
-    if (UNIX AND NOT APPLE)
+    if (UNIX)
         include(AwsPrebuildDependency)
 
         set(AWSLC_CMAKE_ARGUMENTS

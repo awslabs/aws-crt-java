@@ -3426,6 +3426,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
 
+        System.out.println("===== ConnDC_Cred_UC2 is running");
         TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();

@@ -72,6 +72,7 @@ if (BUILD_DEPS)
         )
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
+        set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON CACHE BOOL "")
         add_subdirectory(crt/s2n)
     endif()
     add_subdirectory(crt/aws-c-sdkutils)

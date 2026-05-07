@@ -3425,8 +3425,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(
             AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
+        Assume.assumeTrue("Skipped: AWS_CRT_USE_NON_FIPS_TLS_13 is set",
+            System.getenv("AWS_CRT_USE_NON_FIPS_TLS_13") == null);
 
-        System.out.println("===== ConnDC_Cred_UC2 is running");
         TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
         CrtResource.waitForNoResources();

@@ -24,6 +24,9 @@ struct aws_http_request_body_stream_impl {
     jobject http_request_body_stream;
     bool body_done;
     bool is_valid;
+    /* When true, call sendRequestBody(long address, long length) -> int
+     * instead of sendRequestBody(ByteBuffer) -> boolean. */
+    bool use_ffm;
 };
 
 static int s_aws_input_stream_seek(struct aws_input_stream *stream, int64_t offset, enum aws_stream_seek_basis basis) {
@@ -94,21 +97,49 @@ static int s_aws_input_stream_read(struct aws_input_stream *stream, struct aws_b
     }
 
     size_t out_remaining = dest->capacity - dest->len;
-
-    jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
-
-    impl->body_done = (*env)->CallBooleanMethod(
-        env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
-
     int result = AWS_OP_SUCCESS;
-    if (aws_jni_check_and_clear_exception(env)) {
-        result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    } else {
-        size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
-        dest->len += amt_written;
-    }
 
-    (*env)->DeleteLocalRef(env, direct_buffer);
+    if (impl->use_ffm) {
+        /*
+         * FFM path: pass the raw native pointer and capacity as jlong primitives.
+         * Java writes directly into the native buffer and returns the number of
+         * bytes written as an int. Returning 0 signals end-of-stream.
+         * No DirectByteBuffer wrapper object is allocated.
+         */
+        jlong ptr = (jlong)(uintptr_t)(dest->buffer + dest->len);
+        jlong len = (jlong)out_remaining;
+
+        jint bytes_written = (*env)->CallIntMethod(
+            env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body_ffm, ptr, len);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        } else {
+            dest->len += (size_t)bytes_written;
+            /* 0 bytes written signals end-of-stream */
+            if (bytes_written == 0) {
+                impl->body_done = true;
+            }
+        }
+    } else {
+        /*
+         * JNI path (unchanged): wrap the native buffer as a DirectByteBuffer,
+         * call sendRequestBody(ByteBuffer), then read back position().
+         */
+        jobject direct_buffer = aws_jni_direct_byte_buffer_from_raw_ptr(env, dest->buffer + dest->len, out_remaining);
+
+        impl->body_done = (*env)->CallBooleanMethod(
+            env, impl->http_request_body_stream, http_request_body_stream_properties.send_outgoing_body, direct_buffer);
+
+        if (aws_jni_check_and_clear_exception(env)) {
+            result = aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+        } else {
+            size_t amt_written = aws_jni_byte_buffer_get_position(env, direct_buffer);
+            dest->len += amt_written;
+        }
+
+        (*env)->DeleteLocalRef(env, direct_buffer);
+    }
 
     aws_jni_release_thread_env(impl->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
@@ -188,7 +219,8 @@ static struct aws_input_stream_vtable s_aws_input_stream_vtable = {
 struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
     struct aws_allocator *allocator,
     JNIEnv *env,
-    jobject http_request_body_stream) {
+    jobject http_request_body_stream,
+    bool use_ffm) {
     struct aws_http_request_body_stream_impl *impl =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_http_request_body_stream_impl));
 
@@ -200,6 +232,8 @@ struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream
     AWS_FATAL_ASSERT(jvmresult == 0);
 
     impl->is_valid = true;
+    impl->use_ffm = use_ffm;
+
     if (http_request_body_stream != NULL) {
         impl->http_request_body_stream = (*env)->NewGlobalRef(env, http_request_body_stream);
         if (impl->http_request_body_stream == NULL) {
@@ -370,7 +404,8 @@ int aws_apply_java_http_request_changes_to_native_request(
     JNIEnv *env,
     jbyteArray marshalled_request,
     jobject jni_body_stream,
-    struct aws_http_message *message) {
+    struct aws_http_message *message,
+    bool use_ffm) {
 
     /* come back to this when we decide we need to. */
     (void)jni_body_stream;
@@ -400,8 +435,10 @@ int aws_apply_java_http_request_changes_to_native_request(
     }
 
     if (jni_body_stream) {
-        struct aws_input_stream *body_stream =
-            aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
+        /* use_ffm=false here: this path is used by non-S3 HTTP requests that
+         * don't go through the FFM meta-request path. */
+        struct aws_input_stream *body_stream = aws_input_stream_new_from_java_http_request_body_stream(
+            aws_jni_get_allocator(), env, jni_body_stream, false);
 
         aws_http_message_set_body_stream(message, body_stream);
         /* request controls the lifetime of body stream fully */
@@ -440,8 +477,9 @@ struct aws_http_message *aws_http_request_new_from_java_http_request(
     }
 
     if (jni_body_stream != NULL) {
-        struct aws_input_stream *body_stream =
-            aws_input_stream_new_from_java_http_request_body_stream(aws_jni_get_allocator(), env, jni_body_stream);
+        /* use_ffm=false: this function is used by non-S3 HTTP requests */
+        struct aws_input_stream *body_stream = aws_input_stream_new_from_java_http_request_body_stream(
+            aws_jni_get_allocator(), env, jni_body_stream, false);
         if (body_stream == NULL) {
             exception_message = "aws_fill_out_request: Error building body stream";
             goto on_error;

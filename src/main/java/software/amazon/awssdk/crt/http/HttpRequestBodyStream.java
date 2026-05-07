@@ -5,6 +5,8 @@
 
 package software.amazon.awssdk.crt.http;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 
 /**
@@ -27,6 +29,44 @@ public interface HttpRequestBodyStream {
     default boolean sendRequestBody(ByteBuffer bodyBytesOut) {
         /* Optional Callback, return empty request body by default unless user wants to return one. */
         return true;
+    }
+
+    /**
+     * FFM variant of {@link #sendRequestBody(ByteBuffer)}.
+     * <p>
+     * Called from native when the meta request was created with
+     * {@link software.amazon.awssdk.crt.s3.S3MetaRequestOptions#withUseFFM(boolean)
+     * useFFM=true}. The native layer passes the destination buffer as a raw
+     * pointer ({@code address}) and its capacity ({@code length}) as {@code long}
+     * primitives — no {@code DirectByteBuffer} wrapper object is allocated.
+     * <p>
+     * Implementations should write up to {@code length} bytes of request body
+     * data into the native buffer starting at {@code address} and return the
+     * number of bytes actually written. Returning {@code 0} signals that the
+     * body is complete (end-of-stream).
+     * <p>
+     * The default implementation bridges to the {@link #sendRequestBody(ByteBuffer)}
+     * overload via a {@link MemorySegment} → {@link ByteBuffer} view, so existing
+     * implementations that only override the {@code ByteBuffer} version continue
+     * to work correctly (at the cost of the {@code ByteBuffer} wrapper allocation
+     * that FFM mode is trying to avoid).
+     *
+     * @param address Raw native pointer to the start of the destination buffer.
+     * @param length  Capacity of the destination buffer in bytes.
+     * @return Number of bytes written into the buffer, or {@code 0} when the
+     *         body is fully consumed (end-of-stream).
+     */
+    default int sendRequestBody(long address, long length) {
+        // Default: wrap the native buffer as a ByteBuffer and delegate to the
+        // existing overload so that implementations that only override the
+        // ByteBuffer version still work.
+        MemorySegment seg = MemorySegment.ofAddress(address)
+                .reinterpret(length, Arena.ofAuto(), null);
+        ByteBuffer buf = seg.asByteBuffer();
+        boolean done = sendRequestBody(buf);
+        // Return how many bytes were written (ByteBuffer.position() tracks this).
+        // If done==true and nothing was written, return 0 to signal end-of-stream.
+        return buf.position();
     }
 
     /**

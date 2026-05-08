@@ -435,10 +435,9 @@ int aws_apply_java_http_request_changes_to_native_request(
     }
 
     if (jni_body_stream) {
-        /* use_ffm=false here: this path is used by non-S3 HTTP requests that
-         * don't go through the FFM meta-request path. */
+        /* Pass use_ffm through so the stream uses the correct callback path. */
         struct aws_input_stream *body_stream = aws_input_stream_new_from_java_http_request_body_stream(
-            aws_jni_get_allocator(), env, jni_body_stream, false);
+            aws_jni_get_allocator(), env, jni_body_stream, use_ffm);
 
         aws_http_message_set_body_stream(message, body_stream);
         /* request controls the lifetime of body stream fully */

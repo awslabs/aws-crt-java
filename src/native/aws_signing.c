@@ -494,7 +494,7 @@ void JNICALL Java_software_amazon_awssdk_crt_auth_signing_AwsSigner_awsSignerSig
         AWS_FATAL_ASSERT(callback_data->java_original_chunk_body != NULL);
 
         callback_data->chunk_body_stream = aws_input_stream_new_from_java_http_request_body_stream(
-            aws_jni_get_allocator(), env, java_chunk_body_stream);
+            aws_jni_get_allocator(), env, java_chunk_body_stream, false /* use_ffm: signing path uses JNI */);
         if (callback_data->chunk_body_stream == NULL) {
             aws_jni_throw_runtime_exception(env, "Error building chunk body stream");
             goto on_error;

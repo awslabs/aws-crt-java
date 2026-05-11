@@ -623,7 +623,7 @@ static int s_on_s3_meta_request_body_callback(
         return AWS_OP_ERR;
     }
 
-    jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+    jobject jni_payload = aws_jni_direct_byte_buffer_from_raw_ptr(env, body->ptr, body->len);
     if (jni_payload == NULL) {
         /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
         aws_jni_check_and_clear_exception(env);

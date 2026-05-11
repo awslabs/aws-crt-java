@@ -151,17 +151,48 @@ public class Http2StreamManager extends CrtResource {
     public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
             HttpStreamBaseResponseHandler streamHandler) {
 
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
+        return this.acquireStream((HttpRequestBase) request, streamHandler, false);
+    }
+
+    /**
+     * Request a Http2Stream from StreamManager.
+     *
+     * @param request             The Request to make to the Server.
+     * @param streamHandler       The Stream Handler to be called from the Native
+     *                            EventLoop
+     * @param useManualDataWrites When {@code true}, request body data is provided via
+     *                            {@link HttpStreamBase#writeData} instead of from the
+     *                            request's {@link HttpRequestBodyStream}. See
+     *                            {@link Http2ClientConnection#makeRequest(HttpRequestBase, HttpStreamBaseResponseHandler, boolean)}
+     *                            for caveats on combining a body stream with manual writes.
+     * @return A future for a Http2Stream that will be completed when the stream is
+     *         acquired.
+     */
+    public CompletableFuture<Http2Stream> acquireStream(Http2Request request,
+            HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
+
+        return this.acquireStream((HttpRequestBase) request, streamHandler, useManualDataWrites);
     }
 
     public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
             HttpStreamBaseResponseHandler streamHandler) {
 
-        return this.acquireStream((HttpRequestBase) request, streamHandler);
+        return this.acquireStream((HttpRequestBase) request, streamHandler, false);
+    }
+
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequest request,
+            HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
+
+        return this.acquireStream((HttpRequestBase) request, streamHandler, useManualDataWrites);
     }
 
     public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
         HttpStreamBaseResponseHandler streamHandler) {
+        return this.acquireStream(request, streamHandler, false);
+    }
+
+    public CompletableFuture<Http2Stream> acquireStream(HttpRequestBase request,
+        HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
         if (isNull()) {
@@ -174,7 +205,8 @@ public class Http2StreamManager extends CrtResource {
                     request.marshalForJni(),
                     request.getBodyStream(),
                     new HttpStreamResponseHandlerNativeAdapter(streamHandler),
-                    acquireStreamCompleted);
+                    acquireStreamCompleted,
+                    useManualDataWrites);
         } catch (CrtRuntimeException ex) {
             completionFuture.completeExceptionally(ex);
         }
@@ -278,7 +310,8 @@ public class Http2StreamManager extends CrtResource {
             byte[] marshalledRequest,
             HttpRequestBodyStream bodyStream,
             HttpStreamResponseHandlerNativeAdapter responseHandler,
-            AsyncCallback completedCallback) throws CrtRuntimeException;
+            AsyncCallback completedCallback,
+            boolean useManualDataWrites) throws CrtRuntimeException;
 
     private static native HttpManagerMetrics http2StreamManagerFetchMetrics(long stream_manager) throws CrtRuntimeException;
 }

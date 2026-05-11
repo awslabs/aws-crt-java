@@ -365,7 +365,8 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
     jbyteArray marshalled_request,
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler,
-    jobject java_async_callback) {
+    jobject java_async_callback,
+    jboolean jni_use_manual_data_writes) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -411,6 +412,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_h
         .on_complete = aws_java_http_stream_on_stream_complete_fn,
         .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
         .user_data = stream_binding,
+        .use_manual_data_writes = jni_use_manual_data_writes,
     };
 
     struct aws_allocator *allocator = aws_jni_get_allocator();

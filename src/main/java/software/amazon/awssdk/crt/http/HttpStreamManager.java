@@ -72,7 +72,7 @@ public class HttpStreamManager implements AutoCloseable {
     public CompletableFuture<HttpStreamBase> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         if (this.h2StreamManager != null) {
-            return this.h2StreamManager.acquireStream(request, streamHandler)
+            return this.h2StreamManager.acquireStream(request, streamHandler, useManualDataWrites)
                     .thenApply(stream -> (HttpStreamBase) stream);
         } else {
             return this.h1StreamManager.acquireStream(request, streamHandler, useManualDataWrites)

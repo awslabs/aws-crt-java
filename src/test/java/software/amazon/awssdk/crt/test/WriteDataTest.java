@@ -10,6 +10,12 @@ import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.*;
+import software.amazon.awssdk.crt.io.ClientBootstrap;
+import software.amazon.awssdk.crt.io.EventLoopGroup;
+import software.amazon.awssdk.crt.io.HostResolver;
+import software.amazon.awssdk.crt.io.SocketOptions;
+import software.amazon.awssdk.crt.io.TlsContext;
+import software.amazon.awssdk.crt.io.TlsContextOptions;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -22,6 +28,37 @@ public class WriteDataTest extends HttpRequestResponseFixture {
     private final static String HOST = "https://localhost";
     private final static int H1_TLS_PORT = 8082;
     private final static int H2_TLS_PORT = 3443;
+
+    /**
+     * Build an {@link HttpStreamManager} suitable for the localhost mock server
+     * (self-signed cert -> verify peer disabled). Mirrors the setup used by
+     * the stream-manager and connection-pool tests for localhost.
+     */
+    private HttpStreamManager createLocalhostStreamManager(URI uri, HttpVersion expectedVersion) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContextOptions tlsOpts = (expectedVersion == HttpVersion.HTTP_2
+                        ? TlsContextOptions.createDefaultClient().withAlpnList("h2")
+                        : TlsContextOptions.createDefaultClient().withAlpnList("http/1.1"))
+                        .withVerifyPeer(false);
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
+            HttpClientConnectionManagerOptions h1Options = new HttpClientConnectionManagerOptions()
+                    .withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(1);
+            Http2StreamManagerOptions h2Options = new Http2StreamManagerOptions()
+                    .withConnectionManagerOptions(h1Options);
+            HttpStreamManagerOptions options = new HttpStreamManagerOptions()
+                    .withHTTP1ConnectionManagerOptions(h1Options)
+                    .withHTTP2StreamManagerOptions(h2Options)
+                    .withExpectedProtocol(expectedVersion);
+            return HttpStreamManager.create(options);
+        }
+    }
 
     @Test
     public void testHttp2WriteData() throws Exception {
@@ -325,5 +362,136 @@ public class WriteDataTest extends HttpRequestResponseFixture {
                 }
             }
         }
+    }
+
+    /**
+     * Smoke test: stream acquired from {@link HttpStreamManager} for HTTP/2
+     * correctly threads {@code useManualDataWrites=true} through to the stream
+     * and allows a simple "hello world" body to be sent via writeData().
+     */
+    @Test
+    public void testHttp2StreamManagerWriteData() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(HOST + ":" + H2_TLS_PORT);
+        byte[] payload = "hello world".getBytes(StandardCharsets.UTF_8);
+
+        HttpHeader[] headers = new HttpHeader[] {
+            new HttpHeader(":method", "PUT"),
+            new HttpHeader(":path", "/echo"),
+            new HttpHeader(":scheme", "https"),
+            new HttpHeader(":authority", uri.getHost()),
+            new HttpHeader("content-length", Integer.toString(payload.length)),
+        };
+        Http2Request request = new Http2Request(headers, null);
+
+        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        TestHttpResponse response = new TestHttpResponse();
+
+        CompletableFuture<Void> shutdownComplete;
+        try (HttpStreamManager streamManager = createLocalhostStreamManager(uri, HttpVersion.HTTP_2)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    response.statusCode = responseStatusCode;
+                    response.headers.addAll(Arrays.asList(nextHeaders));
+                }
+
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                    response.bodyBuffer.put(bodyBytesIn);
+                    return bodyBytesIn.length;
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    response.onCompleteErrorCode = errorCode;
+                    reqCompleted.complete(null);
+                }
+            };
+
+            try (HttpStreamBase stream = streamManager.acquireStream(request, streamHandler, true)
+                    .get(60, TimeUnit.SECONDS)) {
+                stream.writeData(payload, true).get(5, TimeUnit.SECONDS);
+                reqCompleted.get(60, TimeUnit.SECONDS);
+            }
+        }
+
+        Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
+        Assert.assertEquals(200, response.statusCode);
+        String body = response.getBody();
+        Assert.assertTrue("Response should contain sent body: " + body,
+                body.contains("\"body\": \"hello world\""));
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Smoke test: stream acquired from {@link HttpStreamManager} for HTTP/1.1
+     * correctly threads {@code useManualDataWrites=true} through to the stream
+     * and allows a simple "hello world" body to be sent via writeData().
+     */
+    @Test
+    public void testHttp1StreamManagerWriteData() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(HOST + ":" + H1_TLS_PORT);
+        byte[] payload = "hello world".getBytes(StandardCharsets.UTF_8);
+
+        HttpHeader[] headers = new HttpHeader[] {
+            new HttpHeader("Host", uri.getHost()),
+            new HttpHeader("Content-Length", Integer.toString(payload.length)),
+        };
+        HttpRequest request = new HttpRequest("PUT", "/echo", headers, null);
+
+        CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
+        TestHttpResponse response = new TestHttpResponse();
+
+        CompletableFuture<Void> shutdownComplete;
+        try (HttpStreamManager streamManager = createLocalhostStreamManager(uri, HttpVersion.HTTP_1_1)) {
+            shutdownComplete = streamManager.getShutdownCompleteFuture();
+
+            HttpStreamBaseResponseHandler streamHandler = new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    response.statusCode = responseStatusCode;
+                    response.headers.addAll(Arrays.asList(nextHeaders));
+                }
+
+                @Override
+                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                    response.bodyBuffer.put(bodyBytesIn);
+                    return bodyBytesIn.length;
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    response.onCompleteErrorCode = errorCode;
+                    reqCompleted.complete(null);
+                }
+            };
+
+            try (HttpStreamBase stream = streamManager.acquireStream(request, streamHandler, true)
+                    .get(60, TimeUnit.SECONDS)) {
+                stream.writeData(payload, true).get(5, TimeUnit.SECONDS);
+                reqCompleted.get(60, TimeUnit.SECONDS);
+            }
+        }
+
+        Assert.assertEquals(CRT.AWS_CRT_SUCCESS, response.onCompleteErrorCode);
+        Assert.assertEquals(200, response.statusCode);
+        String body = response.getBody();
+        Assert.assertTrue("Response should contain sent data: " + body,
+                body.contains("\"data\": \"hello world\""));
+
+        shutdownComplete.get(60, TimeUnit.SECONDS);
+        CrtResource.waitForNoResources();
     }
 }

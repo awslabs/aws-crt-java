@@ -55,7 +55,27 @@ public class HttpStreamManager implements AutoCloseable {
             return this.h2StreamManager.acquireStream(request, streamHandler)
                     .thenApply(stream -> (HttpStreamBase) stream);
         } else {
-            return this.h1StreamManager.acquireStream(request, streamHandler)
+            return this.h1StreamManager.acquireStream(request, streamHandler, false)
+                    .thenApply(stream -> (HttpStreamBase) stream);
+        }
+    }
+
+    /**
+     * Request an HttpStream from StreamManager.
+     *
+     * @param request         HttpRequestBase. The Request to make to the Server.
+     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
+     * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
+     * @return A future for a HttpStreamBase that will be completed when the stream is
+     *         acquired.
+     */
+    public CompletableFuture<HttpStreamBase> acquireStream(HttpRequestBase request,
+            HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
+        if (this.h2StreamManager != null) {
+            return this.h2StreamManager.acquireStream(request, streamHandler)
+                    .thenApply(stream -> (HttpStreamBase) stream);
+        } else {
+            return this.h1StreamManager.acquireStream(request, streamHandler, useManualDataWrites)
                     .thenApply(stream -> (HttpStreamBase) stream);
         }
     }

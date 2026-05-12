@@ -20,6 +20,7 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -66,14 +67,15 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfLocalhostUnavailable();
 
         URI uri = new URI(HOST + ":" + H2_TLS_PORT);
-        byte[] payload = "hello from writeData".getBytes(StandardCharsets.UTF_8);
+        String expectedBody = "hello from writeData";
+        int expectedLen = expectedBody.getBytes(StandardCharsets.UTF_8).length;
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader(":method", "PUT"),
             new HttpHeader(":path", "/echo"),
             new HttpHeader(":scheme", "https"),
             new HttpHeader(":authority", uri.getHost()),
-            new HttpHeader("content-length", Integer.toString(payload.length)),
+            new HttpHeader("content-length", Integer.toString(expectedLen)),
         };
         Http2Request request = new Http2Request(headers, null);
 
@@ -109,7 +111,33 @@ public class WriteDataTest extends HttpRequestResponseFixture {
 
                 try (Http2Stream stream = conn.makeRequest(request, streamHandler, true)) {
                     stream.activate();
-                    stream.writeData(payload, true).get(5, TimeUnit.SECONDS);
+
+                    /*
+                     * Issue the write from a helper that:
+                     *   1) allocates the byte[] locally, so once the helper returns the
+                     *      caller's stack has no reference to it,
+                     *   2) captures only a WeakReference to the array in its inner callback
+                     *      (not the byte[] itself) so the lambda doesn't accidentally become
+                     *      a Java-side GC root,
+                     *   3) performs the "is the native GlobalRef still holding the array?"
+                     *      assertion INSIDE the write-completion callback -- which is
+                     *      guaranteed by the native code to run BEFORE native cleanup
+                     *      (Release + DeleteGlobalRef) in s_write_data_complete.
+                     *
+                     * If NewGlobalRef on callback_data were missing or dropped early, the
+                     * array would be unreachable from Java-land at the moment the callback
+                     * fires, System.gc() inside the callback would clear the WeakReference,
+                     * and the helper would complete the returned future exceptionally.
+                     *
+                     * Caveat: GetByteArrayElements may pin the array, and on some JVMs a
+                     * pin can also keep the object GC-reachable. A pass here therefore
+                     * proves "native side is keeping the array alive somehow" rather than
+                     * strictly "GlobalRef is what is keeping it alive". Combined with the
+                     * echo-body-matches assertion below (which would fail on any data
+                     * corruption from premature release), this covers the interesting cases.
+                     */
+                    CompletableFuture<Void> writeFuture = issueWriteAndAssertReachable(stream, expectedBody);
+                    writeFuture.get(5, TimeUnit.SECONDS);
                     reqCompleted.get(60, TimeUnit.SECONDS);
                 }
             }
@@ -119,13 +147,57 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         Assert.assertEquals(200, response.statusCode);
         // /echo returns JSON: {"body": "<sent>", "bytes": <len>}
         String body = response.getBody();
-        Assert.assertTrue("Response should contain sent body: " + body,
-                body.contains("\"body\": \"hello from writeData\""));
+        Assert.assertTrue("Response should contain sent body intact: " + body,
+                body.contains("\"body\": \"" + expectedBody + "\""));
         Assert.assertTrue("Response should contain byte count: " + body,
-                body.contains("\"bytes\": " + payload.length));
+                body.contains("\"bytes\": " + expectedLen));
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Allocates the payload locally and issues writeData. Inside the write-completion
+     * callback (which runs on the event-loop thread BEFORE native cleanup -- see
+     * s_write_data_complete in http_request_response.c), forces GC and asserts that a
+     * WeakReference to the payload is still live. A pass means the native side is keeping
+     * the array reachable from the JVM's point of view for the duration of the async write,
+     * which is what the NewGlobalRef stored on callback_data is there to guarantee.
+     *
+     * The lambda captures {@code weak} and {@code future}, never {@code payload} directly,
+     * so the lambda itself does not become a Java-side strong root for the array. Once this
+     * method returns, the local {@code payload} is out of scope and the only thing
+     * reachable from Java-land is whatever the native layer holds.
+     */
+    private CompletableFuture<Void> issueWriteAndAssertReachable(HttpStreamBase stream, String body) {
+        byte[] payload = body.getBytes(StandardCharsets.UTF_8);
+        WeakReference<byte[]> weak = new WeakReference<>(payload);
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        stream.writeData(payload, true, (errorCode) -> {
+            try {
+                /* We're inside CallVoidMethod on the event-loop thread; native cleanup has
+                 * not yet run, so the native GlobalRef is still holding the array. Trigger
+                 * a collection attempt and verify the WeakReference is still live. */
+                System.gc();
+                if (weak.get() == null) {
+                    future.completeExceptionally(new AssertionError(
+                            "byte[] was reclaimed while native should still hold a GlobalRef on it "
+                                    + "(NewGlobalRef on callback_data missing or dropped early?)"));
+                    return;
+                }
+                if (errorCode != 0) {
+                    future.completeExceptionally(new RuntimeException(
+                            "writeData failed with errorCode=" + errorCode));
+                } else {
+                    future.complete(null);
+                }
+            } catch (Throwable t) {
+                future.completeExceptionally(t);
+            }
+        });
+
+        return future;
     }
 
     @Test
@@ -199,11 +271,12 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         skipIfLocalhostUnavailable();
 
         URI uri = new URI(HOST + ":" + H1_TLS_PORT);
-        byte[] payload = "hello from writeData h1".getBytes(StandardCharsets.UTF_8);
+        String expectedBody = "hello from writeData h1";
+        int expectedLen = expectedBody.getBytes(StandardCharsets.UTF_8).length;
 
         HttpHeader[] headers = new HttpHeader[]{
             new HttpHeader("Host", uri.getHost()),
-            new HttpHeader("Content-Length", Integer.toString(payload.length)),
+            new HttpHeader("Content-Length", Integer.toString(expectedLen)),
         };
         HttpRequest request = new HttpRequest("PUT", "/echo", headers, null);
 
@@ -239,7 +312,16 @@ public class WriteDataTest extends HttpRequestResponseFixture {
                 // Use the unified makeRequest with useManualDataWrites=true
                 try (HttpStreamBase stream = conn.makeRequest(request, streamHandler, true)) {
                     stream.activate();
-                    stream.writeData(payload, true).get(5, TimeUnit.SECONDS);
+
+                    /*
+                     * Same weak-ref-inside-write-callback assertion as testHttp2WriteData --
+                     * proves that the H1 writeData path also keeps the byte[] reachable
+                     * from the JVM for the duration of the async write. Helper is shared
+                     * (takes HttpStreamBase), so this exercises the exact same JNI code path
+                     * in http_request_response.c (httpStreamBaseWriteData) as H2.
+                     */
+                    CompletableFuture<Void> writeFuture = issueWriteAndAssertReachable(stream, expectedBody);
+                    writeFuture.get(5, TimeUnit.SECONDS);
                     reqCompleted.get(60, TimeUnit.SECONDS);
                 }
             }
@@ -250,7 +332,7 @@ public class WriteDataTest extends HttpRequestResponseFixture {
         // H1 /echo returns JSON: {"data": "<sent>"}
         String body = response.getBody();
         Assert.assertTrue("Response should contain sent data: " + body,
-                body.contains("\"data\": \"hello from writeData h1\""));
+                body.contains("\"data\": \"" + expectedBody + "\""));
 
         shutdownComplete.get(60, TimeUnit.SECONDS);
         CrtResource.waitForNoResources();

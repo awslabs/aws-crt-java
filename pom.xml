@@ -44,7 +44,7 @@
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.crt_fips>OFF</cmake.crt_fips>
-        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
     <profiles>
@@ -498,7 +498,7 @@
                     <shutdown>kill</shutdown>
                     <argLine>-Daws.crt.memory.tracing=2 -Xcheck:jni</argLine>
                     <runOrder>alphabetical</runOrder>
-                    <useFile>true</useFile>
+                    <useFile>false</useFile>
                     <reuseForks>false</reuseForks>
                     <forkCount>0</forkCount>
                     <testFailureIgnore>false</testFailureIgnore>

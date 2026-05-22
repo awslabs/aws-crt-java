@@ -291,7 +291,6 @@ public class CredentialsProviderTest extends CrtTestFixture {
 
     @Test
     public void testCreateDestroyProfile_MissingCreds() throws ExecutionException, InterruptedException, IOException {
-         Log.initLoggingToStderr(Log.LogLevel.Trace);
         Path confPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_conf_", "");
         Path credsPath = Files.createTempFile("testCreateDestroyProfile_ValidProfile_creds_", "");
         Files.write(credsPath, Arrays.asList("[default]")); // Contains a section header but no actual credentials

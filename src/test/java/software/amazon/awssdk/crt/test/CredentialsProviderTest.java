@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 
+import software.amazon.awssdk.crt.Log;
+
 import static org.junit.Assert.*;
 import static org.junit.Assert.fail;
 
@@ -297,18 +299,18 @@ public class CredentialsProviderTest extends CrtTestFixture {
                 .withConfigFileNameOverride(confPath.toString()).withCredentialsFileNameOverride(credsPath.toString());
 
         try (ProfileCredentialsProvider provider = builder.build()) {
-            assertNotNull(provider);
+            assertNotNull("provider is null", provider);
             assertTrue(provider.getNativeHandle() != 0);
 
             try {
                 provider.getCredentials().join();
                 fail("Expected credential fetching to throw an exception since creds are missing from profile");
             } catch (CompletionException e) {
-                assertNotNull(e.getCause());
+                assertNotNull("exception is null", e.getCause());
                 Throwable innerException = e.getCause();
 
                 // Check that the right exception type caused the completion error in the future
-                assertTrue(innerException.getMessage().contains("Parser encountered an error"));
+                assertEquals(innerException.getMessage(), "Valid credentials could not be sourced by a profile provider");
                 assertEquals(CrtRuntimeException.class, innerException.getClass());
             }
         } finally {

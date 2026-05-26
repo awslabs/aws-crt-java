@@ -123,7 +123,12 @@ public class Http1StreamManager implements AutoCloseable {
                         }
                     }, useManualDataWrites);
                     completionFuture.complete((HttpStream) stream);
-                    /* Active the stream for user */
+                    /**
+                     * Active the stream for user after completing the future, otherwise the
+                     * callbacks may be invoked without the stream being completed.
+                     *
+                     * `activate` is idempotent.
+                     **/
                     try {
                         stream.activate();
                     } catch (CrtRuntimeException e) {

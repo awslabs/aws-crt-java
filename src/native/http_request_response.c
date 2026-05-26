@@ -722,6 +722,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_stream_binding;
     struct aws_http_stream *stream = binding->native_stream;
+    if (binding->java_http_stream_base) {
+        /* Already activated */
+        return;
+    }
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");

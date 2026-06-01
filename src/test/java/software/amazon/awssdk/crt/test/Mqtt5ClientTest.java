@@ -3649,4 +3649,44 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
         CrtResource.waitForNoResources();
     }
+
+    /**
+     * ============================================================
+     * TLS 1.3 TEST CASES
+     * ============================================================
+     */
+
+    private void doConnDC_TLS13Test() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+            TlsContext tlsContext = new TlsContext(tlsOptions)) {
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_TLS13_HOST, 8883l);
+            builder.withLifecycleEvents(events);
+            builder.withTlsContext(tlsContext);
+
+            try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                client.stop();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Direct connection to TLS 1.3-only host with mTLS */
+    @Test
+    public void ConnDC_TLS13() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT5_IOT_CORE_TLS13_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+        // macOS does not support TLS 1.3 unless AWS_CRT_USE_NON_FIPS_TLS_13 is set
+        Assume.assumeFalse("Skipped: macOS with Secure Transport does not support TLS 1.3",
+            CRT.getOSIdentifier().equals("osx") && System.getenv("AWS_CRT_USE_NON_FIPS_TLS_13") == null);
+
+        TestUtils.doRetryableTest(this::doConnDC_TLS13Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
 }

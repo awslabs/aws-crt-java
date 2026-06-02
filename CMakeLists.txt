@@ -74,8 +74,18 @@ if (BUILD_DEPS)
         )
 
         set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
-        set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON CACHE BOOL "")
+        # On Intel Macs, Homebrew installs to /usr/local which is in the default header search path.
+        # Without this, s2n's libcrypto detection picks up Homebrew's OpenSSL instead of bundled aws-lc.
+        # ARM Macs use /opt/homebrew (not in default search paths) so they don't need this.
+        if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED ${CMAKE_NO_SYSTEM_FROM_IMPORTED})
+            set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON)
+        endif()
         add_subdirectory(crt/s2n)
+        if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(CMAKE_NO_SYSTEM_FROM_IMPORTED ${_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED})
+            unset(_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED)
+        endif()
     endif()
     add_subdirectory(crt/aws-c-sdkutils)
     add_subdirectory(crt/aws-c-io)

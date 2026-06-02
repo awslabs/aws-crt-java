@@ -3425,6 +3425,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
         Assume.assumeNotNull(
             AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT5_IOT_CORE_PKCS12_KEY_PASSWORD);
+        // When set, TLS backend on macOS switches from Secure Transport to s2n-tls, which doesn't support PKCS#12.
         Assume.assumeTrue("Skipped: AWS_CRT_USE_NON_FIPS_TLS_13 is set",
             System.getenv("AWS_CRT_USE_NON_FIPS_TLS_13") == null);
 

@@ -235,6 +235,10 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
+        # CMAKE_NO_SYSTEM_FROM_IMPORTED: on Intel Macs, Homebrew installs to /usr/local, which is in
+        # the default system header search path. Without this flag, s2n picks up Homebrew's OpenSSL
+        # headers instead of the bundled aws-lc headers. Not needed on ARM where Homebrew uses
+        # /opt/homebrew (not in default search paths).
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream --cmake-extra=-DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
         python3 codebuild/macos_compatibility_check.py
 
@@ -275,6 +279,10 @@ jobs:
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
+        # CMAKE_NO_SYSTEM_FROM_IMPORTED: on Intel Macs, Homebrew installs to /usr/local, which is in
+        # the default system header search path. Without this flag, s2n picks up Homebrew's OpenSSL
+        # headers instead of the bundled aws-lc headers. Not needed on ARM where Homebrew uses
+        # /opt/homebrew (not in default search paths).
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream --cmake-extra=-DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
         python3 codebuild/macos_compatibility_check.py
 

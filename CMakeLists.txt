@@ -29,6 +29,8 @@ if (BUILD_DEPS)
     set(IN_SOURCE_BUILD ON)
     set(BUILD_TESTING OFF)
     add_subdirectory(crt/aws-c-common)
+    # Build s2n-tls and aws-lc on all Unix platforms except non-macOS Apple (iOS, tvOS).
+    # On macOS (Darwin), both Secure Transport and s2n are built; the TLS backend is selected at runtime.
     if (UNIX AND (NOT APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
         include(AwsPrebuildDependency)
 

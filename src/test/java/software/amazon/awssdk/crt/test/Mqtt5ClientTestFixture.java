@@ -82,6 +82,8 @@ public class Mqtt5ClientTestFixture extends CrtTestFixture {
     // MQTT5 Windows Cert Store
     static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_PFX_CERT_NO_PASS");
     static final String AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_WINDOWS_CERT_STORE");
+    // MQTT5 TLS 1.3
+    static final String AWS_TEST_MQTT5_IOT_CORE_TLS13_HOST = System.getProperty("AWS_TEST_MQTT5_IOT_CORE_TLS13_HOST");
 
     protected int OPERATION_TIMEOUT_TIME = 30;
 

@@ -2679,7 +2679,29 @@ static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
     iot_device_sdk_metrics_properties.library_name_field_id = (*env)->GetFieldID(
         env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "libraryName", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.library_name_field_id);
+
+    iot_device_sdk_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(
+        env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "metadataEntries", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.metadata_entries_field_id);
+
 }
+
+struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
+
+static void s_cache_iot_metrics_metadata(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/internal/IoTMetricsMetadata");
+    AWS_FATAL_ASSERT(cls);
+    iot_metrics_metadata_properties.iot_metrics_metadata_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.iot_metrics_metadata_class);
+
+    iot_metrics_metadata_properties.key_field_id = (*env)->GetFieldID(
+        env, iot_metrics_metadata_properties.iot_metrics_metadata_class, "key", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.key_field_id);
+
+    iot_metrics_metadata_properties.value_field_id = (*env)->GetFieldID(
+        env, iot_metrics_metadata_properties.iot_metrics_metadata_class, "value", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.value_field_id);
+  }
 
 // Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {
@@ -2800,6 +2822,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_cognito_login_token_source(env);
     s_cache_cognito_credentials_provider(env);
     s_cache_iot_device_sdk_metrics(env);
+    s_cache_iot_metrics_metadata(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

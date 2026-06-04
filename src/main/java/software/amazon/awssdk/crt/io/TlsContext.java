@@ -13,6 +13,8 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  */
 public class TlsContext extends CrtResource {
 
+    private int cipherPreference;
+    private int minimumTlsVersion;
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
@@ -22,6 +24,8 @@ public class TlsContext extends CrtResource {
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
         acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+        this.cipherPreference = options.tlsCipherPreference.getValue();
+        this.minimumTlsVersion = options.minTlsVersion.getValue();
     }
 
     /**
@@ -31,6 +35,8 @@ public class TlsContext extends CrtResource {
     public TlsContext() throws CrtRuntimeException  {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+            this.cipherPreference = options.tlsCipherPreference.getValue();
+            this.minimumTlsVersion = options.minTlsVersion.getValue();
         }
     }
 
@@ -54,4 +60,18 @@ public class TlsContext extends CrtResource {
     protected static native long tlsContextNew(long options) throws CrtRuntimeException;
 
     private static native void tlsContextDestroy(long elg);
+
+      /**
+       * Returns the TLS cipher preference native value configured on this context.
+       *
+       * @return native int value of the TlsCipherPreference
+       */
+      public int getCipherPreference() { return cipherPreference; }
+
+      /**
+       * Returns the minimum TLS version native value configured on this context.
+       *
+       * @return native int value of the TlsVersions
+       */
+      public int getMinimumTlsVersion() { return minimumTlsVersion; }
 };

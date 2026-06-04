@@ -61,6 +61,15 @@ public class TopicAliasingOptions {
     }
 
     /**
+    * Returns the configured outbound topic alias behavior.
+    *
+    * @return the outbound topic alias behavior type
+    */
+    public OutboundTopicAliasBehaviorType getOutboundBehavior() {
+      return outboundBehavior;
+    }
+
+    /**
      * Controls whether or not the client allows the broker to use topic aliasing when sending publishes.  Even if
      * inbound topic aliasing is enabled, it is up to the server to choose whether or not to use it.
      *
@@ -90,6 +99,15 @@ public class TopicAliasingOptions {
     public TopicAliasingOptions withInboundCacheMaxSize(int size) {
         this.inboundCacheMaxSize = size;
         return this;
+    }
+
+    /**
+    * Returns the configured inbound topic alias behavior.
+    *
+    * @return the inbound topic alias behavior type
+    */
+    public InboundTopicAliasBehaviorType getInboundBehavior() {
+        return inboundBehavior;
     }
 
     /**

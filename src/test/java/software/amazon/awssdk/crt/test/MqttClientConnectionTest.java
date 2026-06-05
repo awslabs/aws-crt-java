@@ -43,7 +43,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 null,
                 null,
                 null,
-                true);
+                false);
             disconnect();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -76,7 +76,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 null,
                 null,
                 null,
-                true);
+                false);
 
             publish(
                     "test/topic/" + (UUID.randomUUID()).toString(),
@@ -116,7 +116,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 null,
                 null,
                 null,
-                true);
+                false);
 
             String topic = "test/topic/" + (UUID.randomUUID()).toString();
             byte[] payload = "Hello_World".getBytes();
@@ -163,7 +163,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     null,
                     null,
                     null,
-                    true);
+                    false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -196,7 +196,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 null,
                 null,
                 null,
-                true);
+                false);
 
             OnConnectionSuccessReturn connectionResult = waitForConnectSuccess();
             assertTrue("Connection success callback was empty", connectionResult != null);
@@ -249,7 +249,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     null,
                     null,
                     null,
-                    true);
+                    false);
             } catch (Exception ex) {
                 // Do nothing with the exception - we expect this to throw since we passed an incorrect port.
             }
@@ -299,7 +299,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
                 AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
                 null,
-                true);  // Metrics enabled
+                false);  // Metrics enabled (disableMetrics=false)
         } catch (Exception ex) {
             // Expected - connection should fail with metrics enabled and basic auth
         }

@@ -13,6 +13,7 @@ import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.internal.IoTMetricEncoder;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -46,12 +47,11 @@ public class Mqtt5ClientOptions {
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
     private TopicAliasingOptions topicAliasingOptions;
-    // Indicates whether AWS IoT Metrics are enabled for this client, default to true.
-    // We don't expose iotDeviceSDKMetrics in the builder, and only allow setting
-    // metricsEnabled for now.
-    private boolean metricsEnabled = true;
+    // Opt-out flag for AWS IoT Metrics. When true, metrics are disabled.
+    // Default is false (metrics enabled).
+    private boolean disableMetrics = false;
     private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
-    
+
 
     /**
      * Returns the host name of the MQTT server to connect to.
@@ -271,21 +271,22 @@ public class Mqtt5ClientOptions {
     }
 
     /**
-     * Returns whether AWS IoT Device SDK metrics collection is enabled
+     * Returns whether AWS IoT Device SDK metrics collection is disabled.
      *
-     * @return true if metrics are enabled, false otherwise
+     * @return true if metrics are disabled, false if metrics are enabled (default)
      */
-    public boolean getMetricsEnabled() {
-        return this.metricsEnabled;
+    public boolean getDisableMetrics() {
+        return this.disableMetrics;
     }
 
     /**
-     * Enables or disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Default is false (metrics enabled).
      *
-     * @param enabled true to enable metrics, false to disable
+     * @param disable true to disable metrics, false to enable (default)
      */
-    public void setMetricsEnabled(boolean enabled) {
-        this.metricsEnabled = enabled;
+    public void setDisableMetrics(boolean disable) {
+        this.disableMetrics = disable;
     }
 
     /**
@@ -314,8 +315,12 @@ public class Mqtt5ClientOptions {
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
         this.topicAliasingOptions = builder.topicAliasingOptions;
-        this.metricsEnabled = builder.metricsEnabled;
-        this.iotDeviceSDKMetrics = new IoTDeviceSDKMetrics();
+        this.disableMetrics = builder.disableMetrics;
+        if (this.disableMetrics) {
+            this.iotDeviceSDKMetrics = null;
+        } else {
+            this.iotDeviceSDKMetrics = IoTMetricEncoder.createMetricsMqtt5(this, builder.metrics);
+        }
     }
 
     /*******************************************************************************
@@ -379,7 +384,7 @@ public class Mqtt5ClientOptions {
          * the client will NOT automatically send the publish acknowledgement. You are responsible for calling
          * {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)} later.</p>
          *
-         * <p>If you do not call {@code acquirePublishAcknowledgementControl()} within the callback , 
+         * <p>If you do not call {@code acquirePublishAcknowledgementControl()} within the callback ,
          * the client will automatically send the publish acknowledgement after this callback returns.</p>
          *
          * @param client The client that has received the message
@@ -618,7 +623,8 @@ public class Mqtt5ClientOptions {
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
         private TopicAliasingOptions topicAliasingOptions;
-        private boolean metricsEnabled = true;
+        private boolean disableMetrics = false;
+        private IoTDeviceSDKMetrics metrics = null;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -887,13 +893,26 @@ public class Mqtt5ClientOptions {
         }
 
         /**
-         * Enables or disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+         * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+         * Default is false (metrics enabled).
          *
-         * @param enabled true to enable metrics, false to disable.
+         * @param disable true to disable metrics, false to enable (default)
          * @return The Mqtt5ClientOptionsBuilder after setting the metrics option
          */
-        public Mqtt5ClientOptionsBuilder withMetricsEnabled(boolean enabled) {
-            this.metricsEnabled = enabled;
+        public Mqtt5ClientOptionsBuilder withDisableMetrics(boolean disable) {
+            this.disableMetrics = disable;
+            return this;
+        }
+
+        /**
+         * Sets the IoT SDK metrics configuration. If provided, the CRT will merge
+         * these metrics with CRT-level metrics. If null, default CRT metrics are used.
+         *
+         * @param metrics metrics configuration from the IoT SDK layer
+         * @return The Mqtt5ClientOptionsBuilder after setting the metrics
+         */
+        public Mqtt5ClientOptionsBuilder withMetrics(IoTDeviceSDKMetrics metrics) {
+            this.metrics = metrics;
             return this;
         }
 

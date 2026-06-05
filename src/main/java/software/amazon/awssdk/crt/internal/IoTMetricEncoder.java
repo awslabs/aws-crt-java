@@ -9,6 +9,7 @@ import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
 import software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions;
+import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.utils.PackageInfo;
 
 import java.util.ArrayList;
@@ -65,10 +66,13 @@ public class IoTMetricEncoder{
      * Mapping: Windows (WINSOCK)->B, all other platforms (POSIX)->A.
      *
      * @return the single-character metrics value for the socket implementation
-     * @throws CRT.UnknownPlatformException if the running platform cannot be identified
      */
-    private static String socketImplementationValue() throws CRT.UnknownPlatformException {
-        return "windows".equals(CRT.getOSIdentifier()) ? "B" : "A";
+    private static String socketImplementationValue() {
+        try {
+            return "windows".equals(CRT.getOSIdentifier()) ? "B" : "A";
+        } catch (Exception e) {
+            return "A";
+        }
     }
 
     /**
@@ -85,16 +89,14 @@ public class IoTMetricEncoder{
     /**
     * Maps ExponentialBackoffJitterMode value to its metrics character.
     *
-    * @param value the int value from JitterMode.getValue()
+    * @param mode the JitterMode enum value
     * @return single-character metrics value, or null if DEFAULT (should be omitted)
     */
-    private static String retryJitterModeValue(int value) {
-        switch (value) {
-            case 1: return "A"; // None
-            case 2: return "B"; // Full
-            case 3: return "C"; // Decorrelated
-            default: return null;
-        }
+    private static String retryJitterModeValue(JitterMode mode) {
+        if (mode == JitterMode.None) return "A";
+        if (mode == JitterMode.Full) return "B";
+        if (mode == JitterMode.Decorrelated) return "C";
+        return null;
     }
 
     /**
@@ -216,7 +218,7 @@ public class IoTMetricEncoder{
 
         // A: retry_jitter_mode
         if (clientOptions.getRetryJitterMode() != null) {
-            String val = retryJitterModeValue(clientOptions.getRetryJitterMode().getValue());
+            String val = retryJitterModeValue(clientOptions.getRetryJitterMode());
             if (val != null) features.add(RETRY_JITTER_MODE + "/" + val);
         }
 

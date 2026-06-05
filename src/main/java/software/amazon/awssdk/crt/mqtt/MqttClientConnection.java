@@ -18,6 +18,7 @@ import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.internal.IoTMetricEncoder;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -78,7 +79,7 @@ public class MqttClientConnection extends CrtResource {
         options.setProtocolOperationTimeoutMs(mqtt5options.getAckTimeoutSeconds() != null
                 ? Math.toIntExact(mqtt5options.getAckTimeoutSeconds()) * 1000
                 : 0);
-        options.setMetricsEnabled(mqtt5options.getMetricsEnabled());
+        options.setDisableMetrics(mqtt5options.getDisableMetrics());
         return options;
     }
 
@@ -164,8 +165,15 @@ public class MqttClientConnection extends CrtResource {
                 mqttClientConnectionSetLogin(getNativeHandle(), config.getUsername(), config.getPassword());
             }
 
-            if (config.getMetricsEnabled()) {
-                mqttClientConnectionSetMetrics(getNativeHandle(), new IoTDeviceSDKMetrics());
+            if (!config.getDisableMetrics()) {
+                TlsContext tls = null;
+                if (config.getMqttClient()!=null){
+                    tls = config.getMqttClient().getTlsContext();
+                } else if (config.getMqtt5Client()!=null){
+                    tls = config.getMqtt5Client().getClientOptions().getTlsContext();
+                }
+                IoTDeviceSDKMetrics metrics = IoTMetricEncoder.createMetricsMqtt3(config.getMetrics(), config.getHttpProxyOptions(), tls);
+                mqttClientConnectionSetMetrics(getNativeHandle(), metrics);
             }
 
             if (config.getMinReconnectTimeoutSecs() != 0L && config.getMaxReconnectTimeoutSecs() != 0L) {

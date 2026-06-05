@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
@@ -47,7 +48,8 @@ public final class MqttConnectionConfig extends CrtResource {
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
 
     /* metrics */
-    private boolean metricsEnabled = true;
+    private boolean disableMetrics = false;
+    private IoTDeviceSDKMetrics metrics = null;
 
     public MqttConnectionConfig() {}
 
@@ -542,22 +544,43 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * Enables or disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Default is false (metrics enabled).
      *
-     * @param enabled true to enable metrics, false to disable
+     * @param disable true to disable metrics, false to enable (default)
      */
-    public void setMetricsEnabled(boolean enabled) {
-        this.metricsEnabled = enabled;
+    public void setDisableMetrics(boolean disable) {
+        this.disableMetrics = disable;
     }
 
     /**
-     * Queries whether IoT Device SDK metrics collection is enabled
+     * Returns whether IoT Device SDK metrics collection is disabled.
      *
-     * @return true if metrics are enabled, false if disabled
+     * @return true if metrics are disabled, false if metrics are enabled (default)
      */
-    public boolean getMetricsEnabled() {
-        return metricsEnabled;
+    public boolean getDisableMetrics() {
+        return disableMetrics;
     }
+
+    /**
+     * Sets the IoT SDK metrics configuration. If provided, the CRT will merge
+     * these metrics with CRT-level metrics. If null, default CRT metrics are used.
+     *
+     * @param metrics metrics configuration from the IoT SDK layer
+     */
+    public void setMetrics(IoTDeviceSDKMetrics metrics) {
+        this.metrics = metrics;
+    }
+
+    /**
+     * Returns the IoT SDK metrics configuration.
+     *
+     * @return metrics configuration, or null if not set
+     */
+    public IoTDeviceSDKMetrics getMetrics() {
+        return metrics;
+    }
+
 
     /**
      * Creates a (shallow) clone of this config object
@@ -588,7 +611,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
-            clone.setMetricsEnabled(getMetricsEnabled());
+            clone.setDisableMetrics(getDisableMetrics());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();

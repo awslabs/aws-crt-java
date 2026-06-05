@@ -728,7 +728,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
     jfieldID topic_aliasing_options_field_id;
-    jfieldID metrics_enabled_field_id;
+    jfieldID disable_metrics_field_id;
     jfieldID iot_device_sdk_metrics_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;

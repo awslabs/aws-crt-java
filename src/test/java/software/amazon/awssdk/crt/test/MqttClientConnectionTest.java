@@ -289,7 +289,7 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
 
         boolean connectionFailed = false;
         try {
-            // Metrics are enabled by default (metricsEnabled = true)
+            // Metrics are enabled by default (disableMetrics = false)
             // This should cause connection failure because metrics appends to username,
             // corrupting basic auth credentials
             connectDirect(

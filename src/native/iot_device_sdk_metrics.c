@@ -45,11 +45,6 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     struct aws_mqtt_iot_metrics_java_jni *java_metrics =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_iot_metrics_java_jni));
-    if (java_metrics == NULL) {
-        AWS_LOGF_ERROR(
-            AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics create_from_java: Creating new IoTDeviceSDKMetrics failed");
-        return NULL;
-    }
 
     if (aws_get_string_from_jobject(
             env,
@@ -74,9 +69,6 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         if (count > 0 && !aws_jni_check_and_clear_exception(env)) {
             java_metrics->metadata_entries =
                 aws_mem_calloc(allocator, (size_t)count, sizeof(struct aws_mqtt_metadata_entry));
-            if (java_metrics->metadata_entries == NULL) {
-                goto on_error;
-            }
 
             /* Pre-allocate storage buffer for all key/value strings */
             aws_byte_buf_init(&java_metrics->metadata_storage, allocator, (size_t)count * 64);

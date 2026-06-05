@@ -1128,11 +1128,11 @@ extern struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_prop
 
 /* IoTMetricsMetadata */
 struct java_iot_metrics_metadata_properties {
-      jclass iot_metrics_metadata_class;
-      jfieldID key_field_id;
-      jfieldID value_field_id;
+    jclass iot_metrics_metadata_class;
+    jfieldID key_field_id;
+    jfieldID value_field_id;
 };
-  extern struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
+extern struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

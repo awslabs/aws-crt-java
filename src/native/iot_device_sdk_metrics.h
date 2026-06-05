@@ -15,7 +15,6 @@ struct aws_mqtt_iot_metrics_java_jni {
     struct aws_byte_buf metadata_storage;
     struct aws_mqtt_metadata_entry *metadata_entries;
     size_t metadata_count;
-    
 };
 
 void aws_mqtt_iot_metrics_java_jni_destroy(

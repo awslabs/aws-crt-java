@@ -2683,7 +2683,6 @@ static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
     iot_device_sdk_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(
         env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "metadataEntries", "Ljava/util/List;");
     AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.metadata_entries_field_id);
-
 }
 
 struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
@@ -2701,7 +2700,7 @@ static void s_cache_iot_metrics_metadata(JNIEnv *env) {
     iot_metrics_metadata_properties.value_field_id = (*env)->GetFieldID(
         env, iot_metrics_metadata_properties.iot_metrics_metadata_class, "value", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(iot_metrics_metadata_properties.value_field_id);
-  }
+}
 
 // Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {

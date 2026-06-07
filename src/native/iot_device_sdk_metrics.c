@@ -70,9 +70,30 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
             java_metrics->metadata_entries =
                 aws_mem_calloc(allocator, (size_t)count, sizeof(struct aws_mqtt_metadata_entry));
 
-            /* Pre-allocate storage buffer for all key/value strings */
-            aws_byte_buf_init(&java_metrics->metadata_storage, allocator, (size_t)count * 64);
+            /* First pass: compute exact buffer size needed */
+            size_t total_size = 0;
+            for (jint i = 0; i < count; i++) {
+                jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
+                if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
+                    continue;
+                }
+                jstring key_jstr =
+                    (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.key_field_id);
+                jstring value_jstr =
+                    (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.value_field_id);
+                if (key_jstr != NULL && value_jstr != NULL) {
+                    total_size += (size_t)(*env)->GetStringUTFLength(env, key_jstr);
+                    total_size += (size_t)(*env)->GetStringUTFLength(env, value_jstr);
+                }
+                (*env)->DeleteLocalRef(env, key_jstr);
+                (*env)->DeleteLocalRef(env, value_jstr);
+                (*env)->DeleteLocalRef(env, entry);
+            }
 
+            /* Allocate exact size  */
+            aws_byte_buf_init(&java_metrics->metadata_storage, allocator, total_size);
+
+            /* Second pass: copy strings and create cursors */
             for (jint i = 0; i < count; i++) {
                 jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
                 if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
@@ -92,13 +113,13 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
                     /* Append key to storage buffer */
                     size_t key_offset = java_metrics->metadata_storage.len;
-                    aws_byte_buf_append_dynamic(
+                    aws_byte_buf_append(
                         &java_metrics->metadata_storage,
                         &(struct aws_byte_cursor){.ptr = (uint8_t *)key_chars, .len = key_len});
 
                     /* Append value to storage buffer */
                     size_t value_offset = java_metrics->metadata_storage.len;
-                    aws_byte_buf_append_dynamic(
+                    aws_byte_buf_append(
                         &java_metrics->metadata_storage,
                         &(struct aws_byte_cursor){.ptr = (uint8_t *)value_chars, .len = value_len});
 

@@ -24,8 +24,20 @@ public class IoTDeviceSDKMetrics {
     }
 
     public String getLibraryName() { return libraryName; }
+
+    /**
+    * Sets the SDK library name (e.g., "IoTDeviceSDK/Java").
+    *
+    * @param libraryName the library name to report in metrics
+    */
     public void setLibraryName(String libraryName) { this.libraryName = libraryName; }
 
     public List<IoTMetricsMetadata> getMetadataEntries() { return metadataEntries; }
+
+    /**
+    * Sets the metadata entries to include in the MQTT CONNECT packet username field.
+    *
+    * @param metadataEntries list of key-value metadata pairs, or null for none
+    */
     public void setMetadataEntries(List<IoTMetricsMetadata> metadataEntries) { this.metadataEntries = metadataEntries; }
 }

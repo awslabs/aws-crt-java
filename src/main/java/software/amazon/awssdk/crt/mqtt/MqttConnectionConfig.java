@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;

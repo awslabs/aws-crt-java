@@ -12,8 +12,7 @@ import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
-import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
-import software.amazon.awssdk.crt.internal.IoTMetricEncoder;
+import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -50,6 +49,7 @@ public class Mqtt5ClientOptions {
     // Opt-out flag for AWS IoT Metrics. When true, metrics are disabled.
     // Default is false (metrics enabled).
     private boolean disableMetrics = false;
+    private IoTDeviceSDKMetrics userMetrics;
     private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
 
 
@@ -280,6 +280,15 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns the user-provided metrics configuration from the IoT SDK layer.
+     *
+     * @return the user metrics, or null if none were provided
+     */
+    public IoTDeviceSDKMetrics getUserMetrics() {
+        return this.userMetrics;
+    }
+
+    /**
      * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
      * Default is false (metrics enabled).
      *
@@ -316,10 +325,11 @@ public class Mqtt5ClientOptions {
         this.publishEvents = builder.publishEvents;
         this.topicAliasingOptions = builder.topicAliasingOptions;
         this.disableMetrics = builder.disableMetrics;
+        this.userMetrics = builder.metrics;
         if (this.disableMetrics) {
             this.iotDeviceSDKMetrics = null;
         } else {
-            this.iotDeviceSDKMetrics = IoTMetricEncoder.createMetricsMqtt5(this, builder.metrics);
+            this.iotDeviceSDKMetrics = IoTDeviceSDKMetrics.createMetricsMqtt5(this);
         }
     }
 

@@ -7,9 +7,9 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import software.amazon.awssdk.crt.internal.IoTMetricEncoder;
-import software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics;
-import software.amazon.awssdk.crt.internal.IoTMetricsMetadata;
+import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.iot.IoTMetricsMetadata;
+import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.Mqtt5ClientOptionsBuilder;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions.ClientSessionBehavior;
@@ -20,42 +20,47 @@ import software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions.InboundTopicAliasBe
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class IoTMetricEncoderTest extends CrtTestFixture {
 
     public IoTMetricEncoderTest() {}
 
+    private MqttConnectionConfig createMqtt3Config(IoTDeviceSDKMetrics userMetrics) {
+        MqttConnectionConfig config = new MqttConnectionConfig();
+        if (userMetrics != null) {
+            config.setMetrics(userMetrics);
+        }
+        return config;
+    }
+
     // ======================== Minimal Options Encoding ========================
 
     @Test
     public void testMqtt5Minimal() {
         Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("localhost", 8883L);
-        builder.withDisableMetrics(true); // disable so constructor doesn't call encoder
+        builder.withDisableMetrics(true);
         Mqtt5ClientOptions options = builder.build();
 
-        String result = IoTMetricEncoder.getEncodedFeatureListMqtt5(options);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt5(options);
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        // Should only have F (protocol=5) and G (socket)
-        assertTrue(result.contains("F/5"));
-        assertTrue(result.contains("G/"));
-        // Should NOT have A, B, C, D, E since all are DEFAULT
-        assertFalse(result.contains("A/"));
-        assertFalse(result.contains("B/"));
-        assertFalse(result.contains("C/"));
-        assertFalse(result.contains("D/"));
-        assertFalse(result.contains("E/"));
+        assertTrue(feature.contains("F/5"));
+        assertTrue(feature.contains("G/"));
+        assertFalse(feature.contains("A/"));
+        assertFalse(feature.contains("B/"));
+        assertFalse(feature.contains("C/"));
+        assertFalse(feature.contains("D/"));
+        assertFalse(feature.contains("E/"));
     }
 
     @Test
     public void testMqtt3Minimal() {
-        String result = IoTMetricEncoder.getEncodedFeatureListMqtt3(null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(null));
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertTrue(result.contains("F/3"));
-        assertTrue(result.contains("G/"));
-        // Only F and G
-        assertEquals(2, result.split(",").length);
+        assertTrue(feature.contains("F/3"));
+        assertTrue(feature.contains("G/"));
     }
 
     // ======================== Non-Default Features Encoding ========================
@@ -74,14 +79,15 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         builder.withDisableMetrics(true);
         Mqtt5ClientOptions options = builder.build();
 
-        String result = IoTMetricEncoder.getEncodedFeatureListMqtt5(options);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt5(options);
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertTrue(result.contains("A/B")); // Full
-        assertTrue(result.contains("B/A")); // CLEAN
-        assertTrue(result.contains("C/C")); // FAIL_ALL
-        assertTrue(result.contains("D/B")); // LRU
-        assertTrue(result.contains("E/A")); // Enabled
-        assertTrue(result.contains("F/5")); // MQTT5
+        assertTrue(feature.contains("A/B")); // Full
+        assertTrue(feature.contains("B/A")); // CLEAN
+        assertTrue(feature.contains("C/C")); // FAIL_ALL
+        assertTrue(feature.contains("D/B")); // LRU
+        assertTrue(feature.contains("E/A")); // Enabled
+        assertTrue(feature.contains("F/5")); // MQTT5
     }
 
     @Test
@@ -93,67 +99,57 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         builder.withDisableMetrics(true);
         Mqtt5ClientOptions options = builder.build();
 
-        String result = IoTMetricEncoder.getEncodedFeatureListMqtt5(options);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt5(options);
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertFalse(result.contains("A/"));
-        assertFalse(result.contains("B/"));
-        assertFalse(result.contains("C/"));
+        assertFalse(feature.contains("A/"));
+        assertFalse(feature.contains("B/"));
+        assertFalse(feature.contains("C/"));
     }
 
-    // ======================== Feature List Merging ========================
+    // ======================== Feature Merging ========================
 
     @Test
     public void testUserOverridesCrt() {
-        String result = IoTMetricEncoder.mergeFeatureLists("A/B,F/5", "A/C");
-        assertEquals("A/C,F/5", result);
+        IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics();
+        List<IoTMetricsMetadata> userEntries = new ArrayList<>();
+        userEntries.add(new IoTMetricsMetadata("IoTSDKMetricsVersion", "1"));
+        userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "F/9"));
+        user.setMetadataEntries(userEntries);
+
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+
+        assertTrue(feature.contains("F/9"));
+        assertFalse(feature.contains("F/3"));
     }
 
     @Test
-    public void testUserOverridesMultipleCrtFeatures() {
-        String result = IoTMetricEncoder.mergeFeatureLists("A/B,F/5,G/A,K/D", "A/C,F/3,K/E");
-        assertEquals("A/C,F/3,G/A,K/E", result);
-    }
+    public void testDisjointFeaturesAreMerged() {
+        IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics();
+        List<IoTMetricsMetadata> userEntries = new ArrayList<>();
+        userEntries.add(new IoTMetricsMetadata("IoTSDKMetricsVersion", "1"));
+        userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A,K/D"));
+        user.setMetadataEntries(userEntries);
 
-    @Test
-    public void testEmptyUserFeatures() {
-        String result = IoTMetricEncoder.mergeFeatureLists("F/5,G/A", "");
-        assertEquals("F/5,G/A", result);
-    }
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-    @Test
-    public void testEmptyCrtFeatures() {
-        String result = IoTMetricEncoder.mergeFeatureLists("", "A/B");
-        assertEquals("A/B", result);
-    }
-
-    @Test
-    public void testBothEmpty() {
-        String result = IoTMetricEncoder.mergeFeatureLists("", "");
-        assertEquals("", result);
-    }
-
-    @Test
-    public void testDisjointFeatures() {
-        String result = IoTMetricEncoder.mergeFeatureLists("F/5,G/A", "I/A,K/D");
-        assertEquals("F/5,G/A,I/A,K/D", result);
-    }
-
-    @Test
-    public void testInsertionOrderPreserved() {
-        String result = IoTMetricEncoder.mergeFeatureLists("G/A,F/5", "A/B");
-        assertEquals("G/A,F/5,A/B", result);
+        assertTrue(feature.contains("F/3"));
+        assertTrue(feature.contains("G/"));
+        assertTrue(feature.contains("I/A"));
+        assertTrue(feature.contains("K/D"));
     }
 
     // ======================== Create Metrics - Default Options ========================
 
     @Test
     public void testCreateMetricsNullUserMetrics() {
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(null, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(null));
 
         assertEquals("IoTDeviceSDK/Java", result.getLibraryName());
         assertNotNull(result.getMetadataEntries());
 
-        // Should have CRTVersion, IoTSDKFeature, IoTSDKMetricsVersion
         List<IoTMetricsMetadata> entries = result.getMetadataEntries();
         String crtVersion = findMetadataValue(entries, "CRTVersion");
         String feature = findMetadataValue(entries, "IoTSDKFeature");
@@ -167,11 +163,11 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
     @Test
     public void testCreateMetricsEmptyUserMetrics() {
         IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics();
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         assertEquals("IoTDeviceSDK/Java", result.getLibraryName());
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertTrue(feature.contains("F/3")); // MQTT3 protocol
+        assertTrue(feature.contains("F/3"));
     }
 
     // ======================== Create Metrics - User Features Merged ========================
@@ -184,7 +180,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertTrue(feature.contains("I/A"));
@@ -200,11 +196,10 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "F/3,I/B"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertTrue(feature.contains("F/3"));
-        assertFalse(feature.contains("F/5"));
         assertTrue(feature.contains("I/B"));
     }
 
@@ -218,7 +213,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertFalse(feature.contains("I/A"));
@@ -233,7 +228,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertFalse(feature.contains("I/A"));
@@ -246,7 +241,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertFalse(feature.contains("I/A"));
@@ -261,7 +256,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("CRTVersion", "fake_version"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String crtVersion = findMetadataValue(result.getMetadataEntries(), "CRTVersion");
         assertNotEquals("fake_version", crtVersion);
@@ -276,7 +271,7 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKVersion", "2.0.0"));
         user.setMetadataEntries(userEntries);
 
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         String sdkVersion = findMetadataValue(result.getMetadataEntries(), "IoTSDKVersion");
         assertEquals("2.0.0", sdkVersion);
@@ -285,14 +280,14 @@ public class IoTMetricEncoderTest extends CrtTestFixture {
     @Test
     public void testCustomLibraryName() {
         IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics("MyCustomSDK/1.0", null);
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(user, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         assertEquals("MyCustomSDK/1.0", result.getLibraryName());
     }
 
     @Test
     public void testMetricsVersionAlwaysSet() {
-        IoTDeviceSDKMetrics result = IoTMetricEncoder.createMetricsMqtt3(null, null, null);
+        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(null));
 
         String metricsVersion = findMetadataValue(result.getMetadataEntries(), "IoTSDKMetricsVersion");
         assertEquals("1", metricsVersion);

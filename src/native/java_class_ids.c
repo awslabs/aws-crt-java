@@ -1767,7 +1767,7 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         env,
         mqtt5_client_options_properties.client_options_class,
         "iotDeviceSDKMetrics",
-        "Lsoftware/amazon/awssdk/crt/internal/IoTDeviceSDKMetrics;");
+        "Lsoftware/amazon/awssdk/crt/iot/IoTDeviceSDKMetrics;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
 }
 
@@ -2671,7 +2671,7 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
 struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
 
 static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/internal/IoTDeviceSDKMetrics");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/IoTDeviceSDKMetrics");
     AWS_FATAL_ASSERT(cls);
     iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class);
@@ -2688,7 +2688,7 @@ static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
 struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
 
 static void s_cache_iot_metrics_metadata(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/internal/IoTMetricsMetadata");
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/IoTMetricsMetadata");
     AWS_FATAL_ASSERT(cls);
     iot_metrics_metadata_properties.iot_metrics_metadata_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(iot_metrics_metadata_properties.iot_metrics_metadata_class);

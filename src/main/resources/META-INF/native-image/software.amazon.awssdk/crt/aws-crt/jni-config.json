@@ -1268,7 +1268,7 @@
     ]
   },
   {
-    "name": "software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics",
+    "name": "software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics",
     "fields": [
       {
         "name": "libraryName"
@@ -1279,7 +1279,7 @@
     ]
   },
   {
-    "name": "software.amazon.awssdk.crt.internal.IoTMetricsMetadata",
+    "name": "software.amazon.awssdk.crt.iot.IoTMetricsMetadata",
     "fields": [
       {
         "name": "key"

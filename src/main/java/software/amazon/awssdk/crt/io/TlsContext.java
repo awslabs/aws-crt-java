@@ -13,8 +13,9 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  */
 public class TlsContext extends CrtResource {
 
-    private int cipherPreference;
-    private int minimumTlsVersion;
+    private TlsCipherPreference cipherPreference;
+    private TlsContextOptions.TlsVersions minimumTlsVersion;
+
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
@@ -24,8 +25,8 @@ public class TlsContext extends CrtResource {
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
         acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-        this.cipherPreference = options.tlsCipherPreference.getValue();
-        this.minimumTlsVersion = options.minTlsVersion.getValue();
+        this.cipherPreference = options.tlsCipherPreference;
+        this.minimumTlsVersion = options.minTlsVersion;
     }
 
     /**
@@ -35,8 +36,8 @@ public class TlsContext extends CrtResource {
     public TlsContext() throws CrtRuntimeException  {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
-            this.cipherPreference = options.tlsCipherPreference.getValue();
-            this.minimumTlsVersion = options.minTlsVersion.getValue();
+            this.cipherPreference = options.tlsCipherPreference;
+            this.minimumTlsVersion = options.minTlsVersion;
         }
     }
 
@@ -61,17 +62,17 @@ public class TlsContext extends CrtResource {
 
     private static native void tlsContextDestroy(long elg);
 
-      /**
-       * Returns the TLS cipher preference native value configured on this context.
-       *
-       * @return native int value of the TlsCipherPreference
-       */
-      public int getCipherPreference() { return cipherPreference; }
+    /**
+     * Returns the {@link TlsCipherPreference} configured on this context.
+     *
+     * @return the cipher preference
+     */
+    public TlsCipherPreference getCipherPreference() { return cipherPreference; }
 
-      /**
-       * Returns the minimum TLS version native value configured on this context.
-       *
-       * @return native int value of the TlsVersions
-       */
-      public int getMinimumTlsVersion() { return minimumTlsVersion; }
+    /**
+     * Returns the minimum {@link TlsContextOptions.TlsVersions TLS version} configured on this context.
+     *
+     * @return the minimum TLS version
+     */
+    public TlsContextOptions.TlsVersions getMinimumTlsVersion() { return minimumTlsVersion; }
 };

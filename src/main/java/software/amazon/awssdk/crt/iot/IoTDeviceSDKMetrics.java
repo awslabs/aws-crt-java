@@ -46,6 +46,7 @@ public class IoTDeviceSDKMetrics {
 
     public IoTDeviceSDKMetrics() {
         this.libraryName = "IoTDeviceSDK/Java";
+        this.metadataEntries = new ArrayList<>();
     }
 
     public IoTDeviceSDKMetrics(String libraryName, List<IoTMetricsMetadata> metadataEntries) {
@@ -108,14 +109,14 @@ public class IoTDeviceSDKMetrics {
      * - G (socket_implementation): detected from platform
      *
      * Conditionally includes (only when not DEFAULT):
-     * A (retry_jitter_mode),
-     * B (session_behavior),
-     * C (offline_queue_behavior),
-     * D (outbound_topic_alias),
-     * E (inbound_topic_alias),
-     * H (http_proxy_type),
-     * J (tls_cipher_preference),
-     * K (minimum_tls_version)
+     * - A (retry_jitter_mode),
+     * - B (session_behavior),
+     * - C (offline_queue_behavior),
+     * - D (outbound_topic_alias),
+     * - E (inbound_topic_alias),
+     * - H (http_proxy_type),
+     * - J (tls_cipher_preference),
+     * - K (minimum_tls_version)
      *
      * Feature I (certificate_source) is set at the IoT SDK level, not here.
      *
@@ -184,7 +185,9 @@ public class IoTDeviceSDKMetrics {
      * - G (socket_implementation): detected from platform
      *
      * Conditionally includes:
-     * H (http_proxy_type), J (tls_cipher_preference), K (minimum_tls_version)
+     * - H (http_proxy_type)
+     * - J (tls_cipher_preference)
+     * - K (minimum_tls_version)
      *
      * @param proxyOptions optional HTTP proxy options from the connection
      * @param tlsCtx optional TLS context used by the connection
@@ -235,11 +238,12 @@ public class IoTDeviceSDKMetrics {
 
 
     /**
+     * <p>
      * Metrics creation logic:
-     * 1. CRTVersion: auto-set from package version, not overridable by user
-     * 2. IoTSDKMetricsVersion: always set to current IOT_SDK_METRICS_FEATURE_VERSION
-     * 3. IoTSDKFeature: merged if user version matches, else CRT only
-     * 4. Other user metadata: passed through unchanged
+     * - CRTVersion: auto-set from package version, not overridable by user
+     * - IoTSDKMetricsVersion: always set to current IOT_SDK_METRICS_FEATURE_VERSION
+     * - IoTSDKFeature: merged if user version matches, else CRT only
+     * - Other user metadata: passed through unchanged
      *
      * @param userMetrics optional metrics from a higher-level IoT SDK (may be {@code null})
      * @param crtFeatureList encoded CRT feature list string
@@ -267,8 +271,7 @@ public class IoTDeviceSDKMetrics {
             }
         }
 
-        if (userMetricsVersion != null && isNumeric(userMetricsVersion)
-                && Integer.parseInt(userMetricsVersion) == IOT_SDK_METRICS_FEATURE_VERSION) {
+        if (parsedVersionMatches(userMetricsVersion)) {
             metadata.put("IoTSDKFeature", mergeFeatureLists(crtFeatureList, userFeature));
         } else {
             metadata.put("IoTSDKFeature", mergeFeatureLists(crtFeatureList, ""));
@@ -435,15 +438,16 @@ public class IoTDeviceSDKMetrics {
     }
 
     /**
-     * Tests whether a string parses as a base-10 integer.
+     * Returns {@code true} when {@code userMetricsVersion} parses as an integer equal to
+     * {@link #IOT_SDK_METRICS_FEATURE_VERSION}. Null and non-numeric inputs return {@code false}.
      *
-     * @param str the string to test (may be {@code null})
-     * @return {@code true} if {@code str} parses via {@link Integer#parseInt(String)}, {@code false} otherwise
+     * @param userMetricsVersion the user-supplied {@code IoTSDKMetricsVersion} string (may be {@code null})
+     * @return {@code true} if the userMetricsVersion matches the current schema, {@code false} otherwise
      */
-    private static boolean isNumeric(String str) {
+    private static boolean parsedVersionMatches(String userMetricsVersion) {
+        if (userMetricsVersion == null) return false;
         try {
-            Integer.parseInt(str);
-            return true;
+            return Integer.parseInt(userMetricsVersion) == IOT_SDK_METRICS_FEATURE_VERSION;
         } catch (NumberFormatException e) {
             return false;
         }

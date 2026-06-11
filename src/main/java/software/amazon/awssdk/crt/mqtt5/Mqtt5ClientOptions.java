@@ -292,10 +292,10 @@ public class Mqtt5ClientOptions {
      * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
      * Default is false (metrics enabled).
      *
-     * @param disable true to disable metrics, false to enable (default)
+     * @param disableMetrics true to disable metrics, false to enable (default)
      */
-    public void setDisableMetrics(boolean disable) {
-        this.disableMetrics = disable;
+    public void setDisableMetrics(boolean disableMetrics) {
+        this.disableMetrics = disableMetrics;
     }
 
     /**
@@ -906,11 +906,11 @@ public class Mqtt5ClientOptions {
          * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
          * Default is false (metrics enabled).
          *
-         * @param disable true to disable metrics, false to enable (default)
+         * @param disableMetrics true to disable metrics, false to enable (default)
          * @return The Mqtt5ClientOptionsBuilder after setting the metrics option
          */
-        public Mqtt5ClientOptionsBuilder withDisableMetrics(boolean disable) {
-            this.disableMetrics = disable;
+        public Mqtt5ClientOptionsBuilder withDisableMetrics(boolean disableMetrics) {
+            this.disableMetrics = disableMetrics;
             return this;
         }
 

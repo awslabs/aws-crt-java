@@ -547,10 +547,10 @@ public final class MqttConnectionConfig extends CrtResource {
      * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
      * Default is false (metrics enabled).
      *
-     * @param disable true to disable metrics, false to enable (default)
+     * @param disableMetrics true to disable metrics, false to enable (default)
      */
-    public void setDisableMetrics(boolean disable) {
-        this.disableMetrics = disable;
+    public void setDisableMetrics(boolean disableMetrics) {
+        this.disableMetrics = disableMetrics;
     }
 
     /**

@@ -85,13 +85,7 @@ public class IoTDeviceSDKMetrics {
      * @return the merged metrics object ready to be passed to JNI
      */
     public static IoTDeviceSDKMetrics createMetricsMqtt3(MqttConnectionConfig config) {
-        TlsContext tls = null;
-        if (config.getMqttClient() != null) {
-            tls = config.getMqttClient().getTlsContext();
-        } else if (config.getMqtt5Client() != null) {
-            tls = config.getMqtt5Client().getClientOptions().getTlsContext();
-        }
-        String crtFeatureList = getEncodedFeatureListMqtt3(config.getHttpProxyOptions(), tls);
+        String crtFeatureList = getEncodedFeatureListMqtt3(config.getHttpProxyOptions(), config.getTlsContext());
         return createMetrics(config.getMetrics(), crtFeatureList);
     }
 

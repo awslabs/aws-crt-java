@@ -13,6 +13,8 @@ import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
+import software.amazon.awssdk.crt.io.TlsContext;
+
 
 /**
  * Encapsulates all per-mqtt-connection configuration
@@ -579,6 +581,21 @@ public final class MqttConnectionConfig extends CrtResource {
      */
     public IoTDeviceSDKMetrics getMetrics() {
         return metrics;
+    }
+
+    /**
+     * Returns the {@link TlsContext} this connection will be resolved from
+     * the underlying {@link MqttClient} or {@link Mqtt5Client}.
+     *
+     * @return the TLS context, or {@code null} if neither client is set or no TLS is configured
+     */
+    public TlsContext getTlsContext() {
+        if (mqttClient != null) {
+            return mqttClient.getTlsContext();
+        } else if (mqtt5Client != null) {
+            return mqtt5Client.getClientOptions().getTlsContext();
+        }
+        return null;
     }
 
 

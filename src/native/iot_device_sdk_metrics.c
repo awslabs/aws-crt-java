@@ -71,7 +71,7 @@ static int s_parse_string_pair_list(
         jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, key_field_id);
         jstring value_jstr = (jstring)(*env)->GetObjectField(env, entry, value_field_id);
 
-        /* Accumulate byte lengths (modified-UTF8). Empty strings contribute 0 — that's valid. */
+        /* Accumulate byte lengths (modified-UTF8). */
         total_size += (size_t)(*env)->GetStringUTFLength(env, key_jstr);
         total_size += (size_t)(*env)->GetStringUTFLength(env, value_jstr);
 

@@ -80,6 +80,25 @@ public final class TlsContextOptions extends CrtResource {
      */
     public boolean verifyPeer = false;
 
+    /**
+     * Set whether or not certificate revocation checking is disabled during TLS negotiation.
+     *
+     * On Windows (SChannel), when enabled (the default), the TLS handshake will make outbound
+     * network calls to CRL/OCSP revocation endpoints. In environments without internet access
+     * (e.g., private subnets with only VPC endpoints), this can cause the handshake to block
+     * for minutes while waiting for network timeouts.
+     * 
+     * On Linux, when enabled (the defualt), the TLS handhake will check the server-stapled
+     * OCSP.
+     * 
+     * On Apple platforms, the revocation check is always skipped.
+     *
+     * Set this to true to skip revocation checking entirely.
+     *
+     * Default is false (revocation checking enabled).
+     */
+    public boolean certificateRevocationCheckDisabled = false;
+
     private String certificate;
     private String privateKey;
     private String certificatePath;
@@ -119,6 +138,7 @@ public final class TlsContextOptions extends CrtResource {
                 caFile,
                 caDir,
                 verifyPeer,
+                certificateRevocationCheckDisabled,
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
@@ -551,6 +571,16 @@ public final class TlsContextOptions extends CrtResource {
         return this.withVerifyPeer(true);
     }
 
+    /**
+     * Disables certificate revocation checking during TLS negotiation.
+     *
+     * @return this
+     */
+    public TlsContextOptions withCertificateRevocationCheckDisabled() {
+        this.certificateRevocationCheckDisabled = true;
+        return this;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -566,6 +596,7 @@ public final class TlsContextOptions extends CrtResource {
                 String caFile,
                 String caDir,
                 boolean verifyPeer,
+                boolean certificateRevocationCheckDisabled,
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,

@@ -88,6 +88,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     jstring jni_ca_filepath,
     jstring jni_ca_dirpath,
     jboolean jni_verify_peer,
+    jboolean jni_certificate_revocation_check_disabled,
     jstring jni_pkcs12_path,
     jstring jni_pkcs12_password,
     jobject jni_pkcs11_options,
@@ -304,6 +305,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_TlsContextOptions_tlsContextOpt
     tls->options.minimum_tls_version = (enum aws_tls_versions)jni_min_tls_version;
     tls->options.cipher_pref = (enum aws_tls_cipher_pref)jni_cipher_pref;
     tls->options.verify_peer = jni_verify_peer != 0;
+    tls->options.disable_certificate_revocation_check = jni_certificate_revocation_check_disabled != 0;
 
     if (jni_alpn) {
         tls->alpn_list = aws_jni_new_string_from_jstring(env, jni_alpn);

@@ -127,22 +127,34 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
     for (jint i = 0; i < count; i++) {
         /* Call List.get(i) to get the IoTMetricsMetadata object */
         jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
-        if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
+        if (!entry || aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
             goto on_error;
         }
 
-        /* Read key and value jstrings from the entry */
+        /* Read the key field. Empty string is allowed; null Java field is not. */
         jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.key_field_id);
+        if (aws_jni_check_and_clear_exception(env) || !key_jstr) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null key at index %d", (int)i);
+            goto on_error;
+        }
+
+        /* Read the value field. Empty string is allowed; null Java field is not. */
         jstring value_jstr =
             (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.value_field_id);
+        if (aws_jni_check_and_clear_exception(env) || !value_jstr) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null value at index %d", (int)i);
+            goto on_error;
+        }
 
-        /* Key: acquire JVM bytes → copy into own buffer → release JVM bytes */
+        /* Key: acquire JVM bytes → copy into own buffer → release JVM bytes.
+         * The local copy lets us hold onto the data after the JVM release. */
         struct aws_metadata_buf_holder holder_key;
         struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, key_jstr);
         aws_byte_buf_init_copy_from_cursor(&holder_key.buffer, allocator, tmp_cursor);
         holder_key.cursor = aws_byte_cursor_from_buf(&holder_key.buffer);
         aws_jni_byte_cursor_from_jstring_release(env, key_jstr, tmp_cursor);
+        key_jstr = NULL;
 
         /* Value: same pattern */
         struct aws_metadata_buf_holder holder_value;
@@ -150,6 +162,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         aws_byte_buf_init_copy_from_cursor(&holder_value.buffer, allocator, tmp_cursor);
         holder_value.cursor = aws_byte_cursor_from_buf(&holder_value.buffer);
         aws_jni_byte_cursor_from_jstring_release(env, value_jstr, tmp_cursor);
+        value_jstr = NULL;
 
         /* Store holders so destroy can free each buffer later */
         aws_array_list_push_back(&java_metrics->metadata_bufs, &holder_key);
@@ -166,15 +179,13 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].key),
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].value));
 
-        java_metrics->metadata_count++;
-
-        /* Release JNI local refs for this iteration */
-        (*env)->DeleteLocalRef(env, key_jstr);
-        (*env)->DeleteLocalRef(env, value_jstr);
+        /* Release JNI local ref for this iteration. Per JNI spec, DeleteLocalRef
+         * with NULL is a no-op, so the jstrings (now NULL after release) are safe. */
         (*env)->DeleteLocalRef(env, entry);
     }
 
-    /* Point the C metrics struct at our parsed data */
+    /* Point the C metrics struct at our parsed data.*/
+    java_metrics->metadata_count = (size_t)count;
     java_metrics->metrics.metadata_entries = java_metrics->metadata_entries;
     java_metrics->metrics.metadata_count = java_metrics->metadata_count;
 

@@ -38,6 +38,7 @@ public class IoTDeviceSDKMetrics {
     private static final String PROTOCOL_VERSION = "F";
     private static final String SOCKET_IMPLEMENTATION = "G";
     private static final String HTTP_PROXY_TYPE = "H";
+    @SuppressWarnings("unused")
     private static final String CERTIFICATE_SOURCE = "I";
     private static final String TLS_CIPHER_PREFERENCE = "J";
     private static final String MINIMUM_TLS_VERSION = "K";
@@ -46,7 +47,6 @@ public class IoTDeviceSDKMetrics {
 
     public IoTDeviceSDKMetrics() {
         this.libraryName = "IoTDeviceSDK/Java";
-        this.metadataEntries = new ArrayList<>();
     }
 
     public IoTDeviceSDKMetrics(String libraryName, List<IoTMetricsMetadata> metadataEntries) {
@@ -402,6 +402,7 @@ public class IoTDeviceSDKMetrics {
      *         or {@code null} for system default/unknown
      */
     private static String tlsCipherPreferenceValue(TlsCipherPreference pref) {
+        if (pref == null) return null;
         switch (pref) {
             case TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05: return "A"; // TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05
             case TLS_CIPHER_PQ_DEFAULT: return "B"; // TLS_CIPHER_PQ_DEFAULT
@@ -418,6 +419,7 @@ public class IoTDeviceSDKMetrics {
      *         {@code "D"} for TLSv1.2, {@code "E"} for TLSv1.3, or {@code null} for system default/unknown
      */
     private static String minimumTlsVersionValue(TlsContextOptions.TlsVersions version) {
+        if (version == null) return null;
         switch (version) {
             case SSLv3: return "A"; // SSLv3
             case TLSv1: return "B"; // TLSv1

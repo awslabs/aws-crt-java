@@ -20,11 +20,10 @@
 #include <java_class_ids.h>
 
 static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
- struct aws_metadata_buf_holder {
-      struct aws_byte_cursor cursor;
-      struct aws_byte_buf buffer;
-  };
-  
+struct aws_metadata_buf_holder {
+    struct aws_byte_cursor cursor;
+    struct aws_byte_buf buffer;
+};
 
 /* Frees all native memory associated with a parsed metrics struct. */
 void aws_mqtt_iot_metrics_java_jni_destroy(
@@ -121,10 +120,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     /* Init array_list to hold individual byte_bufs (2 per entry: key + value) */
     if (aws_array_list_init_dynamic(
-            &java_metrics->metadata_bufs,
-            allocator,
-            (size_t)count * 2,
-            sizeof(struct aws_metadata_buf_holder))) {
+            &java_metrics->metadata_bufs, allocator, (size_t)count * 2, sizeof(struct aws_metadata_buf_holder))) {
         goto on_error;
     }
 

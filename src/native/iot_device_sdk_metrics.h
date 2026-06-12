@@ -12,7 +12,7 @@
 struct aws_mqtt_iot_metrics_java_jni {
     struct aws_mqtt_iot_metrics metrics;
     struct aws_byte_buf library_name_buf;
-    struct aws_byte_buf metadata_storage;
+    struct aws_array_list metadata_bufs;
     struct aws_mqtt_metadata_entry *metadata_entries;
     size_t metadata_count;
 };

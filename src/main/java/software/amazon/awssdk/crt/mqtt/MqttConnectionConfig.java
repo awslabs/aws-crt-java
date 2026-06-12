@@ -598,7 +598,6 @@ public final class MqttConnectionConfig extends CrtResource {
         return null;
     }
 
-
     /**
      * Creates a (shallow) clone of this config object
      *

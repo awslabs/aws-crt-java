@@ -6,10 +6,9 @@
 /**
  * JNI bridge for IoT Device SDK Metrics.
  *
- * This file is responsible for converting the Java IoTDeviceSDKMetrics object
- * (library name + metadata key-value entries) into a native aws_mqtt_iot_metrics
- * struct that the C MQTT layer uses to append SDK telemetry to the CONNECT packet
- * username field.
+ * Converts a Java IoTDeviceSDKMetrics object (library name + metadata key-value
+ * entries) into a native aws_mqtt_iot_metrics struct that the C MQTT layer uses
+ * to append SDK telemetry to the CONNECT packet username field.
  *
  */
 #include <jni.h>
@@ -21,130 +20,11 @@
 #include <java_class_ids.h>
 
 static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
-
-/*******************************************************************************
- * HELPER FUNCTIONS
- ******************************************************************************/
-/**
- * Parse a java list of objects (each having a String key field and a String value field)
- * into a contiguous buffer.
- *
- * Two-pass approach:
- *  Pass 1 - measure total byte size of all keys and value
- *  Pass 2 - copy into one buffer, set cursors, pointing into it.
- *
- * @param env JNI environment
- * @param allocator     CRT allocator
- * @param java_list     Java List jobject (must not be NULL, count must be > 0)
- * @param count         Number of elements in the list
- * @param key_field_id  JNI field ID for the String key on each list element
- * @param value_field_id JNI field ID for the String value on each list element
- * @param out_storage   Output buffer that will own all string bytes
- * @param out_entries   Pre-allocated array of count entries to populate
- *
- * @return AWS_OP_SUCCESS or AWS_OP_ERR
- */
-static int s_parse_string_pair_list(
-    JNIEnv *env,
-    struct aws_allocator *allocator,
-    jobject java_list,
-    size_t count,
-    jfieldID key_field_id,
-    jfieldID value_field_id,
-    struct aws_byte_buf *out_storage,
-    struct aws_mqtt_metadata_entry *out_entries) {
-
-    /*
-     * First pass: iterate all entries to compute the total byte size needed for
-     * all key and value strings combined. This lets us do a single allocation.
-     */
-    size_t total_size = 0;
-    for (size_t i = 0; i < count; i++) {
-        /* Call List.get(i) to retrieve the list object at this index */
-        jobject entry = (*env)->CallObjectMethod(env, java_list, boxed_list_properties.list_get_id, (jint)i);
-        if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
-            return AWS_OP_ERR;
-        }
-
-        /* Read the key and value String fields from the entry */
-        jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, key_field_id);
-        jstring value_jstr = (jstring)(*env)->GetObjectField(env, entry, value_field_id);
-
-        /* Accumulate byte lengths (modified-UTF8). */
-        total_size += (size_t)(*env)->GetStringUTFLength(env, key_jstr);
-        total_size += (size_t)(*env)->GetStringUTFLength(env, value_jstr);
-
-        /* Release local refs to avoid exhausting JNI local ref table in large lists */
-        (*env)->DeleteLocalRef(env, key_jstr);
-        (*env)->DeleteLocalRef(env, value_jstr);
-        (*env)->DeleteLocalRef(env, entry);
-    }
-    AWS_LOGF_DEBUG(
-        AWS_LS_MQTT_GENERAL,
-        "IoTDeviceSDKMetrics: first pass complete, total_size=%zu for %d entries",
-        total_size,
-        (int)count);
-    /* Allocate one contiguous buffer for all strings */
-    if (aws_byte_buf_init(out_storage, allocator, total_size)) {
-        AWS_LOGF_ERROR(
-            AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to allocate %zu bytes for metadata storage", total_size);
-        return AWS_OP_ERR;
-    }
-
-    /*
-     * Second pass: copy each key/value string into the contiguous buffer and
-     * build aws_byte_cursor structs that point into it at the correct offsets.
-     */
-    for (size_t i = 0; i < count; i++) {
-        jobject entry = (*env)->CallObjectMethod(env, java_list, boxed_list_properties.list_get_id, (jint)i);
-        if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
-            return AWS_OP_ERR;
-        }
-
-        jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, key_field_id);
-        jstring value_jstr = (jstring)(*env)->GetObjectField(env, entry, value_field_id);
-
-        /* Acquire the raw UTF-8 bytes from the JVM for the key string */
-        struct aws_byte_cursor key_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, key_jstr);
-
-        /* Record where in the buffer this key will start */
-        size_t key_offset = out_storage->len;
-        /* Copy key bytes into our contiguous buffer */
-        aws_byte_buf_append(out_storage, &key_cursor);
-        /* Release the JVM's internal string memory*/
-        aws_jni_byte_cursor_from_jstring_release(env, key_jstr, key_cursor);
-
-        /* same pattern as above */
-        struct aws_byte_cursor value_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, value_jstr);
-        size_t value_offset = out_storage->len;
-        aws_byte_buf_append(out_storage, &value_cursor);
-        aws_jni_byte_cursor_from_jstring_release(env, value_jstr, value_cursor);
-
-        out_entries[i].key = aws_byte_cursor_from_array(out_storage->buffer + key_offset, key_cursor.len);
-        out_entries[i].value = aws_byte_cursor_from_array(out_storage->buffer + value_offset, value_cursor.len);
-
-        AWS_LOGF_DEBUG(
-            AWS_LS_MQTT_GENERAL,
-            "IoTDeviceSDKMetrics: metadata[%d] key=\"" PRInSTR "\" value=\"" PRInSTR "\"",
-            (int)i,
-            AWS_BYTE_CURSOR_PRI(out_entries[i].key),
-            AWS_BYTE_CURSOR_PRI(out_entries[i].value));
-
-        (*env)->DeleteLocalRef(env, key_jstr);
-        (*env)->DeleteLocalRef(env, value_jstr);
-        (*env)->DeleteLocalRef(env, entry);
-    }
-
-    AWS_LOGF_DEBUG(
-        AWS_LS_MQTT_GENERAL,
-        "IoTDeviceSDKMetrics: second pass complete, %d entries parsed into %zu bytes",
-        (int)count,
-        out_storage->len);
-
-    return AWS_OP_SUCCESS;
-}
+ struct aws_metadata_buf_holder {
+      struct aws_byte_cursor cursor;
+      struct aws_byte_buf buffer;
+  };
+  
 
 /* Frees all native memory associated with a parsed metrics struct. */
 void aws_mqtt_iot_metrics_java_jni_destroy(
@@ -158,18 +38,28 @@ void aws_mqtt_iot_metrics_java_jni_destroy(
     }
     AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Destroying IoTDeviceSDKMetrics", (void *)java_metrics);
 
+    /* Free the library name buffer */
     if (aws_byte_buf_is_valid(&java_metrics->library_name_buf)) {
         aws_byte_buf_clean_up(&java_metrics->library_name_buf);
     }
 
-    if (aws_byte_buf_is_valid(&java_metrics->metadata_storage)) {
-        aws_byte_buf_clean_up(&java_metrics->metadata_storage);
+    /* Free each individual key/value buffer stored in the array_list */
+    if (aws_array_list_is_valid(&java_metrics->metadata_bufs)) {
+        size_t buf_count = aws_array_list_length(&java_metrics->metadata_bufs);
+        for (size_t i = 0; i < buf_count; i++) {
+            struct aws_metadata_buf_holder *holder = NULL;
+            aws_array_list_get_at_ptr(&java_metrics->metadata_bufs, (void **)&holder, i);
+            aws_byte_buf_clean_up(&holder->buffer);
+        }
+        aws_array_list_clean_up(&java_metrics->metadata_bufs);
     }
 
+    /* Free the pre-allocated entries array */
     if (java_metrics->metadata_entries) {
         aws_mem_release(allocator, java_metrics->metadata_entries);
     }
 
+    /* Free the wrapper struct itself */
     aws_mem_release(allocator, java_metrics);
 }
 
@@ -181,11 +71,17 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     jobject metadata_list = NULL;
 
+    /* Zero-initialize so all fields are safe for cleanup on any error path */
     struct aws_mqtt_iot_metrics_java_jni *java_metrics =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_iot_metrics_java_jni));
 
     AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Creating IoTDeviceSDKMetrics from Java object", (void *)java_metrics);
-    /* Extract the library name string */
+
+    /*
+     * Extract the library name (e.g. "IoTDeviceSDK/Java").
+     * Copies the Java String into library_name_buf and sets metrics.library_name
+     * as a cursor pointing into that buffer.
+     */
     if (aws_get_string_from_jobject(
             env,
             java_iot_device_sdk_metrics,
@@ -200,54 +96,98 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         goto on_error;
     }
 
-    /* Get the metadata list */
+    /* Read the Java List<IoTMetricsMetadata> field */
     metadata_list = (*env)->GetObjectField(
         env, java_iot_device_sdk_metrics, iot_device_sdk_metrics_properties.metadata_entries_field_id);
 
+    /* Null list is valid — return metrics with just library name */
     if (metadata_list == NULL || aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_DEBUG(
-            AWS_LS_MQTT_GENERAL,
-            "id=%p: IoTDeviceSDKMetrics no metadata entries, returning with library name only",
-            (void *)java_metrics);
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: IoTDeviceSDKMetrics no metadata entries", (void *)java_metrics);
         return java_metrics;
     }
 
+    /* Get list size */
     jint count = (*env)->CallIntMethod(env, metadata_list, boxed_list_properties.list_size_id);
+
+    /* Empty list is valid — return metrics with just library name */
     if (aws_jni_check_and_clear_exception(env) || count <= 0) {
-        AWS_LOGF_DEBUG(
-            AWS_LS_MQTT_GENERAL,
-            "id=%p: IoTDeviceSDKMetrics metadata list empty or size() failed",
-            (void *)java_metrics);
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: IoTDeviceSDKMetrics metadata list empty", (void *)java_metrics);
         (*env)->DeleteLocalRef(env, metadata_list);
         return java_metrics;
     }
 
-    /* Allocate entry array */
+    /* Pre-allocate entries array since we know the count */
     java_metrics->metadata_entries = aws_mem_calloc(allocator, (size_t)count, sizeof(struct aws_mqtt_metadata_entry));
 
-    /* Use helper to do the two-pass parse */
-    if (s_parse_string_pair_list(
-            env,
+    /* Init array_list to hold individual byte_bufs (2 per entry: key + value) */
+    if (aws_array_list_init_dynamic(
+            &java_metrics->metadata_bufs,
             allocator,
-            metadata_list,
-            (size_t)count,
-            iot_metrics_metadata_properties.key_field_id,
-            iot_metrics_metadata_properties.value_field_id,
-            &java_metrics->metadata_storage,
-            java_metrics->metadata_entries) == AWS_OP_ERR) {
+            (size_t)count * 2,
+            sizeof(struct aws_metadata_buf_holder))) {
         goto on_error;
     }
 
-    /* Wire up the C struct */
-    java_metrics->metadata_count = (size_t)count;
+    for (jint i = 0; i < count; i++) {
+        /* Call List.get(i) to get the IoTMetricsMetadata object */
+        jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
+        if (entry == NULL || aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
+            goto on_error;
+        }
+
+        /* Read key and value jstrings from the entry */
+        jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.key_field_id);
+        jstring value_jstr =
+            (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.value_field_id);
+
+        /* Key: acquire JVM bytes → copy into own buffer → release JVM bytes */
+        struct aws_metadata_buf_holder holder_key;
+        struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, key_jstr);
+        aws_byte_buf_init_copy_from_cursor(&holder_key.buffer, allocator, tmp_cursor);
+        holder_key.cursor = aws_byte_cursor_from_buf(&holder_key.buffer);
+        aws_jni_byte_cursor_from_jstring_release(env, key_jstr, tmp_cursor);
+
+        /* Value: same pattern */
+        struct aws_metadata_buf_holder holder_value;
+        tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, value_jstr);
+        aws_byte_buf_init_copy_from_cursor(&holder_value.buffer, allocator, tmp_cursor);
+        holder_value.cursor = aws_byte_cursor_from_buf(&holder_value.buffer);
+        aws_jni_byte_cursor_from_jstring_release(env, value_jstr, tmp_cursor);
+
+        /* Store holders so destroy can free each buffer later */
+        aws_array_list_push_back(&java_metrics->metadata_bufs, &holder_key);
+        aws_array_list_push_back(&java_metrics->metadata_bufs, &holder_value);
+
+        /* Set entry cursors — point at heap memory owned by the holders */
+        java_metrics->metadata_entries[i].key = holder_key.cursor;
+        java_metrics->metadata_entries[i].value = holder_value.cursor;
+
+        AWS_LOGF_DEBUG(
+            AWS_LS_MQTT_GENERAL,
+            "IoTDeviceSDKMetrics: metadata[%d] key=\"" PRInSTR "\" value=\"" PRInSTR "\"",
+            (int)i,
+            AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].key),
+            AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].value));
+
+        java_metrics->metadata_count++;
+
+        /* Release JNI local refs for this iteration */
+        (*env)->DeleteLocalRef(env, key_jstr);
+        (*env)->DeleteLocalRef(env, value_jstr);
+        (*env)->DeleteLocalRef(env, entry);
+    }
+
+    /* Point the C metrics struct at our parsed data */
     java_metrics->metrics.metadata_entries = java_metrics->metadata_entries;
-    java_metrics->metrics.metadata_count = (size_t)count;
+    java_metrics->metrics.metadata_count = java_metrics->metadata_count;
 
     AWS_LOGF_DEBUG(
         AWS_LS_MQTT_GENERAL,
         "id=%p: IoTDeviceSDKMetrics creation complete, %d metadata entries",
         (void *)java_metrics,
         (int)count);
+
     (*env)->DeleteLocalRef(env, metadata_list);
     return java_metrics;
 

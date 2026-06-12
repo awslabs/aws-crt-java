@@ -62,7 +62,6 @@ public class IoTDeviceSDKMetrics {
 
     public void setMetadataEntries(List<IoTMetricsMetadata> metadataEntries) { this.metadataEntries = metadataEntries; }
 
-
     /**
      * Builds the final metrics object for an MQTT5 client by encoding the CRT
      * feature list from {@code clientOptions} and merging it with any
@@ -88,7 +87,6 @@ public class IoTDeviceSDKMetrics {
         String crtFeatureList = getEncodedFeatureListMqtt3(config.getHttpProxyOptions(), config.getTlsContext());
         return createMetrics(config.getMetrics(), crtFeatureList);
     }
-
 
     /**
      * Generates the encoded feature list string for metrics from MQTT5 client options.
@@ -230,7 +228,6 @@ public class IoTDeviceSDKMetrics {
         return sb.toString();
     }
 
-
     /**
      * <p>
      * Metrics creation logic:
@@ -336,7 +333,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 session behavior enum value.
      *
-     * @param value the {@code ClientSessionBehavior} ordinal
+     * @param behavior the {@code ClientSessionBehavior} ordinal
      * @return {@code "A"} for CLEAN, {@code "B"} for REJOIN_POST_SUCCESS, {@code "C"} for REJOIN_ALWAYS,
      *         or {@code null} for DEFAULT/unknown
      */
@@ -352,7 +349,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 offline queue behavior enum value.
      *
-     * @param value the {@code ClientOfflineQueueBehavior} ordinal
+     * @param behavior the {@code ClientOfflineQueueBehavior} ordinal
      * @return {@code "A"} for FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT, {@code "B"} for FAIL_QOS0_PUBLISH_ON_DISCONNECT,
      *         {@code "C"} for FAIL_ALL_ON_DISCONNECT, or {@code null} for DEFAULT/unknown
      */
@@ -368,7 +365,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an outbound topic alias behavior enum value.
      *
-     * @param value the {@code OutboundTopicAliasBehaviorType} ordinal
+     * @param behavior the {@code OutboundTopicAliasBehaviorType} ordinal
      * @return {@code "A"} for Manual, {@code "B"} for LRU, {@code "C"} for Disabled,
      *         or {@code null} for Default/unknown
      */
@@ -384,7 +381,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an inbound topic alias behavior enum value.
      *
-     * @param value the {@code InboundTopicAliasBehaviorType} ordinal
+     * @param behavior the {@code InboundTopicAliasBehaviorType} ordinal
      * @return {@code "A"} for Enabled, {@code "B"} for Disabled, or {@code null} for Default/unknown
      */
     private static String inboundTopicAliasBehaviorValue(TopicAliasingOptions.InboundTopicAliasBehaviorType behavior) {

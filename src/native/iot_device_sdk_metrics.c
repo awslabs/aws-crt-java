@@ -147,6 +147,9 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
             (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.value_field_id);
         if (aws_jni_check_and_clear_exception(env) || !value_jstr) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null value at index %d", (int)i);
+            (*env)->DeleteLocalRef(env, key_jstr);
+            (*env)->DeleteLocalRef(env, value_jstr);
+            (*env)->DeleteLocalRef(env, entry);
             goto on_error;
         }
 

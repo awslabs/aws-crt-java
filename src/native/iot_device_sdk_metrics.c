@@ -129,6 +129,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
         if (!entry || aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
+            (*env)->DeleteLocalRef(env, entry);
             goto on_error;
         }
 
@@ -136,6 +137,8 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.key_field_id);
         if (aws_jni_check_and_clear_exception(env) || !key_jstr) {
             AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null key at index %d", (int)i);
+            (*env)->DeleteLocalRef(env, key_jstr);
+            (*env)->DeleteLocalRef(env, entry);
             goto on_error;
         }
 
@@ -179,8 +182,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].key),
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].value));
 
-        /* Release JNI local ref for this iteration. Per JNI spec, DeleteLocalRef
-         * with NULL is a no-op, so the jstrings (now NULL after release) are safe. */
+        /* Release JNI local ref for this iteration. */
         (*env)->DeleteLocalRef(env, entry);
     }
 

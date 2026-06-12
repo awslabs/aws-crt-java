@@ -47,6 +47,7 @@ public class IoTDeviceSDKMetrics {
 
     public IoTDeviceSDKMetrics() {
         this.libraryName = "IoTDeviceSDK/Java";
+        this.metadataEntries = new ArrayList<>();
     }
 
     public IoTDeviceSDKMetrics(String libraryName, List<IoTMetricsMetadata> metadataEntries) {
@@ -333,7 +334,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 session behavior enum value.
      *
-     * @param behavior the {@code ClientSessionBehavior} ordinal
+     * @param behavior the {@code ClientSessionBehavior} enum
      * @return {@code "A"} for CLEAN, {@code "B"} for REJOIN_POST_SUCCESS, {@code "C"} for REJOIN_ALWAYS,
      *         or {@code null} for DEFAULT/unknown
      */
@@ -349,7 +350,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 offline queue behavior enum value.
      *
-     * @param behavior the {@code ClientOfflineQueueBehavior} ordinal
+     * @param behavior the {@code ClientOfflineQueueBehavior} enum
      * @return {@code "A"} for FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT, {@code "B"} for FAIL_QOS0_PUBLISH_ON_DISCONNECT,
      *         {@code "C"} for FAIL_ALL_ON_DISCONNECT, or {@code null} for DEFAULT/unknown
      */
@@ -365,7 +366,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an outbound topic alias behavior enum value.
      *
-     * @param behavior the {@code OutboundTopicAliasBehaviorType} ordinal
+     * @param behavior the {@code OutboundTopicAliasBehaviorType} enum
      * @return {@code "A"} for Manual, {@code "B"} for LRU, {@code "C"} for Disabled,
      *         or {@code null} for Default/unknown
      */
@@ -381,7 +382,7 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an inbound topic alias behavior enum value.
      *
-     * @param behavior the {@code InboundTopicAliasBehaviorType} ordinal
+     * @param behavior the {@code InboundTopicAliasBehaviorType} enum
      * @return {@code "A"} for Enabled, {@code "B"} for Disabled, or {@code null} for Default/unknown
      */
     private static String inboundTopicAliasBehaviorValue(TopicAliasingOptions.InboundTopicAliasBehaviorType behavior) {

@@ -15,6 +15,7 @@ public class TlsContext extends CrtResource {
 
     private TlsCipherPreference cipherPreference;
     private TlsContextOptions.TlsVersions minimumTlsVersion;
+    private TlsContextOptions.CertificateSource certificateSource;
 
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
@@ -27,6 +28,7 @@ public class TlsContext extends CrtResource {
         acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
         this.cipherPreference = options.tlsCipherPreference;
         this.minimumTlsVersion = options.minTlsVersion;
+        this.certificateSource = options.getCertificateSource();
     }
 
     /**
@@ -38,6 +40,7 @@ public class TlsContext extends CrtResource {
             acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
             this.cipherPreference = options.tlsCipherPreference;
             this.minimumTlsVersion = options.minTlsVersion;
+            this.certificateSource = options.getCertificateSource();
         }
     }
 
@@ -75,4 +78,12 @@ public class TlsContext extends CrtResource {
      * @return the minimum TLS version
      */
     public TlsContextOptions.TlsVersions getMinimumTlsVersion() { return minimumTlsVersion; }
+
+    /**
+     * Returns the {@link TlsContextOptions.CertificateSource} of the configured mTLS, or
+     * {@code null} if no mTLS source has been set on the options used to create this context.
+     *
+     * @return the certificate source
+     */
+    public TlsContextOptions.CertificateSource getCertificateSource() { return certificateSource; }
 };

@@ -38,7 +38,6 @@ public class IoTDeviceSDKMetrics {
     private static final String PROTOCOL_VERSION = "F";
     private static final String SOCKET_IMPLEMENTATION = "G";
     private static final String HTTP_PROXY_TYPE = "H";
-    @SuppressWarnings("unused")
     private static final String CERTIFICATE_SOURCE = "I";
     private static final String TLS_CIPHER_PREFERENCE = "J";
     private static final String MINIMUM_TLS_VERSION = "K";
@@ -108,10 +107,9 @@ public class IoTDeviceSDKMetrics {
      * - D (outbound_topic_alias),
      * - E (inbound_topic_alias),
      * - H (http_proxy_type),
+     * - I (certificate_source): detected from TlsContextOptions
      * - J (tls_cipher_preference),
      * - K (minimum_tls_version)
-     *
-     * Feature I (certificate_source) is set at the IoT SDK level, not here.
      *
      * @param clientOptions MQTT5 client options containing connection configuration
      * @return the encoded feature list string
@@ -157,6 +155,9 @@ public class IoTDeviceSDKMetrics {
 
         TlsContext tlsCtx = clientOptions.getTlsContext();
         if (tlsCtx != null) {
+            String certSrc = certificateSourceValue(tlsCtx.getCertificateSource());
+            if (certSrc != null) features.add(CERTIFICATE_SOURCE + "/" + certSrc);
+
             String val = tlsCipherPreferenceValue(tlsCtx.getCipherPreference());
             if (val != null) features.add(TLS_CIPHER_PREFERENCE + "/" + val);
 
@@ -179,6 +180,7 @@ public class IoTDeviceSDKMetrics {
      *
      * Conditionally includes:
      * - H (http_proxy_type)
+     * - I (certificate_source): detected from TlsContextOptions
      * - J (tls_cipher_preference)
      * - K (minimum_tls_version)
      *
@@ -198,6 +200,9 @@ public class IoTDeviceSDKMetrics {
         }
 
         if (tlsCtx != null) {
+            String certSrc = certificateSourceValue(tlsCtx.getCertificateSource());
+            if (certSrc != null) features.add(CERTIFICATE_SOURCE + "/" + certSrc);
+
             String val = tlsCipherPreferenceValue(tlsCtx.getCipherPreference());
             if (val != null) features.add(TLS_CIPHER_PREFERENCE + "/" + val);
 
@@ -389,6 +394,25 @@ public class IoTDeviceSDKMetrics {
         switch (behavior) {
             case Enabled: return "A";
             case Disabled: return "B";
+            default: return null;
+        }
+    }
+
+    /**
+     * Encodes a {@link TlsContextOptions.CertificateSource} into its single-character metrics value.
+     *
+     * @param source the certificate source detected from the TLS context options
+     * @return {@code "A"} for CERTIFICATE_FILES, {@code "B"} for PKCS11, {@code "C"} for WINDOWS_CERT_STORE,
+     *         {@code "D"} for JAVA_KEYSTORE, {@code "E"} for PKCS12_FILE, or {@code null} if unknown/null
+     */
+    private static String certificateSourceValue(TlsContextOptions.CertificateSource source) {
+        if (source == null) return null;
+        switch (source) {
+            case CERTIFICATE_FILES: return "A";
+            case PKCS11: return "B";
+            case WINDOWS_CERT_STORE: return "C";
+            case JAVA_KEYSTORE: return "D";
+            case PKCS12_FILE: return "E";
             default: return null;
         }
     }

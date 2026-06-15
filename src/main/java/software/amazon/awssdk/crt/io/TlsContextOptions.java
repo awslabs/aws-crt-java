@@ -97,7 +97,7 @@ public final class TlsContextOptions extends CrtResource {
      *
      * Default is false (revocation checking enabled).
      */
-    public boolean certificateRevocationCheckDisabled = false;
+    public boolean noCertificateRevocation = false;
 
     private String certificate;
     private String privateKey;
@@ -138,7 +138,7 @@ public final class TlsContextOptions extends CrtResource {
                 caFile,
                 caDir,
                 verifyPeer,
-                certificateRevocationCheckDisabled,
+                noCertificateRevocation,
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
@@ -576,8 +576,8 @@ public final class TlsContextOptions extends CrtResource {
      *
      * @return this
      */
-    public TlsContextOptions withCertificateRevocationCheckDisabled() {
-        this.certificateRevocationCheckDisabled = true;
+    public TlsContextOptions withNoCertificateRevocation() {
+        this.noCertificateRevocation = true;
         return this;
     }
 
@@ -596,7 +596,7 @@ public final class TlsContextOptions extends CrtResource {
                 String caFile,
                 String caDir,
                 boolean verifyPeer,
-                boolean certificateRevocationCheckDisabled,
+                boolean noCertificateRevocation,
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,

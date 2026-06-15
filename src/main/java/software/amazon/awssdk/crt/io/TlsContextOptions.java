@@ -81,21 +81,17 @@ public final class TlsContextOptions extends CrtResource {
     public boolean verifyPeer = false;
 
     /**
-     * Set whether or not certificate revocation checking is disabled during TLS negotiation.
+     * Set to true to disable certificate revocation checking during TLS negotiation.
      *
-     * On Windows (SChannel), when enabled (the default), the TLS handshake will make outbound
-     * network calls to CRL/OCSP revocation endpoints. In environments without internet access
-     * (e.g., private subnets with only VPC endpoints), this can cause the handshake to block
-     * for minutes while waiting for network timeouts.
+     * On Windows (SChannel), this prevents the TLS handshake from making outbound network calls
+     * to CRL/OCSP revocation endpoints, which can block for minutes when the endpoints are unreachable
+     * (e.g., in private subnets without internet access).
+     *
+     * On Linux (s2n), this disables validation of OCSP stapled responses provided by the server.
+     *
+     * On Apple platforms, this is a no-op as revocation checking is not enabled by default.
      * 
-     * On Linux, when enabled (the defualt), the TLS handhake will check the server-stapled
-     * OCSP.
-     * 
-     * On Apple platforms, the revocation check is always skipped.
-     *
-     * Set this to true to skip revocation checking entirely.
-     *
-     * Default is false (revocation checking enabled).
+     * Default is false (revocation checking enabled where available).
      */
     public boolean noCertificateRevocation = false;
 

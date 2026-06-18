@@ -324,8 +324,14 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes a {@link JitterMode} into its single-character metrics value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code None}</li>
+     *   <li>{@code "B"} - {@code Full}</li>
+     *   <li>{@code "C"} - {@code Decorrelated}</li>
+     * </ul>
+     *
      * @param mode the configured jitter mode
-     * @return {@code "A"} for None, {@code "B"} for Full, {@code "C"} for Decorrelated, or {@code null} for Default/unknown
+     * @return the single-character metrics value, or {@code null} for Default/unknown
      */
     private static String retryJitterModeValue(JitterMode mode) {
         switch (mode) {
@@ -339,9 +345,14 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 session behavior enum value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code CLEAN}</li>
+     *   <li>{@code "B"} - {@code REJOIN_POST_SUCCESS}</li>
+     *   <li>{@code "C"} - {@code REJOIN_ALWAYS}</li>
+     * </ul>
+     *
      * @param behavior the {@code ClientSessionBehavior} enum
-     * @return {@code "A"} for CLEAN, {@code "B"} for REJOIN_POST_SUCCESS, {@code "C"} for REJOIN_ALWAYS,
-     *         or {@code null} for DEFAULT/unknown
+     * @return the single-character metrics value, or {@code null} for DEFAULT/unknown
      */
     private static String sessionBehaviorValue(Mqtt5ClientOptions.ClientSessionBehavior behavior) {
         switch (behavior) {
@@ -355,9 +366,14 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an MQTT5 offline queue behavior enum value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT}</li>
+     *   <li>{@code "B"} - {@code FAIL_QOS0_PUBLISH_ON_DISCONNECT}</li>
+     *   <li>{@code "C"} - {@code FAIL_ALL_ON_DISCONNECT}</li>
+     * </ul>
+     *
      * @param behavior the {@code ClientOfflineQueueBehavior} enum
-     * @return {@code "A"} for FAIL_NON_QOS1_PUBLISH_ON_DISCONNECT, {@code "B"} for FAIL_QOS0_PUBLISH_ON_DISCONNECT,
-     *         {@code "C"} for FAIL_ALL_ON_DISCONNECT, or {@code null} for DEFAULT/unknown
+     * @return the single-character metrics value, or {@code null} for DEFAULT/unknown
      */
     private static String offlineQueueBehaviorValue(Mqtt5ClientOptions.ClientOfflineQueueBehavior behavior) {
         switch (behavior) {
@@ -371,9 +387,14 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an outbound topic alias behavior enum value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code Manual}</li>
+     *   <li>{@code "B"} - {@code LRU}</li>
+     *   <li>{@code "C"} - {@code Disabled}</li>
+     * </ul>
+     *
      * @param behavior the {@code OutboundTopicAliasBehaviorType} enum
-     * @return {@code "A"} for Manual, {@code "B"} for LRU, {@code "C"} for Disabled,
-     *         or {@code null} for Default/unknown
+     * @return the single-character metrics value, or {@code null} for Default/unknown
      */
     private static String outboundTopicAliasBehaviorValue(TopicAliasingOptions.OutboundTopicAliasBehaviorType behavior) {
         switch (behavior) {
@@ -387,8 +408,13 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes an inbound topic alias behavior enum value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code Enabled}</li>
+     *   <li>{@code "B"} - {@code Disabled}</li>
+     * </ul>
+     *
      * @param behavior the {@code InboundTopicAliasBehaviorType} enum
-     * @return {@code "A"} for Enabled, {@code "B"} for Disabled, or {@code null} for Default/unknown
+     * @return the single-character metrics value, or {@code null} for Default/unknown
      */
     private static String inboundTopicAliasBehaviorValue(TopicAliasingOptions.InboundTopicAliasBehaviorType behavior) {
         switch (behavior) {
@@ -401,9 +427,16 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes a {@link TlsContextOptions.CertificateSource} into its single-character metrics value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code CERTIFICATE_FILES}</li>
+     *   <li>{@code "B"} - {@code PKCS11}</li>
+     *   <li>{@code "C"} - {@code WINDOWS_CERT_STORE}</li>
+     *   <li>{@code "D"} - {@code JAVA_KEYSTORE}</li>
+     *   <li>{@code "E"} - {@code PKCS12_FILE}</li>
+     * </ul>
+     *
      * @param source the certificate source detected from the TLS context options
-     * @return {@code "A"} for CERTIFICATE_FILES, {@code "B"} for PKCS11, {@code "C"} for WINDOWS_CERT_STORE,
-     *         {@code "D"} for JAVA_KEYSTORE, {@code "E"} for PKCS12_FILE, or {@code null} if unknown/null
+     * @return the single-character metrics value, or {@code null} if unknown/null
      */
     private static String certificateSourceValue(TlsContextOptions.CertificateSource source) {
         if (source == null) return null;
@@ -420,18 +453,37 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes a {@link TlsCipherPreference} into its single-character metrics value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06}</li>
+     *   <li>{@code "B"} - {@code TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2019_11}</li>
+     *   <li>{@code "C"} - {@code TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_02}</li>
+     *   <li>{@code "D"} - {@code TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02}</li>
+     *   <li>{@code "E"} - {@code TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07}</li>
+     *   <li>{@code "F"} - {@code TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05}</li>
+     *   <li>{@code "G"} - {@code TLS_CIPHER_PREF_PQ_TLSv1_2_2023}</li>
+     *   <li>{@code "H"} - {@code TLS_CIPHER_PQ_DEFAULT}</li>
+     *   <li>{@code "I"} - {@code TLS_CIPHER_PREF_TLSv1_2_2025}</li>
+     *   <li>{@code "J"} - {@code TLS_CIPHER_PREF_TLSv1_0_2023}</li>
+     *   <li>{@code "K"} - {@code TLS_CIPHER_NON_PQ_DEFAULT}</li>
+     * </ul>
+     *
      * @param pref the configured TLS cipher preference
-     * @return {@code "A"} for {@code TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05},
-     *         {@code "B"} for {@code TLS_CIPHER_PQ_DEFAULT},
-     *         {@code "C"} for {@code TLS_CIPHER_PREF_TLSv1_2_2025},
-     *         or {@code null} for system default/unknown
+     * @return the single-character metrics value, or {@code null} for system default/unknown
      */
     private static String tlsCipherPreferenceValue(TlsCipherPreference pref) {
         if (pref == null) return null;
         switch (pref) {
-            case TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05: return "A"; // TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05
-            case TLS_CIPHER_PQ_DEFAULT: return "B"; // TLS_CIPHER_PQ_DEFAULT
-            case TLS_CIPHER_PREF_TLSv1_2_2025: return "C"; // TLS_CIPHER_PREF_TLSv1_2_2025
+            case TLS_CIPHER_KMS_PQ_TLSv1_0_2019_06: return "A";
+            case TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2019_11: return "B";
+            case TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_02: return "C";
+            case TLS_CIPHER_PREF_KMS_PQ_SIKE_TLSv1_0_2020_02: return "D";
+            case TLS_CIPHER_PREF_KMS_PQ_TLSv1_0_2020_07: return "E";
+            case TLS_CIPHER_PREF_PQ_TLSv1_0_2021_05: return "F";
+            case TLS_CIPHER_PREF_PQ_TLSv1_2_2023: return "G";
+            case TLS_CIPHER_PQ_DEFAULT: return "H";
+            case TLS_CIPHER_PREF_TLSv1_2_2025: return "I";
+            case TLS_CIPHER_PREF_TLSv1_0_2023: return "J";
+            case TLS_CIPHER_NON_PQ_DEFAULT: return "K";
             default: return null;
         }
     }
@@ -439,9 +491,16 @@ public class IoTDeviceSDKMetrics {
     /**
      * Encodes a minimum {@link TlsContextOptions.TlsVersions TLS version} into its single-character metrics value.
      *
+     * <ul>
+     *   <li>{@code "A"} - {@code SSLv3}</li>
+     *   <li>{@code "B"} - {@code TLSv1}</li>
+     *   <li>{@code "C"} - {@code TLSv1.1}</li>
+     *   <li>{@code "D"} - {@code TLSv1.2}</li>
+     *   <li>{@code "E"} - {@code TLSv1.3}</li>
+     * </ul>
+     *
      * @param version the configured minimum TLS version
-     * @return {@code "A"} for SSLv3, {@code "B"} for TLSv1, {@code "C"} for TLSv1.1,
-     *         {@code "D"} for TLSv1.2, {@code "E"} for TLSv1.3, or {@code null} for system default/unknown
+     * @return the single-character metrics value, or {@code null} for system default/unknown
      */
     private static String minimumTlsVersionValue(TlsContextOptions.TlsVersions version) {
         if (version == null) return null;

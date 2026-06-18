@@ -26,9 +26,9 @@ import software.amazon.awssdk.crt.io.TlsContextOptions.CertificateSource;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IoTMetricEncoderTest extends CrtTestFixture {
+public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
 
-    public IoTMetricEncoderTest() {}
+    public IoTDeviceSDKMetricsTest() {}
 
     private MqttConnectionConfig createMqtt3Config(IoTDeviceSDKMetrics userMetrics) {
         MqttConnectionConfig config = new MqttConnectionConfig();

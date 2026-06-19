@@ -611,7 +611,15 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
 
 struct http_stream_write_data_callback_data {
     struct http_stream_binding *stream_cb_data;
-    struct aws_byte_buf data_buf;
+    /*
+     * Global ref to the Java byte[] passed in by the caller, and the aws_byte_cursor acquired
+     * from it via aws_jni_byte_cursor_from_jbyteArray_acquire. Held on callback_data so the
+     * JNI-side bytes stay valid for the full async write, and released from
+     * s_cleanup_write_data_callback_data once the write completes (or fails synchronously).
+     * Avoids copying the payload into a native aws_byte_buf before sending.
+     */
+    jbyteArray data_array;
+    struct aws_byte_cursor data_cur;
     struct aws_input_stream *data_stream;
     jobject completion_callback;
 };
@@ -622,7 +630,11 @@ static void s_cleanup_write_data_callback_data(
     if (callback_data->data_stream) {
         aws_input_stream_destroy(callback_data->data_stream);
     }
-    aws_byte_buf_clean_up(&callback_data->data_buf);
+    if (callback_data->data_array) {
+        /* Release the JNI pin/copy (needs the jbyteArray + original cursor), then drop our global ref. */
+        aws_jni_byte_cursor_from_jbyteArray_release(env, callback_data->data_array, callback_data->data_cur);
+        (*env)->DeleteGlobalRef(env, callback_data->data_array);
+    }
     (*env)->DeleteGlobalRef(env, callback_data->completion_callback);
     aws_mem_release(aws_jni_get_allocator(), callback_data);
 }
@@ -676,12 +688,19 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
     };
 
     if (data != NULL) {
-        struct aws_byte_cursor data_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, data);
-        aws_byte_buf_init_copy_from_cursor(&callback_data->data_buf, aws_jni_get_allocator(), data_cur);
-        aws_jni_byte_cursor_from_jbyteArray_release(env, data, data_cur);
+        /*
+         * Promote to a global ref so it survives beyond this JNI frame — the async write
+         * completion fires on the event-loop thread after this function returns.
+         * Acquire the cursor once, store both on callback_data, and let
+         * s_cleanup_write_data_callback_data release them when the write finishes.
+         * aws_input_stream_new_from_cursor copies the {ptr,len} cursor struct into its own
+         * state, but does NOT copy the underlying bytes, so this path avoids the payload copy.
+         */
+        callback_data->data_array = (*env)->NewGlobalRef(env, data);
+        callback_data->data_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, data);
 
-        data_cur = aws_byte_cursor_from_buf(&callback_data->data_buf);
-        callback_data->data_stream = aws_input_stream_new_from_cursor(aws_jni_get_allocator(), &data_cur);
+        callback_data->data_stream =
+            aws_input_stream_new_from_cursor(aws_jni_get_allocator(), &callback_data->data_cur);
         options.data = callback_data->data_stream;
     }
 
@@ -703,6 +722,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_stream_binding;
     struct aws_http_stream *stream = binding->native_stream;
+    if (binding->java_http_stream_base) {
+        /* Already activated */
+        return;
+    }
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");

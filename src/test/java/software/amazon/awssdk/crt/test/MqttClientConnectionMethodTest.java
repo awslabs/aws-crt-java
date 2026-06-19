@@ -113,6 +113,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         Assume.assumeNotNull(
             AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY_PASSWORD);
+        // When set, TLS backend on macOS switches from Secure Transport to s2n-tls, which doesn't support PKCS#12.
+        Assume.assumeTrue("Skipped: AWS_CRT_USE_NON_FIPS_TLS_13 is set",
+            System.getenv("AWS_CRT_USE_NON_FIPS_TLS_13") == null);
 
         TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 

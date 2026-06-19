@@ -80,6 +80,21 @@ public final class TlsContextOptions extends CrtResource {
      */
     public boolean verifyPeer = false;
 
+    /**
+     * Set to true to disable certificate revocation checking during TLS negotiation.
+     *
+     * On Windows (SChannel), this prevents the TLS handshake from making outbound network calls
+     * to CRL/OCSP revocation endpoints, which can block for minutes when the endpoints are unreachable
+     * (e.g., in private subnets without internet access).
+     *
+     * On Linux (s2n), this disables validation of OCSP stapled responses provided by the server.
+     *
+     * On Apple platforms, this is a no-op as revocation checking is not enabled by default.
+     * 
+     * Default is false (revocation checking enabled where available).
+     */
+    public boolean noCertificateRevocation = false;
+
     private String certificate;
     private String privateKey;
     private String certificatePath;
@@ -119,6 +134,7 @@ public final class TlsContextOptions extends CrtResource {
                 caFile,
                 caDir,
                 verifyPeer,
+                noCertificateRevocation,
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
@@ -551,6 +567,16 @@ public final class TlsContextOptions extends CrtResource {
         return this.withVerifyPeer(true);
     }
 
+    /**
+     * Disables certificate revocation checking during TLS negotiation.
+     *
+     * @return this
+     */
+    public TlsContextOptions withNoCertificateRevocation() {
+        this.noCertificateRevocation = true;
+        return this;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -566,6 +592,7 @@ public final class TlsContextOptions extends CrtResource {
                 String caFile,
                 String caDir,
                 boolean verifyPeer,
+                boolean noCertificateRevocation,
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,

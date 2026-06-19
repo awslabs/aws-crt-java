@@ -52,6 +52,21 @@ public class Http1StreamManager implements AutoCloseable {
     /**
      * Request an HTTP/1.1 HttpStream from StreamManager.
      *
+     * @param request         HttpRequest. The Request to make to the Server.
+     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
+     * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
+     * @return A future for a HttpStream that will be completed when the stream is
+     *         acquired.
+     * @throws CrtRuntimeException Exception happens from acquiring stream.
+     */
+    public CompletableFuture<HttpStream> acquireStream(HttpRequest request,
+            HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
+        return this.acquireStream((HttpRequestBase) request, streamHandler, useManualDataWrites);
+    }
+
+    /**
+     * Request an HTTP/1.1 HttpStream from StreamManager.
+     *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
      * @return A future for a HttpStream that will be completed when the stream is
@@ -60,6 +75,21 @@ public class Http1StreamManager implements AutoCloseable {
      */
     public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler) {
+        return this.acquireStream(request, streamHandler, false); // overloading to ensure backward-compatibility
+    }
+
+    /**
+     * Request an HTTP/1.1 HttpStream from StreamManager.
+     *
+     * @param request         HttpRequestBase. The Request to make to the Server.
+     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
+     * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
+     * @return A future for a HttpStream that will be completed when the stream is
+     *         acquired.
+     * @throws CrtRuntimeException Exception happens from acquiring stream.
+     */
+    public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
+            HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
         HttpClientConnectionManager connManager = this.connectionManager;
 
@@ -91,9 +121,14 @@ public class Http1StreamManager implements AutoCloseable {
                             /* Release the connection back */
                             connManager.releaseConnection(conn);
                         }
-                    });
+                    }, useManualDataWrites);
                     completionFuture.complete((HttpStream) stream);
-                    /* Active the stream for user */
+                    /**
+                     * Activate the stream for user after completing the future, otherwise the
+                     * callbacks may be invoked without the stream being completed.
+                     *
+                     * `activate` is idempotent.
+                     **/
                     try {
                         stream.activate();
                     } catch (CrtRuntimeException e) {

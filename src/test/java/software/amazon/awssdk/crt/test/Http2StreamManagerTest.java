@@ -55,6 +55,44 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         }
     }
 
+    private Http2StreamManager createStreamManagerWithTlsConnectionOptions(URI uri, int numConnections) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts);
+                TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext)) {
+            tlsConnectionOptions.withServerName(uri.getHost());
+
+            Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
+            // Configure TLS via TlsConnectionOptions only (no withTlsContext). This is the
+            // configuration that used to NPE in the Http2StreamManager constructor.
+            connectionManagerOptions.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsConnectionOptions(tlsConnectionOptions)
+                    .withUri(uri)
+                    .withMaxConnections(numConnections);
+            options.withConnectionManagerOptions(connectionManagerOptions);
+
+            return Http2StreamManager.create(options);
+        }
+    }
+
+    @Test
+    public void testStreamManagerWithTlsConnectionOptions() throws Exception {
+        skipIfAndroid();
+        URI uri = new URI(endpoint);
+
+        try (Http2StreamManager streamManager = createStreamManagerWithTlsConnectionOptions(uri, NUM_CONNECTIONS)) {
+            Assert.assertNotNull(streamManager);
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
     private Http2Request createHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
         URI uri = new URI(endpoint);

@@ -182,7 +182,7 @@ import org.junit.Assume;
                                                     String username,
                                                     String password,
                                                     HttpProxyOptions httpProxyOptions,
-                                                    boolean metricsEnabled) throws Exception {
+                                                    boolean disableMetrics) throws Exception {
         try (EventLoopGroup elg = new EventLoopGroup(1);
              HostResolver hr = new HostResolver(elg);
              ClientBootstrap bootstrap = new ClientBootstrap(elg, hr)) {
@@ -239,7 +239,7 @@ import org.junit.Assume;
                 config.setKeepAliveSecs(0);
                 config.setProtocolOperationTimeoutMs(60000);
                 config.setConnectionCallbacks(events);
-                config.setMetricsEnabled(metricsEnabled);
+                config.setDisableMetrics(disableMetrics);
 
                 if (httpProxyOptions != null) {
                     config.setHttpProxyOptions(httpProxyOptions);
@@ -266,14 +266,14 @@ import org.junit.Assume;
         }
     }
 
-    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions, boolean metricsEnabled) throws Exception {
+    void connectDirect(TlsContext tlsContext, String endpoint, int port, String username, String password, HttpProxyOptions httpProxyOptions, boolean disableMetrics) throws Exception {
         reset();
-        MqttClientConnection connection = createMqttClientConnection(tlsContext, endpoint, port, username, password, httpProxyOptions, metricsEnabled);
+        MqttClientConnection connection = createMqttClientConnection(tlsContext, endpoint, port, username, password, httpProxyOptions, disableMetrics);
         CompletableFuture<Boolean> connected = connection.connect();
         connected.get(30, TimeUnit.SECONDS);
     }
 
-    void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions, boolean metricsEnabled) throws Exception
+    void connectWebsockets(CredentialsProvider credentialsProvider, String endpoint, int port, TlsContext tlsContext, String username, String password, HttpProxyOptions httpProxyOptions, boolean disableMetrics) throws Exception
     {
         String clientId = TEST_CLIENTID + (UUID.randomUUID()).toString();
 
@@ -324,7 +324,7 @@ import org.junit.Assume;
             config.setPort(port);
             config.setUseWebsockets(true);
             config.setConnectionCallbacks(events);
-            config.setMetricsEnabled(metricsEnabled);
+            config.setDisableMetrics(disableMetrics);
 
             if (username != null) {
                 config.setUsername(username);

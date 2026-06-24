@@ -728,7 +728,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
     jfieldID topic_aliasing_options_field_id;
-    jfieldID metrics_enabled_field_id;
+    jfieldID disable_metrics_field_id;
     jfieldID iot_device_sdk_metrics_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
@@ -1122,8 +1122,17 @@ extern struct java_cognito_credentials_provider_properties cognito_credentials_p
 struct java_iot_device_sdk_metrics_properties {
     jclass iot_device_sdk_metrics_class;
     jfieldID library_name_field_id;
+    jfieldID metadata_entries_field_id;
 };
 extern struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
+
+/* IoTMetricsMetadata */
+struct java_iot_metrics_metadata_properties {
+    jclass iot_metrics_metadata_class;
+    jfieldID key_field_id;
+    jfieldID value_field_id;
+};
+extern struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

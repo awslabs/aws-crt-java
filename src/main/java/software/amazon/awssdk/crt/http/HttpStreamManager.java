@@ -106,6 +106,33 @@ public class HttpStreamManager implements AutoCloseable {
         }
     }
 
+    /**
+     * Abort an in-flight stream obtained from this manager. Cancels the HTTP exchange
+     * and ensures the underlying connection/stream slot is properly released back to the
+     * pool so it can be reused by new requests.
+     *
+     * <p>This is the correct way to cancel an in-flight request from outside the stream
+     * callback lifecycle (e.g., on SDK timeout). Calling {@code stream.cancel()} and
+     * {@code stream.close()} directly may leak the connection slot.
+     *
+     * <p>Safe to call with null (e.g., if the stream was never acquired), after normal
+     * completion, or multiple times.
+     *
+     * @param stream the stream to abort, or null
+     */
+    public void abortStream(HttpStreamBase stream) {
+        if (this.h1StreamManager != null) {
+            this.h1StreamManager.abortStream(stream);
+        } else if (this.h2StreamManager != null) {
+            // HTTP/2 stream manager handles stream lifecycle natively;
+            // cancel+close is sufficient for H2 streams.
+            if (stream != null && !stream.isNull()) {
+                stream.cancel();
+                stream.close();
+            }
+        }
+    }
+
     @Override
     public void close() {
         if (this.h1StreamManager != null) {

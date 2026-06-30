@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.http;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages a Pool of HTTP/1.1 Streams. Creates and manages HTTP/1.1 connections
@@ -97,6 +98,11 @@ public class Http1StreamManager implements AutoCloseable {
             if (throwable != null) {
                 completionFuture.completeExceptionally(throwable);
             } else {
+                // Guard ensures the connection is released exactly once, regardless of
+                // whether release happens via onResponseComplete, activate failure, or
+                // external cancellation (e.g., SDK timeout calling cancel+close).
+                AtomicBoolean connectionReleased = new AtomicBoolean(false);
+
                 try {
                     HttpStreamBase stream = conn.makeRequest(request, new HttpStreamBaseResponseHandler() {
                         @Override
@@ -118,8 +124,10 @@ public class Http1StreamManager implements AutoCloseable {
                         @Override
                         public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                             streamHandler.onResponseComplete(stream, errorCode);
-                            /* Release the connection back */
-                            connManager.releaseConnection(conn);
+                            /* Release the connection back (at most once) */
+                            if (connectionReleased.compareAndSet(false, true)) {
+                                connManager.releaseConnection(conn);
+                            }
                         }
                     }, useManualDataWrites);
                     completionFuture.complete((HttpStream) stream);
@@ -134,11 +142,22 @@ public class Http1StreamManager implements AutoCloseable {
                     } catch (CrtRuntimeException e) {
                         /* If activate failed, complete callback will not be invoked */
                         streamHandler.onResponseComplete(stream, e.errorCode);
-                        /* Release the connection back */
+                        if (connectionReleased.compareAndSet(false, true)) {
+                            connManager.releaseConnection(conn);
+                        }
+                    }
+
+                    // If the stream was externally cancelled+closed between
+                    // completionFuture.complete() and stream.activate() above, activate()
+                    // becomes a no-op (stream handle is null) and onResponseComplete will
+                    // never fire. Detect this and release the connection.
+                    if (stream.isNull() && connectionReleased.compareAndSet(false, true)) {
                         connManager.releaseConnection(conn);
                     }
                 } catch (Exception ex) {
-                    connManager.releaseConnection(conn);
+                    if (connectionReleased.compareAndSet(false, true)) {
+                        connManager.releaseConnection(conn);
+                    }
                     completionFuture.completeExceptionally(ex);
                 }
             }

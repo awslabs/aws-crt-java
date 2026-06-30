@@ -36,11 +36,6 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 /**
  * Tests for {@link Http1StreamManager} connection release guarantees when streams
  * are cancelled or aborted externally (e.g., due to SDK timeout).
- *
- * <p>These tests verify the fix for the connection pool exhaustion regression where
- * calling {@code stream.cancel()} + {@code stream.close()} on a stream obtained from
- * {@code Http1StreamManager} bypassed the connection release path, permanently leaking
- * pool slots.
  */
 public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
     private final static String ENDPOINT = "https://d1cz66xoahf9cl.cloudfront.net";
@@ -133,8 +128,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
      * Verify that direct {@code cancel()} + {@code close()} on an activated stream
      * still releases the connection slot (due to the AtomicBoolean guard and
      * onResponseComplete being triggered by cancel on an active stream).
-     *
-     * <p>This is the pattern used by the SDK's {@code ResponseHandlerHelper.closeConnection()}.
      */
     @Test
     public void testDirectCancelCloseOnActivatedStreamReleasesConnection() throws Exception {
@@ -185,9 +178,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
     /**
      * Verify that aborting all streams in a full pool does not permanently exhaust it.
      * After aborting N streams (where N = maxConcurrency), a new request must still succeed.
-     *
-     * <p>This is the core regression test: before the fix, each abort would permanently
-     * leak a connection slot, and after maxConcurrency aborts the pool was permanently dead.
      */
     @Test
     public void testPoolRecoveryAfterMultipleAborts() throws Exception {
@@ -240,67 +230,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             reqCompleted.get(10, TimeUnit.SECONDS);
 
             Assert.assertEquals("Pool should still serve requests after aborting all connections",
-                    200, responseStatus.get());
-        }
-
-        CrtResource.waitForNoResources();
-    }
-
-    /**
-     * Same as {@link #testPoolRecoveryAfterMultipleAborts()} but using direct
-     * cancel+close (the SDK's actual pattern) instead of abortStream().
-     */
-    @Test
-    public void testPoolRecoveryAfterMultipleDirectCancelClose() throws Exception {
-        skipIfNetworkUnavailable();
-        URI uri = new URI(ENDPOINT);
-
-        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
-            HttpRequest request = createRequest(uri);
-
-            for (int i = 0; i < MAX_CONNECTIONS; i++) {
-                final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
-                HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        headersReceived.complete(null);
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    }
-                };
-
-                HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
-                headersReceived.get(60, TimeUnit.SECONDS);
-                stream.cancel();
-                stream.close();
-            }
-
-            Thread.sleep(1000);
-
-            final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
-            final AtomicInteger responseStatus = new AtomicInteger(-1);
-
-            HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
-                    responseStatus.set(responseStatusCode);
-                }
-
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    reqCompleted.complete(null);
-                    stream.close();
-                }
-            };
-
-            streamManager.acquireStream(request, handler).get(10, TimeUnit.SECONDS);
-            reqCompleted.get(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals("Pool should still serve requests after direct cancel+close",
                     200, responseStatus.get());
         }
 

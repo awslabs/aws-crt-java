@@ -190,6 +190,8 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
             responseCompleted.get(60, TimeUnit.SECONDS);
 
+            Thread.sleep(500);
+
             metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Leased concurrency should return to 0 after direct cancel+close",
                     0, metrics.getLeasedConcurrency());

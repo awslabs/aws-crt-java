@@ -130,13 +130,14 @@ public class Http1StreamManager implements AutoCloseable {
                             }
                         }
                     }, useManualDataWrites);
-                    completionFuture.complete((HttpStream) stream);
                     /**
-                     * Activate the stream for user after completing the future, otherwise the
-                     * callbacks may be invoked without the stream being completed.
-                     *
-                     * `activate` is idempotent.
-                     **/
+                     * Activate the stream before completing the future. This is safe because
+                     * this callback runs on the connection's event-loop thread, and the event
+                     * loop is single-threaded — no stream callbacks can fire until we return.
+                     * By activating first, the caller always receives an already-active stream,
+                     * eliminating the race where an external thread could close the stream
+                     * between complete() and activate().
+                     */
                     try {
                         stream.activate();
                     } catch (CrtRuntimeException e) {
@@ -145,15 +146,10 @@ public class Http1StreamManager implements AutoCloseable {
                         if (connectionReleased.compareAndSet(false, true)) {
                             connManager.releaseConnection(conn);
                         }
+                        completionFuture.completeExceptionally(e);
+                        return;
                     }
-
-                    // If the stream was externally cancelled+closed between
-                    // completionFuture.complete() and stream.activate() above, activate()
-                    // becomes a no-op (stream handle is null) and onResponseComplete will
-                    // never fire. Detect this and release the connection.
-                    if (stream.isNull() && connectionReleased.compareAndSet(false, true)) {
-                        connManager.releaseConnection(conn);
-                    }
+                    completionFuture.complete((HttpStream) stream);
                 } catch (Exception ex) {
                     if (connectionReleased.compareAndSet(false, true)) {
                         connManager.releaseConnection(conn);

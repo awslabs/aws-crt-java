@@ -89,6 +89,8 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
+            // Gate: blocks onResponseComplete until we've verified the leased count.
+            final CompletableFuture<Void> allowComplete = new CompletableFuture<>();
             HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
                 @Override
                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
@@ -103,6 +105,11 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
                 @Override
                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    try {
+                        allowComplete.get(60, TimeUnit.SECONDS);
+                    } catch (Exception e) {
+                        // ignore
+                    }
                 }
             };
 
@@ -112,6 +119,8 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Should have 1 leased connection", 1, metrics.getLeasedConcurrency());
 
+            // Open the gate, then abort
+            allowComplete.complete(null);
             streamManager.abortStream(stream);
 
             Thread.sleep(500);
@@ -138,6 +147,10 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
+            final CompletableFuture<Void> responseCompleted = new CompletableFuture<>();
+            // Gate: blocks onResponseComplete until we've verified the leased count.
+            // No deadlock risk because cancel()+close() happens after we open the gate.
+            final CompletableFuture<Void> allowComplete = new CompletableFuture<>();
             HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
                 @Override
                 public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
@@ -152,6 +165,13 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
                 @Override
                 public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    // Block until the test has verified leased connection count.
+                    try {
+                        allowComplete.get(60, TimeUnit.SECONDS);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    responseCompleted.complete(null);
                 }
             };
 
@@ -161,11 +181,14 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals(1, metrics.getLeasedConcurrency());
 
+            // Open the gate — onResponseComplete can now proceed and release the connection
+            allowComplete.complete(null);
+
             // Simulate what the SDK does on timeout: direct cancel + close
             stream.cancel();
             stream.close();
 
-            Thread.sleep(500);
+            responseCompleted.get(60, TimeUnit.SECONDS);
 
             metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Leased concurrency should return to 0 after direct cancel+close",

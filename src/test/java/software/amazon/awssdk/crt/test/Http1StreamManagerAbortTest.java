@@ -47,23 +47,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
     private final static String PATH = "/random_32_byte.data";
     private final static int MAX_CONNECTIONS = 3;
 
-    private Http1StreamManager createHttp1StreamManager(URI uri, int maxConnections) {
-        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
-                HostResolver resolver = new HostResolver(eventLoopGroup);
-                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
-                SocketOptions sockOpts = new SocketOptions();
-                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("http/1.1");
-                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
-            HttpClientConnectionManagerOptions options = new HttpClientConnectionManagerOptions()
-                    .withClientBootstrap(bootstrap)
-                    .withSocketOptions(sockOpts)
-                    .withTlsContext(tlsContext)
-                    .withUri(uri)
-                    .withMaxConnections(maxConnections);
-            return Http1StreamManager.create(options);
-        }
-    }
-
     private HttpStreamManager createStreamManager(URI uri, int maxConnections) {
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
@@ -99,8 +82,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
      * Verify that {@code abortStream()} on an activated stream releases the
      * connection slot back to the pool.
      *
-     * <p>Sequence: acquire stream → stream activates → abort → verify pool slot freed.
-     *
      * <p>The handler returns 0 from onResponseBody to prevent the response window from
      * advancing, keeping the stream pinned in the "body in progress" state until we abort.
      */
@@ -109,7 +90,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
@@ -122,7 +103,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
                 @Override
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                    // Return 0 to not advance the window — keeps stream held open
                     return 0;
                 }
 
@@ -131,22 +111,16 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
-
-            // Wait until headers arrive so we know the stream is activated and in-flight
+            HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
             headersReceived.get(60, TimeUnit.SECONDS);
 
-            // At this point, 1 connection is leased
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Should have 1 leased connection", 1, metrics.getLeasedConcurrency());
 
-            // Abort the stream via the manager API
             streamManager.abortStream(stream);
 
-            // Give the native layer a moment to process the cancellation
             Thread.sleep(500);
 
-            // Verify the connection slot was released
             metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Leased concurrency should return to 0 after abort",
                     0, metrics.getLeasedConcurrency());
@@ -167,7 +141,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
@@ -180,7 +154,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
                 @Override
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                    return 0; // Don't advance window — keep stream held
+                    return 0;
                 }
 
                 @Override
@@ -188,9 +162,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
-
-            // Wait until headers arrive
+            HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
             headersReceived.get(60, TimeUnit.SECONDS);
 
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
@@ -202,7 +174,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
             Thread.sleep(500);
 
-            // Verify the connection slot was released
             metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("Leased concurrency should return to 0 after direct cancel+close",
                     0, metrics.getLeasedConcurrency());
@@ -223,10 +194,9 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
-            // Acquire and abort MAX_CONNECTIONS streams
             for (int i = 0; i < MAX_CONNECTIONS; i++) {
                 final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
                 HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
@@ -241,15 +211,14 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                     }
                 };
 
-                HttpStream stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
+                HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
                 headersReceived.get(60, TimeUnit.SECONDS);
                 streamManager.abortStream(stream);
             }
 
-            // Allow time for all aborts to process
             Thread.sleep(1000);
 
-            // Now verify the pool is alive: a new request should succeed
+            // Pool should still work: a new request must succeed
             final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
             final AtomicInteger responseStatus = new AtomicInteger(-1);
 
@@ -267,7 +236,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream = streamManager.acquireStream(request, handler).get(10, TimeUnit.SECONDS);
+            streamManager.acquireStream(request, handler).get(10, TimeUnit.SECONDS);
             reqCompleted.get(10, TimeUnit.SECONDS);
 
             Assert.assertEquals("Pool should still serve requests after aborting all connections",
@@ -286,7 +255,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             for (int i = 0; i < MAX_CONNECTIONS; i++) {
@@ -303,17 +272,14 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                     }
                 };
 
-                HttpStream stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
+                HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
                 headersReceived.get(60, TimeUnit.SECONDS);
-
-                // Direct cancel+close as the SDK does
                 stream.cancel();
                 stream.close();
             }
 
             Thread.sleep(1000);
 
-            // Pool should still work
             final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
             final AtomicInteger responseStatus = new AtomicInteger(-1);
 
@@ -331,7 +297,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream = streamManager.acquireStream(request, handler).get(10, TimeUnit.SECONDS);
+            streamManager.acquireStream(request, handler).get(10, TimeUnit.SECONDS);
             reqCompleted.get(10, TimeUnit.SECONDS);
 
             Assert.assertEquals("Pool should still serve requests after direct cancel+close",
@@ -350,11 +316,10 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             // Should not throw
             streamManager.abortStream(null);
 
-            // Pool should still be usable
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals(0, metrics.getLeasedConcurrency());
         }
@@ -371,7 +336,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
@@ -384,7 +349,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
                 @Override
                 public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                    return 0; // Don't advance window — keep stream held
+                    return 0;
                 }
 
                 @Override
@@ -392,7 +357,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
+            HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
             headersReceived.get(60, TimeUnit.SECONDS);
 
             // Abort multiple times — should not throw or cause issues
@@ -424,89 +389,9 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                 }
             };
 
-            HttpStream stream2 = streamManager.acquireStream(request, handler2).get(10, TimeUnit.SECONDS);
+            streamManager.acquireStream(request, handler2).get(10, TimeUnit.SECONDS);
             reqCompleted.get(10, TimeUnit.SECONDS);
             Assert.assertEquals(200, responseStatus.get());
-        }
-
-        CrtResource.waitForNoResources();
-    }
-
-    /**
-     * Verify that the {@link HttpStreamManager} facade's {@code abortStream()} method
-     * properly delegates to the underlying {@code Http1StreamManager} and releases
-     * the connection slot. We verify this by filling the pool with aborted streams
-     * and then confirming a subsequent request succeeds (which requires pool slots
-     * to have been released).
-     */
-    @Test
-    public void testHttpStreamManagerAbortStreamDelegation() throws Exception {
-        skipIfNetworkUnavailable();
-        URI uri = new URI(ENDPOINT);
-
-        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
-            HttpRequest request = createRequest(uri);
-
-            // Acquire and abort MAX_CONNECTIONS streams via the facade
-            for (int i = 0; i < MAX_CONNECTIONS; i++) {
-                final CompletableFuture<Void> headersReceived = new CompletableFuture<>();
-                HttpStreamBaseResponseHandler handler = new HttpStreamBaseResponseHandler() {
-                    @Override
-                    public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                            HttpHeader[] nextHeaders) {
-                        headersReceived.complete(null);
-                    }
-
-                    @Override
-                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                        return 0;
-                    }
-
-                    @Override
-                    public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    }
-                };
-
-                HttpStreamBase stream = streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
-                headersReceived.get(60, TimeUnit.SECONDS);
-                streamManager.abortStream(stream);
-            }
-
-            Thread.sleep(1000);
-
-            // Pool should still be alive: a new request must succeed
-            final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
-            final AtomicInteger responseStatus = new AtomicInteger(-1);
-
-            HttpStreamBaseResponseHandler finalHandler = new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                        HttpHeader[] nextHeaders) {
-                    responseStatus.set(responseStatusCode);
-                }
-
-                @Override
-                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                    return bodyBytesIn.length;
-                }
-
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    reqCompleted.complete(null);
-                    stream.close();
-                }
-            };
-
-            streamManager.acquireStream(request, finalHandler).get(10, TimeUnit.SECONDS);
-            reqCompleted.get(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals("Pool should still serve requests after aborts via facade",
-                    200, responseStatus.get());
-
-            // After the successful request completes, pool should be idle
-            Thread.sleep(200);
-            HttpManagerMetrics metrics = streamManager.getManagerMetrics();
-            Assert.assertEquals(0, metrics.getLeasedConcurrency());
         }
 
         CrtResource.waitForNoResources();
@@ -522,7 +407,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
         skipIfNetworkUnavailable();
         URI uri = new URI(ENDPOINT);
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             final CompletableFuture<Void> reqCompleted = new CompletableFuture<>();
@@ -550,7 +435,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             streamManager.acquireStream(request, handler).get(60, TimeUnit.SECONDS);
             reqCompleted.get(60, TimeUnit.SECONDS);
 
-            // Request completed normally — connection already released
             Thread.sleep(200);
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals(0, metrics.getLeasedConcurrency());
@@ -558,7 +442,6 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
             // Abort after completion should be a no-op (stream already closed/null)
             streamManager.abortStream(streamRef.get());
 
-            // Pool should still be healthy
             metrics = streamManager.getManagerMetrics();
             Assert.assertEquals(0, metrics.getLeasedConcurrency());
         }
@@ -568,8 +451,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
     /**
      * Stress test: rapidly acquire and abort streams to verify no connection leaks
-     * under concurrent abort pressure. Verifies that after many aborts, the pool
-     * fully recovers and can serve new requests.
+     * under repeated abort pressure.
      */
     @Test
     public void testRepeatedAbortDoesNotLeakConnections() throws Exception {
@@ -578,7 +460,7 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
 
         final int numAbortCycles = 10;
 
-        try (Http1StreamManager streamManager = createHttp1StreamManager(uri, MAX_CONNECTIONS)) {
+        try (HttpStreamManager streamManager = createStreamManager(uri, MAX_CONNECTIONS)) {
             HttpRequest request = createRequest(uri);
 
             for (int i = 0; i < numAbortCycles; i++) {
@@ -595,15 +477,13 @@ public class Http1StreamManagerAbortTest extends HttpRequestResponseFixture {
                     }
                 };
 
-                HttpStream stream = streamManager.acquireStream(request, handler).get(30, TimeUnit.SECONDS);
+                HttpStreamBase stream = streamManager.acquireStream(request, handler).get(30, TimeUnit.SECONDS);
                 headersReceived.get(30, TimeUnit.SECONDS);
                 streamManager.abortStream(stream);
 
-                // Brief pause to let the native layer process
                 Thread.sleep(100);
             }
 
-            // After all aborts, pool should be fully recovered
             Thread.sleep(500);
             HttpManagerMetrics metrics = streamManager.getManagerMetrics();
             Assert.assertEquals("All connections should be released after " + numAbortCycles + " abort cycles",

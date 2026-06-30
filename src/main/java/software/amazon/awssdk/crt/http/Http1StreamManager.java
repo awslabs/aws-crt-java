@@ -166,34 +166,6 @@ public class Http1StreamManager implements AutoCloseable {
     }
 
     /**
-     * Abort an in-flight stream obtained from this manager. Cancels the HTTP exchange
-     * and ensures the underlying connection slot is properly released back to the pool.
-     *
-     * <p>This method is safe to call:
-     * <ul>
-     *   <li>With a null stream (e.g., if acquisition was still pending)</li>
-     *   <li>After the stream has already completed normally</li>
-     *   <li>Multiple times (idempotent)</li>
-     * </ul>
-     *
-     * <p>For HTTP/1.1, cancelling a stream closes the underlying TCP connection (it will
-     * not be returned to the pool for reuse). The connection <em>slot</em> is released so
-     * a new connection can be established.
-     *
-     * @param stream the stream to abort, or null if the stream was never acquired
-     */
-    public void abortStream(HttpStreamBase stream) {
-        if (stream != null && !stream.isNull()) {
-            stream.cancel();
-            stream.close();
-        }
-        // Connection release is handled by the AtomicBoolean guard:
-        // - If onResponseComplete fires (cancel triggers it on activated streams): released there
-        // - If stream was never activated or already closed: released by the isNull() check
-        //   after activate() in acquireStream()
-    }
-
-    /**
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {

@@ -61,7 +61,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     null,
-                    true);
+                    false);
                 disconnect();
             } finally {
                 close();
@@ -97,7 +97,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     null,
-                    true);
+                    false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -133,7 +133,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 null,
                 null,
                 null,
-                true);
+                false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -174,7 +174,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     null,
-                    true);
+                    false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -212,7 +212,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
              TlsContext tlsContext = new TlsContext(tlsOptions);
              CredentialsProvider provider = providerBuilder.apply(bootstrap)) {
 
-            connectWebsockets(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, true);
+            connectWebsockets(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -335,7 +335,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 null,
                 null,
                 null,
-                true);
+                false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -364,7 +364,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
                 AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
                 null,
-                false);
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -397,7 +397,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     null,
-                    true);
+                    false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -438,7 +438,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null,
                         null,
-                        true);
+                        false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -479,7 +479,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         null,
                         null,
                         proxyOptions,
-                        true);
+                        false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -518,7 +518,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 null,
                 null,
                 null,
-                true);
+                false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -548,7 +548,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
                 AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
                 null,
-                false);
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -582,7 +582,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     null,
-                    true);
+                    false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -621,7 +621,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     null,
                     null,
                     proxyOptions,
-                    true);
+                    false);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);

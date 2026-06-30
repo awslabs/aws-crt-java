@@ -266,7 +266,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 .withRetryJitterMode(JitterMode.Default)
                 .withSessionBehavior(ClientSessionBehavior.CLEAN)
                 .withSocketOptions(socketOptions)
-                .withMetricsEnabled(false);
+                .withDisableMetrics(true);
                 // Skip websocket and TLS options - those are all different tests
 
                 HttpProxyOptions proxyOptions = new HttpProxyOptions();
@@ -332,7 +332,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
                     Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
             builder.withLifecycleEvents(events);
-            builder.withMetricsEnabled(false);
+            builder.withDisableMetrics(true);
 
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
@@ -375,7 +375,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_HOST,
                     Long.parseLong(AWS_TEST_MQTT5_DIRECT_MQTT_BASIC_AUTH_PORT));
             builder.withLifecycleEvents(events);
-            // Metrics are enabled by default (metricsEnabled = true)
+            // Metrics are enabled by default (disableMetrics = false)
             // This should cause connection failure because metrics appends to username,
             // corrupting basic auth credentials
 
@@ -586,7 +586,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
                     .withSocketOptions(socketOptions)
-                    .withMetricsEnabled(false);
+                    .withDisableMetrics(true);
             // Skip websocket, proxy options, and TLS options - those are all different tests
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
@@ -681,7 +681,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
             ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
             connectOptions.withUsername(AWS_TEST_MQTT5_BASIC_AUTH_USERNAME).withPassword(AWS_TEST_MQTT5_BASIC_AUTH_PASSWORD.getBytes());
             builder.withConnectOptions(connectOptions.build());
-            builder.withMetricsEnabled(false);
+            builder.withDisableMetrics(true);
 
             try (Mqtt5Client client = new Mqtt5Client(builder.build())) {
                 client.start();
@@ -850,7 +850,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                     .withRetryJitterMode(JitterMode.Default)
                     .withSessionBehavior(ClientSessionBehavior.CLEAN)
                     .withSocketOptions(socketOptions)
-                    .withMetricsEnabled(false);
+                    .withDisableMetrics(true);
 
             Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketTransform = new Consumer<Mqtt5WebsocketHandshakeTransformArgs>() {
                 @Override

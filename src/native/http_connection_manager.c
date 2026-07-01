@@ -455,6 +455,123 @@ JNIEXPORT jobject JNICALL
         (jlong)metrics.leased_concurrency);
 }
 
+/********************************************************************************************************************/
+/* H1 Stream Manager: acquire connection, then invoke Java callback on the connection's event-loop thread.       */
+/* C stores request params and passes them through to the Java callback — no Java-side lookup table needed.      */
+/********************************************************************************************************************/
+
+struct aws_h1_sm_binding {
+    JavaVM *jvm;
+    struct aws_http_connection_manager *manager;
+    struct aws_http_connection *connection;
+    jobject java_acquire_stream_future;
+    /* Request params — opaque Java objects passed through to the callback */
+    jobject java_request;
+    jobject java_response_handler;
+    jboolean use_manual_data_writes;
+};
+
+static void s_h1_sm_binding_destroy(struct aws_h1_sm_binding *binding, JNIEnv *env) {
+    if (binding == NULL || env == NULL) {
+        return;
+    }
+    if (binding->java_acquire_stream_future) {
+        (*env)->DeleteGlobalRef(env, binding->java_acquire_stream_future);
+    }
+    if (binding->java_request) {
+        (*env)->DeleteGlobalRef(env, binding->java_request);
+    }
+    if (binding->java_response_handler) {
+        (*env)->DeleteGlobalRef(env, binding->java_response_handler);
+    }
+    aws_mem_release(aws_jni_get_allocator(), binding);
+}
+
+static void s_h1_sm_on_connection_acquired(struct aws_http_connection *connection, int error_code, void *user_data) {
+
+    struct aws_h1_sm_binding *binding = (struct aws_h1_sm_binding *)user_data;
+    binding->connection = connection;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(binding->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        return;
+    }
+
+    jint jni_error_code = (jint)error_code;
+
+    AWS_LOGF_DEBUG(
+        AWS_LS_HTTP_CONNECTION,
+        "H1 StreamManager: connection acquired, conn: %p, manager: %p, err_code: %d, err_str: %s",
+        (void *)connection,
+        (void *)binding->manager,
+        error_code,
+        aws_error_str(error_code));
+
+    /* Call Http1StreamManager.onConnectionAcquired on the event-loop thread.
+     * Pass all request params through so Java doesn't need a lookup table. */
+    JavaVM *jvm = binding->jvm;
+    (*env)->CallStaticVoidMethod(
+        env,
+        http1_stream_manager_properties.http1_stream_manager_class,
+        http1_stream_manager_properties.on_connection_acquired_method_id,
+        binding->java_acquire_stream_future,
+        (jlong)binding->connection,
+        (jlong)binding->manager,
+        jni_error_code,
+        binding->java_request,
+        binding->java_response_handler,
+        binding->use_manual_data_writes);
+
+    AWS_FATAL_ASSERT(!aws_jni_check_and_clear_exception(env));
+
+    s_h1_sm_binding_destroy(binding, env);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+}
+
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_http_HttpClientConnectionManager_httpClientConnectionManagerAcquireStream(
+        JNIEnv *env,
+        jclass jni_class,
+        jlong jni_conn_manager_binding,
+        jobject acquire_future,
+        jobject jni_request,
+        jobject jni_response_handler,
+        jboolean jni_use_manual_data_writes) {
+
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct http_connection_manager_binding *manager_binding =
+        (struct http_connection_manager_binding *)jni_conn_manager_binding;
+    struct aws_http_connection_manager *conn_manager = manager_binding->manager;
+
+    if (!conn_manager) {
+        aws_jni_throw_runtime_exception(env, "Connection Manager can't be null");
+        return;
+    }
+    if (!acquire_future) {
+        aws_jni_throw_illegal_argument_exception(env, "Invalid acquire future");
+        return;
+    }
+
+    struct aws_allocator *allocator = aws_jni_get_allocator();
+    struct aws_h1_sm_binding *binding = aws_mem_calloc(allocator, 1, sizeof(struct aws_h1_sm_binding));
+
+    jint jvmresult = (*env)->GetJavaVM(env, &binding->jvm);
+    AWS_FATAL_ASSERT(jvmresult == 0);
+
+    binding->manager = conn_manager;
+    binding->java_acquire_stream_future = (*env)->NewGlobalRef(env, acquire_future);
+    binding->java_request = (*env)->NewGlobalRef(env, jni_request);
+    binding->java_response_handler = jni_response_handler ? (*env)->NewGlobalRef(env, jni_response_handler) : NULL;
+    binding->use_manual_data_writes = jni_use_manual_data_writes;
+
+    aws_http_connection_manager_acquire_connection(conn_manager, s_h1_sm_on_connection_acquired, binding);
+}
+
 #if UINTPTR_MAX == 0xffffffff
 #    if defined(_MSC_VER)
 #        pragma warning(pop)

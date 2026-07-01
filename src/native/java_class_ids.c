@@ -836,6 +836,23 @@ static void s_cache_http_manager_metrics(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_manager_metrics_properties.constructor_method_id);
 }
 
+struct java_http1_stream_manager_properties http1_stream_manager_properties;
+
+static void s_cache_http1_stream_manager(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/http/Http1StreamManager");
+    AWS_FATAL_ASSERT(cls);
+    http1_stream_manager_properties.http1_stream_manager_class = (*env)->NewGlobalRef(env, cls);
+
+    http1_stream_manager_properties.on_connection_acquired_method_id = (*env)->GetStaticMethodID(
+        env,
+        cls,
+        "onConnectionAcquired",
+        "(Ljava/util/concurrent/CompletableFuture;JJI"
+        "Lsoftware/amazon/awssdk/crt/http/HttpRequestBase;"
+        "Lsoftware/amazon/awssdk/crt/http/HttpStreamBaseResponseHandler;Z)V");
+    AWS_FATAL_ASSERT(http1_stream_manager_properties.on_connection_acquired_method_id);
+}
+
 struct java_aws_exponential_backoff_retry_options_properties exponential_backoff_retry_options_properties;
 
 static void s_cache_exponential_backoff_retry_options(JNIEnv *env) {
@@ -2732,6 +2749,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_aws_signing_result(env);
     s_cache_http_header(env);
     s_cache_http_manager_metrics(env);
+    s_cache_http1_stream_manager(env);
     s_cache_exponential_backoff_retry_options(env);
     s_cache_standard_retry_options(env);
     s_cache_directory_traversal_handler(env);

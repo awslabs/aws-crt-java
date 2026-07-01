@@ -634,6 +634,23 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.http.Http1StreamManager",
+    "methods": [
+      {
+        "name": "onConnectionAcquired",
+        "parameterTypes": [
+          "java.util.concurrent.CompletableFuture",
+          "long",
+          "long",
+          "int",
+          "software.amazon.awssdk.crt.http.HttpRequestBase",
+          "software.amazon.awssdk.crt.http.HttpStreamBaseResponseHandler",
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.http.HttpHeader",
     "methods": [
       {

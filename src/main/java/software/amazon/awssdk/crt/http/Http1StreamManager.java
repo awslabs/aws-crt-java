@@ -4,9 +4,11 @@
  */
 package software.amazon.awssdk.crt.http;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -17,6 +19,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Http1StreamManager implements AutoCloseable {
 
     private HttpClientConnectionManager connectionManager = null;
+
+    /**
+     * Holds the per-acquire context needed by the onConnectionAcquired callback.
+     */
+    private static class PendingAcquire {
+        final HttpClientConnectionManager connManager;
+        final HttpRequestBase request;
+        final HttpStreamBaseResponseHandler streamHandler;
+        final boolean useManualDataWrites;
+
+        PendingAcquire(HttpClientConnectionManager connManager, HttpRequestBase request,
+                HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
+            this.connManager = connManager;
+            this.request = request;
+            this.streamHandler = streamHandler;
+            this.useManualDataWrites = useManualDataWrites;
+        }
+    }
+
+    private static final ConcurrentHashMap<CompletableFuture<HttpStream>, PendingAcquire> pendingAcquires =
+            new ConcurrentHashMap<>();
 
     /**
      * Factory function for Http1StreamManager instances
@@ -36,129 +59,80 @@ public class Http1StreamManager implements AutoCloseable {
         return this.connectionManager.getShutdownCompleteFuture();
     }
 
-    /**
-     * Request an HTTP/1.1 HttpStream from StreamManager.
-     *
-     * @param request         HttpRequest. The Request to make to the Server.
-     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
-     * @return A future for a HttpStream that will be completed when the stream is
-     *         acquired.
-     * @throws CrtRuntimeException Exception happens from acquiring stream.
-     */
     public CompletableFuture<HttpStream> acquireStream(HttpRequest request,
             HttpStreamBaseResponseHandler streamHandler) {
         return this.acquireStream((HttpRequestBase) request, streamHandler);
     }
 
-    /**
-     * Request an HTTP/1.1 HttpStream from StreamManager.
-     *
-     * @param request         HttpRequest. The Request to make to the Server.
-     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
-     * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
-     * @return A future for a HttpStream that will be completed when the stream is
-     *         acquired.
-     * @throws CrtRuntimeException Exception happens from acquiring stream.
-     */
     public CompletableFuture<HttpStream> acquireStream(HttpRequest request,
             HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         return this.acquireStream((HttpRequestBase) request, streamHandler, useManualDataWrites);
     }
 
-    /**
-     * Request an HTTP/1.1 HttpStream from StreamManager.
-     *
-     * @param request         HttpRequestBase. The Request to make to the Server.
-     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
-     * @return A future for a HttpStream that will be completed when the stream is
-     *         acquired.
-     * @throws CrtRuntimeException Exception happens from acquiring stream.
-     */
     public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler) {
-        return this.acquireStream(request, streamHandler, false); // overloading to ensure backward-compatibility
+        return this.acquireStream(request, streamHandler, false);
     }
 
     /**
      * Request an HTTP/1.1 HttpStream from StreamManager.
-     *
-     * @param request         HttpRequestBase. The Request to make to the Server.
-     * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
-     * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
-     * @return A future for a HttpStream that will be completed when the stream is
-     *         acquired.
-     * @throws CrtRuntimeException Exception happens from acquiring stream.
+     * The native layer acquires a connection and invokes onConnectionAcquired() on the
+     * connection's event-loop thread, passing through the request and handler objects.
+     * The Java callback performs makeRequest + activate + future.complete() — all
+     * guaranteed on the event-loop thread.
      */
     public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
             HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         CompletableFuture<HttpStream> completionFuture = new CompletableFuture<>();
         HttpClientConnectionManager connManager = this.connectionManager;
 
-        connManager.acquireConnection().whenComplete((conn, throwable) -> {
-            if (throwable != null) {
-                completionFuture.completeExceptionally(throwable);
-            } else {
-                // Guard ensures the connection is released exactly once, regardless of
-                // whether release happens via onResponseComplete, activate failure, or
-                // external cancellation (e.g., SDK timeout calling cancel+close).
-                AtomicBoolean connectionReleased = new AtomicBoolean(false);
-
-                try {
-                    HttpStreamBase stream = conn.makeRequest(request, new HttpStreamBaseResponseHandler() {
-                        @Override
-                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                HttpHeader[] nextHeaders) {
-                            streamHandler.onResponseHeaders(stream, responseStatusCode, blockType, nextHeaders);
-                        }
-
-                        @Override
-                        public void onResponseHeadersDone(HttpStreamBase stream, int blockType) {
-                            streamHandler.onResponseHeadersDone(stream, blockType);
-                        }
-
-                        @Override
-                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
-                            return streamHandler.onResponseBody(stream, bodyBytesIn);
-                        }
-
-                        @Override
-                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                            streamHandler.onResponseComplete(stream, errorCode);
-                            /* Release the connection back (at most once) */
-                            if (connectionReleased.compareAndSet(false, true)) {
-                                connManager.releaseConnection(conn);
-                            }
-                        }
-                    }, useManualDataWrites);
-                    /**
-                     * Activate the stream before completing the future. This is safe because
-                     * this callback runs on the connection's event-loop thread, and the event
-                     * loop is single-threaded — no stream callbacks can fire until we return.
-                     * By activating first, the caller always receives an already-active stream,
-                     * eliminating the race where an external thread could close the stream
-                     * between complete() and activate().
-                     */
-                    try {
-                        stream.activate();
-                    } catch (CrtRuntimeException e) {
-                        /* If activate failed, complete callback will not be invoked */
-                        streamHandler.onResponseComplete(stream, e.errorCode);
-                        if (connectionReleased.compareAndSet(false, true)) {
-                            connManager.releaseConnection(conn);
-                        }
-                        completionFuture.completeExceptionally(e);
-                        return;
-                    }
-                    completionFuture.complete((HttpStream) stream);
-                } catch (Exception ex) {
-                    if (connectionReleased.compareAndSet(false, true)) {
-                        connManager.releaseConnection(conn);
-                    }
-                    completionFuture.completeExceptionally(ex);
-                }
-            }
-        });
+        try {
+            HttpClientConnectionManager.httpClientConnectionManagerAcquireStream(
+                    connManager.getNativeHandle(),
+                    completionFuture,
+                    request,
+                    streamHandler,
+                    useManualDataWrites);
+        } catch (CrtRuntimeException ex) {
+            completionFuture.completeExceptionally(ex);
+        }
         return completionFuture;
+    }
+
+    /**
+     * Called from native (on the connection's event-loop thread) when a connection is acquired.
+     * All parameters are passed through from C — no Java-side state/lookup needed.
+     *
+     * Performs makeRequest + activate + future.complete() — all on the event-loop thread,
+     * so no stream callbacks can fire until this method returns to C.
+     */
+    private static void onConnectionAcquired(
+            CompletableFuture<HttpStream> acquireFuture,
+            long nativeConnectionBinding,
+            long nativeConnManager,
+            int errorCode,
+            HttpRequestBase request,
+            HttpStreamBaseResponseHandler streamHandler,
+            boolean useManualDataWrites) {
+
+        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+            acquireFuture.completeExceptionally(new HttpException(errorCode));
+            return;
+        }
+
+        /* We are on the connection's event-loop thread. */
+        HttpClientConnection conn = new HttpClientConnection(nativeConnectionBinding);
+
+        try {
+            HttpStreamBase stream = conn.makeRequest(request, streamHandler, useManualDataWrites);
+
+            /* Activate — safe because we're on the event-loop thread. */
+            stream.activate();
+            acquireFuture.complete((HttpStream) stream);
+        } catch (Exception ex) {
+            conn.close();
+            acquireFuture.completeExceptionally(ex);
+        }
     }
 
     /**

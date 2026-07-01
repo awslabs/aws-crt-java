@@ -391,6 +391,13 @@ struct java_http_manager_metrics_properties {
 };
 extern struct java_http_manager_metrics_properties http_manager_metrics_properties;
 
+/* Http1StreamManager */
+struct java_http1_stream_manager_properties {
+    jclass http1_stream_manager_class;
+    jmethodID on_connection_acquired_method_id;
+};
+extern struct java_http1_stream_manager_properties http1_stream_manager_properties;
+
 /* ExponentialBackoffRetryOptions */
 struct java_aws_exponential_backoff_retry_options_properties {
     jclass exponential_backoff_retry_options_class;

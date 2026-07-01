@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.http;
 import software.amazon.awssdk.crt.CrtRuntimeException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages a Pool of HTTP/1.1 Streams. Creates and manages HTTP/1.1 connections
@@ -97,6 +98,11 @@ public class Http1StreamManager implements AutoCloseable {
             if (throwable != null) {
                 completionFuture.completeExceptionally(throwable);
             } else {
+                // Guard ensures the connection is released exactly once, regardless of
+                // whether release happens via onResponseComplete, activate failure, or
+                // external cancellation (e.g., SDK timeout calling cancel+close).
+                AtomicBoolean connectionReleased = new AtomicBoolean(false);
+
                 try {
                     HttpStreamBase stream = conn.makeRequest(request, new HttpStreamBaseResponseHandler() {
                         @Override
@@ -118,27 +124,36 @@ public class Http1StreamManager implements AutoCloseable {
                         @Override
                         public void onResponseComplete(HttpStreamBase stream, int errorCode) {
                             streamHandler.onResponseComplete(stream, errorCode);
-                            /* Release the connection back */
-                            connManager.releaseConnection(conn);
+                            /* Release the connection back (at most once) */
+                            if (connectionReleased.compareAndSet(false, true)) {
+                                connManager.releaseConnection(conn);
+                            }
                         }
                     }, useManualDataWrites);
-                    completionFuture.complete((HttpStream) stream);
                     /**
-                     * Activate the stream for user after completing the future, otherwise the
-                     * callbacks may be invoked without the stream being completed.
-                     *
-                     * `activate` is idempotent.
-                     **/
+                     * Activate the stream before completing the future. This is safe because
+                     * this callback runs on the connection's event-loop thread, and the event
+                     * loop is single-threaded — no stream callbacks can fire until we return.
+                     * By activating first, the caller always receives an already-active stream,
+                     * eliminating the race where an external thread could close the stream
+                     * between complete() and activate().
+                     */
                     try {
                         stream.activate();
                     } catch (CrtRuntimeException e) {
                         /* If activate failed, complete callback will not be invoked */
                         streamHandler.onResponseComplete(stream, e.errorCode);
-                        /* Release the connection back */
+                        if (connectionReleased.compareAndSet(false, true)) {
+                            connManager.releaseConnection(conn);
+                        }
+                        completionFuture.completeExceptionally(e);
+                        return;
+                    }
+                    completionFuture.complete((HttpStream) stream);
+                } catch (Exception ex) {
+                    if (connectionReleased.compareAndSet(false, true)) {
                         connManager.releaseConnection(conn);
                     }
-                } catch (Exception ex) {
-                    connManager.releaseConnection(conn);
                     completionFuture.completeExceptionally(ex);
                 }
             }

@@ -31,10 +31,18 @@ public class FileIoOptions {
     /**
      * Enable direct I/O to bypass the OS cache. Helpful when the disk I/O outperforms the kernel cache.
      * Notes:
-     * - Only supported on Linux for now.
-     * - Only supports upload for now.
-     * - Uses it as a potentially powerful tool that should be used with caution. Read NOTES for O_DIRECT
-     *   for additional info https://man7.org/linux/man-pages/man2/openat.2.html
+     * - Currently only Linux supports direct I/O. On unsupported platforms, the request transparently
+     *   falls back to buffered I/O and a warning is logged.
+     * - Supported for both upload (send_filepath) and download (recv_filepath).
+     * - This is a BEST-EFFORT optimization. The request transparently falls back to
+     *   buffered I/O (logging a warning) if any of the following preconditions are not met:
+     *     - part_size is not page-aligned
+     *     - For WRITE_TO_POSITION, recv_file_position is not page-aligned
+     *     - For CREATE_OR_APPEND, the existing file size is not page-aligned
+     *     - The last part of the download has an unaligned length
+     *     - Buffer allocated is not page-size-aligned
+     * - Read NOTES for O_DIRECT for additional info https://man7.org/linux/man-pages/man2/openat.2.html
+     *   In summary, O_DIRECT is a potentially powerful tool that should be used with caution.
      */
     private boolean directIo;
 
@@ -103,8 +111,10 @@ public class FileIoOptions {
      * Sets whether to enable direct I/O to bypass the OS cache.
      * Helpful when the disk I/O outperforms the kernel cache.
      * Notes:
-     * - Only supported on Linux for now.
-     * - Only supports upload for now.
+     * - Currently only Linux supports direct I/O. On unsupported platforms, the request transparently
+     *   falls back to buffered I/O and a warning is logged.
+     * - Supported for both upload (send_filepath) and download (recv_filepath).
+     * - This is a BEST-EFFORT optimization -- see field-level Javadoc for fallback conditions.
      *
      * @param directIo true to enable direct I/O, false otherwise
      */

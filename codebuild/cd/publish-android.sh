@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 set -o pipefail # Make sure one process in pipe fail gets bubble up
 
 git submodule update --init

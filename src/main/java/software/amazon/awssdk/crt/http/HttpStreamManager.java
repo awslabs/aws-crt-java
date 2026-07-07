@@ -44,6 +44,14 @@ public class HttpStreamManager implements AutoCloseable {
     /**
      * Request an HttpStream from StreamManager.
      *
+     * <p><b>HTTP/1.1 note:</b> For HTTP/1.1 streams, the future is completed before
+     * {@code activate()} is called. Operations on the stream (such as {@code cancel()}) require
+     * activate to have been called first — otherwise they are a no-op. Callers that need to operate
+     * on the stream from a future callback should call {@code stream.activate()} before any other
+     * operation. {@code activate()} is idempotent and safe to call multiple times.
+     * HTTP/2 does not have this concern — the H2 stream manager activates the stream from the
+     * connection's event-loop thread in the C implementation before completing the future.
+     *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
      * @return A future for a HttpStreamBase that will be completed when the stream is
@@ -62,6 +70,14 @@ public class HttpStreamManager implements AutoCloseable {
 
     /**
      * Request an HttpStream from StreamManager.
+     *
+     * <p><b>HTTP/1.1 note:</b> For HTTP/1.1 streams, the future is completed before
+     * {@code activate()} is called. Operations on the stream (such as {@code cancel()}) require
+     * activate to have been called first — otherwise they are a no-op. Callers that need to operate
+     * on the stream from a future callback should call {@code stream.activate()} before any other
+     * operation. {@code activate()} is idempotent and safe to call multiple times.
+     * HTTP/2 does not have this concern — the H2 stream manager activates the stream from the
+     * connection's event-loop thread in the C implementation before completing the future.
      *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop

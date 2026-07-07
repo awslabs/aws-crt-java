@@ -82,11 +82,24 @@ public class Http1StreamManager implements AutoCloseable {
     /**
      * Request an HTTP/1.1 HttpStream from StreamManager.
      *
+     * <p>The returned future completes with an {@link HttpStream} that will be activated immediately
+     * after the future is completed. The stream's response callbacks (onResponseHeaders, etc.) may
+     * begin firing as soon as activate is called.
+     *
+     * <p><b>Important:</b> Operations on the stream (such as {@code cancel()}) must only be invoked
+     * after {@code activate()} has been called. If {@code cancel()} is called before activate, it
+     * is a no-op — the stream will still proceed normally once activate runs, which may lead to
+     * unexpected behavior. Since there is a brief window between future completion and activation,
+     * callers that need to perform operations on the stream (from a future callback such as
+     * {@code thenAccept} or {@code whenComplete}) should call {@code stream.activate()} first.
+     * {@code activate()} is idempotent — calling it multiple times is safe and has no effect after
+     * the first successful call.
+     *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
      * @param useManualDataWrites A boolean variable to signal that body will be streamed using async writes.
      * @return A future for a HttpStream that will be completed when the stream is
-     *         acquired.
+     *         acquired and will be activated immediately after.
      * @throws CrtRuntimeException Exception happens from acquiring stream.
      */
     public CompletableFuture<HttpStream> acquireStream(HttpRequestBase request,
@@ -130,14 +143,13 @@ public class Http1StreamManager implements AutoCloseable {
                             }
                         }
                     }, useManualDataWrites);
-                    /**
-                     * Activate the stream before completing the future. This is safe because
-                     * this callback runs on the connection's event-loop thread, and the event
-                     * loop is single-threaded — no stream callbacks can fire until we return.
-                     * By activating first, the caller always receives an already-active stream,
-                     * eliminating the race where an external thread could close the stream
-                     * between complete() and activate().
-                     */
+                    /* Complete the future before activate. We cannot guarantee this callback
+                     * runs on the connection's event-loop thread (CompletableFuture.whenComplete
+                     * runs on the calling thread if the future is already completed when whenComplete
+                     * is attached). If we activated first, stream callbacks could fire on the
+                     * event-loop thread before the caller has the stream handle — a race condition.
+                     * By completing first, the caller has the handle before callbacks begin. */
+                    completionFuture.complete((HttpStream) stream);
                     try {
                         stream.activate();
                     } catch (CrtRuntimeException e) {
@@ -149,7 +161,6 @@ public class Http1StreamManager implements AutoCloseable {
                         completionFuture.completeExceptionally(e);
                         return;
                     }
-                    completionFuture.complete((HttpStream) stream);
                 } catch (Exception ex) {
                     if (connectionReleased.compareAndSet(false, true)) {
                         connManager.releaseConnection(conn);

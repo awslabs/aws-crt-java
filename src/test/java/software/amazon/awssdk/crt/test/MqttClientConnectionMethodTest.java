@@ -60,7 +60,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
                 disconnect();
             } finally {
                 close();
@@ -95,7 +96,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -111,6 +113,9 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
         Assume.assumeNotNull(
             AWS_TEST_MQTT311_IOT_CORE_HOST, AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY,
             AWS_TEST_MQTT311_IOT_CORE_PKCS12_KEY_PASSWORD);
+        // When set, TLS backend on macOS switches from Secure Transport to s2n-tls, which doesn't support PKCS#12.
+        Assume.assumeTrue("Skipped: AWS_CRT_USE_NON_FIPS_TLS_13 is set",
+            System.getenv("AWS_CRT_USE_NON_FIPS_TLS_13") == null);
 
         TestUtils.doRetryableTest(this::doConnDC_Cred_UC2Test, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
 
@@ -127,7 +132,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -167,7 +173,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -205,7 +212,7 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
              TlsContext tlsContext = new TlsContext(tlsOptions);
              CredentialsProvider provider = providerBuilder.apply(bootstrap)) {
 
-            connectWebsockets(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null);
+            connectWebsockets(provider, AWS_TEST_MQTT311_IOT_CORE_HOST, 443, tlsContext, null, null, null, true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -327,7 +334,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_PORT),
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -355,7 +363,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT),
                 AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
                 AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
-                null);
+                null,
+                false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -387,7 +396,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_TLS_PORT),
                     null,
                     null,
-                    null);
+                    null,
+                    true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -427,7 +437,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         port,
                         null,
                         null,
-                        null);
+                        null,
+                        true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -467,7 +478,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                         Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_TLS_PORT),
                         null,
                         null,
-                        proxyOptions);
+                        proxyOptions,
+                        true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -505,7 +517,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 null,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -534,7 +547,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                 null,
                 AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
                 AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
-                null);
+                null,
+                false);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -567,7 +581,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     tlsContext,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -605,7 +620,8 @@ public class MqttClientConnectionMethodTest extends MqttClientConnectionFixture 
                     tlsContext,
                     null,
                     null,
-                    proxyOptions);
+                    proxyOptions,
+                    true);
                 disconnect();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);

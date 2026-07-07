@@ -400,7 +400,8 @@ static jobject s_make_request_general(
     jbyteArray marshalled_request,
     jobject jni_http_request_body_stream,
     jobject jni_http_response_callback_handler,
-    enum aws_http_version version) {
+    enum aws_http_version version,
+    bool use_manual_data_writes) {
 
     struct aws_http_connection_binding *connection_binding = (struct aws_http_connection_binding *)jni_connection;
     struct aws_http_connection *native_conn = connection_binding->connection;
@@ -441,6 +442,7 @@ static jobject s_make_request_general(
         .on_destroy = aws_java_http_stream_on_stream_destroy_fn,
         .on_metrics = aws_java_http_stream_on_stream_metrics_fn,
         .user_data = stream_binding,
+        .use_manual_data_writes = use_manual_data_writes,
     };
 
     stream_binding->native_stream = aws_http_connection_make_request(native_conn, &request_options);
@@ -478,7 +480,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
     jlong jni_connection,
     jbyteArray marshalled_request,
     jobject jni_http_request_body_stream,
-    jobject jni_http_response_callback_handler) {
+    jobject jni_http_response_callback_handler,
+    jboolean jni_use_manual_data_writes) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -488,7 +491,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_HttpClientConnect
         marshalled_request,
         jni_http_request_body_stream,
         jni_http_response_callback_handler,
-        AWS_HTTP_VERSION_1_1);
+        AWS_HTTP_VERSION_1_1,
+        jni_use_manual_data_writes);
 }
 
 JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnection_http2ClientConnectionMakeRequest(
@@ -497,7 +501,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnec
     jlong jni_connection,
     jbyteArray marshalled_request,
     jobject jni_http_request_body_stream,
-    jobject jni_http_response_callback_handler) {
+    jobject jni_http_response_callback_handler,
+    jboolean jni_use_manual_data_writes) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -507,7 +512,8 @@ JNIEXPORT jobject JNICALL Java_software_amazon_awssdk_crt_http_Http2ClientConnec
         marshalled_request,
         jni_http_request_body_stream,
         jni_http_response_callback_handler,
-        AWS_HTTP_VERSION_2);
+        AWS_HTTP_VERSION_2,
+        jni_use_manual_data_writes);
 }
 
 struct http_stream_chunked_callback_data {
@@ -603,6 +609,109 @@ JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStream_httpStrea
     return AWS_OP_SUCCESS;
 }
 
+struct http_stream_write_data_callback_data {
+    struct http_stream_binding *stream_cb_data;
+    /*
+     * Global ref to the Java byte[] passed in by the caller, and the aws_byte_cursor acquired
+     * from it via aws_jni_byte_cursor_from_jbyteArray_acquire. Held on callback_data so the
+     * JNI-side bytes stay valid for the full async write, and released from
+     * s_cleanup_write_data_callback_data once the write completes (or fails synchronously).
+     * Avoids copying the payload into a native aws_byte_buf before sending.
+     */
+    jbyteArray data_array;
+    struct aws_byte_cursor data_cur;
+    struct aws_input_stream *data_stream;
+    jobject completion_callback;
+};
+
+static void s_cleanup_write_data_callback_data(
+    JNIEnv *env,
+    struct http_stream_write_data_callback_data *callback_data) {
+    if (callback_data->data_stream) {
+        aws_input_stream_destroy(callback_data->data_stream);
+    }
+    if (callback_data->data_array) {
+        /* Release the JNI pin/copy (needs the jbyteArray + original cursor), then drop our global ref. */
+        aws_jni_byte_cursor_from_jbyteArray_release(env, callback_data->data_array, callback_data->data_cur);
+        (*env)->DeleteGlobalRef(env, callback_data->data_array);
+    }
+    (*env)->DeleteGlobalRef(env, callback_data->completion_callback);
+    aws_mem_release(aws_jni_get_allocator(), callback_data);
+}
+
+static void s_write_data_complete(struct aws_http_stream *stream, int error_code, void *user_data) {
+    (void)stream;
+
+    struct http_stream_write_data_callback_data *callback_data = user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->stream_cb_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        return;
+    }
+
+    (*env)->CallVoidMethod(
+        env, callback_data->completion_callback, http_stream_write_data_completion_properties.callback, error_code);
+    aws_jni_check_and_clear_exception(env);
+
+    JavaVM *jvm = callback_data->stream_cb_data->jvm;
+    s_cleanup_write_data_callback_data(env, callback_data);
+    aws_jni_release_thread_env(jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+}
+
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseWriteData(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_cb_data,
+    jbyteArray data,
+    jboolean end_stream,
+    jobject completion_callback) {
+    (void)jni_class;
+    aws_cache_jni_ids(env);
+
+    struct http_stream_binding *cb_data = (struct http_stream_binding *)jni_cb_data;
+    struct aws_http_stream *stream = cb_data->native_stream;
+
+    struct http_stream_write_data_callback_data *callback_data =
+        aws_mem_calloc(aws_jni_get_allocator(), 1, sizeof(struct http_stream_write_data_callback_data));
+
+    callback_data->stream_cb_data = cb_data;
+    callback_data->completion_callback = (*env)->NewGlobalRef(env, completion_callback);
+
+    struct aws_http_stream_write_data_options options = {
+        .data = NULL,
+        .end_stream = end_stream,
+        .on_complete = s_write_data_complete,
+        .user_data = callback_data,
+    };
+
+    if (data != NULL) {
+        /*
+         * Promote to a global ref so it survives beyond this JNI frame — the async write
+         * completion fires on the event-loop thread after this function returns.
+         * Acquire the cursor once, store both on callback_data, and let
+         * s_cleanup_write_data_callback_data release them when the write finishes.
+         * aws_input_stream_new_from_cursor copies the {ptr,len} cursor struct into its own
+         * state, but does NOT copy the underlying bytes, so this path avoids the payload copy.
+         */
+        callback_data->data_array = (*env)->NewGlobalRef(env, data);
+        callback_data->data_cur = aws_jni_byte_cursor_from_jbyteArray_acquire(env, data);
+
+        callback_data->data_stream =
+            aws_input_stream_new_from_cursor(aws_jni_get_allocator(), &callback_data->data_cur);
+        options.data = callback_data->data_stream;
+    }
+
+    if (aws_http_stream_write_data(stream, &options)) {
+        s_cleanup_write_data_callback_data(env, callback_data);
+        return AWS_OP_ERR;
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpStreamBaseActivate(
     JNIEnv *env,
     jclass jni_class,
@@ -613,6 +722,10 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_http_HttpStreamBase_httpS
 
     struct http_stream_binding *binding = (struct http_stream_binding *)jni_stream_binding;
     struct aws_http_stream *stream = binding->native_stream;
+    if (binding->java_http_stream_base) {
+        /* Already activated */
+        return;
+    }
 
     if (stream == NULL) {
         aws_jni_throw_runtime_exception(env, "HttpStream is null.");

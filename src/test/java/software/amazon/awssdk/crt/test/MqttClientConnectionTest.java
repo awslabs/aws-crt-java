@@ -42,7 +42,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
             disconnect();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -74,7 +75,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             publish(
                     "test/topic/" + (UUID.randomUUID()).toString(),
@@ -113,7 +115,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             String topic = "test/topic/" + (UUID.randomUUID()).toString();
             byte[] payload = "Hello_World".getBytes();
@@ -159,7 +162,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     8883,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             disconnect();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -191,7 +195,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                 8883,
                 null,
                 null,
-                null);
+                null,
+                true);
 
             OnConnectionSuccessReturn connectionResult = waitForConnectSuccess();
             assertTrue("Connection success callback was empty", connectionResult != null);
@@ -243,7 +248,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     123,
                     null,
                     null,
-                    null);
+                    null,
+                    true);
             } catch (Exception ex) {
                 // Do nothing with the exception - we expect this to throw since we passed an incorrect port.
             }
@@ -263,6 +269,53 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
         }
      }
 
+    /**
+     * ============================================================
+     * METRICS TEST CASES
+     * ============================================================
+     */
+
+    /**
+     * Test that connection fails with basic auth when metrics are enabled (default).
+     * When metrics are enabled, the SDK appends metrics info to the username field,
+     * which corrupts basic authentication credentials and causes connection failure.
+     */
+    @Test
+    public void testConnDC_Metrics_BasicAuth_Enabled() {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(
+            AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST, AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT,
+            AWS_TEST_MQTT311_BASIC_AUTH_USERNAME, AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD);
+
+        boolean connectionFailed = false;
+        try {
+            // Metrics are enabled by default (metricsEnabled = true)
+            // This should cause connection failure because metrics appends to username,
+            // corrupting basic auth credentials
+            connectDirect(
+                null,  // No TLS context for basic auth
+                AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_HOST,
+                Integer.parseInt(AWS_TEST_MQTT311_DIRECT_MQTT_BASIC_AUTH_PORT),
+                AWS_TEST_MQTT311_BASIC_AUTH_USERNAME,
+                AWS_TEST_MQTT311_BASIC_AUTH_PASSWORD,
+                null,
+                true);  // Metrics enabled
+        } catch (Exception ex) {
+            // Expected - connection should fail with metrics enabled and basic auth
+        }
+
+        try {
+            OnConnectionFailureReturn result = waitForConnectFailure();
+            assertTrue("Connection error callback was empty", result != null);
+            assertTrue("Error code was success when it should not be", result.getErrorCode() != 0);
+        } catch (Exception ex) {
+            fail(ex.toString());
+        }
+
+        close();
+        CrtResource.waitForNoResources();
+    }
+
      /* This scenario once led to memory leaks, so this test primarily checks that there is no memory leaks. */
      @Test
      public void testMultipleFailedAttemptsOnSingleConnection() {
@@ -276,7 +329,8 @@ public class MqttClientConnectionTest extends MqttClientConnectionFixture {
                     8883,
                     null,
                     null,
-                    null)) {
+                    null,
+                    true)) {
                 for (int i = 0; i < 2; i++) {
                     CompletableFuture<Boolean> connected = connection.connect();
                     assertThrows(Exception.class, () -> connected.get(30, TimeUnit.SECONDS));

@@ -246,6 +246,12 @@ struct java_http_stream_write_chunk_completion_properties {
 };
 extern struct java_http_stream_write_chunk_completion_properties http_stream_write_chunk_completion_properties;
 
+/* HttpStreamWriteDataCompletionCallback */
+struct java_http_stream_write_data_completion_properties {
+    jmethodID callback;
+};
+extern struct java_http_stream_write_data_completion_properties http_stream_write_data_completion_properties;
+
 /* HtppStreamMetrics */
 struct java_http_stream_metrics_properties {
     jclass http_stream_metrics_class;
@@ -722,6 +728,8 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID publish_events_field_id;
     jfieldID lifecycle_events_field_id;
     jfieldID topic_aliasing_options_field_id;
+    jfieldID metrics_enabled_field_id;
+    jfieldID iot_device_sdk_metrics_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
 
@@ -926,7 +934,10 @@ extern struct java_aws_mqtt5_publish_result_properties mqtt5_publish_result_prop
 /* mqtt5.PublishReturn */
 struct java_aws_mqtt5_publish_return_properties {
     jclass return_class;
-    jmethodID return_constructor_id;
+    jmethodID return_constructor_id; /* (PublishPacket, long) */
+    jmethodID
+        return_acquire_publish_acknowledgement_control_id; /* ()Lsoftware/.../Mqtt5PublishAcknowledgementControlHandle;
+                                                            */
 };
 extern struct java_aws_mqtt5_publish_return_properties mqtt5_publish_return_properties;
 
@@ -1106,6 +1117,13 @@ struct java_cognito_credentials_provider_properties {
 };
 
 extern struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
+
+/* IoTDeviceSDKMetrics */
+struct java_iot_device_sdk_metrics_properties {
+    jclass iot_device_sdk_metrics_class;
+    jfieldID library_name_field_id;
+};
+extern struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
 
 /**
  * All functions bound to JNI MUST call this before doing anything else.

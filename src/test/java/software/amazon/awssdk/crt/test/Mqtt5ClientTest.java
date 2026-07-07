@@ -2626,6 +2626,96 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
     /**
      * ============================================================
+     * Auto PUBACK Tests
+     * ============================================================
+     */
+
+    private void doAutoPuback_NoDuplicateTest() {
+        try (TlsContextOptions tlsOptions = TlsContextOptions.createWithMtlsFromPath(
+                AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+             TlsContext tlsContext = new TlsContext(tlsOptions)) {
+
+            String testUUID = UUID.randomUUID().toString();
+            String testTopic = "test/MQTT5_AutoPuback_NoDuplicate_Java_" + testUUID;
+            byte[] payload = "hello".getBytes();
+
+            final long NO_REDELIVERY_WAIT_SEC = 60L;
+
+            CompletableFuture<byte[]> firstDeliveryFuture = new CompletableFuture<>();
+            CompletableFuture<byte[]> unexpectedRedeliveryFuture = new CompletableFuture<>();
+
+            Mqtt5ClientOptionsBuilder clientBuilder = new Mqtt5ClientOptionsBuilder(AWS_TEST_MQTT5_IOT_CORE_HOST, 8883l);
+            LifecycleEvents_Futured events = new LifecycleEvents_Futured();
+            clientBuilder.withLifecycleEvents(events);
+            clientBuilder.withTlsContext(tlsContext);
+
+            ConnectPacketBuilder connectOptions = new ConnectPacketBuilder();
+            connectOptions.withClientId("test/MQTT5_AutoPuback_NoDuplicate_Java_" + testUUID);
+            clientBuilder.withConnectOptions(connectOptions.build());
+
+            clientBuilder.withPublishEvents(new Mqtt5ClientOptions.PublishEvents() {
+                @Override
+                public void onMessageReceived(Mqtt5Client client, PublishReturn publishReturn) {
+                    byte[] receivedPayload = publishReturn.getPublishPacket().getPayload();
+                    if (!firstDeliveryFuture.isDone()) {
+                        // First delivery: do NOT call acquirePublishAcknowledgementControl(), auto-PUBACK path
+                        firstDeliveryFuture.complete(receivedPayload);
+                    } else if (java.util.Arrays.equals(receivedPayload, payload) && !unexpectedRedeliveryFuture.isDone()) {
+                        // Unexpected redelivery of the same payload
+                        unexpectedRedeliveryFuture.complete(receivedPayload);
+                    }
+                }
+            });
+
+            try (Mqtt5Client client = new Mqtt5Client(clientBuilder.build())) {
+                client.start();
+                events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Subscribe to the topic with QoS 1
+                SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
+                client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Publish a QoS 1 message
+                PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
+                client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+
+                // Wait for the first delivery
+                byte[] firstPayload = firstDeliveryFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                assertTrue("First delivery payload should match", java.util.Arrays.equals(firstPayload, payload));
+
+                // Wait 60 seconds and confirm the broker does NOT re-deliver the message (auto-PUBACK was sent)
+                boolean redelivered = false;
+                try {
+                    unexpectedRedeliveryFuture.get(NO_REDELIVERY_WAIT_SEC, TimeUnit.SECONDS);
+                    redelivered = true;
+                } catch (java.util.concurrent.TimeoutException ex) {
+                    redelivered = false;
+                }
+                assertTrue("Auto-PUBACK should have been sent (no acquirePublishAcknowledgementControl called), verified by absence of re-delivery",
+                        !redelivered);
+
+                client.stop();
+                events.stopFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /* Verify that the client sends PUBACK automatically when acquirePublishAcknowledgementControl() is not called.
+     * Confirmed by the absence of broker re-delivery. */
+    @Test
+    public void AutoPuback_NoDuplicate() throws Exception {
+        skipIfNetworkUnavailable();
+        Assume.assumeNotNull(AWS_TEST_MQTT5_IOT_CORE_HOST, AWS_TEST_MQTT5_IOT_CORE_RSA_CERT, AWS_TEST_MQTT5_IOT_CORE_RSA_KEY);
+
+        TestUtils.doRetryableTest(this::doAutoPuback_NoDuplicateTest, TestUtils::isRetryableTimeout, MAX_TEST_RETRIES, TEST_RETRY_SLEEP_MILLIS);
+
+        CrtResource.waitForNoResources();
+    }
+
+    /**
+     * ============================================================
      * Manual Publish Acknowledgement Tests
      * ============================================================
      */

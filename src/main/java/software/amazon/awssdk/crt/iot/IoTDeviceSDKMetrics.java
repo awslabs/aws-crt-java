@@ -63,6 +63,7 @@ public class IoTDeviceSDKMetrics {
     public void setMetadataEntries(List<IoTMetricsMetadata> metadataEntries) { this.metadataEntries = metadataEntries; }
 
     /**
+     * @hidden
      * Builds the final metrics object for an MQTT5 client by encoding the CRT
      * feature list from {@code clientOptions} and merging it with any
      * user-supplied metadata.
@@ -76,6 +77,7 @@ public class IoTDeviceSDKMetrics {
     }
 
     /**
+     * @hidden
      * Builds the final metrics object for an MQTT3 connection by encoding the CRT
      * feature list from the connection configuration and merging it
      * with any user-supplied metadata.
@@ -84,13 +86,12 @@ public class IoTDeviceSDKMetrics {
      * @return the merged metrics object ready to be passed to JNI
      */
     public static IoTDeviceSDKMetrics createMetricsMqtt3(MqttConnectionConfig config) {
-        String crtFeatureList = getEncodedFeatureListMqtt3(config.getHttpProxyOptions(), config.getTlsContext());
+        String crtFeatureList = getEncodedFeatureListMqtt3(config);
         return createMetrics(config.getMetrics(), crtFeatureList);
     }
 
     /**
      * Generates the encoded feature list string for metrics from MQTT5 client options.
-     *
      * <p>
      * Format: "ID/Value,ID/Value,..."
      * Example: "A/B,C/A,F/5,G/A" means retry_jitter_mode=FULL,
@@ -184,20 +185,23 @@ public class IoTDeviceSDKMetrics {
      * - J (tls_cipher_preference)
      * - K (minimum_tls_version)
      *
-     * @param proxyOptions optional HTTP proxy options from the connection
-     * @param tlsCtx optional TLS context used by the connection
+     * @param config the MQTT3 connection configuration containing proxy and TLS
      * @return the encoded feature list string
      */
-    private static String getEncodedFeatureListMqtt3(HttpProxyOptions proxyOptions, TlsContext tlsCtx) {
+    private static String getEncodedFeatureListMqtt3(MqttConnectionConfig config) {
         List<String> features = new ArrayList<>();
 
         features.add(PROTOCOL_VERSION + "/" + protocolVersionValue(false));
         features.add(SOCKET_IMPLEMENTATION + "/" + socketImplementationValue());
 
+        HttpProxyOptions proxyOptions = config.getHttpProxyOptions();
+
         if (proxyOptions != null) {
             boolean proxyUsesTls = proxyOptions.getTlsContext() != null;
             features.add(HTTP_PROXY_TYPE + "/" + httpProxyTypeValue(proxyUsesTls));
         }
+
+        TlsContext tlsCtx = config.getTlsContext();
 
         if (tlsCtx != null) {
             String certSrc = certificateSourceValue(tlsCtx.getCertificateSource());

@@ -604,11 +604,11 @@ public final class TlsContextOptions extends CrtResource {
         return this;
     }
 
-    /** 
+    /**
      * @return the {@link CertificateSource} of the configured mTLS, or {@code null}
      *         if no mTLS source has been set (or the source has no defined metrics mapping).
      */
-    public CertificateSource getCertificateSource() {
+    CertificateSource getCertificateSource() {
         return certificateSource;
     }
 

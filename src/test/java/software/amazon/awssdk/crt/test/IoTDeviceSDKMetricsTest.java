@@ -21,7 +21,6 @@ import software.amazon.awssdk.crt.mqtt5.TopicAliasingOptions.InboundTopicAliasBe
 import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.io.TlsContextOptions;
-import software.amazon.awssdk.crt.io.TlsContextOptions.CertificateSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -298,21 +297,6 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
     }
 
     // ======================== Certificate Source ========================
-
-    @Test
-    public void testCertificateSourceMappingFromFactories() {
-        try (TlsContextOptions mtls =
-                 TlsContextOptions.createWithMtls(TlsContextOptionsTest.TEST_CERT, TlsContextOptionsTest.TEST_KEY)) {
-            assertEquals(CertificateSource.CERTIFICATE_FILES, mtls.getCertificateSource());
-        }
-        try (TlsContextOptions pkcs12 =
-                 TlsContextOptions.createWithMtlsPkcs12("/dev/null", "password")) {
-            assertEquals(CertificateSource.PKCS12_FILE, pkcs12.getCertificateSource());
-        }
-        try (TlsContextOptions defaults = TlsContextOptions.createDefaultClient()) {
-            assertNull(defaults.getCertificateSource());
-        }
-    }
 
     @Test
     public void testCertificateSourceInMqtt5Features() {

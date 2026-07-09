@@ -16,6 +16,16 @@ struct aws_mqtt5_packet_publish_view_java_jni;
 struct aws_mqtt5_packet_subscribe_view_java_jni;
 struct aws_mqtt5_packet_unsubscribe_view_java_jni;
 
+/*
+ * Owns a buffer copied from a JVM-provided cursor and a cursor pointing into
+ * that buffer. Used to hold ownership of key/value byte-buffers whose original
+ * JVM references have been released, keeping the data alive for the C layer.
+ */
+struct buffer_and_cursor_array_holder_struct {
+    struct aws_byte_cursor cursor;
+    struct aws_byte_buf buffer;
+};
+
 int aws_get_uint16_from_jobject(
     JNIEnv *env,
     jobject packet,

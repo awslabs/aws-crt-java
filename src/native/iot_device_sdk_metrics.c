@@ -20,10 +20,6 @@
 #include <java_class_ids.h>
 
 static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
-struct aws_metadata_buf_holder {
-    struct aws_byte_cursor cursor;
-    struct aws_byte_buf buffer;
-};
 
 /* Frees all native memory associated with a parsed metrics struct. */
 void aws_mqtt_iot_metrics_java_jni_destroy(
@@ -46,7 +42,7 @@ void aws_mqtt_iot_metrics_java_jni_destroy(
     if (aws_array_list_is_valid(&java_metrics->metadata_bufs)) {
         size_t buf_count = aws_array_list_length(&java_metrics->metadata_bufs);
         for (size_t i = 0; i < buf_count; i++) {
-            struct aws_metadata_buf_holder *holder = NULL;
+            struct buffer_and_cursor_array_holder_struct *holder = NULL;
             aws_array_list_get_at_ptr(&java_metrics->metadata_bufs, (void **)&holder, i);
             aws_byte_buf_clean_up(&holder->buffer);
         }
@@ -120,7 +116,10 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     /* Init array_list to hold individual byte_bufs (2 per entry: key + value) */
     if (aws_array_list_init_dynamic(
-            &java_metrics->metadata_bufs, allocator, (size_t)count * 2, sizeof(struct aws_metadata_buf_holder))) {
+            &java_metrics->metadata_bufs,
+            allocator,
+            (size_t)count * 2,
+            sizeof(struct buffer_and_cursor_array_holder_struct))) {
         goto on_error;
     }
 
@@ -155,7 +154,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
         /* Key: acquire JVM bytes → copy into own buffer → release JVM bytes.
          * The local copy lets us hold onto the data after the JVM release. */
-        struct aws_metadata_buf_holder holder_key;
+        struct buffer_and_cursor_array_holder_struct holder_key;
         struct aws_byte_cursor tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, key_jstr);
         aws_byte_buf_init_copy_from_cursor(&holder_key.buffer, allocator, tmp_cursor);
         holder_key.cursor = aws_byte_cursor_from_buf(&holder_key.buffer);
@@ -163,7 +162,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         key_jstr = NULL;
 
         /* Value: same pattern */
-        struct aws_metadata_buf_holder holder_value;
+        struct buffer_and_cursor_array_holder_struct holder_value;
         tmp_cursor = aws_jni_byte_cursor_from_jstring_acquire(env, value_jstr);
         aws_byte_buf_init_copy_from_cursor(&holder_value.buffer, allocator, tmp_cursor);
         holder_value.cursor = aws_byte_cursor_from_buf(&holder_value.buffer);

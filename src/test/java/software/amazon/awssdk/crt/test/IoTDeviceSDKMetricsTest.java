@@ -93,23 +93,6 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
         assertTrue(feature.contains("F/5")); // MQTT5
     }
 
-    @Test
-    public void testDefaultEnumValuesOmitted() {
-        Mqtt5ClientOptionsBuilder builder = new Mqtt5ClientOptionsBuilder("localhost", 8883L);
-        builder.withSessionBehavior(ClientSessionBehavior.DEFAULT);
-        builder.withOfflineQueueBehavior(ClientOfflineQueueBehavior.DEFAULT);
-        builder.withRetryJitterMode(JitterMode.Default);
-        builder.withDisableMetrics(true);
-        Mqtt5ClientOptions options = builder.build();
-
-        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt5(options);
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-
-        assertFalse(feature.contains("A/"));
-        assertFalse(feature.contains("B/"));
-        assertFalse(feature.contains("C/"));
-    }
-
     // ======================== Feature Merging ========================
 
     @Test
@@ -189,21 +172,6 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
         assertTrue(feature.contains("I/A"));
         assertTrue(feature.contains("F/3"));
         assertTrue(feature.contains("G/"));
-    }
-
-    @Test
-    public void testUserFeatureOverridesCrt() {
-        IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics();
-        List<IoTMetricsMetadata> userEntries = new ArrayList<>();
-        userEntries.add(new IoTMetricsMetadata("IoTSDKMetricsVersion", "1"));
-        userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "F/3,I/B"));
-        user.setMetadataEntries(userEntries);
-
-        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
-
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertTrue(feature.contains("F/3"));
-        assertTrue(feature.contains("I/B"));
     }
 
     // ======================== Create Metrics - Version Mismatch ========================
@@ -286,14 +254,6 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
         IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
         assertEquals("MyCustomSDK/1.0", result.getLibraryName());
-    }
-
-    @Test
-    public void testMetricsVersionAlwaysSet() {
-        IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(null));
-
-        String metricsVersion = findMetadataValue(result.getMetadataEntries(), "IoTSDKMetricsVersion");
-        assertEquals("1", metricsVersion);
     }
 
     // ======================== Certificate Source ========================

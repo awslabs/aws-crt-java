@@ -29,6 +29,10 @@ public class IoTDeviceSDKMetrics {
     private String libraryName;
     private List<IoTMetricsMetadata> metadataEntries;
 
+    // Library name constants
+    private static final String SDK_LIBRARY_NAME_JAVA = "IoTDeviceSDK/Java";
+    private static final String SDK_LIBRARY_NAME_ANDROID = "IoTDeviceSDK/Android";
+
     // Feature ID constants
     private static final String RETRY_JITTER_MODE = "A";
     private static final String SESSION_BEHAVIOR = "B";
@@ -45,7 +49,7 @@ public class IoTDeviceSDKMetrics {
     public static final int IOT_SDK_METRICS_FEATURE_VERSION = 1;
 
     public IoTDeviceSDKMetrics() {
-        this.libraryName = "IoTDeviceSDK/Java";
+        this.libraryName = getDefaultLibraryName();
         this.metadataEntries = new ArrayList<>();
     }
 
@@ -251,7 +255,7 @@ public class IoTDeviceSDKMetrics {
      * @return the final metrics object
      */
     private static IoTDeviceSDKMetrics createMetrics(IoTDeviceSDKMetrics userMetrics, String crtFeatureList) {
-        String libraryName = (userMetrics != null) ? userMetrics.getLibraryName() : "IoTDeviceSDK/Java";
+        String libraryName = (userMetrics != null) ? userMetrics.getLibraryName() : getDefaultLibraryName();
 
         String crtVersion = new PackageInfo().version.toString();
         LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
@@ -304,6 +308,26 @@ public class IoTDeviceSDKMetrics {
      */
     private static String protocolVersionValue(boolean isMqtt5) {
         return isMqtt5 ? "5" : "3";
+    }
+
+    /**
+     * Returns the default SDK library name for this platform.
+     *
+     * <p>Returns {@code "IoTDeviceSDK/Android"} when running on Android,
+     * {@code "IoTDeviceSDK/Java"} otherwise. Defaults to
+     * {@code "IoTDeviceSDK/Java"} if OS detection fails.
+     *
+     * @return the platform-appropriate default library name
+     */
+    private static String getDefaultLibraryName() {
+        try {
+            if ("android".equals(CRT.getOSIdentifier())) {
+                return SDK_LIBRARY_NAME_ANDROID;
+            }
+        } catch (Exception e) {
+            // fall through to default
+        }
+        return SDK_LIBRARY_NAME_JAVA;
     }
 
     /**

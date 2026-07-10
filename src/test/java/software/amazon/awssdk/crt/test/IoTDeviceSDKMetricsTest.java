@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.test;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
 import software.amazon.awssdk.crt.iot.IoTMetricsMetadata;
 import software.amazon.awssdk.crt.mqtt.MqttClient;
@@ -133,7 +134,7 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
     public void testCreateMetricsNullUserMetrics() {
         IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(null));
 
-        assertEquals("IoTDeviceSDK/Java", result.getLibraryName());
+        assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
         assertNotNull(result.getMetadataEntries());
 
         List<IoTMetricsMetadata> entries = result.getMetadataEntries();
@@ -151,7 +152,7 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
         IoTDeviceSDKMetrics user = new IoTDeviceSDKMetrics();
         IoTDeviceSDKMetrics result = IoTDeviceSDKMetrics.createMetricsMqtt3(createMqtt3Config(user));
 
-        assertEquals("IoTDeviceSDK/Java", result.getLibraryName());
+        assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
         String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
         assertTrue(feature.contains("F/3"));
     }
@@ -295,6 +296,20 @@ public class IoTDeviceSDKMetricsTest extends CrtTestFixture {
     }
 
     // ======================== Helper ========================
+
+    /**
+     * Returns the library name that {@link IoTDeviceSDKMetrics} should produce
+     * by default on the current platform.
+     */
+    private static String getExpectedDefaultLibraryName() {
+        try {
+            return "android".equals(CRT.getOSIdentifier())
+                    ? "IoTDeviceSDK/Android"
+                    : "IoTDeviceSDK/Java";
+        } catch (Exception e) {
+            return "IoTDeviceSDK/Java";
+        }
+    }
 
     private String findMetadataValue(List<IoTMetricsMetadata> entries, String key) {
         for (IoTMetricsMetadata entry : entries) {

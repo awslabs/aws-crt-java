@@ -92,8 +92,8 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
     }
 
     /* Read the Java List<IoTMetricsMetadata> field */
-    metadata_list = (*env)->GetObjectField(
-        env, java_aws_iot_metrics, aws_iot_metrics_properties.metadata_entries_field_id);
+    metadata_list =
+        (*env)->GetObjectField(env, java_aws_iot_metrics, aws_iot_metrics_properties.metadata_entries_field_id);
 
     /* Null list is valid — return metrics with just library name */
     if (metadata_list == NULL || aws_jni_check_and_clear_exception(env)) {

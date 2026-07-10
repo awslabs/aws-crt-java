@@ -2676,8 +2676,8 @@ static void s_cache_aws_iot_metrics(JNIEnv *env) {
     aws_iot_metrics_properties.aws_iot_metrics_class = (*env)->NewGlobalRef(env, cls);
     AWS_FATAL_ASSERT(aws_iot_metrics_properties.aws_iot_metrics_class);
 
-    aws_iot_metrics_properties.library_name_field_id = (*env)->GetFieldID(
-        env, aws_iot_metrics_properties.aws_iot_metrics_class, "libraryName", "Ljava/lang/String;");
+    aws_iot_metrics_properties.library_name_field_id =
+        (*env)->GetFieldID(env, aws_iot_metrics_properties.aws_iot_metrics_class, "libraryName", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(aws_iot_metrics_properties.library_name_field_id);
 
     aws_iot_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(

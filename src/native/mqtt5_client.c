@@ -9,9 +9,9 @@
 #include <aws/io/socket.h>
 #include <aws/io/tls_channel_handler.h>
 
+#include <aws_iot_metrics.h>
 #include <crt.h>
 #include <http_request_utils.h>
-#include <aws_iot_metrics.h>
 #include <java_class_ids.h>
 #include <jni.h>
 #include <mqtt5_client_jni.h>
@@ -2170,8 +2170,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
         jobject jni_aws_iot_metrics =
             (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.aws_iot_metrics_field_id);
         if (!aws_jni_check_and_clear_exception(env) && jni_aws_iot_metrics != NULL) {
-            aws_iot_metrics =
-                aws_mqtt_iot_metrics_java_jni_create_from_java(env, allocator, jni_aws_iot_metrics);
+            aws_iot_metrics = aws_mqtt_iot_metrics_java_jni_create_from_java(env, allocator, jni_aws_iot_metrics);
             client_options.metrics = aws_iot_metrics ? &aws_iot_metrics->metrics : NULL;
         } else {
             AWS_LOGF_DEBUG(

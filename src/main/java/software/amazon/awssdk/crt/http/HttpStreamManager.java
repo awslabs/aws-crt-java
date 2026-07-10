@@ -44,6 +44,14 @@ public class HttpStreamManager implements AutoCloseable {
     /**
      * Request an HttpStream from StreamManager.
      *
+     * <p><b>HTTP/1.1 note:</b> For HTTP/1.1 streams, the future is completed before
+     * {@code activate()} is called. Operations on the stream (such as {@code cancel()}) require
+     * activate to have been called first — otherwise they are a no-op. Callers that need to operate
+     * on the stream from a future callback should call {@code stream.activate()} before any other
+     * operation. {@code activate()} is idempotent and safe to call multiple times.
+     * HTTP/2 does not have this concern — the H2 stream manager activates the stream from the
+     * connection's event-loop thread in the C implementation before completing the future.
+     *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
      * @return A future for a HttpStreamBase that will be completed when the stream is
@@ -62,6 +70,14 @@ public class HttpStreamManager implements AutoCloseable {
 
     /**
      * Request an HttpStream from StreamManager.
+     *
+     * <p><b>HTTP/1.1 note:</b> For HTTP/1.1 streams, the future is completed before
+     * {@code activate()} is called. Operations on the stream (such as {@code cancel()}) require
+     * activate to have been called first — otherwise they are a no-op. Callers that need to operate
+     * on the stream from a future callback should call {@code stream.activate()} before any other
+     * operation. {@code activate()} is idempotent and safe to call multiple times.
+     * HTTP/2 does not have this concern — the H2 stream manager activates the stream from the
+     * connection's event-loop thread in the C implementation before completing the future.
      *
      * @param request         HttpRequestBase. The Request to make to the Server.
      * @param streamHandler   HttpStreamBaseResponseHandler. The Stream Handler to be called from the Native EventLoop
@@ -103,6 +119,31 @@ public class HttpStreamManager implements AutoCloseable {
             return this.h2StreamManager.getMaxConnections();
         } else {
             return this.h1StreamManager.getMaxConnections();
+        }
+    }
+
+    /**
+     * Abort an in-flight stream obtained from this manager. Cancels the HTTP exchange
+     * and ensures the underlying connection/stream slot is properly released back to the
+     * pool so it can be reused by new requests.
+     *
+     * <p>This is the correct way to cancel an in-flight request from outside the stream
+     * callback lifecycle (e.g., on SDK timeout). For HTTP/1.1, the connection release is
+     * guaranteed by the {@code AtomicBoolean} guard and {@code isNull()} check inside
+     * {@code Http1StreamManager.acquireStream()} — calling {@code cancel()} triggers
+     * {@code onResponseComplete} on activated streams, or the post-activate guard catches
+     * streams closed before activation. For HTTP/2, the native layer handles stream slot
+     * accounting internally.
+     *
+     * <p>Safe to call with null (e.g., if the stream was never acquired), after normal
+     * completion, or multiple times.
+     *
+     * @param stream the stream to abort, or null
+     */
+    public void abortStream(HttpStreamBase stream) {
+        if (stream != null && !stream.isNull()) {
+            stream.cancel();
+            stream.close();
         }
     }
 

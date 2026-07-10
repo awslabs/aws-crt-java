@@ -2161,12 +2161,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5C
     client_options.client_termination_handler = &s_aws_mqtt5_client_java_termination;
     client_options.client_termination_handler_user_data = (void *)java_client;
 
-    /* Check if metrics are enabled and set metrics value */
-    jboolean metrics_enabled =
-        (*env)->GetBooleanField(env, jni_options, mqtt5_client_options_properties.metrics_enabled_field_id);
+    /* Check if metrics are disabled (opt-out pattern, default false = metrics enabled) */
+    jboolean disable_metrics =
+        (*env)->GetBooleanField(env, jni_options, mqtt5_client_options_properties.disable_metrics_field_id);
     bool metrics_has_error = aws_jni_check_and_clear_exception(env);
 
-    if (!metrics_has_error && metrics_enabled) {
+    if (!metrics_has_error && !disable_metrics) {
         jobject jni_iot_device_sdk_metrics =
             (*env)->GetObjectField(env, jni_options, mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
         if (!aws_jni_check_and_clear_exception(env) && jni_iot_device_sdk_metrics != NULL) {

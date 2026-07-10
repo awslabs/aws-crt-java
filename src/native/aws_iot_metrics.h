@@ -2,8 +2,8 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#ifndef AWS_JNI_IOT_DEVICE_SDK_METRICS_H
-#define AWS_JNI_IOT_DEVICE_SDK_METRICS_H
+#ifndef AWS_JNI_AWS_IOT_METRICS_H
+#define AWS_JNI_AWS_IOT_METRICS_H
 
 #include <aws/mqtt/mqtt.h>
 #include <crt.h>
@@ -25,6 +25,6 @@ void aws_mqtt_iot_metrics_java_jni_destroy(
 struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_java(
     JNIEnv *env,
     struct aws_allocator *allocator,
-    jobject java_iot_device_sdk_metrics);
+    jobject java_aws_iot_metrics);
 
-#endif /* AWS_JNI_IOT_DEVICE_SDK_METRICS_H */
+#endif /* AWS_JNI_AWS_IOT_METRICS_H */

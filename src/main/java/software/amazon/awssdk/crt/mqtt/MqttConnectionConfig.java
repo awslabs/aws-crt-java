@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
-import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
@@ -51,7 +51,7 @@ public final class MqttConnectionConfig extends CrtResource {
 
     /* metrics */
     private boolean disableMetrics = false;
-    private IoTDeviceSDKMetrics metrics = null;
+    private AWSIoTMetrics metrics = null;
 
     public MqttConnectionConfig() {}
 
@@ -570,7 +570,7 @@ public final class MqttConnectionConfig extends CrtResource {
      *
      * @param metrics metrics configuration from the IoT SDK layer
      */
-    public void setMetrics(IoTDeviceSDKMetrics metrics) {
+    public void setMetrics(AWSIoTMetrics metrics) {
         this.metrics = metrics;
     }
 
@@ -579,7 +579,7 @@ public final class MqttConnectionConfig extends CrtResource {
      *
      * @return metrics configuration, or null if not set
      */
-    public IoTDeviceSDKMetrics getMetrics() {
+    public AWSIoTMetrics getMetrics() {
         return metrics;
     }
 

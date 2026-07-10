@@ -12,7 +12,7 @@ import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
-import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -49,8 +49,8 @@ public class Mqtt5ClientOptions {
     // Opt-out flag for AWS IoT Metrics. When true, metrics are disabled.
     // Default is false (metrics enabled).
     private boolean disableMetrics = false;
-    private IoTDeviceSDKMetrics userMetrics;
-    private IoTDeviceSDKMetrics iotDeviceSDKMetrics;
+    private AWSIoTMetrics userMetrics;
+    private AWSIoTMetrics awsIoTMetrics;
 
 
     /**
@@ -284,7 +284,7 @@ public class Mqtt5ClientOptions {
      *
      * @return the user metrics, or null if none were provided
      */
-    public IoTDeviceSDKMetrics getUserMetrics() {
+    public AWSIoTMetrics getUserMetrics() {
         return this.userMetrics;
     }
 
@@ -327,9 +327,9 @@ public class Mqtt5ClientOptions {
         this.disableMetrics = builder.disableMetrics;
         this.userMetrics = builder.metrics;
         if (this.disableMetrics) {
-            this.iotDeviceSDKMetrics = null;
+            this.awsIoTMetrics = null;
         } else {
-            this.iotDeviceSDKMetrics = IoTDeviceSDKMetrics.createMetricsMqtt5(this);
+            this.awsIoTMetrics = AWSIoTMetrics.createMetricsMqtt5(this);
         }
     }
 
@@ -634,7 +634,7 @@ public class Mqtt5ClientOptions {
         private PublishEvents publishEvents;
         private TopicAliasingOptions topicAliasingOptions;
         private boolean disableMetrics = false;
-        private IoTDeviceSDKMetrics metrics = null;
+        private AWSIoTMetrics metrics = null;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -921,7 +921,7 @@ public class Mqtt5ClientOptions {
          * @param metrics metrics configuration from the IoT SDK layer
          * @return The Mqtt5ClientOptionsBuilder after setting the metrics
          */
-        public Mqtt5ClientOptionsBuilder withMetrics(IoTDeviceSDKMetrics metrics) {
+        public Mqtt5ClientOptionsBuilder withMetrics(AWSIoTMetrics metrics) {
             this.metrics = metrics;
             return this;
         }

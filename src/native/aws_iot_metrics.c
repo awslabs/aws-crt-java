@@ -6,20 +6,20 @@
 /**
  * JNI bridge for IoT Device SDK Metrics.
  *
- * Converts a Java IoTDeviceSDKMetrics object (library name + metadata key-value
+ * Converts a Java AWSIoTMetrics object (library name + metadata key-value
  * entries) into a native aws_mqtt_iot_metrics struct that the C MQTT layer uses
  * to append SDK telemetry to the CONNECT packet username field.
  *
  */
 #include <jni.h>
 
-#include "iot_device_sdk_metrics.h"
+#include "aws_iot_metrics.h"
 #include "mqtt5_packets.h"
 #include <aws/mqtt/mqtt.h>
 #include <crt.h>
 #include <java_class_ids.h>
 
-static char s_iot_device_sdk_metrics_string[] = "IoTDeviceSDKMetrics";
+static char s_aws_iot_metrics_string[] = "AWSIoTMetrics";
 
 /* Frees all native memory associated with a parsed metrics struct. */
 void aws_mqtt_iot_metrics_java_jni_destroy(
@@ -31,7 +31,7 @@ void aws_mqtt_iot_metrics_java_jni_destroy(
     if (!java_metrics) {
         return;
     }
-    AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Destroying IoTDeviceSDKMetrics", (void *)java_metrics);
+    AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Destroying AWSIoTMetrics", (void *)java_metrics);
 
     /* Free the library name buffer */
     if (aws_byte_buf_is_valid(&java_metrics->library_name_buf)) {
@@ -58,11 +58,11 @@ void aws_mqtt_iot_metrics_java_jni_destroy(
     aws_mem_release(allocator, java_metrics);
 }
 
-/* Parses a Java IoTDeviceSDKMetrics object into a native metrics struct for the C MQTT layer. */
+/* Parses a Java AWSIoTMetrics object into a native metrics struct for the C MQTT layer. */
 struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_java(
     JNIEnv *env,
     struct aws_allocator *allocator,
-    jobject java_iot_device_sdk_metrics) {
+    jobject java_aws_iot_metrics) {
 
     jobject metadata_list = NULL;
 
@@ -70,7 +70,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
     struct aws_mqtt_iot_metrics_java_jni *java_metrics =
         aws_mem_calloc(allocator, 1, sizeof(struct aws_mqtt_iot_metrics_java_jni));
 
-    AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Creating IoTDeviceSDKMetrics from Java object", (void *)java_metrics);
+    AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: Creating AWSIoTMetrics from Java object", (void *)java_metrics);
 
     /*
      * Extract the library name (e.g. "IoTDeviceSDK/Java").
@@ -79,25 +79,25 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
      */
     if (aws_get_string_from_jobject(
             env,
-            java_iot_device_sdk_metrics,
-            iot_device_sdk_metrics_properties.library_name_field_id,
-            s_iot_device_sdk_metrics_string,
+            java_aws_iot_metrics,
+            aws_iot_metrics_properties.library_name_field_id,
+            s_aws_iot_metrics_string,
             "library name",
             &java_metrics->library_name_buf,
             &java_metrics->metrics.library_name,
             false,
             NULL) == AWS_OP_ERR) {
-        AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics create_from_java: No library name found");
+        AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "AWSIoTMetrics create_from_java: No library name found");
         goto on_error;
     }
 
     /* Read the Java List<IoTMetricsMetadata> field */
     metadata_list = (*env)->GetObjectField(
-        env, java_iot_device_sdk_metrics, iot_device_sdk_metrics_properties.metadata_entries_field_id);
+        env, java_aws_iot_metrics, aws_iot_metrics_properties.metadata_entries_field_id);
 
     /* Null list is valid — return metrics with just library name */
     if (metadata_list == NULL || aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: IoTDeviceSDKMetrics no metadata entries", (void *)java_metrics);
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: AWSIoTMetrics no metadata entries", (void *)java_metrics);
         return java_metrics;
     }
 
@@ -106,7 +106,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     /* Empty list is valid — return metrics with just library name */
     if (aws_jni_check_and_clear_exception(env) || count <= 0) {
-        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: IoTDeviceSDKMetrics metadata list empty", (void *)java_metrics);
+        AWS_LOGF_DEBUG(AWS_LS_MQTT_GENERAL, "id=%p: AWSIoTMetrics metadata list empty", (void *)java_metrics);
         (*env)->DeleteLocalRef(env, metadata_list);
         return java_metrics;
     }
@@ -127,7 +127,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         /* Call List.get(i) to get the IoTMetricsMetadata object */
         jobject entry = (*env)->CallObjectMethod(env, metadata_list, boxed_list_properties.list_get_id, i);
         if (!entry || aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: failed to get entry at index %d", (int)i);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "AWSIoTMetrics: failed to get entry at index %d", (int)i);
             (*env)->DeleteLocalRef(env, entry);
             goto on_error;
         }
@@ -135,7 +135,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         /* Read the key field. Empty string is allowed; null Java field is not. */
         jstring key_jstr = (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.key_field_id);
         if (aws_jni_check_and_clear_exception(env) || !key_jstr) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null key at index %d", (int)i);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "AWSIoTMetrics: exception or null key at index %d", (int)i);
             (*env)->DeleteLocalRef(env, key_jstr);
             (*env)->DeleteLocalRef(env, entry);
             goto on_error;
@@ -145,7 +145,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
         jstring value_jstr =
             (jstring)(*env)->GetObjectField(env, entry, iot_metrics_metadata_properties.value_field_id);
         if (aws_jni_check_and_clear_exception(env) || !value_jstr) {
-            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "IoTDeviceSDKMetrics: exception or null value at index %d", (int)i);
+            AWS_LOGF_ERROR(AWS_LS_MQTT_GENERAL, "AWSIoTMetrics: exception or null value at index %d", (int)i);
             (*env)->DeleteLocalRef(env, key_jstr);
             (*env)->DeleteLocalRef(env, value_jstr);
             (*env)->DeleteLocalRef(env, entry);
@@ -179,7 +179,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
         AWS_LOGF_DEBUG(
             AWS_LS_MQTT_GENERAL,
-            "IoTDeviceSDKMetrics: metadata[%d] key=\"" PRInSTR "\" value=\"" PRInSTR "\"",
+            "AWSIoTMetrics: metadata[%d] key=\"" PRInSTR "\" value=\"" PRInSTR "\"",
             (int)i,
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].key),
             AWS_BYTE_CURSOR_PRI(java_metrics->metadata_entries[i].value));
@@ -195,7 +195,7 @@ struct aws_mqtt_iot_metrics_java_jni *aws_mqtt_iot_metrics_java_jni_create_from_
 
     AWS_LOGF_DEBUG(
         AWS_LS_MQTT_GENERAL,
-        "id=%p: IoTDeviceSDKMetrics creation complete, %d metadata entries",
+        "id=%p: AWSIoTMetrics creation complete, %d metadata entries",
         (void *)java_metrics,
         (int)count);
 

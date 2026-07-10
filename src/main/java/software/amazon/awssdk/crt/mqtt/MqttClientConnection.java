@@ -17,7 +17,7 @@ import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
-import software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics;
+import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -165,7 +165,7 @@ public class MqttClientConnection extends CrtResource {
             }
 
             if (!config.getDisableMetrics()) {
-                IoTDeviceSDKMetrics metrics = IoTDeviceSDKMetrics.createMetricsMqtt3(config);
+                AWSIoTMetrics metrics = AWSIoTMetrics.createMetricsMqtt3(config);
                 mqttClientConnectionSetMetrics(getNativeHandle(), metrics);
             }
 
@@ -509,7 +509,7 @@ public class MqttClientConnection extends CrtResource {
     private static native void mqttClientConnectionSetLogin(long connection, String username, String password)
             throws CrtRuntimeException;
 
-    private static native void mqttClientConnectionSetMetrics(long connection, IoTDeviceSDKMetrics metrics)
+    private static native void mqttClientConnectionSetMetrics(long connection, AWSIoTMetrics metrics)
             throws CrtRuntimeException;
 
     private static native void mqttClientConnectionSetReconnectTimeout(long connection, long minTimeout,

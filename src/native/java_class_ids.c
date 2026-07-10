@@ -1763,12 +1763,12 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
     mqtt5_client_options_properties.disable_metrics_field_id =
         (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "disableMetrics", "Z");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.disable_metrics_field_id);
-    mqtt5_client_options_properties.iot_device_sdk_metrics_field_id = (*env)->GetFieldID(
+    mqtt5_client_options_properties.aws_iot_metrics_field_id = (*env)->GetFieldID(
         env,
         mqtt5_client_options_properties.client_options_class,
-        "iotDeviceSDKMetrics",
-        "Lsoftware/amazon/awssdk/crt/iot/IoTDeviceSDKMetrics;");
-    AWS_FATAL_ASSERT(mqtt5_client_options_properties.iot_device_sdk_metrics_field_id);
+        "awsIoTMetrics",
+        "Lsoftware/amazon/awssdk/crt/iot/AWSIoTMetrics;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.aws_iot_metrics_field_id);
 }
 
 struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
@@ -2668,21 +2668,21 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
     AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
 
-struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
+struct java_aws_iot_metrics_properties aws_iot_metrics_properties;
 
-static void s_cache_iot_device_sdk_metrics(JNIEnv *env) {
-    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/IoTDeviceSDKMetrics");
+static void s_cache_aws_iot_metrics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/AWSIoTMetrics");
     AWS_FATAL_ASSERT(cls);
-    iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class = (*env)->NewGlobalRef(env, cls);
-    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class);
+    aws_iot_metrics_properties.aws_iot_metrics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.aws_iot_metrics_class);
 
-    iot_device_sdk_metrics_properties.library_name_field_id = (*env)->GetFieldID(
-        env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "libraryName", "Ljava/lang/String;");
-    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.library_name_field_id);
+    aws_iot_metrics_properties.library_name_field_id = (*env)->GetFieldID(
+        env, aws_iot_metrics_properties.aws_iot_metrics_class, "libraryName", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.library_name_field_id);
 
-    iot_device_sdk_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(
-        env, iot_device_sdk_metrics_properties.iot_device_sdk_metrics_class, "metadataEntries", "Ljava/util/List;");
-    AWS_FATAL_ASSERT(iot_device_sdk_metrics_properties.metadata_entries_field_id);
+    aws_iot_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(
+        env, aws_iot_metrics_properties.aws_iot_metrics_class, "metadataEntries", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.metadata_entries_field_id);
 }
 
 struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
@@ -2820,7 +2820,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_consumer_properties(env);
     s_cache_cognito_login_token_source(env);
     s_cache_cognito_credentials_provider(env);
-    s_cache_iot_device_sdk_metrics(env);
+    s_cache_aws_iot_metrics(env);
     s_cache_iot_metrics_metadata(env);
 }
 

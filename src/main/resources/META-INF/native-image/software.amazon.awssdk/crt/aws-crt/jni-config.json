@@ -1268,7 +1268,7 @@
     ]
   },
   {
-    "name": "software.amazon.awssdk.crt.iot.IoTDeviceSDKMetrics",
+    "name": "software.amazon.awssdk.crt.iot.AWSIoTMetrics",
     "fields": [
       {
         "name": "libraryName"
@@ -1341,7 +1341,7 @@
         "name": "topicAliasingOptions"
       },
       {
-        "name": "iotDeviceSDKMetrics"
+        "name": "awsIoTMetrics"
       },
       {
         "name": "disableMetrics"

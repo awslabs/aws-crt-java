@@ -729,7 +729,7 @@ struct java_aws_mqtt5_client_options_properties {
     jfieldID lifecycle_events_field_id;
     jfieldID topic_aliasing_options_field_id;
     jfieldID disable_metrics_field_id;
-    jfieldID iot_device_sdk_metrics_field_id;
+    jfieldID aws_iot_metrics_field_id;
 };
 extern struct java_aws_mqtt5_client_options_properties mqtt5_client_options_properties;
 
@@ -1118,13 +1118,13 @@ struct java_cognito_credentials_provider_properties {
 
 extern struct java_cognito_credentials_provider_properties cognito_credentials_provider_properties;
 
-/* IoTDeviceSDKMetrics */
-struct java_iot_device_sdk_metrics_properties {
-    jclass iot_device_sdk_metrics_class;
+/* AWSIoTMetrics */
+struct java_aws_iot_metrics_properties {
+    jclass aws_iot_metrics_class;
     jfieldID library_name_field_id;
     jfieldID metadata_entries_field_id;
 };
-extern struct java_iot_device_sdk_metrics_properties iot_device_sdk_metrics_properties;
+extern struct java_aws_iot_metrics_properties aws_iot_metrics_properties;
 
 /* IoTMetricsMetadata */
 struct java_iot_metrics_metadata_properties {

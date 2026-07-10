@@ -25,7 +25,7 @@ import software.amazon.awssdk.crt.utils.PackageInfo;
  * Holds library identification and metadata entries that are appended
  * to the MQTT CONNECT packet username field.
  */
-public class IoTDeviceSDKMetrics {
+public class AWSIoTMetrics {
     private String libraryName;
     private List<IoTMetricsMetadata> metadataEntries;
 
@@ -48,12 +48,12 @@ public class IoTDeviceSDKMetrics {
 
     public static final int IOT_SDK_METRICS_FEATURE_VERSION = 1;
 
-    public IoTDeviceSDKMetrics() {
+    public AWSIoTMetrics() {
         this.libraryName = getDefaultLibraryName();
         this.metadataEntries = new ArrayList<>();
     }
 
-    public IoTDeviceSDKMetrics(String libraryName, List<IoTMetricsMetadata> metadataEntries) {
+    public AWSIoTMetrics(String libraryName, List<IoTMetricsMetadata> metadataEntries) {
         this.libraryName = libraryName;
         this.metadataEntries = metadataEntries;
     }
@@ -75,7 +75,7 @@ public class IoTDeviceSDKMetrics {
      * @param clientOptions MQTT5 client options containing connection configuration and user metrics
      * @return the merged metrics object ready to be passed to JNI
      */
-    public static IoTDeviceSDKMetrics createMetricsMqtt5(Mqtt5ClientOptions clientOptions) {
+    public static AWSIoTMetrics createMetricsMqtt5(Mqtt5ClientOptions clientOptions) {
         String crtFeatureList = getEncodedFeatureListMqtt5(clientOptions);
         return createMetrics(clientOptions.getUserMetrics(), crtFeatureList);
     }
@@ -89,7 +89,7 @@ public class IoTDeviceSDKMetrics {
      * @param config the MQTT3 connection configuration containing proxy, TLS, and user metrics
      * @return the merged metrics object ready to be passed to JNI
      */
-    public static IoTDeviceSDKMetrics createMetricsMqtt3(MqttConnectionConfig config) {
+    public static AWSIoTMetrics createMetricsMqtt3(MqttConnectionConfig config) {
         String crtFeatureList = getEncodedFeatureListMqtt3(config);
         return createMetrics(config.getMetrics(), crtFeatureList);
     }
@@ -254,7 +254,7 @@ public class IoTDeviceSDKMetrics {
      * @param crtFeatureList encoded CRT feature list string
      * @return the final metrics object
      */
-    private static IoTDeviceSDKMetrics createMetrics(IoTDeviceSDKMetrics userMetrics, String crtFeatureList) {
+    private static AWSIoTMetrics createMetrics(AWSIoTMetrics userMetrics, String crtFeatureList) {
         String libraryName = (userMetrics != null) ? userMetrics.getLibraryName() : getDefaultLibraryName();
 
         String crtVersion = new PackageInfo().version.toString();
@@ -289,7 +289,7 @@ public class IoTDeviceSDKMetrics {
             entries.add(new IoTMetricsMetadata(entry.getKey(), entry.getValue()));
         }
 
-        return new IoTDeviceSDKMetrics(libraryName, entries);
+        return new AWSIoTMetrics(libraryName, entries);
     }
 
     private static void parseFeatures(String featureStr, Map<String, String> map) {

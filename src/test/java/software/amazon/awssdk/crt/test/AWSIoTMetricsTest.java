@@ -60,11 +60,13 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
 
     @Test
     public void testMqtt3Minimal() {
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(null));
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+        try (MqttConnectionConfig config = createMqtt3Config(null)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertTrue(feature.contains("F/3"));
-        assertTrue(feature.contains("G/"));
+            assertTrue(feature.contains("F/3"));
+            assertTrue(feature.contains("G/"));
+        }
     }
 
     // ======================== Non-Default Features Encoding ========================
@@ -104,11 +106,13 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "F/9"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertTrue(feature.contains("F/9"));
-        assertFalse(feature.contains("F/3"));
+            assertTrue(feature.contains("F/9"));
+            assertFalse(feature.contains("F/3"));
+        }
     }
 
     @Test
@@ -119,42 +123,48 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A,K/D"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
 
-        assertTrue(feature.contains("F/3"));
-        assertTrue(feature.contains("G/"));
-        assertTrue(feature.contains("I/A"));
-        assertTrue(feature.contains("K/D"));
+            assertTrue(feature.contains("F/3"));
+            assertTrue(feature.contains("G/"));
+            assertTrue(feature.contains("I/A"));
+            assertTrue(feature.contains("K/D"));
+        }
     }
 
     // ======================== Create Metrics - Default Options ========================
 
     @Test
     public void testCreateMetricsNullUserMetrics() {
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(null));
+        try (MqttConnectionConfig config = createMqtt3Config(null)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
-        assertNotNull(result.getMetadataEntries());
+            assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
+            assertNotNull(result.getMetadataEntries());
 
-        List<IoTMetricsMetadata> entries = result.getMetadataEntries();
-        String crtVersion = findMetadataValue(entries, "CRTVersion");
-        String feature = findMetadataValue(entries, "IoTSDKFeature");
-        String metricsVersion = findMetadataValue(entries, "IoTSDKMetricsVersion");
+            List<IoTMetricsMetadata> entries = result.getMetadataEntries();
+            String crtVersion = findMetadataValue(entries, "CRTVersion");
+            String feature = findMetadataValue(entries, "IoTSDKFeature");
+            String metricsVersion = findMetadataValue(entries, "IoTSDKMetricsVersion");
 
-        assertNotNull(crtVersion);
-        assertNotNull(feature);
-        assertEquals("1", metricsVersion);
+            assertNotNull(crtVersion);
+            assertNotNull(feature);
+            assertEquals("1", metricsVersion);
+        }
     }
 
     @Test
     public void testCreateMetricsEmptyUserMetrics() {
         AWSIoTMetrics user = new AWSIoTMetrics();
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertTrue(feature.contains("F/3"));
+            assertEquals(getExpectedDefaultLibraryName(), result.getLibraryName());
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+            assertTrue(feature.contains("F/3"));
+        }
     }
 
     // ======================== Create Metrics - User Features Merged ========================
@@ -167,12 +177,14 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertTrue(feature.contains("I/A"));
-        assertTrue(feature.contains("F/3"));
-        assertTrue(feature.contains("G/"));
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+            assertTrue(feature.contains("I/A"));
+            assertTrue(feature.contains("F/3"));
+            assertTrue(feature.contains("G/"));
+        }
     }
 
     // ======================== Create Metrics - Version Mismatch ========================
@@ -185,11 +197,13 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertFalse(feature.contains("I/A"));
-        assertTrue(feature.contains("F/3"));
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+            assertFalse(feature.contains("I/A"));
+            assertTrue(feature.contains("F/3"));
+        }
     }
 
     @Test
@@ -200,10 +214,12 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertFalse(feature.contains("I/A"));
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+            assertFalse(feature.contains("I/A"));
+        }
     }
 
     @Test
@@ -213,10 +229,12 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKFeature", "I/A"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
-        assertFalse(feature.contains("I/A"));
+            String feature = findMetadataValue(result.getMetadataEntries(), "IoTSDKFeature");
+            assertFalse(feature.contains("I/A"));
+        }
     }
 
     // ======================== CRTVersion Not Overridable ========================
@@ -228,10 +246,12 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("CRTVersion", "fake_version"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String crtVersion = findMetadataValue(result.getMetadataEntries(), "CRTVersion");
-        assertNotEquals("fake_version", crtVersion);
+            String crtVersion = findMetadataValue(result.getMetadataEntries(), "CRTVersion");
+            assertNotEquals("fake_version", crtVersion);
+        }
     }
 
     // ======================== Other User Metadata Preserved ========================
@@ -243,18 +263,22 @@ public class AWSIoTMetricsTest extends CrtTestFixture {
         userEntries.add(new IoTMetricsMetadata("IoTSDKVersion", "2.0.0"));
         user.setMetadataEntries(userEntries);
 
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        String sdkVersion = findMetadataValue(result.getMetadataEntries(), "IoTSDKVersion");
-        assertEquals("2.0.0", sdkVersion);
+            String sdkVersion = findMetadataValue(result.getMetadataEntries(), "IoTSDKVersion");
+            assertEquals("2.0.0", sdkVersion);
+        }
     }
 
     @Test
     public void testCustomLibraryName() {
         AWSIoTMetrics user = new AWSIoTMetrics("MyCustomSDK/1.0", null);
-        AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(createMqtt3Config(user));
+        try (MqttConnectionConfig config = createMqtt3Config(user)) {
+            AWSIoTMetrics result = AWSIoTMetrics.createMetricsMqtt3(config);
 
-        assertEquals("MyCustomSDK/1.0", result.getLibraryName());
+            assertEquals("MyCustomSDK/1.0", result.getLibraryName());
+        }
     }
 
     // ======================== Certificate Source ========================

@@ -114,11 +114,6 @@ struct aws_mqtt5_packet_unsubscribe_view_java_jni {
     struct aws_array_list jni_user_properties_struct_holder;
 };
 
-struct buffer_and_cursor_array_holder_struct {
-    struct aws_byte_cursor cursor;
-    struct aws_byte_buf buffer;
-};
-
 /*******************************************************************************
  * HELPER FUNCTIONS
  ******************************************************************************/

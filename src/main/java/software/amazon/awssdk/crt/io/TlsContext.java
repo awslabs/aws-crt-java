@@ -13,6 +13,10 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
  */
 public class TlsContext extends CrtResource {
 
+    private TlsCipherPreference cipherPreference;
+    private TlsContextOptions.TlsVersions minimumTlsVersion;
+    private TlsContextOptions.CertificateSource certificateSource;
+
     /**
      * Creates a new Client TlsContext. There are significant native resources consumed to create a TlsContext, so most
      * applications will only need to create one and re-use it for all connections.
@@ -22,6 +26,9 @@ public class TlsContext extends CrtResource {
      */
     public TlsContext(TlsContextOptions options) throws CrtRuntimeException {
         acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+        this.cipherPreference = options.tlsCipherPreference;
+        this.minimumTlsVersion = options.minTlsVersion;
+        this.certificateSource = options.getCertificateSource();
     }
 
     /**
@@ -31,6 +38,9 @@ public class TlsContext extends CrtResource {
     public TlsContext() throws CrtRuntimeException  {
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
             acquireNativeHandle(tlsContextNew(options.getNativeHandle()));
+            this.cipherPreference = options.tlsCipherPreference;
+            this.minimumTlsVersion = options.minTlsVersion;
+            this.certificateSource = options.getCertificateSource();
         }
     }
 
@@ -54,4 +64,26 @@ public class TlsContext extends CrtResource {
     protected static native long tlsContextNew(long options) throws CrtRuntimeException;
 
     private static native void tlsContextDestroy(long elg);
+
+    /**
+     * Returns the {@link TlsCipherPreference} configured on this context.
+     *
+     * @return the cipher preference
+     */
+    public TlsCipherPreference getCipherPreference() { return cipherPreference; }
+
+    /**
+     * Returns the minimum {@link TlsContextOptions.TlsVersions TLS version} configured on this context.
+     *
+     * @return the minimum TLS version
+     */
+    public TlsContextOptions.TlsVersions getMinimumTlsVersion() { return minimumTlsVersion; }
+
+    /**
+     * Returns the {@link TlsContextOptions.CertificateSource} of the configured mTLS, or
+     * {@code null} if no mTLS source has been set on the options used to create this context.
+     *
+     * @return the certificate source
+     */
+    public TlsContextOptions.CertificateSource getCertificateSource() { return certificateSource; }
 };

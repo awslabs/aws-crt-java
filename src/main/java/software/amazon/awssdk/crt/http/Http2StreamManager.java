@@ -135,7 +135,12 @@ public class Http2StreamManager extends CrtResource {
          */
         addReferenceTo(clientBootstrap);
         if (useTls) {
-            addReferenceTo(tlsContext);
+            if (tlsContext != null) {
+                addReferenceTo(tlsContext);
+            }
+            if (tlsConnectionOptions != null) {
+                addReferenceTo(tlsConnectionOptions);
+            }
         }
     }
 

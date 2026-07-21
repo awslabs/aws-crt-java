@@ -1268,10 +1268,24 @@
     ]
   },
   {
-    "name": "software.amazon.awssdk.crt.internal.IoTDeviceSDKMetrics",
+    "name": "software.amazon.awssdk.crt.iot.AWSIoTMetrics",
     "fields": [
       {
         "name": "libraryName"
+      },
+      {
+        "name": "metadataEntries"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.IoTMetricsMetadata",
+    "fields": [
+      {
+        "name": "key"
+      },
+      {
+        "name": "value"
       }
     ]
   },
@@ -1327,10 +1341,10 @@
         "name": "topicAliasingOptions"
       },
       {
-        "name": "iotDeviceSDKMetrics"
+        "name": "awsIoTMetrics"
       },
       {
-        "name": "metricsEnabled"
+        "name": "disableMetrics"
       }
     ],
     "methods": [

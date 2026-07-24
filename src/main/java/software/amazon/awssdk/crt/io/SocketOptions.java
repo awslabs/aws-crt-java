@@ -130,11 +130,11 @@ public final class SocketOptions extends CrtResource {
 
     /**
      * Controls the TCP_NODELAY option (Nagle's algorithm).
-     * Defaults to {@link TcpNoDelay#DEFAULT}, which leaves the OS default in place.
+     * Defaults to {@link TcpNoDelay#ON}.
      * Set to {@link TcpNoDelay#ON} to disable Nagle's algorithm (send small writes immediately),
      * or {@link TcpNoDelay#OFF} to explicitly enable it. TCP only; ignored for UDP and LOCAL sockets.
      */
-    public TcpNoDelay tcpNoDelay = TcpNoDelay.DEFAULT;
+    public TcpNoDelay tcpNoDelay = TcpNoDelay.ON;
 
     /**
      * Creates a new set of socket options

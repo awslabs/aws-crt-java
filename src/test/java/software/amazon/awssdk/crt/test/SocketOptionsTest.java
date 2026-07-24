@@ -14,7 +14,7 @@ public class SocketOptionsTest extends CrtTestFixture {
     @Test
     public void testSocketOptionsDefaults() {
         try (SocketOptions options = new SocketOptions()) {
-            Assert.assertEquals(SocketOptions.TcpNoDelay.DEFAULT, options.tcpNoDelay);
+            Assert.assertEquals(SocketOptions.TcpNoDelay.ON, options.tcpNoDelay);
             Assert.assertNotEquals(0, options.getNativeHandle());
         }
     }

@@ -108,6 +108,10 @@ public abstract class CrtResource implements AutoCloseable {
      * Default constructor
      */
     public CrtResource() {
+        // If the native lib failed to load, surface a single, catchable CrtRuntimeException
+        // before any subclass touches a native method (which would throw UnsatisfiedLinkError).
+        CRT.checkLoaded();
+
         if (debugNativeObjects) {
             String canonicalName = this.getClass().getCanonicalName();
 

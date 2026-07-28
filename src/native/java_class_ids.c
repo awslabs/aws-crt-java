@@ -740,6 +740,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
 
     s3_meta_request_response_handler_native_adapter_properties.onTelemetry =
         (*env)->GetMethodID(env, cls, "onTelemetry", "(Lsoftware/amazon/awssdk/crt/s3/S3RequestMetrics;)V");
+
+    s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken = (*env)->GetMethodID(
+        env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -1120,6 +1124,33 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
     s3_meta_request_resume_token_properties.upload_id_field_id =
         (*env)->GetFieldID(env, cls, "uploadId", "Ljava/lang/String;");
     AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.upload_id_field_id);
+
+    /* download specific fields */
+    s3_meta_request_resume_token_properties.etag_field_id = (*env)->GetFieldID(env, cls, "etag", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.etag_field_id);
+    s3_meta_request_resume_token_properties.version_id_field_id =
+        (*env)->GetFieldID(env, cls, "versionId", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.version_id_field_id);
+    s3_meta_request_resume_token_properties.s3_object_last_modified_field_id =
+        (*env)->GetFieldID(env, cls, "s3ObjectLastModified", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.s3_object_last_modified_field_id);
+    s3_meta_request_resume_token_properties.object_size_field_id = (*env)->GetFieldID(env, cls, "objectSize", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.object_size_field_id);
+    s3_meta_request_resume_token_properties.object_range_start_field_id =
+        (*env)->GetFieldID(env, cls, "objectRangeStart", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.object_range_start_field_id);
+    s3_meta_request_resume_token_properties.object_range_end_field_id =
+        (*env)->GetFieldID(env, cls, "objectRangeEnd", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.object_range_end_field_id);
+    s3_meta_request_resume_token_properties.continues_downloaded_bytes_field_id =
+        (*env)->GetFieldID(env, cls, "continuesDownloadedBytes", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.continues_downloaded_bytes_field_id);
+    s3_meta_request_resume_token_properties.total_downloaded_bytes_field_id =
+        (*env)->GetFieldID(env, cls, "totalDownloadedBytes", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.total_downloaded_bytes_field_id);
+    s3_meta_request_resume_token_properties.file_last_modified_epoch_ns_field_id =
+        (*env)->GetFieldID(env, cls, "fileLastModifiedEpochNs", "J");
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.file_last_modified_epoch_ns_field_id);
 }
 
 struct java_aws_mqtt5_connack_packet_properties mqtt5_connack_packet_properties;

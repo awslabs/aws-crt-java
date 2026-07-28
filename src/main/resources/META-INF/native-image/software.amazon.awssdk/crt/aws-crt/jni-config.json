@@ -2125,19 +2125,46 @@
     "name": "software.amazon.awssdk.crt.s3.ResumeToken",
     "fields": [
       {
+        "name": "continuesDownloadedBytes"
+      },
+      {
+        "name": "etag"
+      },
+      {
+        "name": "fileLastModifiedEpochNs"
+      },
+      {
         "name": "nativeType"
       },
       {
         "name": "numPartsCompleted"
       },
       {
+        "name": "objectRangeEnd"
+      },
+      {
+        "name": "objectRangeStart"
+      },
+      {
+        "name": "objectSize"
+      },
+      {
         "name": "partSize"
+      },
+      {
+        "name": "s3ObjectLastModified"
+      },
+      {
+        "name": "totalDownloadedBytes"
       },
       {
         "name": "totalNumParts"
       },
       {
         "name": "uploadId"
+      },
+      {
+        "name": "versionId"
       }
     ],
     "methods": [
@@ -2364,6 +2391,13 @@
   {
     "name": "software.amazon.awssdk.crt.s3.S3MetaRequestResponseHandlerNativeAdapter",
     "methods": [
+      {
+        "name": "onErrorResumeToken",
+        "parameterTypes": [
+          "int",
+          "software.amazon.awssdk.crt.s3.ResumeToken"
+        ]
+      },
       {
         "name": "onFinished",
         "parameterTypes": [

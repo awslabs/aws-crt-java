@@ -36,4 +36,8 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     void onTelemetry(final S3RequestMetrics requestMetrics) {
         responseHandler.onTelemetry(requestMetrics);
     }
+
+    void onErrorResumeToken(final int errorCode, final ResumeToken resumeToken) {
+        responseHandler.onErrorResumeToken(errorCode, resumeToken);
+    }
 }

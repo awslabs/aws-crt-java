@@ -76,6 +76,38 @@ public class S3MetaRequest extends CrtResource {
     }
 
     /**
+     * Asynchronously pause the meta request. Works for both uploads (PUT) and downloads (GET).
+     * The returned future completes once all in-flight work has finished (in-flight parts for
+     * uploads, file writes for downloads) and the resume token is ready.
+     * <p>
+     * For PutObject resume, input stream should always start at the beginning,
+     * already uploaded parts will be skipped, but checksums on those will be verified if
+     * the request specified a checksum algorithm.
+     * <p>
+     * Note: consuming a download (GET) resume token to resume via meta request options is not
+     * supported yet. To resume a download, issue a new ranged GET starting at
+     * {@link ResumeToken#getContinuesDownloadedBytes()} (offset from
+     * {@link ResumeToken#getObjectRangeStart()}) through the end of the original download.
+     *
+     * @return future completed with the resume token once the pause completes. The token may be
+     *         null if the request had not progressed far enough to produce one (equivalent to
+     *         restarting the transfer). Completed exceptionally with a CrtRuntimeException if
+     *         the pause failed.
+     */
+    public CompletableFuture<ResumeToken> pauseAsync() {
+        if (isNull()) {
+            throw new IllegalStateException("S3MetaRequest has been closed.");
+        }
+        CompletableFuture<ResumeToken> future = new CompletableFuture<>();
+        try {
+            s3MetaRequestPauseAsync(getNativeHandle(), future);
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
+    /**
      * Increment the flow-control window, so that response data continues downloading.
      * <p>
      * If the client was created with {@link S3ClientOptions#withReadBackpressureEnabled} set true,
@@ -113,6 +145,8 @@ public class S3MetaRequest extends CrtResource {
     private static native void s3MetaRequestCancel(long s3MetaRequest);
 
     private static native ResumeToken s3MetaRequestPause(long s3MetaRequest);
+
+    private static native void s3MetaRequestPauseAsync(long s3MetaRequest, CompletableFuture<ResumeToken> future);
 
     private static native void s3MetaRequestIncrementReadWindow(long s3MetaRequest, long bytes);
 }

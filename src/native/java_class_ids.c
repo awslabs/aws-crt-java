@@ -749,8 +749,8 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onTelemetry =
         (*env)->GetMethodID(env, cls, "onTelemetry", "(Lsoftware/amazon/awssdk/crt/s3/S3RequestMetrics;)V");
 
-    s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken = (*env)->GetMethodID(
-        env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
+    s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken =
+        (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 }
 

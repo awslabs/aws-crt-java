@@ -319,9 +319,11 @@ struct java_s3_client_properties {
 };
 extern struct java_s3_client_properties s3_client_properties;
 
-/* S3Client */
+/* S3MetaRequest */
 struct java_s3_meta_request_properties {
+    jclass s3_meta_request_class;
     jmethodID onShutdownComplete;
+    jmethodID on_pause_complete_method_id;
 };
 extern struct java_s3_meta_request_properties s3_meta_request_properties;
 

@@ -1260,13 +1260,7 @@ static struct aws_s3_meta_request_resume_token *s_native_resume_token_from_java_
 /* Create a Java ResumeToken object from a native resume token, populating both the
  * common fields and the type-specific (upload vs download) fields.
  * Returns NULL (with a pending Java exception) on failure. */
-static jobject s_java_resume_token_from_native_new(
-    JNIEnv *env,
-    const struct aws_s3_meta_request_resume_token *resume_token_const) {
-
-    /* The pre-existing getters take a non-const token. */
-    struct aws_s3_meta_request_resume_token *resume_token =
-        (struct aws_s3_meta_request_resume_token *)resume_token_const;
+static jobject s_java_resume_token_from_native_new(JNIEnv *env, struct aws_s3_meta_request_resume_token *resume_token) {
 
     jobject resume_token_jni = (*env)->NewObject(
         env,
@@ -1317,7 +1311,8 @@ static jobject s_java_resume_token_from_native_new(
             (*env)->DeleteLocalRef(env, version_id_jni);
         }
 
-        struct aws_byte_cursor last_modified_cur = aws_s3_meta_request_resume_token_s3_object_last_modified(resume_token);
+        struct aws_byte_cursor last_modified_cur =
+            aws_s3_meta_request_resume_token_s3_object_last_modified(resume_token);
         if (last_modified_cur.len > 0) {
             jstring last_modified_jni = aws_jni_string_from_cursor(env, &last_modified_cur);
             (*env)->SetObjectField(
@@ -1365,7 +1360,7 @@ static jobject s_java_resume_token_from_native_new(
 
 static void s_on_s3_meta_request_error_resume_token_callback(
     struct aws_s3_meta_request *meta_request,
-    const struct aws_s3_meta_request_resume_token *resume_token,
+    struct aws_s3_meta_request_resume_token *resume_token,
     int error_code,
     void *user_data) {
 
@@ -1726,7 +1721,7 @@ struct s3_meta_request_pause_async_callback_data {
 
 static void s_on_s3_meta_request_pause_async_complete(
     struct aws_s3_meta_request *meta_request,
-    const struct aws_s3_meta_request_resume_token *resume_token,
+    struct aws_s3_meta_request_resume_token *resume_token,
     int error_code,
     void *user_data) {
 
@@ -1744,41 +1739,36 @@ static void s_on_s3_meta_request_pause_async_complete(
         return;
     }
 
-    if (error_code != AWS_ERROR_SUCCESS) {
-        jobject crt_exception = (*env)->NewObject(
-            env,
-            crt_runtime_exception_properties.crt_runtime_exception_class,
-            crt_runtime_exception_properties.constructor_method_id,
-            error_code);
-        (*env)->CallBooleanMethod(
-            env,
-            pause_callback_data->java_future,
-            completable_future_properties.complete_exceptionally_method_id,
-            crt_exception);
-        (*env)->DeleteLocalRef(env, crt_exception);
-    } else {
-        jobject resume_token_jni = NULL;
-        if (resume_token != NULL) {
-            resume_token_jni = s_java_resume_token_from_native_new(env, resume_token);
-            if (resume_token_jni == NULL && aws_jni_check_and_clear_exception(env)) {
-                AWS_LOGF_ERROR(
-                    AWS_LS_S3_META_REQUEST,
-                    "id=%p: Ignored Exception from S3MetaRequest.pauseAsync token conversion",
-                    (void *)meta_request);
-            }
-        }
-        (*env)->CallBooleanMethod(
-            env, pause_callback_data->java_future, completable_future_properties.complete_method_id, resume_token_jni);
-        if (resume_token_jni) {
-            (*env)->DeleteLocalRef(env, resume_token_jni);
+    /* Build the token when there is one; a NULL token is not an error (it means no resumable
+     * state was captured). Let Java own future completion and exception creation. */
+    jobject resume_token_jni = NULL;
+    if (resume_token != NULL) {
+        resume_token_jni = s_java_resume_token_from_native_new(env, resume_token);
+        if (resume_token_jni == NULL && aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_META_REQUEST,
+                "id=%p: Ignored Exception from S3MetaRequest.pauseAsync token conversion",
+                (void *)meta_request);
         }
     }
+
+    (*env)->CallStaticVoidMethod(
+        env,
+        s3_meta_request_properties.s3_meta_request_class,
+        s3_meta_request_properties.on_pause_complete_method_id,
+        pause_callback_data->java_future,
+        error_code,
+        resume_token_jni);
 
     if (aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_ERROR(
             AWS_LS_S3_META_REQUEST,
-            "id=%p: Ignored Exception from S3MetaRequest.pauseAsync future completion",
+            "id=%p: Ignored Exception from S3MetaRequest.onPauseComplete",
             (void *)meta_request);
+    }
+
+    if (resume_token_jni) {
+        (*env)->DeleteLocalRef(env, resume_token_jni);
     }
 
     (*env)->DeleteGlobalRef(env, pause_callback_data->java_future);
@@ -1817,8 +1807,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     pause_callback_data->java_future = (*env)->NewGlobalRef(env, java_future);
     AWS_FATAL_ASSERT(pause_callback_data->java_future != NULL);
 
-    if (aws_s3_meta_request_pause_async(
-            meta_request, s_on_s3_meta_request_pause_async_complete, pause_callback_data)) {
+    if (aws_s3_meta_request_pause_async(meta_request, s_on_s3_meta_request_pause_async_complete, pause_callback_data)) {
         (*env)->DeleteGlobalRef(env, pause_callback_data->java_future);
         aws_mem_release(allocator, pause_callback_data);
         aws_jni_throw_runtime_exception(env, "S3MetaRequest.s3MetaRequestPauseAsync: Failed to initiate pause");

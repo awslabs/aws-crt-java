@@ -5,7 +5,9 @@
 package software.amazon.awssdk.crt.s3;
 
 import java.util.concurrent.CompletableFuture;
+import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 
 public class S3MetaRequest extends CrtResource {
 
@@ -19,6 +21,23 @@ public class S3MetaRequest extends CrtResource {
         releaseReferences();
 
         this.shutdownComplete.complete(null);
+    }
+
+    /**
+     * Called from native when an async pause completes. The resume token is null when no
+     * resumable state was captured, which is not an error.
+     *
+     * @param future the future to complete with the pause result
+     * @param errorCode 0 on success, otherwise the CRT error code that made the pause fail
+     * @param resumeToken the resume token, or null if no resumable state was captured
+     */
+    private static void onPauseComplete(
+            CompletableFuture<ResumeToken> future, int errorCode, ResumeToken resumeToken) {
+        if (errorCode != CRT.AWS_CRT_SUCCESS) {
+            future.completeExceptionally(new CrtRuntimeException(errorCode));
+            return;
+        }
+        future.complete(resumeToken);
     }
 
     /**

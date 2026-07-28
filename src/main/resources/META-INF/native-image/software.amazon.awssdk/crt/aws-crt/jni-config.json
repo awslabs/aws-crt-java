@@ -2232,6 +2232,14 @@
     "name": "software.amazon.awssdk.crt.s3.S3MetaRequest",
     "methods": [
       {
+        "name": "onPauseComplete",
+        "parameterTypes": [
+          "java.util.concurrent.CompletableFuture",
+          "int",
+          "software.amazon.awssdk.crt.s3.ResumeToken"
+        ]
+      },
+      {
         "name": "onShutdownComplete",
         "parameterTypes": []
       }

@@ -710,9 +710,17 @@ struct java_s3_meta_request_properties s3_meta_request_properties;
 static void s_cache_s3_meta_request_properties(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3MetaRequest");
     AWS_FATAL_ASSERT(cls);
+    s3_meta_request_properties.s3_meta_request_class = (*env)->NewGlobalRef(env, cls);
 
     s3_meta_request_properties.onShutdownComplete = (*env)->GetMethodID(env, cls, "onShutdownComplete", "()V");
     AWS_FATAL_ASSERT(s3_meta_request_properties.onShutdownComplete);
+
+    s3_meta_request_properties.on_pause_complete_method_id = (*env)->GetStaticMethodID(
+        env,
+        cls,
+        "onPauseComplete",
+        "(Ljava/util/concurrent/CompletableFuture;ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_properties.on_pause_complete_method_id);
 }
 
 struct java_s3_meta_request_response_handler_native_adapter_properties

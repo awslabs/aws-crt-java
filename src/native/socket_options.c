@@ -32,7 +32,8 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     jint keep_alive_interval_secs,
     jint keep_alive_timeout_secs,
     jint keep_alive_max_failed_probes,
-    jboolean keep_alive) {
+    jboolean keep_alive,
+    jint tcp_nodelay) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -48,6 +49,7 @@ jlong JNICALL Java_software_amazon_awssdk_crt_io_SocketOptions_socketOptionsNew(
     options->keep_alive_timeout_sec = (uint16_t)keep_alive_timeout_secs;
     options->keep_alive_max_failed_probes = (uint16_t)keep_alive_max_failed_probes;
     options->keepalive = keep_alive;
+    options->tcp_nodelay = (enum aws_socket_tcp_nodelay)tcp_nodelay;
 
     return (jlong)options;
 }

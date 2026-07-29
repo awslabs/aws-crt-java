@@ -67,6 +67,34 @@ public final class SocketOptions extends CrtResource {
     }
 
     /**
+     * Controls the TCP_NODELAY option (Nagle's algorithm). TCP only; ignored for UDP and LOCAL sockets.
+     */
+    public enum TcpNoDelay {
+        /**
+         * Leaves the OS default in place (Nagle's algorithm typically enabled).
+         */
+        DEFAULT(0),
+        /**
+         * Disables Nagle's algorithm, sending small writes immediately.
+         */
+        ON(1),
+        /**
+         * Explicitly enables Nagle's algorithm.
+         */
+        OFF(2);
+
+        private int tcpNoDelay;
+
+        TcpNoDelay(int val) {
+            tcpNoDelay = val;
+        }
+
+        int getValue() {
+            return tcpNoDelay;
+        }
+    }
+
+    /**
      * Sets the socket domain
      */
     public SocketDomain domain = SocketDomain.IPv6;
@@ -99,6 +127,14 @@ public final class SocketOptions extends CrtResource {
      * If true, enables periodic transmits of keepalive messages for detecting a disconnected peer.
      */
     public boolean keepAlive = false;
+
+    /**
+     * Controls the TCP_NODELAY option (Nagle's algorithm).
+     * Defaults to {@link TcpNoDelay#ON}.
+     * Set to {@link TcpNoDelay#ON} to disable Nagle's algorithm (send small writes immediately),
+     * or {@link TcpNoDelay#OFF} to explicitly enable it. TCP only; ignored for UDP and LOCAL sockets.
+     */
+    public TcpNoDelay tcpNoDelay = TcpNoDelay.ON;
 
     /**
      * Creates a new set of socket options
@@ -152,7 +188,8 @@ public final class SocketOptions extends CrtResource {
                 keepAliveIntervalSecs,
                 keepAliveTimeoutSecs,
                 keepAliveMaxFailedProbes,
-                keepAlive
+                keepAlive,
+                tcpNoDelay.getValue()
             ));
         }
         return super.getNativeHandle();
@@ -179,7 +216,7 @@ public final class SocketOptions extends CrtResource {
      * native methods
      ******************************************************************************/
     private static native long socketOptionsNew(
-            int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, int keepAliveMaxFailedProbes, boolean keepAlive);
+            int domain, int type, int connectTimeoutMs, int keepAliveIntervalSecs, int keepAliveTimeoutSecs, int keepAliveMaxFailedProbes, boolean keepAlive, int tcpNoDelay);
 
     private static native void socketOptionsDestroy(long elg);
 };

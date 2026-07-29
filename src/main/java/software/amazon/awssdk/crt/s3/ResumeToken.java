@@ -216,11 +216,11 @@ public class ResumeToken {
     }
 
     /**
-     * Number of bytes downloaded contiguously from the start of the range, with no
+     * Number of bytes downloaded continuously from the start of the range, with no
      * gaps. Everything before this offset (relative to the object range start) has
      * been downloaded.
      *
-     * @return contiguously downloaded bytes
+     * @return continuously downloaded bytes
      */
     public long getContinuesDownloadedBytes() {
         validateDownloadToken("continues downloaded bytes");

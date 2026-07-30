@@ -241,7 +241,6 @@ afterEvaluate {
                         (String) project.property("signingKey"),
                         (String) project.property("signingPassword")
                 )
-                println("key=" + project.property("signingKey"))
                 sign(publications)
             }
         }

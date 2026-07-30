@@ -44,7 +44,8 @@ import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 import software.amazon.awssdk.crt.Log;
 
 public class Http2ClientLocalHostTest extends HttpClientTestFixture {
-    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be run locally for testing.
+    // crt/aws-c-http/tests/mock_server includes a readme on how the server can be
+    // run locally for testing.
     private static final int LOCAL_HTTPS_PORT = 3443;
     private static final int LOCAL_HTTP_PORT = 3280;
 
@@ -208,7 +209,7 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
                     }
 
                     @Override
-                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
+                    public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
                         String bodyString = new String(bodyBytesIn);
                         // Parse {"bytes": 123456} manually
                         int start = bodyString.indexOf("\"bytes\":") + 8;
@@ -255,33 +256,34 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final long expectedLength = bodyLength;
-            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                              HttpHeader[] nextHeaders) {
+            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
+                    new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
 
-                    Assert.assertTrue(responseStatusCode == 200);
-                }
+                            Assert.assertTrue(responseStatusCode == 200);
+                        }
 
-                @Override
-                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-                    String bodyString = new String(bodyBytesIn);
-                    // Parse {"bytes": 123456} manually
-                    int start = bodyString.indexOf("\"bytes\":") + 8;
-                    int end = bodyString.indexOf("}", start);
-                    String bytesStr = bodyString.substring(start, end).trim();
-                    long receivedLength = Long.parseLong(bytesStr);
-                    Assert.assertTrue(receivedLength == expectedLength);
-                    return bodyString.length();
-                }
+                        @Override
+                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                            String bodyString = new String(bodyBytesIn);
+                            // Parse {"bytes": 123456} manually
+                            int start = bodyString.indexOf("\"bytes\":") + 8;
+                            int end = bodyString.indexOf("}", start);
+                            String bytesStr = bodyString.substring(start, end).trim();
+                            long receivedLength = Long.parseLong(bytesStr);
+                            Assert.assertTrue(receivedLength == expectedLength);
+                            return bodyString.length();
+                        }
 
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
-                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                    requestCompleteFuture.complete(null);
-                }
-            });
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                            stream.close();
+                            requestCompleteFuture.complete(null);
+                        }
+                    });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             requestCompleteFuture.get(5, TimeUnit.MINUTES);
@@ -305,29 +307,30 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
 
             final CompletableFuture<Void> requestCompleteFuture = new CompletableFuture<Void>();
             final AtomicLong receivedLength = new AtomicLong(0);
-            CompletableFuture<Http2Stream> acquireCompleteFuture  = streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
-                @Override
-                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
-                                              HttpHeader[] nextHeaders) {
+            CompletableFuture<Http2Stream> acquireCompleteFuture = streamManager.acquireStream(request,
+                    new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
 
-                    Assert.assertTrue(responseStatusCode == 200);
-                }
+                            Assert.assertTrue(responseStatusCode == 200);
+                        }
 
-                @Override
-                public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn){
-                    receivedLength.addAndGet(bodyBytesIn.length);
+                        @Override
+                        public int onResponseBody(HttpStreamBase stream, byte[] bodyBytesIn) {
+                            receivedLength.addAndGet(bodyBytesIn.length);
 
-                    return bodyBytesIn.length;
-                }
+                            return bodyBytesIn.length;
+                        }
 
-                @Override
-                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
 
-                    Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
-                    stream.close();
-                    requestCompleteFuture.complete(null);
-                }
-            });
+                            Assert.assertTrue(errorCode == CRT.AWS_CRT_SUCCESS);
+                            stream.close();
+                            requestCompleteFuture.complete(null);
+                        }
+                    });
 
             acquireCompleteFuture.get(30, TimeUnit.SECONDS);
             requestCompleteFuture.get(5, TimeUnit.MINUTES);
@@ -337,4 +340,5 @@ public class Http2ClientLocalHostTest extends HttpClientTestFixture {
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }
+
 }

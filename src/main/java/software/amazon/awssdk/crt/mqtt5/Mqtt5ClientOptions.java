@@ -12,6 +12,7 @@ import software.amazon.awssdk.crt.io.ExponentialBackoffRetryOptions.JitterMode;
 
 import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
+import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -45,6 +46,12 @@ public class Mqtt5ClientOptions {
     private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
     private PublishEvents publishEvents;
     private TopicAliasingOptions topicAliasingOptions;
+    // Opt-out flag for AWS IoT Metrics. When true, metrics are disabled.
+    // Default is false (metrics enabled).
+    private boolean disableMetrics = false;
+    private AWSIoTMetrics userMetrics;
+    private AWSIoTMetrics awsIoTMetrics;
+
 
     /**
      * Returns the host name of the MQTT server to connect to.
@@ -264,6 +271,34 @@ public class Mqtt5ClientOptions {
     }
 
     /**
+     * Returns whether AWS IoT Device SDK metrics collection is disabled.
+     *
+     * @return true if metrics are disabled, false if metrics are enabled (default)
+     */
+    public boolean getDisableMetrics() {
+        return this.disableMetrics;
+    }
+
+    /**
+     * Returns the user-provided metrics configuration from the IoT SDK layer.
+     *
+     * @return the user metrics, or null if none were provided
+     */
+    public AWSIoTMetrics getUserMetrics() {
+        return this.userMetrics;
+    }
+
+    /**
+     * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Default is false (metrics enabled).
+     *
+     * @param disableMetrics true to disable metrics, false to enable (default)
+     */
+    public void setDisableMetrics(boolean disableMetrics) {
+        this.disableMetrics = disableMetrics;
+    }
+
+    /**
      * Creates a Mqtt5ClientOptionsBuilder instance
      * @param builder The builder to get the Mqtt5ClientOptions values from
      */
@@ -289,6 +324,13 @@ public class Mqtt5ClientOptions {
         this.websocketHandshakeTransform = builder.websocketHandshakeTransform;
         this.publishEvents = builder.publishEvents;
         this.topicAliasingOptions = builder.topicAliasingOptions;
+        this.disableMetrics = builder.disableMetrics;
+        this.userMetrics = builder.metrics;
+        if (this.disableMetrics) {
+            this.awsIoTMetrics = null;
+        } else {
+            this.awsIoTMetrics = AWSIoTMetrics.createMetricsMqtt5(this);
+        }
     }
 
     /*******************************************************************************
@@ -345,7 +387,15 @@ public class Mqtt5ClientOptions {
      */
     public interface PublishEvents {
         /**
-         * Called when an MQTT PUBLISH packet is received by the client
+         * Called when an MQTT PUBLISH packet is received by the client.
+         *
+         * <p>To take manual control of the publish acknowledgement for a QoS 1 message, call
+         * {@link PublishReturn#acquirePublishAcknowledgementControl()} within this callback. If you do so,
+         * the client will NOT automatically send the publish acknowledgement. You are responsible for calling
+         * {@link Mqtt5Client#invokePublishAcknowledgement(Mqtt5PublishAcknowledgementControlHandle)} later.</p>
+         *
+         * <p>If you do not call {@code acquirePublishAcknowledgementControl()} within the callback ,
+         * the client will automatically send the publish acknowledgement after this callback returns.</p>
          *
          * @param client The client that has received the message
          * @param publishReturn All of the data that was received from the server
@@ -583,6 +633,8 @@ public class Mqtt5ClientOptions {
         private Consumer<Mqtt5WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
         private PublishEvents publishEvents;
         private TopicAliasingOptions topicAliasingOptions;
+        private boolean disableMetrics = false;
+        private AWSIoTMetrics metrics = null;
 
         /**
          * Sets the host name of the MQTT server to connect to.
@@ -847,6 +899,30 @@ public class Mqtt5ClientOptions {
          */
         public Mqtt5ClientOptionsBuilder withTopicAliasingOptions(TopicAliasingOptions options) {
             this.topicAliasingOptions = options;
+            return this;
+        }
+
+        /**
+         * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+         * Default is false (metrics enabled).
+         *
+         * @param disableMetrics true to disable metrics, false to enable (default)
+         * @return The Mqtt5ClientOptionsBuilder after setting the metrics option
+         */
+        public Mqtt5ClientOptionsBuilder withDisableMetrics(boolean disableMetrics) {
+            this.disableMetrics = disableMetrics;
+            return this;
+        }
+
+        /**
+         * Sets the IoT SDK metrics configuration. If provided, the CRT will merge
+         * these metrics with CRT-level metrics. If null, default CRT metrics are used.
+         *
+         * @param metrics metrics configuration from the IoT SDK layer
+         * @return The Mqtt5ClientOptionsBuilder after setting the metrics
+         */
+        public Mqtt5ClientOptionsBuilder withMetrics(AWSIoTMetrics metrics) {
+            this.metrics = metrics;
             return this;
         }
 

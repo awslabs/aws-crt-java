@@ -762,6 +762,17 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.http.HttpStreamBase$HttpStreamWriteDataCompletionCallback",
+    "methods": [
+      {
+        "name": "onWriteDataCompleted",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.http.HttpStreamMetrics",
     "methods": [
       {
@@ -1257,6 +1268,28 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.iot.AWSIoTMetrics",
+    "fields": [
+      {
+        "name": "libraryName"
+      },
+      {
+        "name": "metadataEntries"
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.iot.IoTMetricsMetadata",
+    "fields": [
+      {
+        "name": "key"
+      },
+      {
+        "name": "value"
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions",
     "fields": [
       {
@@ -1306,6 +1339,12 @@
       },
       {
         "name": "topicAliasingOptions"
+      },
+      {
+        "name": "awsIoTMetrics"
+      },
+      {
+        "name": "disableMetrics"
       }
     ],
     "methods": [
@@ -1549,8 +1588,13 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket"
+          "software.amazon.awssdk.crt.mqtt5.packets.PublishPacket",
+          "long"
         ]
+      },
+      {
+        "name": "acquirePublishAcknowledgementControl",
+        "parameterTypes": []
       }
     ]
   },

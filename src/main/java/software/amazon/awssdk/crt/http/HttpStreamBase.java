@@ -100,6 +100,79 @@ public class HttpStreamBase extends CrtResource {
         throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
 
+    /**
+     * Cancels the stream with the default error code (AWS_ERROR_HTTP_STREAM_CANCELLED).
+     * <p>
+     * For HTTP/1.1 streams, this is equivalent to closing the connection.
+     * For HTTP/2 streams, this sends a RST_STREAM frame with AWS_HTTP2_ERR_CANCEL.
+     * <p>
+     * The stream will complete with AWS_ERROR_HTTP_STREAM_CANCELLED, unless the stream is
+     * already completing for other reasons, or the stream is not activated,
+     * in which case this call will have no effect.
+     */
+    public void cancel() {
+        if (!isNull()) {
+            httpStreamBaseCancelDefaultError(getNativeHandle());
+        }
+    }
+
+    /**
+     * Completion interface for writing data to an http stream.
+     */
+    public interface HttpStreamWriteDataCompletionCallback {
+        void onWriteDataCompleted(int errorCode);
+    }
+
+    /**
+     * Write data to an HTTP stream. Works for both HTTP/1.1 and HTTP/2.
+     * The stream must have been created with {@code useManualDataWrites = true}.
+     * You must call activate() before using this function.
+     *
+     * @param data       data to send, or null to write zero bytes. Pass null with
+     *                   endStream=true to signal end-of-body without sending additional data.
+     * @param endStream  if true, this is the last data to be sent on this stream.
+     * @param completionCallback invoked when the data has been flushed or an error occurs.
+     */
+    public void writeData(final byte[] data, boolean endStream,
+            final HttpStreamWriteDataCompletionCallback completionCallback) {
+        if (isNull()) {
+            throw new IllegalStateException("HttpStream has been closed.");
+        }
+        if (completionCallback == null) {
+            throw new IllegalArgumentException("You must supply a completionCallback");
+        }
+
+        int error = httpStreamBaseWriteData(getNativeHandle(), data, endStream, completionCallback);
+        if (error != 0) {
+            int lastError = CRT.awsLastError();
+            throw new CrtRuntimeException(lastError);
+        }
+    }
+
+    /**
+     * Write data to an HTTP stream. Works for both HTTP/1.1 and HTTP/2.
+     * The stream must have been created with {@code useManualDataWrites = true}.
+     * You must call activate() before using this function.
+     *
+     * @param data      data to send, or null to write zero bytes. Pass null with
+     *                  endStream=true to signal end-of-body without sending additional data.
+     * @param endStream if true, this is the last data to be sent on this stream.
+     * @return completable future which completes when data is flushed or an error occurs.
+     */
+    public CompletableFuture<Void> writeData(final byte[] data, boolean endStream) {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+
+        writeData(data, endStream, (errorCode) -> {
+            if (errorCode == 0) {
+                completionFuture.complete(null);
+            } else {
+                completionFuture.completeExceptionally(new CrtRuntimeException(errorCode));
+            }
+        });
+
+        return completionFuture;
+    }
+
     /*******************************************************************************
      * Native methods
      ******************************************************************************/
@@ -111,4 +184,9 @@ public class HttpStreamBase extends CrtResource {
     private static native void httpStreamBaseActivate(long http_stream, HttpStreamBase streamObj);
 
     private static native int httpStreamBaseGetResponseStatusCode(long http_stream);
+
+    private static native void httpStreamBaseCancelDefaultError(long http_stream);
+
+    private static native int httpStreamBaseWriteData(long http_stream, byte[] data, boolean endStream,
+            HttpStreamWriteDataCompletionCallback completionCallback);
 }

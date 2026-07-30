@@ -542,6 +542,18 @@ static void s_cache_http_stream_write_chunk_completion_properties(JNIEnv *env) {
     AWS_FATAL_ASSERT(http_stream_write_chunk_completion_properties.callback);
 }
 
+struct java_http_stream_write_data_completion_properties http_stream_write_data_completion_properties;
+
+static void s_cache_http_stream_write_data_completion_properties(JNIEnv *env) {
+    jclass cls =
+        (*env)->FindClass(env, "software/amazon/awssdk/crt/http/HttpStreamBase$HttpStreamWriteDataCompletionCallback");
+    AWS_FATAL_ASSERT(cls);
+
+    http_stream_write_data_completion_properties.callback =
+        (*env)->GetMethodID(env, cls, "onWriteDataCompleted", "(I)V");
+    AWS_FATAL_ASSERT(http_stream_write_data_completion_properties.callback);
+}
+
 struct java_http_stream_metrics_properties http_stream_metrics_properties;
 
 static void s_cache_http_stream_metrics_properties(JNIEnv *env) {
@@ -1748,6 +1760,15 @@ static void s_cache_mqtt5_client_options(JNIEnv *env) {
         "topicAliasingOptions",
         "Lsoftware/amazon/awssdk/crt/mqtt5/TopicAliasingOptions;");
     AWS_FATAL_ASSERT(mqtt5_client_options_properties.topic_aliasing_options_field_id);
+    mqtt5_client_options_properties.disable_metrics_field_id =
+        (*env)->GetFieldID(env, mqtt5_client_options_properties.client_options_class, "disableMetrics", "Z");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.disable_metrics_field_id);
+    mqtt5_client_options_properties.aws_iot_metrics_field_id = (*env)->GetFieldID(
+        env,
+        mqtt5_client_options_properties.client_options_class,
+        "awsIoTMetrics",
+        "Lsoftware/amazon/awssdk/crt/iot/AWSIoTMetrics;");
+    AWS_FATAL_ASSERT(mqtt5_client_options_properties.aws_iot_metrics_field_id);
 }
 
 struct java_aws_mqtt5_topic_aliasing_options_properties mqtt5_topic_aliasing_options_properties;
@@ -2253,8 +2274,20 @@ static void s_cache_mqtt5_publish_return(JNIEnv *env) {
         env,
         mqtt5_publish_return_properties.return_class,
         "<init>",
-        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;)V");
+        "(Lsoftware/amazon/awssdk/crt/mqtt5/packets/PublishPacket;J)V");
     AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_constructor_id);
+    /*
+     * acquirePublishAcknowledgementControl() called by native code after onMessageReceived returns
+     * to check whether the user took manual control during the callback. Returns a non-null handle
+     * if control was not yet acquired (native then auto-invokes the PUBACK), or null if the user
+     * already called it during the callback (user is responsible for invoking the PUBACK).
+     */
+    mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id = (*env)->GetMethodID(
+        env,
+        mqtt5_publish_return_properties.return_class,
+        "acquirePublishAcknowledgementControl",
+        "()Lsoftware/amazon/awssdk/crt/mqtt5/Mqtt5PublishAcknowledgementControlHandle;");
+    AWS_FATAL_ASSERT(mqtt5_publish_return_properties.return_acquire_publish_acknowledgement_control_id);
 }
 
 struct java_aws_mqtt5_on_stopped_return_properties mqtt5_on_stopped_return_properties;
@@ -2635,6 +2668,40 @@ static void s_cache_cognito_credentials_provider(JNIEnv *env) {
     AWS_FATAL_ASSERT(cognito_credentials_provider_properties.create_chained_future_method_id != NULL);
 }
 
+struct java_aws_iot_metrics_properties aws_iot_metrics_properties;
+
+static void s_cache_aws_iot_metrics(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/AWSIoTMetrics");
+    AWS_FATAL_ASSERT(cls);
+    aws_iot_metrics_properties.aws_iot_metrics_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.aws_iot_metrics_class);
+
+    aws_iot_metrics_properties.library_name_field_id =
+        (*env)->GetFieldID(env, aws_iot_metrics_properties.aws_iot_metrics_class, "libraryName", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.library_name_field_id);
+
+    aws_iot_metrics_properties.metadata_entries_field_id = (*env)->GetFieldID(
+        env, aws_iot_metrics_properties.aws_iot_metrics_class, "metadataEntries", "Ljava/util/List;");
+    AWS_FATAL_ASSERT(aws_iot_metrics_properties.metadata_entries_field_id);
+}
+
+struct java_iot_metrics_metadata_properties iot_metrics_metadata_properties;
+
+static void s_cache_iot_metrics_metadata(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/iot/IoTMetricsMetadata");
+    AWS_FATAL_ASSERT(cls);
+    iot_metrics_metadata_properties.iot_metrics_metadata_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.iot_metrics_metadata_class);
+
+    iot_metrics_metadata_properties.key_field_id = (*env)->GetFieldID(
+        env, iot_metrics_metadata_properties.iot_metrics_metadata_class, "key", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.key_field_id);
+
+    iot_metrics_metadata_properties.value_field_id = (*env)->GetFieldID(
+        env, iot_metrics_metadata_properties.iot_metrics_metadata_class, "value", "Ljava/lang/String;");
+    AWS_FATAL_ASSERT(iot_metrics_metadata_properties.value_field_id);
+}
+
 // Update jni-config.json when adding or modifying JNI classes for GraalVM support.
 static void s_cache_java_class_ids(void *user_data) {
     JNIEnv *env = user_data;
@@ -2666,6 +2733,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_http2_stream(env);
     s_cache_http_stream_response_handler_native_adapter(env);
     s_cache_http_stream_write_chunk_completion_properties(env);
+    s_cache_http_stream_write_data_completion_properties(env);
     s_cache_http_stream_metrics_properties(env);
     s_cache_event_stream_server_listener_properties(env);
     s_cache_event_stream_server_listener_handler_properties(env);
@@ -2752,6 +2820,8 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_consumer_properties(env);
     s_cache_cognito_login_token_source(env);
     s_cache_cognito_credentials_provider(env);
+    s_cache_aws_iot_metrics(env);
+    s_cache_iot_metrics_metadata(env);
 }
 
 static aws_thread_once s_cache_once_init = AWS_THREAD_ONCE_STATIC_INIT;

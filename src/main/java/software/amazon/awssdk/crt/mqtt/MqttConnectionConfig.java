@@ -9,9 +9,12 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
+import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
+import software.amazon.awssdk.crt.io.TlsContext;
+
 
 /**
  * Encapsulates all per-mqtt-connection configuration
@@ -45,6 +48,10 @@ public final class MqttConnectionConfig extends CrtResource {
     private boolean useWebsockets = false;
     private HttpProxyOptions proxyOptions;
     private Consumer<WebsocketHandshakeTransformArgs> websocketHandshakeTransform;
+
+    /* metrics */
+    private boolean disableMetrics = false;
+    private AWSIoTMetrics metrics = null;
 
     public MqttConnectionConfig() {}
 
@@ -539,6 +546,59 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
+     * Disables IoT Device SDK metrics collection. The metrics includes SDK name, version, and platform.
+     * Default is false (metrics enabled).
+     *
+     * @param disableMetrics true to disable metrics, false to enable (default)
+     */
+    public void setDisableMetrics(boolean disableMetrics) {
+        this.disableMetrics = disableMetrics;
+    }
+
+    /**
+     * Returns whether IoT Device SDK metrics collection is disabled.
+     *
+     * @return true if metrics are disabled, false if metrics are enabled (default)
+     */
+    public boolean getDisableMetrics() {
+        return disableMetrics;
+    }
+
+    /**
+     * Sets the IoT SDK metrics configuration. If provided, the CRT will merge
+     * these metrics with CRT-level metrics. If null, default CRT metrics are used.
+     *
+     * @param metrics metrics configuration from the IoT SDK layer
+     */
+    public void setMetrics(AWSIoTMetrics metrics) {
+        this.metrics = metrics;
+    }
+
+    /**
+     * Returns the IoT SDK metrics configuration.
+     *
+     * @return metrics configuration, or null if not set
+     */
+    public AWSIoTMetrics getMetrics() {
+        return metrics;
+    }
+
+    /**
+     * Returns the {@link TlsContext} this connection will be resolved from
+     * the underlying {@link MqttClient} or {@link Mqtt5Client}.
+     *
+     * @return the TLS context, or {@code null} if neither client is set or no TLS is configured
+     */
+    public TlsContext getTlsContext() {
+        if (mqttClient != null) {
+            return mqttClient.getTlsContext();
+        } else if (mqtt5Client != null) {
+            return mqtt5Client.getClientOptions().getTlsContext();
+        }
+        return null;
+    }
+
+    /**
      * Creates a (shallow) clone of this config object
      *
      * @return shallow clone of this config object
@@ -567,6 +627,7 @@ public final class MqttConnectionConfig extends CrtResource {
             clone.setWebsocketHandshakeTransform(getWebsocketHandshakeTransform());
 
             clone.setReconnectTimeoutSecs(getMinReconnectTimeoutSecs(), getMaxReconnectTimeoutSecs());
+            clone.setDisableMetrics(getDisableMetrics());
 
             // success, bump up the ref count so we can escape the try-with-resources block
             clone.addRef();

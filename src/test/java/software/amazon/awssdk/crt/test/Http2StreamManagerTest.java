@@ -55,6 +55,44 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
         }
     }
 
+    private Http2StreamManager createStreamManagerWithTlsConnectionOptions(URI uri, int numConnections) {
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts);
+                TlsConnectionOptions tlsConnectionOptions = new TlsConnectionOptions(tlsContext)) {
+            tlsConnectionOptions.withServerName(uri.getHost());
+
+            Http2StreamManagerOptions options = new Http2StreamManagerOptions();
+            HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
+            // Configure TLS via TlsConnectionOptions only (no withTlsContext). This is the
+            // configuration that used to NPE in the Http2StreamManager constructor.
+            connectionManagerOptions.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsConnectionOptions(tlsConnectionOptions)
+                    .withUri(uri)
+                    .withMaxConnections(numConnections);
+            options.withConnectionManagerOptions(connectionManagerOptions);
+
+            return Http2StreamManager.create(options);
+        }
+    }
+
+    @Test
+    public void testStreamManagerWithTlsConnectionOptions() throws Exception {
+        skipIfAndroid();
+        URI uri = new URI(endpoint);
+
+        try (Http2StreamManager streamManager = createStreamManagerWithTlsConnectionOptions(uri, NUM_CONNECTIONS)) {
+            Assert.assertNotNull(streamManager);
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
     private Http2Request createHttp2Request(String method, String endpoint, String path, String requestBody)
             throws Exception {
         URI uri = new URI(endpoint);
@@ -210,8 +248,8 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
             Http2StreamManagerOptions options = new Http2StreamManagerOptions();
             options.withMaxConcurrentStreams(maxConcurrentStreams)
-                   .withMaxConcurrentStreamsPerConnection(100)
-                   .withIdealConcurrentStreamsPerConnection(100);
+                    .withMaxConcurrentStreamsPerConnection(100)
+                    .withIdealConcurrentStreamsPerConnection(100);
 
             HttpClientConnectionManagerOptions connectionManagerOptions = new HttpClientConnectionManagerOptions();
             connectionManagerOptions.withClientBootstrap(bootstrap)
@@ -274,13 +312,15 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
                 // (allowing small margin for timing)
                 int observedMax = maxConcurrentActive.get();
                 Log.log(Log.LogLevel.Info, Log.LogSubject.HttpConnectionManager,
-                        String.format("Max concurrent streams observed: %d (limit: %d)", observedMax, maxConcurrentStreams));
+                        String.format("Max concurrent streams observed: %d (limit: %d)", observedMax,
+                                maxConcurrentStreams));
 
-                // The observed max should be close to our limit (allowing some flexibility for race conditions)
+                // The observed max should be close to our limit (allowing some flexibility for
+                // race conditions)
                 Assert.assertTrue(
-                    String.format("Expected max concurrent streams around %d, but observed %d",
-                                  maxConcurrentStreams, observedMax),
-                    observedMax <= maxConcurrentStreams);
+                        String.format("Expected max concurrent streams around %d, but observed %d",
+                                maxConcurrentStreams, observedMax),
+                        observedMax <= maxConcurrentStreams);
 
             } finally {
                 streamManager.close();
@@ -288,6 +328,51 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
             }
         }
 
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+    }
+
+    @Test
+    public void testHttp2StreamCancel() throws Exception {
+        skipIfAndroid();
+        skipIfLocalhostUnavailable();
+
+        URI uri = new URI(endpoint);
+        // Use a large object to make the request outlive the cancel stage and let cancel happen as expected.
+        String large_file_path = "/crt-canary-obj.txt";
+        int maxConcurrentStreams = 20;
+        try (Http2StreamManager streamManager = createStreamManager(uri, 100, maxConcurrentStreams)) {
+
+            Http2Request request = createHttp2Request("GET", endpoint, large_file_path, EMPTY_BODY);
+
+            final CompletableFuture<Integer> requestCompleteFuture = new CompletableFuture<>();
+
+            streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                @Override
+                public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                        HttpHeader[] nextHeaders) {
+                    // Cancel the HTTP/2 stream using the default error code (AWS_ERROR_HTTP_STREAM_CANCELLED)
+                    stream.cancel();
+                }
+
+                @Override
+                public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                    requestCompleteFuture.complete(errorCode);
+                    stream.close();
+                }
+            }).whenComplete((stream, throwable) -> {
+                if (throwable != null) {
+                    requestCompleteFuture.completeExceptionally(throwable);
+                }
+            });
+
+
+            int actualErrorCode = requestCompleteFuture.get(60, TimeUnit.SECONDS);
+
+            // The HTTP/2 stream should complete with AWS_ERROR_HTTP_STREAM_CANCELLED
+            Assert.assertEquals("Error code should be AWS_ERROR_HTTP_STREAM_CANCELLED",
+                    "AWS_ERROR_HTTP_STREAM_CANCELLED", CRT.awsErrorName(actualErrorCode));
+        }
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
     }

@@ -30,49 +30,74 @@ public final class CRT {
 
     public static final String CRT_LIB_NAME = "aws-crt-jni";
     public static final int AWS_CRT_SUCCESS = 0;
-    private static final CrtPlatform s_platform;
+    private static CrtPlatform s_platform;
+    private static final Throwable s_loadFailure;
 
     static {
-        // Scan for and invoke any platform specific initialization
-        s_platform = findPlatformImpl();
-        jvmInit();
+        // The static initializer must never throw. If native load or init fails, capture
+        // the cause into s_loadFailure so callers (via checkLoaded()) can surface it as a
+        // catchable CrtRuntimeException, instead of triggering ExceptionInInitializerError
+        // and subsequent NoClassDefFoundError for every CRT type the customer touches.
+        Throwable loadFailure = null;
         try {
-            // If the lib is already present/loaded or is in java.library.path, just use it
-            System.loadLibrary(CRT_LIB_NAME);
-        } catch (UnsatisfiedLinkError e) {
-            String graalVMImageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
-            if (graalVMImageCode != null && graalVMImageCode == "runtime") {
-                throw new CrtRuntimeException(
-                        "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
-                        "'. Make sure this file is in the same directory as the GraalVM native image. ");
-            } else {
-                // otherwise, load from the jar this class is in
-                loadLibraryFromJar();
+            // Scan for and invoke any platform specific initialization
+            s_platform = findPlatformImpl();
+            jvmInit();
+            try {
+                // If the lib is already present/loaded or is in java.library.path, just use it
+                System.loadLibrary(CRT_LIB_NAME);
+            } catch (UnsatisfiedLinkError e) {
+                String graalVMImageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
+                if (graalVMImageCode != null && graalVMImageCode == "runtime") {
+                    throw new CrtRuntimeException(
+                            "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
+                            "'. Make sure this file is in the same directory as the GraalVM native image. ");
+                } else {
+                    // otherwise, load from the jar this class is in
+                    loadLibraryFromJar();
+                }
             }
-        }
 
-        // Initialize the CRT
-        int memoryTracingLevel = 0;
-        try {
-            memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
-        } catch (Exception ex) {
-        }
-        boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
-        boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
-        awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
+            // Initialize the CRT
+            int memoryTracingLevel = 0;
+            try {
+                memoryTracingLevel = Integer.parseInt(System.getProperty("aws.crt.memory.tracing"));
+            } catch (Exception ex) {
+            }
+            boolean debugWait = System.getProperty("aws.crt.debugwait") != null;
+            boolean strictShutdown = System.getProperty("aws.crt.strictshutdown") != null;
+            awsCrtInit(memoryTracingLevel, debugWait, strictShutdown);
 
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
-            public void run()
+            Runtime.getRuntime().addShutdownHook(new Thread()
             {
-                CRT.releaseShutdownRef();
-            }
-        });
+                public void run()
+                {
+                    CRT.releaseShutdownRef();
+                }
+            });
 
-        try {
-            Log.initLoggingFromSystemProperties();
-        } catch (IllegalArgumentException e) {
-            ;
+            try {
+                Log.initLoggingFromSystemProperties();
+            } catch (IllegalArgumentException e) {
+                ;
+            }
+        } catch (Throwable t) {
+            loadFailure = t;
+        }
+        s_loadFailure = loadFailure;
+    }
+
+    /**
+     * Throws a {@link CrtRuntimeException} if the CRT native library failed to load or initialize.
+     * Otherwise returns normally. Customers can call this directly to probe availability, or rely on
+     * {@link CrtResource} subclasses (e.g. {@code S3Client}, {@code EventLoopGroup}) to invoke it
+     * during construction.
+     */
+    public static void checkLoaded() {
+        if (s_loadFailure != null) {
+            CrtRuntimeException ex = new CrtRuntimeException("Failed to load AWS CRT native library");
+            ex.initCause(s_loadFailure);
+            throw ex;
         }
     }
 

@@ -188,10 +188,11 @@ In this way, it reduces the native image size around 30% (142 MB to 101 MB for a
 
 The CRT uses native libraries for TLS, rather than Java's typical
 Secure Socket Extension (JSSE), KeyStore, and TrustStore.
-On [Windows](https://learn.microsoft.com/en-us/windows/win32/security) and
-[Apple](https://developer.apple.com/documentation/security) devices,
-the built-in OS libraries are used.
+On [Windows](https://learn.microsoft.com/en-us/windows/win32/security),
+the built-in OS library (Schannel) is used.
 On Linux/Unix/etc [s2n-tls](https://github.com/aws/s2n-tls) is used.
+On macOS, the default TLS backend is Apple Secure Transport, but an
+alternative backend (s2n-tls) can be selected at runtime (see below).
 
 If you need to add certificates to the trust store, add them to your OS trust store.
 The CRT does not use the Java TrustStore. For more customization options, see
@@ -200,7 +201,25 @@ The CRT does not use the Java TrustStore. For more customization options, see
 
 ### Mac-Only TLS Behavior
 
-Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically.  Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
+#### `AWS_CRT_USE_NON_FIPS_TLS_13` environment variable
+
+On macOS, both Apple Secure Transport and s2n-tls are compiled into the binary.
+The TLS backend is selected at runtime based on this environment variable:
+
+* **Not set (default):** Apple Secure Transport is used.
+* **Set (e.g. `AWS_CRT_USE_NON_FIPS_TLS_13=1`):** s2n-tls with aws-lc is used.
+
+This variable has no effect on Linux (always uses s2n-tls) or Windows (always uses Schannel).
+
+| | Secure Transport (default) | s2n-tls (`AWS_CRT_USE_NON_FIPS_TLS_13=1`) |
+|---|---|---|
+| TLS versions | Up to TLS 1.2 | Up to TLS 1.3 |
+| FIPS compliance | Yes | No |
+| macOS Keychain integration | Yes (PKCS#12, system certs) | No |
+
+#### Keychain behavior
+
+Please note that on Mac, once a private key is used with a certificate, that certificate-key pair is imported into the Mac Keychain. All subsequent uses of that certificate will use the stored private key and ignore anything passed in programmatically. This applies when using the default Secure Transport backend. Beginning in v0.6.6, when a stored private key from the Keychain is used, the following will be logged at the "info" log level:
 
 ```
 static: certificate has an existing certificate-key pair that was previously imported into the Keychain.  Using key from Keychain instead of the one provided.

@@ -9,8 +9,6 @@ env:
 phases:
   install:
     commands:
-      - sudo add-apt-repository ppa:openjdk-r/ppa
-      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
       - sudo apt-get install cmake -y
   build:

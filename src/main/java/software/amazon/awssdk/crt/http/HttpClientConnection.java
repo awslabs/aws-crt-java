@@ -41,22 +41,58 @@ public class HttpClientConnection extends CrtResource {
      */
     public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler)
             throws CrtRuntimeException {
+        return makeRequest(request, streamHandler, false);
+    }
+
+    /**
+     * Schedules an HttpRequest on the Native EventLoop for this HttpClientConnection specific to HTTP/1.1 connection.
+     *
+     * @param request The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native EventLoop
+     * @param useManualDataWrites When {@code true}, request body data is provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's
+     *        {@link HttpRequestBodyStream}.
+     *
+     *        <p>By design, CRT does not support setting both a body stream and enabling
+     *        manual writes for HTTP/1.1. Body streams are intended for requests whose
+     *        payload is available in full at the time of sending. If the stream does not
+     *        signal end-of-stream promptly, the event loop will busy-wait (hot-loop) for
+     *        more data, wasting CPU time. Manual writes avoid this by letting the caller
+     *        control when data is sent; the event loop only processes the request when
+     *        {@link HttpStreamBase#writeData} is called and is free to service other
+     *        requests in the meantime.
+     *
+     *        <p>If the request was created with an {@link HttpRequestBodyStream} and this
+     *        parameter is {@code true}, an {@link IllegalStateException} is thrown
+     *        immediately.
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
+     *          request/response, but must be closed by the user thread making this request when it's done.
+     */
+    public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler,
+            boolean useManualDataWrites) throws CrtRuntimeException, IllegalStateException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
         if (getVersion() == HttpVersion.HTTP_2) {
             throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
         }
+        if (useManualDataWrites && request.getBodyStream() != null) {
+            throw new IllegalStateException(
+                "Cannot use manual data writes with a body stream on an HTTP/1.1 request. "
+                + "Either remove the body stream or set useManualDataWrites to false.");
+        }
         HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),
                 request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                useManualDataWrites);
 
         return (HttpStream)stream;
     }
 
     /**
-     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection applies to both HTTP/2 and HTTP/1.1 connection.
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection. Applies to both HTTP/2 and HTTP/1.1 connections.
      *
      * @param request The Request to make to the Server.
      * @param streamHandler The Stream Handler to be called from the Native EventLoop
@@ -65,13 +101,30 @@ public class HttpClientConnection extends CrtResource {
      *          request/response, but must be closed by the user thread making this request when it's done.
      */
     public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler) throws CrtRuntimeException {
+        return makeRequest(request, streamHandler, false);
+    }
+
+    /**
+     * Schedules an HttpRequestBase on the Native EventLoop for this HttpClientConnection. Applies to both HTTP/2 and HTTP/1.1 connections.
+     *
+     * @param request The Request to make to the Server.
+     * @param streamHandler The Stream Handler to be called from the Native EventLoop
+     * @param useManualDataWrites When true, request body data will be provided via
+     *        {@link HttpStreamBase#writeData} instead of from the request's body stream.
+     * @throws CrtRuntimeException if stream creation fails
+     * @return The HttpStream that represents this Request/Response Pair. It can be closed at any time during the
+     *          request/response, but must be closed by the user thread making this request when it's done.
+     */
+    public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler,
+            boolean useManualDataWrites) throws CrtRuntimeException {
         if (isNull()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
         HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
                 request.marshalForJni(),
                 request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler));
+                new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                useManualDataWrites);
 
         return stream;
     }
@@ -172,7 +225,8 @@ public class HttpClientConnection extends CrtResource {
     private static native HttpStreamBase httpClientConnectionMakeRequest(long connectionBinding,
                                                                      byte[] marshalledRequest,
                                                                      HttpRequestBodyStream bodyStream,
-                                                                     HttpStreamResponseHandlerNativeAdapter responseHandler) throws CrtRuntimeException;
+                                                                     HttpStreamResponseHandlerNativeAdapter responseHandler,
+                                                                     boolean useManualDataWrites) throws CrtRuntimeException;
 
     private static native void httpClientConnectionShutdown(long connectionBinding) throws CrtRuntimeException;
     private static native boolean httpClientConnectionIsOpen(long connectionBinding) throws CrtRuntimeException;

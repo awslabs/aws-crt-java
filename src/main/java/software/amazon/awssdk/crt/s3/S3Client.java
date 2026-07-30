@@ -168,6 +168,12 @@ public class S3Client extends CrtResource {
             throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Operation name must be set for MetaRequestType.DEFAULT.");
         }
 
+        if (options.getChecksumConfig() != null && options.getChecksumAlgorithm() == ChecksumAlgorithm.MD5) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                    "S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
+            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
+        }
+
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
                 options.getResponseHandler());

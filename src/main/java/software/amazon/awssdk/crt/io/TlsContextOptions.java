@@ -20,6 +20,26 @@ import software.amazon.awssdk.crt.utils.StringUtils;
  */
 public final class TlsContextOptions extends CrtResource {
 
+    /**
+     * Identifies the source of the mTLS certificate/private key configured on a
+     * {@link TlsContextOptions}. Used internally by the IoT Device SDK metrics
+     * layer to encode feature "I" of the SDK metrics string. Values are set
+     * automatically by the {@code createWithMtls*} factory methods (and their
+     * {@code withMtls*} equivalents).
+     */
+    public enum CertificateSource {
+        /** PEM cert + key files (in-memory or on-disk). */
+        CERTIFICATE_FILES,
+        /** Hardware security module via PKCS#11. */
+        PKCS11,
+        /** Windows certificate store. */
+        WINDOWS_CERT_STORE,
+        /** Java keystore. */
+        JAVA_KEYSTORE,
+        /** PKCS#12 (.p12 / .pfx) file. */
+        PKCS12_FILE,
+    }
+
     public enum TlsVersions {
         /**
          * SSL v3. This should almost never be used.
@@ -80,6 +100,21 @@ public final class TlsContextOptions extends CrtResource {
      */
     public boolean verifyPeer = false;
 
+    /**
+     * Set to true to disable certificate revocation checking during TLS negotiation.
+     *
+     * On Windows (SChannel), this prevents the TLS handshake from making outbound network calls
+     * to CRL/OCSP revocation endpoints, which can block for minutes when the endpoints are unreachable
+     * (e.g., in private subnets without internet access).
+     *
+     * On Linux (s2n), this disables validation of OCSP stapled responses provided by the server.
+     *
+     * On Apple platforms, this is a no-op as revocation checking is not enabled by default.
+     *
+     * Default is false (revocation checking enabled where available).
+     */
+    public boolean noCertificateRevocation = false;
+
     private String certificate;
     private String privateKey;
     private String certificatePath;
@@ -92,6 +127,7 @@ public final class TlsContextOptions extends CrtResource {
     private TlsContextPkcs11Options pkcs11Options;
     private TlsContextCustomKeyOperationOptions customKeyOperations;
     private String windowsCertStorePath;
+    private CertificateSource certificateSource;
 
     /**
      * Creates a new set of options that can be used to create a {@link TlsContext}
@@ -119,6 +155,7 @@ public final class TlsContextOptions extends CrtResource {
                 caFile,
                 caDir,
                 verifyPeer,
+                noCertificateRevocation,
                 pkcs12Path,
                 pkcs12Password,
                 pkcs11Options,
@@ -171,6 +208,7 @@ public final class TlsContextOptions extends CrtResource {
     public void initMtlsFromPath(String certificatePath, String privateKeyPath) {
         this.certificatePath = certificatePath;
         this.privateKeyPath = privateKeyPath;
+        this.certificateSource = CertificateSource.CERTIFICATE_FILES;
     }
 
     /**
@@ -187,6 +225,7 @@ public final class TlsContextOptions extends CrtResource {
 
         this.privateKey = PemUtils.cleanUpPem(privateKey);
         PemUtils.sanityCheck(privateKey, 1, "PRIVATE KEY");
+        this.certificateSource = CertificateSource.CERTIFICATE_FILES;
     }
 
     /**
@@ -202,6 +241,7 @@ public final class TlsContextOptions extends CrtResource {
         }
         this.pkcs12Path = pkcs12Path;
         this.pkcs12Password = pkcs12Password;
+        this.certificateSource = CertificateSource.PKCS12_FILE;
     }
 
     /**
@@ -398,6 +438,7 @@ public final class TlsContextOptions extends CrtResource {
         }
         options.initMtls(certificate, privateKey);
         options.verifyPeer = true;
+        options.certificateSource = CertificateSource.JAVA_KEYSTORE;
         return options;
     }
 
@@ -501,6 +542,7 @@ public final class TlsContextOptions extends CrtResource {
     public TlsContextOptions withMtlsPkcs11(TlsContextPkcs11Options pkcs11Options) {
         swapReferenceTo(this.pkcs11Options, pkcs11Options);
         this.pkcs11Options = pkcs11Options;
+        this.certificateSource = CertificateSource.PKCS11;
         return this;
     }
 
@@ -528,6 +570,7 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withMtlsWindowsCertStorePath(String certificatePath) {
         this.windowsCertStorePath = certificatePath;
+        this.certificateSource = CertificateSource.WINDOWS_CERT_STORE;
         return this;
     }
 
@@ -551,6 +594,24 @@ public final class TlsContextOptions extends CrtResource {
         return this.withVerifyPeer(true);
     }
 
+    /**
+     * Disables certificate revocation checking during TLS negotiation.
+     *
+     * @return this
+     */
+    public TlsContextOptions withNoCertificateRevocation() {
+        this.noCertificateRevocation = true;
+        return this;
+    }
+
+    /**
+     * @return the {@link CertificateSource} of the configured mTLS, or {@code null}
+     *         if no mTLS source has been set (or the source has no defined metrics mapping).
+     */
+    CertificateSource getCertificateSource() {
+        return certificateSource;
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -566,6 +627,7 @@ public final class TlsContextOptions extends CrtResource {
                 String caFile,
                 String caDir,
                 boolean verifyPeer,
+                boolean noCertificateRevocation,
                 String pkcs12Path,
                 String pkcs12Password,
                 TlsContextPkcs11Options pkcs11Options,

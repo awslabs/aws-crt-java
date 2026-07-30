@@ -27,8 +27,8 @@
 
 #include "crt.h"
 
+#include "aws_iot_metrics.h"
 #include "http_request_utils.h"
-#include "iot_device_sdk_metrics.h"
 #include "java_class_ids.h"
 #include "mqtt5_client_jni.h"
 #include "mqtt_connection.h"

@@ -41,8 +41,8 @@ import software.amazon.awssdk.crt.io.TlsContextOptions;
 import software.amazon.awssdk.crt.utils.ByteBufferUtils;
 
 public class HttpStreamManagerTest extends HttpRequestResponseFixture {
-    private final static String endpoint = "https://httpbin.org";
-    private final static String path = "/anything";
+    private final static String endpoint = "https://d1cz66xoahf9cl.cloudfront.net";
+    private final static String path = "/random_32_byte.data";
     private final String EMPTY_BODY = "";
     private final static int NUM_CONNECTIONS = 20;
     private final static Charset UTF8 = StandardCharsets.UTF_8;

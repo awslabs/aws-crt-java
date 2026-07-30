@@ -4,6 +4,7 @@
  */
 package software.amazon.awssdk.crt.s3;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import software.amazon.awssdk.crt.http.HttpHeader;
 
@@ -48,6 +49,38 @@ public interface S3MetaRequestResponseHandler {
      */
     default int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return 0;
+    }
+
+    /**
+     * FFM variant of {@link #onResponseBody(ByteBuffer, long, long)}.
+     * <p>
+     * Invoked instead of the {@code ByteBuffer} overload when the meta request was
+     * created with {@link S3MetaRequestOptions#withUseFFM(boolean) useFFM=true}.
+     * The body data is delivered as a {@link MemorySegment} that is a zero-copy
+     * view directly into native (off-heap) memory — no {@code byte[]} is allocated
+     * and no data is copied.
+     * <p>
+     * <b>Do NOT</b> retain a reference to {@code bodyBytesIn} beyond the lifetime
+     * of this method call. The underlying native memory is only guaranteed to be
+     * valid for the duration of the callback.
+     * <p>
+     * The default implementation falls back to the {@code ByteBuffer} overload by
+     * copying the data, so existing implementations that only override the
+     * {@code ByteBuffer} version continue to work correctly.
+     *
+     * @param bodyBytesIn     A zero-copy view of the native response body chunk.
+     * @param objectRangeStart Byte offset of the first byte in this chunk within
+     *                         the full S3 object.
+     * @param objectRangeEnd   Past-the-end byte offset (i.e.
+     *                         {@code objectRangeStart + chunk length}).
+     * @return The number of bytes to increment the flow-control window by.
+     *         Ignored when backpressure is disabled.
+     */
+    default int onResponseBody(MemorySegment bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+        // Default: copy into a heap ByteBuffer and delegate to the ByteBuffer overload
+        // so that implementations that only override the ByteBuffer version still work.
+        ByteBuffer buf = ByteBuffer.wrap(bodyBytesIn.toArray(java.lang.foreign.ValueLayout.JAVA_BYTE));
+        return onResponseBody(buf, objectRangeStart, objectRangeEnd);
     }
 
     /**

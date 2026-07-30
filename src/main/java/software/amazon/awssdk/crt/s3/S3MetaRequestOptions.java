@@ -96,6 +96,13 @@ public class S3MetaRequestOptions {
     private ResumeToken resumeToken;
     private Long objectSizeHint;
     private FileIoOptions fileIoOptions;
+    /**
+     * When true, the native layer uses FFM (Foreign Function & Memory) style
+     * callbacks that pass raw native pointers as {@code long} values instead of
+     * allocating JNI wrapper objects (byte[] for downloads, DirectByteBuffer for
+     * uploads). Requires Java 22+ and {@code --enable-native-access=ALL-UNNAMED}.
+     */
+    private boolean useFFM = false;
 
     public S3MetaRequestOptions withMetaRequestType(MetaRequestType metaRequestType) {
         this.metaRequestType = metaRequestType;
@@ -471,5 +478,40 @@ public class S3MetaRequestOptions {
      */
     public FileIoOptions getFileIoOptions() {
         return fileIoOptions;
+    }
+
+    /**
+     * Enable FFM (Foreign Function &amp; Memory) mode for this meta request.
+     * <p>
+     * When {@code true}, the native layer passes raw native memory pointers as
+     * {@code long} values to Java callbacks instead of allocating JNI wrapper
+     * objects:
+     * <ul>
+     *   <li><b>Downloads:</b> {@code onResponseBody} receives a
+     *       {@code MemorySegment} view of native memory (zero-copy) instead of
+     *       a heap-allocated {@code byte[]}.</li>
+     *   <li><b>Uploads:</b> {@code sendRequestBody} receives a raw pointer and
+     *       length as {@code long} values instead of a {@code DirectByteBuffer}
+     *       wrapper object.</li>
+     * </ul>
+     * Requires Java 22+ and the JVM flag
+     * {@code --enable-native-access=ALL-UNNAMED}.
+     *
+     * @param useFFM {@code true} to use FFM callbacks, {@code false} (default)
+     *               to use the standard JNI callbacks.
+     * @return this
+     */
+    public S3MetaRequestOptions withUseFFM(boolean useFFM) {
+        this.useFFM = useFFM;
+        return this;
+    }
+
+    /**
+     * Returns whether FFM (Foreign Function &amp; Memory) mode is enabled.
+     *
+     * @return {@code true} if FFM mode is enabled, {@code false} otherwise.
+     */
+    public boolean getUseFFM() {
+        return useFFM;
     }
 }

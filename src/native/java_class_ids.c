@@ -18,6 +18,11 @@ static void s_cache_http_request_body_stream(JNIEnv *env) {
         (*env)->GetMethodID(env, cls, "sendRequestBody", "(Ljava/nio/ByteBuffer;)Z");
     AWS_FATAL_ASSERT(http_request_body_stream_properties.send_outgoing_body);
 
+    /* FFM path: sendRequestBody(long address, long length) -> int bytes_written */
+    http_request_body_stream_properties.send_outgoing_body_ffm =
+        (*env)->GetMethodID(env, cls, "sendRequestBody", "(JJ)I");
+    AWS_FATAL_ASSERT(http_request_body_stream_properties.send_outgoing_body_ffm);
+
     http_request_body_stream_properties.reset_position = (*env)->GetMethodID(env, cls, "resetPosition", "()Z");
     AWS_FATAL_ASSERT(http_request_body_stream_properties.reset_position);
 
@@ -725,6 +730,11 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onResponseBody =
         (*env)->GetMethodID(env, cls, "onResponseBody", "([BJJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBody);
+
+    /* FFM path: onResponseBodyFFM(long address, long length, long rangeStart) -> int */
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBodyFFM =
+        (*env)->GetMethodID(env, cls, "onResponseBodyFFM", "(JJJ)I");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyFFM);
 
     s3_meta_request_response_handler_native_adapter_properties.onFinished = (*env)->GetMethodID(
         env, cls, "onFinished", "(II[BLjava/lang/String;IZLjava/lang/Throwable;Ljava/nio/ByteBuffer;)V");

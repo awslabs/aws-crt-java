@@ -10,7 +10,8 @@
 
 /* HttpRequestBodyStream */
 struct java_http_request_body_stream_properties {
-    jmethodID send_outgoing_body;
+    jmethodID send_outgoing_body;     /* sendRequestBody(Ljava/nio/ByteBuffer;)Z  - JNI path */
+    jmethodID send_outgoing_body_ffm; /* sendRequestBody(JJ)I                    - FFM path */
     jmethodID reset_position;
     jmethodID get_length;
 };
@@ -327,7 +328,8 @@ extern struct java_s3_meta_request_properties s3_meta_request_properties;
 
 /* S3MetaRequestResponseHandlerNativeAdapter */
 struct java_s3_meta_request_response_handler_native_adapter_properties {
-    jmethodID onResponseBody;
+    jmethodID onResponseBody;    /* onResponseBody([BJJ)I    - JNI path: byte[], rangeStart, rangeEnd */
+    jmethodID onResponseBodyFFM; /* onResponseBodyFFM(JJJ)I  - FFM path: address, length, rangeStart */
     jmethodID onFinished;
     jmethodID onResponseHeaders;
     jmethodID onProgress;

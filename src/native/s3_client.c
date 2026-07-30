@@ -50,6 +50,9 @@ struct s3_client_make_meta_request_callback_data {
     struct aws_input_stream *input_stream;
     struct aws_signing_config_data signing_config_data;
     jthrowable java_exception;
+    /* When true, use FFM-style callbacks (raw pointer + length as jlong)
+     * instead of allocating JNI wrapper objects (byte[] / DirectByteBuffer). */
+    bool use_ffm;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -606,8 +609,6 @@ static int s_on_s3_meta_request_body_callback(
     const struct aws_byte_cursor *body,
     uint64_t range_start,
     void *user_data) {
-    (void)body;
-    (void)range_start;
     int return_value = AWS_OP_ERR;
 
     uint64_t range_end = range_start + body->len;
@@ -623,25 +624,45 @@ static int s_on_s3_meta_request_body_callback(
         return AWS_OP_ERR;
     }
 
-    jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
-    if (jni_payload == NULL) {
-        /* JVM is out of memory, but native code can still have memory available, handle it and don't crash. */
-        aws_jni_check_and_clear_exception(env);
-        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-        /********** JNI ENV RELEASE **********/
-        return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
-    }
-
     jint body_response_result = 0;
 
     if (callback_data->java_s3_meta_request_response_handler_native_adapter != NULL) {
-        body_response_result = (*env)->CallIntMethod(
-            env,
-            callback_data->java_s3_meta_request_response_handler_native_adapter,
-            s3_meta_request_response_handler_native_adapter_properties.onResponseBody,
-            jni_payload,
-            range_start,
-            range_end);
+        if (callback_data->use_ffm) {
+            /*
+             * FFM path: pass the raw native pointer and length as jlong primitives.
+             * No byte[] allocation, no memory copy.
+             * Java wraps this as a MemorySegment (zero-copy) in onResponseBodyFFM().
+             */
+            body_response_result = (*env)->CallIntMethod(
+                env,
+                callback_data->java_s3_meta_request_response_handler_native_adapter,
+                s3_meta_request_response_handler_native_adapter_properties.onResponseBodyFFM,
+                (jlong)(uintptr_t)body->ptr, /* raw native pointer */
+                (jlong)body->len,            /* chunk length in bytes */
+                (jlong)range_start);         /* byte offset within the S3 object */
+        } else {
+            /*
+             * JNI path (unchanged): copy the body bytes into a new Java byte[].
+             */
+            jobject jni_payload = aws_jni_byte_array_from_cursor(env, body);
+            if (jni_payload == NULL) {
+                /* JVM is out of memory, but native code can still have memory available. */
+                aws_jni_check_and_clear_exception(env);
+                aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+                /********** JNI ENV RELEASE **********/
+                return aws_raise_error(AWS_ERROR_JAVA_CRT_JVM_OUT_OF_MEMORY);
+            }
+
+            body_response_result = (*env)->CallIntMethod(
+                env,
+                callback_data->java_s3_meta_request_response_handler_native_adapter,
+                s3_meta_request_response_handler_native_adapter_properties.onResponseBody,
+                jni_payload,
+                range_start,
+                range_end);
+
+            (*env)->DeleteLocalRef(env, jni_payload);
+        }
 
         if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
             AWS_LOGF_ERROR(
@@ -660,8 +681,6 @@ static int s_on_s3_meta_request_body_callback(
     return_value = AWS_OP_SUCCESS;
 
 cleanup:
-    (*env)->DeleteLocalRef(env, jni_payload);
-
     aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
     /********** JNI ENV RELEASE **********/
 
@@ -1284,7 +1303,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jboolean use_ffm) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1327,12 +1347,16 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         (*env)->NewGlobalRef(env, java_response_handler_jobject);
     AWS_FATAL_ASSERT(callback_data->java_s3_meta_request_response_handler_native_adapter != NULL);
 
+    /* Store the FFM flag so body/upload callbacks can branch on it */
+    callback_data->use_ffm = (bool)use_ffm;
+
     request_message = aws_http_message_new_request(allocator);
     AWS_FATAL_ASSERT(request_message);
 
     AWS_FATAL_ASSERT(
-        AWS_OP_SUCCESS == aws_apply_java_http_request_changes_to_native_request(
-                              env, jni_marshalled_message_data, jni_http_request_body_stream, request_message));
+        AWS_OP_SUCCESS ==
+        aws_apply_java_http_request_changes_to_native_request(
+            env, jni_marshalled_message_data, jni_http_request_body_stream, request_message, callback_data->use_ffm));
 
     if (jni_operation_name) {
         operation_name = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_operation_name);

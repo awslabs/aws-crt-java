@@ -520,7 +520,7 @@ struct java_aws_s3_meta_request_resume_token {
     jfieldID object_size_field_id;
     jfieldID object_range_start_field_id;
     jfieldID object_range_end_field_id;
-    jfieldID continues_downloaded_bytes_field_id;
+    jfieldID continuous_downloaded_bytes_field_id;
     jfieldID total_downloaded_bytes_field_id;
     jfieldID file_last_modified_epoch_ns_field_id;
 };

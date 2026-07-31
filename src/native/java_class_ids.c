@@ -1150,9 +1150,9 @@ static void s_cache_s3_meta_request_resume_token(JNIEnv *env) {
     s3_meta_request_resume_token_properties.object_range_end_field_id =
         (*env)->GetFieldID(env, cls, "objectRangeEnd", "J");
     AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.object_range_end_field_id);
-    s3_meta_request_resume_token_properties.continues_downloaded_bytes_field_id =
+    s3_meta_request_resume_token_properties.continuous_downloaded_bytes_field_id =
         (*env)->GetFieldID(env, cls, "continuesDownloadedBytes", "J");
-    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.continues_downloaded_bytes_field_id);
+    AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.continuous_downloaded_bytes_field_id);
     s3_meta_request_resume_token_properties.total_downloaded_bytes_field_id =
         (*env)->GetFieldID(env, cls, "totalDownloadedBytes", "J");
     AWS_FATAL_ASSERT(s3_meta_request_resume_token_properties.total_downloaded_bytes_field_id);

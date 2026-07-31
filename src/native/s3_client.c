@@ -1341,8 +1341,8 @@ static jobject s_java_resume_token_from_native_new(JNIEnv *env, struct aws_s3_me
         (*env)->SetLongField(
             env,
             resume_token_jni,
-            s3_meta_request_resume_token_properties.continues_downloaded_bytes_field_id,
-            (jlong)aws_s3_meta_request_resume_token_continues_downloaded_bytes(resume_token));
+            s3_meta_request_resume_token_properties.continuous_downloaded_bytes_field_id,
+            (jlong)aws_s3_meta_request_resume_token_continuous_downloaded_bytes(resume_token));
         (*env)->SetLongField(
             env,
             resume_token_jni,

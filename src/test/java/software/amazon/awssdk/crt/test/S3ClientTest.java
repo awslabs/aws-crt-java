@@ -1262,6 +1262,197 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    @Test
+    public void testS3PutPauseAsyncResume() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        S3ClientOptions clientOptions = new S3ClientOptions()
+                .withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            CompletableFuture<Void> onProgressFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = createTestPutPauseResumeHandler(onFinishedFuture,
+                    onProgressFuture);
+
+            final ByteBuffer payload = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
+            HttpRequestBodyStream payloadStream = new HttpRequestBodyStream() {
+                @Override
+                public boolean sendRequestBody(ByteBuffer outBuffer) {
+                    ByteBufferUtils.transferData(payload, outBuffer);
+                    return payload.remaining() == 0;
+                }
+
+                @Override
+                public boolean resetPosition() {
+                    return true;
+                }
+
+                @Override
+                public long getLength() {
+                    return payload.capacity();
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT),
+                    new HttpHeader("Content-Length", Integer.valueOf(payload.capacity()).toString()), };
+
+            HttpRequest httpRequest = new HttpRequest("PUT",
+                    uploadObjectPathInit("/put_object_test_async_pause_128MB"), headers, payloadStream);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            ResumeToken resumeToken;
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                onProgressFuture.get();
+
+                /* Async pause: the future completes once in-flight parts have finished. */
+                resumeToken = metaRequest.pauseAsync().get();
+                Assert.assertNotNull(resumeToken);
+                Assert.assertEquals(MetaRequestType.PUT_OBJECT, resumeToken.getType());
+                Assert.assertNotNull(resumeToken.getUploadId());
+                Assert.assertTrue(resumeToken.getPartSize() > 0);
+                /* download-only getters must reject upload tokens */
+                assertThrows(IllegalArgumentException.class, () -> resumeToken.getObjectSize());
+
+                Throwable thrown = assertThrows(Throwable.class,
+                        () -> onFinishedFuture.get());
+
+                Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtRuntimeException) thrown.getCause()).errorName);
+            }
+
+            final ByteBuffer payloadResume = ByteBuffer.wrap(createTestPayload(128 * 1024 * 1024));
+            HttpRequestBodyStream payloadStreamResume = new HttpRequestBodyStream() {
+                @Override
+                public boolean sendRequestBody(ByteBuffer outBuffer) {
+                    ByteBufferUtils.transferData(payloadResume, outBuffer);
+                    return payloadResume.remaining() == 0;
+                }
+
+                @Override
+                public boolean resetPosition() {
+                    return true;
+                }
+
+                @Override
+                public long getLength() {
+                    return payloadResume.capacity();
+                }
+            };
+
+            HttpHeader[] headersResume = { new HttpHeader("Host", ENDPOINT),
+                    new HttpHeader("Content-Length", Integer.valueOf(payloadResume.capacity()).toString()), };
+
+            HttpRequest httpRequestResume = new HttpRequest("PUT",
+                    uploadObjectPathInit("/put_object_test_async_pause_128MB"), headersResume, payloadStreamResume);
+
+            CompletableFuture<Integer> onFinishedFutureResume = new CompletableFuture<>();
+            CompletableFuture<Void> onProgressFutureResume = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandlerResume = createTestPutPauseResumeHandler(onFinishedFutureResume,
+                    onProgressFutureResume);
+            S3MetaRequestOptions metaRequestOptionsResume = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(httpRequestResume)
+                    .withResponseHandler(responseHandlerResume)
+                    .withChecksumAlgorithm(ChecksumAlgorithm.CRC32)
+                    .withResumeToken(new ResumeToken.PutResumeTokenBuilder()
+                            .withPartSize(resumeToken.getPartSize())
+                            .withTotalNumParts(resumeToken.getTotalNumParts())
+                            .withNumPartsCompleted(resumeToken.getNumPartsCompleted())
+                            .withUploadId(resumeToken.getUploadId())
+                            .build());
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptionsResume)) {
+                Integer finish = onFinishedFutureResume.get();
+                Assert.assertEquals(Integer.valueOf(0), finish);
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testS3GetPauseAsync() {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        final long partSize = 1024 * 1024;
+        final long objectSize = 10 * 1024 * 1024;
+
+        /* Enable backpressure with a 1MB initial window and never grow it: the download
+         * stalls once the window is exhausted, so the pause below deterministically lands
+         * mid-download instead of racing the 10MB transfer to completion. */
+        S3ClientOptions clientOptions = new S3ClientOptions()
+                .withRegion(REGION)
+                .withPartSize(partSize)
+                .withReadBackpressureEnabled(true)
+                .withInitialReadWindowSize(partSize);
+        try (S3Client client = createS3Client(clientOptions)) {
+            CompletableFuture<Integer> onFinishedFuture = new CompletableFuture<>();
+            CompletableFuture<Void> onBodyFuture = new CompletableFuture<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                    onBodyFuture.complete(null);
+                    return 0;
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                            "Meta request finished with error code " + context.getErrorCode());
+                    if (context.getErrorCode() != 0) {
+                        onFinishedFuture.completeExceptionally(new CrtRuntimeException(context.getErrorCode()));
+                        return;
+                    }
+                    onFinishedFuture.complete(Integer.valueOf(context.getErrorCode()));
+                }
+            };
+
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            HttpRequest httpRequest = new HttpRequest("GET", PRE_EXIST_10MB_PATH, headers, null);
+
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(httpRequest)
+                    .withResponseHandler(responseHandler);
+
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                onBodyFuture.get();
+
+                ResumeToken resumeToken = metaRequest.pauseAsync().get();
+                Assert.assertNotNull(resumeToken);
+                Assert.assertEquals(MetaRequestType.GET_OBJECT, resumeToken.getType());
+                Assert.assertEquals(partSize, resumeToken.getPartSize());
+                Assert.assertEquals(objectSize, resumeToken.getObjectSize());
+                Assert.assertEquals(0, resumeToken.getObjectRangeStart());
+                Assert.assertEquals(objectSize - 1, resumeToken.getObjectRangeEnd());
+                Assert.assertTrue(resumeToken.getContinuesDownloadedBytes() > 0);
+                Assert.assertTrue(
+                        resumeToken.getContinuesDownloadedBytes() <= resumeToken.getTotalDownloadedBytes());
+                Assert.assertNotNull(resumeToken.getEtag());
+                Assert.assertFalse(resumeToken.getEtag().isEmpty());
+                /* body-callback download: no local receive file */
+                Assert.assertEquals(0, resumeToken.getFileLastModifiedEpochNs());
+                /* upload-only getters must reject download tokens */
+                assertThrows(IllegalArgumentException.class, () -> resumeToken.getUploadId());
+
+                Throwable thrown = assertThrows(Throwable.class,
+                        () -> onFinishedFuture.get());
+
+                Assert.assertEquals("AWS_ERROR_S3_PAUSED", ((CrtRuntimeException) thrown.getCause()).errorName);
+            }
+        } catch (InterruptedException | ExecutionException ex) {
+            Assert.fail(ex.getMessage());
+        }
+    }
+
     private void testS3RoundTripWithChecksumHelper(ChecksumAlgorithm algo, ChecksumLocation location, boolean MPU,
             boolean provide_full_object_checksum) throws IOException {
 

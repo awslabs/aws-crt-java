@@ -642,7 +642,7 @@ static void s_jni_atexit_gentle(void) {
     }
 }
 
-#define KB_256 (256 * 1024)
+#define KB_256 (16 * 1024)
 
 /* Called as the entry point, immediately after the shared lib is loaded the first time by JNI */
 JNIEXPORT
@@ -667,6 +667,7 @@ void JNICALL Java_software_amazon_awssdk_crt_CRT_awsCrtInit(
      * Increase the maximum channel message size in order to improve throughput on large payloads.
      * Consider adding a system property override in the future.
      */
+    fprintf(stderr, "########### 16 K!\n");
     g_aws_channel_max_fragment_size = KB_256;
 
     /* check to see if we have support for backtraces only if we need to */

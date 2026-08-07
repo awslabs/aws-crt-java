@@ -319,9 +319,11 @@ struct java_s3_client_properties {
 };
 extern struct java_s3_client_properties s3_client_properties;
 
-/* S3Client */
+/* S3MetaRequest */
 struct java_s3_meta_request_properties {
+    jclass s3_meta_request_class;
     jmethodID onShutdownComplete;
+    jmethodID on_pause_complete_method_id;
 };
 extern struct java_s3_meta_request_properties s3_meta_request_properties;
 
@@ -332,6 +334,7 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseHeaders;
     jmethodID onProgress;
     jmethodID onTelemetry;
+    jmethodID onErrorResumeToken;
     jmethodID onResponseBodyBB; /* NEW: ByteBuffer overload for DBZ pool path */
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
@@ -519,6 +522,16 @@ struct java_aws_s3_meta_request_resume_token {
     jfieldID total_num_parts_field_id;
     jfieldID num_parts_completed_field_id;
     jfieldID upload_id_field_id;
+    /* download specific fields */
+    jfieldID etag_field_id;
+    jfieldID version_id_field_id;
+    jfieldID s3_object_last_modified_field_id;
+    jfieldID object_size_field_id;
+    jfieldID object_range_start_field_id;
+    jfieldID object_range_end_field_id;
+    jfieldID continuous_downloaded_bytes_field_id;
+    jfieldID total_downloaded_bytes_field_id;
+    jfieldID file_last_modified_epoch_ns_field_id;
 };
 extern struct java_aws_s3_meta_request_resume_token s3_meta_request_resume_token_properties;
 

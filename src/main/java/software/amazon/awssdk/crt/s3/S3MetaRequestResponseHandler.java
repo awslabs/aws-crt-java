@@ -79,4 +79,25 @@ public interface S3MetaRequestResponseHandler {
      */
     default void onTelemetry(S3RequestMetrics requestMetrics) {
     }
+
+    /**
+     * Invoked with a resume token when the meta request fails unexpectedly.
+     * Allows persisting state for later resume without re-transferring completed parts.
+     * Supported for both upload (PUT) and download (GET) meta requests.
+     * Always invoked exactly once on unexpected failure; not invoked on success or
+     * explicit pause (use {@link S3MetaRequest#pauseAsync} for that).
+     * The token is null when no resumable state was captured.
+     * <p>
+     * WARNING: for a file download with
+     * {@link S3MetaRequestOptions#withResponseFileDeleteOnFailure} set true, the deletion
+     * is respected — the partial file is deleted on error, leaving nothing to resume on,
+     * and this callback fires with a null token. Do not set responseFileDeleteOnFailure
+     * if you intend to resume from this callback's token.
+     *
+     * @param errorCode the CRT error code that caused the meta request to fail
+     * @param resumeToken resumable state captured at failure time, null if no
+     *        resumable state was captured
+     */
+    default void onErrorResumeToken(final int errorCode, final ResumeToken resumeToken) {
+    }
 }

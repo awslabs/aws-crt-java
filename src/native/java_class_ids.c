@@ -749,6 +749,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onTelemetry =
         (*env)->GetMethodID(env, cls, "onTelemetry", "(Lsoftware/amazon/awssdk/crt/s3/S3RequestMetrics;)V");
 
+    s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken =
+        (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
+
     /* NEW: ByteBuffer overload for DBZ pool path — same method name, different signature */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
@@ -766,16 +770,12 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
 
     s3_direct_buffer_pool_properties.tryAcquireSlot = (*env)->GetMethodID(env, cls, "tryAcquireSlot", "()I");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.tryAcquireSlot);
-    ß
 
-        s3_direct_buffer_pool_properties.releaseSlot = (*env)->GetMethodID(env, cls, "releaseSlot", "(I)V");
+    s3_direct_buffer_pool_properties.releaseSlot = (*env)->GetMethodID(env, cls, "releaseSlot", "(I)V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.releaseSlot);
 
     s3_direct_buffer_pool_properties.slotAddress = (*env)->GetMethodID(env, cls, "slotAddress", "(I)J");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.slotAddress);
-    s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken =
-        (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
-    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 }
 
 struct java_completable_future_properties completable_future_properties;

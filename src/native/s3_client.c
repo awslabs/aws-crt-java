@@ -8,6 +8,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include "s3_java_buffer_pool.h"
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
 #include <aws/http/proxy.h>
@@ -353,7 +354,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jobject jni_buffer_pool /* NEW: DBZ pool, may be NULL */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -520,10 +522,37 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
+    /* NEW: attach DBZ pool factory if customer supplied a pool. */
+    struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
+    if (jni_buffer_pool != NULL) {
+        factory_data.java_pool_global = (*env)->NewGlobalRef(env, jni_buffer_pool);
+        if (factory_data.java_pool_global == NULL) {
+            // TODO: If a customer wants to use a dbz pool but it fails, should we fail client creation
+            // instead of falling back onto a default?
+            AWS_LOGF_WARN(AWS_LS_S3_CLIENT, "S3DirectBufferPool: NewGlobalRef failed; falling back to default pool");
+        } else {
+            /* Package JVM for the factory. Stack allocation is safe
+             * because aws_s3_client_new invokes the factory
+             * synchronously before returning. */
+            (*env)->GetJavaVM(env, &factory_data.jvm);
+
+            client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
+            client_config.buffer_pool_user_data = &factory_data;
+            AWS_LOGF_INFO(AWS_LS_S3_CLIENT, "S3DirectBufferPool attached to client");
+        }
+    }
+
     struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
     if (!client) {
         aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
-        /* Clean up stuff */
+        /* Clean up stuff. If the factory took ownership of the global
+         * ref (in either its success or failure path), it will have
+         * NULLed factory_data.java_pool_global. Only release here if
+         * the factory never ran (e.g. aws_s3_client_new failed
+         * validation before reaching the buffer-pool factory call). */
+        if (factory_data.java_pool_global != NULL) {
+            (*env)->DeleteGlobalRef(env, factory_data.java_pool_global);
+        }
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(allocator, callback_data);
     }
@@ -666,6 +695,83 @@ cleanup:
     /********** JNI ENV RELEASE **********/
 
     return return_value;
+}
+
+/*
+ * Body delivery for the DBZ-pool path.
+ *
+ * Invoked once per completed part with a cursor pointing into the
+ * ticket's slot memory. The ticket is carried in info->ticket — we
+ * reach through ticket->impl to recover the slot address, then
+ * construct a ByteBuffer view over the range described by the cursor.
+ *
+ * WARNING: The ByteBuffer slice handed to Java is valid only until
+ *          the SDK consumer acknowledges receipt and the ticket is
+ *          released. Releasing the ticket while the slice is still
+ *          held by Java code causes silent corruption.
+ */
+static int s_on_s3_meta_request_body_callback_dbb(
+    struct aws_s3_meta_request *meta_request,
+    const struct aws_byte_cursor *body,
+    uint64_t range_start,
+    void *user_data) {
+
+    struct s3_client_make_meta_request_callback_data *callback_data =
+        (struct s3_client_make_meta_request_callback_data *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    /* Construct the ByteBuffer view in C via NewDirectByteBuffer.
+     * body->ptr points into pool-managed slot memory. The returned
+     * DBB has no Cleaner — the slot's parent DBB owns the memory. */
+    jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, (void *)body->ptr, (jlong)body->len);
+    if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_WARN(AWS_LS_S3_META_REQUEST,
+            "id=%p: S3DirectBufferPool: NewDirectByteBuffer failed for "
+            "chunk (len=%zu, range_start=%llu); meta-request will fail",
+            (void *)meta_request, body->len, (unsigned long long)range_start);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+        /********** JNI ENV RELEASE **********/
+        return AWS_OP_ERR;
+    }
+
+    /* Deliver to the ByteBuffer-taking adapter method (registered in
+     * java_class_ids.c). The byte[]-taking method ID is NOT touched
+     * here — that path is exclusively used by the default callback. */
+    uint64_t range_end = range_start + body->len;
+    jint window_increment = (*env)->CallIntMethod(
+        env,
+        callback_data->java_s3_meta_request_response_handler_native_adapter,
+        s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB,
+        sliced_dbb,
+        (jlong)range_start,
+        (jlong)range_end);
+
+    if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: Received exception from S3MetaRequest.onResponseBody (ByteBuffer path) callback",
+            (void *)meta_request);
+        (*env)->DeleteLocalRef(env, sliced_dbb);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+        /********** JNI ENV RELEASE **********/
+        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
+
+    if (window_increment > 0) {
+        aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)window_increment);
+    }
+
+    (*env)->DeleteLocalRef(env, sliced_dbb);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+
+    return AWS_OP_SUCCESS;
 }
 
 static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers, struct aws_byte_buf *out_headers_buf) {
@@ -1284,7 +1390,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jboolean jni_use_dbz_pool /* NEW: true when client has DBZ pool attached */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1418,7 +1525,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        .body_callback = s_on_s3_meta_request_body_callback,
+        /* NEW: DBZ pool path uses the ByteBuffer-delivering callback;
+         * byte[] path is the default for clients without a pool. */
+        .body_callback = jni_use_dbz_pool ? s_on_s3_meta_request_body_callback_dbb
+                                          : s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .telemetry_callback = s_on_s3_meta_request_telemetry_callback,

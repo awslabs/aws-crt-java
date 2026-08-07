@@ -26,10 +26,12 @@ public class S3Client extends CrtResource {
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final String region;
+    private final boolean useDirectByteBufferPool;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
+        useDirectByteBufferPool = options.getDirectByteBufferPool() != null;
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -126,7 +128,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo));
+                directIo,
+                options.getDirectByteBufferPool()));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -226,7 +229,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo);
+                directIo,
+                useDirectByteBufferPool);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -290,7 +294,8 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo) throws CrtRuntimeException;
+            boolean directIo,
+            S3DirectBufferPool directByteBufferPool) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
@@ -305,5 +310,6 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo);
+            boolean directIo,
+            boolean useDirectByteBufferPool);
 }

@@ -332,9 +332,18 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onResponseHeaders;
     jmethodID onProgress;
     jmethodID onTelemetry;
+    jmethodID onResponseBodyBB; /* NEW: ByteBuffer overload for DBZ pool path */
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
+
+/* S3DirectBufferPool */
+struct s3_direct_buffer_pool_properties {
+    jmethodID tryAcquireSlot;
+    jmethodID releaseSlot;
+    jmethodID slotAddress;
+};
+extern struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 
 /* CompletableFuture */
 struct java_completable_future_properties {

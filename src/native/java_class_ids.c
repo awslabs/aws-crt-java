@@ -740,6 +740,33 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
 
     s3_meta_request_response_handler_native_adapter_properties.onTelemetry =
         (*env)->GetMethodID(env, cls, "onTelemetry", "(Lsoftware/amazon/awssdk/crt/s3/S3RequestMetrics;)V");
+
+    /* NEW: ByteBuffer overload for DBZ pool path — same method name, different signature */
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB =
+        (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB);
+}
+
+/* ------------------------------------------------------------------ */
+/* S3DirectBufferPool class & methods (DBZ pool Layer 4)              */
+/* ------------------------------------------------------------------ */
+struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
+
+static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3DirectBufferPool");
+    AWS_FATAL_ASSERT(cls);
+
+    s3_direct_buffer_pool_properties.tryAcquireSlot =
+        (*env)->GetMethodID(env, cls, "tryAcquireSlot", "()I");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.tryAcquireSlot);
+
+    s3_direct_buffer_pool_properties.releaseSlot =
+        (*env)->GetMethodID(env, cls, "releaseSlot", "(I)V");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.releaseSlot);
+
+    s3_direct_buffer_pool_properties.slotAddress =
+        (*env)->GetMethodID(env, cls, "slotAddress", "(I)J");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.slotAddress);
 }
 
 struct java_completable_future_properties completable_future_properties;
@@ -2746,6 +2773,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_s3_client_properties(env);
     s_cache_s3_meta_request_properties(env);
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
+    s_cache_s3_direct_buffer_pool(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
     s_cache_ecc_key_pair(env);

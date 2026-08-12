@@ -41,6 +41,24 @@ public class S3Client extends CrtResource {
             options.withDirectByteBufferPool(S3DirectBufferPool.create(options));
         }
 
+        // When a DBZ pool is attached, the pool's slot-exhaustion mechanism
+        // provides memory safety (no heap allocation per part, bounded off-heap
+        // memory committed at construction). The read window is no longer needed
+        // as an OOM guard. Override it to pool capacity so backpressure never
+        // artificially throttles throughput.
+        if (options.getDirectByteBufferPool() != null) {
+            S3DirectBufferPool pool = options.getDirectByteBufferPool();
+            long poolCapacityBytes = (long) pool.maxSlots() * pool.partSize();
+            long previousWindow = options.getInitialReadWindowSize();
+            options.withReadBackpressureEnabled(true);
+            options.withInitialReadWindowSize(poolCapacityBytes);
+            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool attached: initialReadWindowSize overridden from "
+              + previousWindow + " to " + poolCapacityBytes + " bytes "
+              + "(pool capacity = " + pool.maxSlots() + " slots x " + pool.partSize()
+              + " bytes). Pool slot exhaustion provides memory safety.");
+        }
+
         useDirectByteBufferPool = options.getDirectByteBufferPool() != null;
 
         int proxyConnectionType = 0;

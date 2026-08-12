@@ -46,14 +46,18 @@ public class S3Client extends CrtResource {
         // memory committed at construction). The read window is no longer needed
         // as an OOM guard. Override it to pool capacity so backpressure never
         // artificially throttles throughput.
-        if (options.getDirectByteBufferPool() != null) {
+        //
+        // Only widen if backpressure is already enabled (i.e., the SDK path).
+        // If the caller has backpressure disabled (crt-java direct usage),
+        // don't force it on — their handler doesn't call incrementReadWindow
+        // and would deadlock.
+        if (options.getDirectByteBufferPool() != null && options.getReadBackpressureEnabled()) {
             S3DirectBufferPool pool = options.getDirectByteBufferPool();
             long poolCapacityBytes = (long) pool.maxSlots() * pool.partSize();
             long previousWindow = options.getInitialReadWindowSize();
-            options.withReadBackpressureEnabled(true);
             options.withInitialReadWindowSize(poolCapacityBytes);
             Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                "S3DirectBufferPool attached: initialReadWindowSize overridden from "
+                "S3DirectBufferPool attached (backpressure enabled): initialReadWindowSize overridden from "
               + previousWindow + " to " + poolCapacityBytes + " bytes "
               + "(pool capacity = " + pool.maxSlots() + " slots x " + pool.partSize()
               + " bytes). Pool slot exhaustion provides memory safety.");

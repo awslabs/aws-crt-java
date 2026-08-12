@@ -26,10 +26,44 @@ public class S3Client extends CrtResource {
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final String region;
+    private final boolean useDirectByteBufferPool;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
+
+        // TODO - THIS SHOULD BE REMOVED ONCE BENCHMARKING IS DONE
+        // Benchmark-only: auto-attach DBZ pool when -Daws.crt.s3.use_dbz=true is set
+        // AND the caller didn't attach a pool. Lets the SDK's S3CrtAsyncClient path
+        // (which doesn't yet expose DBZ APIs) participate in DBZ benchmarks.
+        if (options.getDirectByteBufferPool() == null
+                && "true".equalsIgnoreCase(System.getProperty("aws.crt.s3.use_dbz"))) {
+            options.withDirectByteBufferPool(S3DirectBufferPool.create(options));
+        }
+
+        // When a DBZ pool is attached, the pool's slot-exhaustion mechanism
+        // provides memory safety (no heap allocation per part, bounded off-heap
+        // memory committed at construction). The read window is no longer needed
+        // as an OOM guard. Override it to pool capacity so backpressure never
+        // artificially throttles throughput.
+        //
+        // Only widen if backpressure is already enabled (i.e., the SDK path).
+        // If the caller has backpressure disabled (crt-java direct usage),
+        // don't force it on — their handler doesn't call incrementReadWindow
+        // and would deadlock.
+        if (options.getDirectByteBufferPool() != null && options.getReadBackpressureEnabled()) {
+            S3DirectBufferPool pool = options.getDirectByteBufferPool();
+            long poolCapacityBytes = (long) pool.maxSlots() * pool.partSize();
+            long previousWindow = options.getInitialReadWindowSize();
+            options.withInitialReadWindowSize(poolCapacityBytes);
+            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool attached (backpressure enabled): initialReadWindowSize overridden from "
+              + previousWindow + " to " + poolCapacityBytes + " bytes "
+              + "(pool capacity = " + pool.maxSlots() + " slots x " + pool.partSize()
+              + " bytes). Pool slot exhaustion provides memory safety.");
+        }
+
+        useDirectByteBufferPool = options.getDirectByteBufferPool() != null;
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -126,7 +160,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo));
+                directIo,
+                options.getDirectByteBufferPool()));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -226,7 +261,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo);
+                directIo,
+                useDirectByteBufferPool);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -290,7 +326,8 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo) throws CrtRuntimeException;
+            boolean directIo,
+            S3DirectBufferPool directByteBufferPool) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
@@ -305,5 +342,6 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo);
+            boolean directIo,
+            boolean useDirectByteBufferPool);
 }

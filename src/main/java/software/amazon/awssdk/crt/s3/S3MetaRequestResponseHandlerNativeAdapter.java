@@ -19,6 +19,19 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
     }
 
+    // Direct ByteBuffer path. Called by the pool-aware callback in
+    // s3_client.c when the client was constructed with a pool. The
+    // delivered ByteBuffer is a slice over pool-owned memory.
+    //
+    // WARNING: The ByteBuffer is valid only for the duration of this
+    //          call. The user's handler MUST consume or copy the bytes
+    //          before returning. See S3MetaRequestResponseHandler
+    //          Javadoc for the contract.
+    int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+        return this.responseHandler.onResponseBody(
+            bodyBytesIn, objectRangeStart, objectRangeEnd);
+    }
+
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, String errorOperationName, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {
         HttpHeader[] errorHeaders = headersBlob == null ? null : HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob);
         S3FinishedResponseContext context = new S3FinishedResponseContext(errorCode, responseStatus, errorPayload, errorOperationName, ChecksumAlgorithm.getEnumValueFromInteger(checksumAlgorithm), didValidateChecksum, cause, errorHeaders);

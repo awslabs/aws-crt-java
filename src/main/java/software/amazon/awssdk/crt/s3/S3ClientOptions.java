@@ -81,6 +81,37 @@ public class S3ClientOptions {
      */
     private FileIoOptions fileIoOptions;
 
+    /**
+     * Optional Java-owned direct buffer pool. When set, S3 download
+     * responses bypass the default byte[]-copy delivery path and
+     * instead deliver the response body as a {@link java.nio.ByteBuffer}
+     * slice over pool-owned memory.
+     *
+     * <p>Construct the pool via one of:</p>
+     * <ul>
+     *   <li>{@link S3DirectBufferPool#create(long, int)} — fixed-size
+     *       (eager). Pool memory is fully committed at construction.</li>
+     *   <li>{@link S3DirectBufferPool#createElastic(int, int, int)} —
+     *       elastic. Memory tracks demand between {@code initialSlots}
+     *       and {@code maxSlots}; lazy growth on {@code acquireSlot}.</li>
+     * </ul>
+     *
+     * <p>See {@link S3DirectBufferPool} for the lifetime contract:
+     * the ByteBuffer delivered to your handler is valid <strong>only
+     * during the call</strong>. Copy out before returning if you need
+     * to retain the bytes.</p>
+     *
+     * <p><b>Sizing JVM direct memory:</b> set
+     * {@code -XX:MaxDirectMemorySize} to at least
+     * {@code maxSlots × partSize × 1.5} regardless of the factory
+     * used. For the fixed-size factory {@code maxSlots == slotCount},
+     * so the formula collapses to {@code slotCount × partSize × 1.5}.</p>
+     *
+     * <p>Default: {@code null} — the existing byte[]-copy path is used,
+     * exactly as before this option was introduced.</p>
+     */
+    private S3DirectBufferPool directByteBufferPool;
+
     public S3ClientOptions() {
         this.computeContentMd5 = false;
     }
@@ -409,5 +440,30 @@ public class S3ClientOptions {
      */
     public FileIoOptions getFileIoOptions() {
         return fileIoOptions;
+    }
+
+    /**
+     * Sets a Java-owned direct buffer pool for zero-copy response body delivery.
+     *
+     * <p>When set, S3 download responses deliver body bytes as a
+     * {@link java.nio.ByteBuffer} slice over pool-owned off-heap memory,
+     * eliminating the {@code byte[]} allocation and copy on the hot path.</p>
+     *
+     * @param pool the direct buffer pool, or {@code null} to use the default byte[]-copy path
+     * @return this
+     * @see S3DirectBufferPool
+     */
+    public S3ClientOptions withDirectByteBufferPool(S3DirectBufferPool pool) {
+        this.directByteBufferPool = pool;
+        return this;
+    }
+
+    /**
+     * Returns the configured direct buffer pool, or {@code null} if not set.
+     *
+     * @return the direct buffer pool or null
+     */
+    public S3DirectBufferPool getDirectByteBufferPool() {
+        return directByteBufferPool;
     }
 }

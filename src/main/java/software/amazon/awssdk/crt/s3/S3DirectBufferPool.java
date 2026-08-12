@@ -238,6 +238,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
         int partSize = 8 * 1024 * 1024;  // 8 MiB, matches aws-c-s3 default
         int maxSlots = (int) (memoryLimitBytes / partSize);
         int initialSlots = Math.min(8, maxSlots);  // small warm floor
+        validateDirectMemoryCapacity(memoryLimitBytes);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
     }
 
@@ -255,6 +256,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
                 "memoryLimitBytes (" + memoryLimitBytes
               + ") must be >= partSize (" + partSize + ")");
         }
+        validateDirectMemoryCapacity(memoryLimitBytes);
         int slotCount = (int) (memoryLimitBytes / partSize);
         return new S3DirectBufferPool(partSize, slotCount, slotCount);
     }
@@ -293,6 +295,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * @param partSize     per-slot size in bytes (> 0)
      */
     public static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
+        validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
     }
 
@@ -484,6 +487,107 @@ public final class S3DirectBufferPool implements AutoCloseable {
         if (idx < 0 || idx >= maxSlots) {
             throw new IllegalArgumentException("invalid slot index: " + idx);
         }
+    }
+
+    /**
+     * Fail-fast check: verify that the JVM's {@code MaxDirectMemorySize}
+     * can accommodate the pool's maximum capacity.
+     *
+     * <p>Direct ByteBuffer memory is bounded by {@code -XX:MaxDirectMemorySize}
+     * (defaults to {@code -Xmx} if not explicitly set). If the pool's ceiling
+     * exceeds 80% of that limit, allocation will eventually fail with
+     * {@code OutOfMemoryError: Direct buffer memory} at an unpredictable time
+     * during transfers. Failing at construction gives the operator a clear
+     * signal to either raise the limit or reduce the throughput target.</p>
+     *
+     * <p>The 80% threshold leaves headroom for other direct buffer users in
+     * the application (NIO channels, Netty pools, SDK internals).</p>
+     *
+     * @param poolCapacityBytes the pool's maximum byte capacity
+     *                          ({@code maxSlots × partSize})
+     * @throws IllegalStateException if the pool cannot fit
+     */
+    private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
+        long maxDirectMemory = getMaxDirectMemory();
+        if (maxDirectMemory <= 0) {
+            // Unable to determine the limit (non-HotSpot JVM or reflective
+            // access denied). Log a warning but don't block construction.
+            Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool: unable to determine MaxDirectMemorySize. "
+              + "Pool requires " + (poolCapacityBytes / (1024 * 1024)) + " MiB of direct memory. "
+              + "Ensure -XX:MaxDirectMemorySize is set appropriately.");
+            return;
+        }
+
+        // Reserve 20% of MaxDirectMemorySize for other direct buffer users.
+        long availableForPool = (long) (maxDirectMemory * 0.8);
+
+        if (poolCapacityBytes > availableForPool) {
+            long poolMiB = poolCapacityBytes / (1024 * 1024);
+            long maxMiB = maxDirectMemory / (1024 * 1024);
+            long recommendedMiB = (long) (poolCapacityBytes * 1.25 / (1024 * 1024));
+            throw new IllegalStateException(
+                "S3DirectBufferPool requires " + poolMiB + " MiB of direct memory, "
+              + "but MaxDirectMemorySize is " + maxMiB + " MiB "
+              + "(80% usable = " + (availableForPool / (1024 * 1024)) + " MiB). "
+              + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
+              + "or use S3DirectBufferPool.createFixed(memoryLimitBytes, partSize) / "
+              + "S3DirectBufferPool.createElastic(initialSlots, maxSlots, partSize) "
+              + "to manually size the pool within available direct memory.");
+        }
+    }
+
+    /**
+     * Retrieves the JVM's maximum direct memory limit.
+     *
+     * <p>Uses {@code sun.misc.VM.maxDirectMemory()} via reflection for
+     * HotSpot/OpenJDK. Returns {@code -1} if the value cannot be
+     * determined (non-HotSpot JVM, module access denied, etc.).</p>
+     */
+    private static long getMaxDirectMemory() {
+        // Try sun.misc.VM.maxDirectMemory() — available on HotSpot/OpenJDK 8-21+.
+        try {
+            Class<?> vmClass = Class.forName("sun.misc.VM");
+            java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
+            return (Long) method.invoke(null);
+        } catch (Exception ignored) {
+            // Fall through to alternative.
+        }
+
+        // Try jdk.internal.misc.VM on newer JDKs (Java 9+).
+        try {
+            Class<?> vmClass = Class.forName("jdk.internal.misc.VM");
+            java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
+            return (Long) method.invoke(null);
+        } catch (Exception ignored) {
+            // Cannot determine.
+        }
+
+        // Fallback: ManagementFactory approach — check the runtime args
+        // for an explicit -XX:MaxDirectMemorySize.
+        try {
+            for (String arg : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+                if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
+                    String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
+                    long multiplier = 1;
+                    if (val.endsWith("g")) {
+                        multiplier = 1024L * 1024L * 1024L;
+                        val = val.substring(0, val.length() - 1);
+                    } else if (val.endsWith("m")) {
+                        multiplier = 1024L * 1024L;
+                        val = val.substring(0, val.length() - 1);
+                    } else if (val.endsWith("k")) {
+                        multiplier = 1024L;
+                        val = val.substring(0, val.length() - 1);
+                    }
+                    return Long.parseLong(val) * multiplier;
+                }
+            }
+        } catch (Exception ignored) {
+            // Cannot determine.
+        }
+
+        return -1;
     }
 
     /**

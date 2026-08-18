@@ -1133,6 +1133,9 @@ static void s_on_s3_meta_request_telemetry_callback(
     (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.host_address_field_id, host_address);
     (*env)->DeleteLocalRef(env, host_address);
 
+    bool is_https = aws_s3_request_metrics_get_is_https(metrics);
+    (*env)->SetBooleanField(env, metrics_object, s3_request_metrics_properties.is_https_field_id, (jboolean)is_https);
+
     // CRT info (String) - from crt_info_metrics
     const struct aws_string *ip_address_string;
     if (aws_s3_request_metrics_get_ip_address(metrics, &ip_address_string) == AWS_OP_SUCCESS) {

@@ -482,6 +482,7 @@ struct java_aws_s3_request_metrics {
     jfieldID operation_name_field_id;
     jfieldID request_path_query_field_id;
     jfieldID host_address_field_id;
+    jfieldID is_https_field_id;
     jfieldID request_type_field_id;
     // CRT info
     jfieldID ip_address_field_id;

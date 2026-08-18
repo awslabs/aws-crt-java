@@ -23,6 +23,10 @@ public class S3RequestMetrics {
     // AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE = 14358
     private static final int AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE = 14358;
 
+    private static final String HTTPS_SCHEME = "https";
+    private static final String HTTP_SCHEME = "http";
+    private static final String SCHEME_SEPARATOR = "://";
+
     // Required timestamp metrics - always available (default to 0)
     private long s3RequestFirstAttemptStartTimestampNs = 0;
     private long startTimestampNs = 0;
@@ -62,6 +66,7 @@ public class S3RequestMetrics {
     // Required: always available (default to null, will be set by native code)
     private String requestPathQuery = null;
     private String hostAddress = null;
+    private boolean isHttps = false;
 
     // Required: always available (default to 0)
     private int requestType = 0;
@@ -106,7 +111,7 @@ public class S3RequestMetrics {
     }
 
     public String getServiceEndpoint() {
-        return this.hostAddress;
+        return (this.isHttps ? HTTPS_SCHEME : HTTP_SCHEME) + SCHEME_SEPARATOR + this.hostAddress;
     }
 
     public String getAwsExtendedRequestId() throws CrtRuntimeException {

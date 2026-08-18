@@ -2006,8 +2006,13 @@ public class S3ClientTest extends CrtTestFixture {
         public void validateMetrics() {
             Assert.assertTrue("API Call duration should be >= 0", apiCallDurationNs >= 0);
             Assert.assertTrue("API call should be successful", apiCallSuccessful);
-            Assert.assertEquals("Service ID should be s3", "s3", serviceId);
-            Assert.assertNotNull("Service endpoint should not be null", serviceEndpoint);
+            Assert.assertEquals("Service ID should be S3", "S3", serviceId);
+            // This test's S3Client uses no endpoint override and no explicit HTTP scheme, so the
+            // client defaults to https.
+            Assert.assertEquals("Service endpoint should be the https-qualified host",
+                    "https://" + ENDPOINT, serviceEndpoint);
+            Assert.assertEquals("Service endpoint should parse to the expected host",
+                    ENDPOINT, java.net.URI.create(serviceEndpoint).getHost());
             Assert.assertNotNull("Operation name should not be null", operationName);
             Assert.assertFalse("Operation name should not be empty", operationName.isEmpty());
             Assert.assertNotNull("Request ID should not be null", awsRequestId);

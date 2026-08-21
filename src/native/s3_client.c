@@ -1136,6 +1136,19 @@ static void s_on_s3_meta_request_telemetry_callback(
     bool is_https = aws_s3_request_metrics_get_is_https(metrics);
     (*env)->SetBooleanField(env, metrics_object, s3_request_metrics_properties.is_https_field_id, (jboolean)is_https);
 
+    struct aws_http_manager_metrics http_manager_metrics;
+    aws_s3_request_metrics_get_http_manager_metrics(metrics, &http_manager_metrics);
+    jobject http_manager_metrics_object = (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)http_manager_metrics.available_concurrency,
+        (jlong)http_manager_metrics.pending_concurrency_acquires,
+        (jlong)http_manager_metrics.leased_concurrency);
+    (*env)->SetObjectField(
+        env, metrics_object, s3_request_metrics_properties.http_manager_metrics_field_id, http_manager_metrics_object);
+    (*env)->DeleteLocalRef(env, http_manager_metrics_object);
+
     // CRT info (String) - from crt_info_metrics
     const struct aws_string *ip_address_string;
     if (aws_s3_request_metrics_get_ip_address(metrics, &ip_address_string) == AWS_OP_SUCCESS) {

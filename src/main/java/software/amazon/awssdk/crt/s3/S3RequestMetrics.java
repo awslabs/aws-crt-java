@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpManagerMetrics;
 
 /**
  * An Request is any HTTP request made to the S3 Server. Within CRT,
@@ -67,6 +68,9 @@ public class S3RequestMetrics {
     private String requestPathQuery = null;
     private String hostAddress = null;
     private boolean isHttps = false;
+    // Snapshot of the endpoint's HTTP connection manager metrics, taken right before this request asked
+    // for a connection. Reflects the manager's overall state at that instant, not just this request.
+    private HttpManagerMetrics httpManagerMetrics = null;
 
     // Required: always available (default to 0)
     private int requestType = 0;
@@ -174,5 +178,15 @@ public class S3RequestMetrics {
 
     public int getResponseStatus() {
         return this.responseStatus;
+    }
+
+    /**
+     * @return a snapshot of the endpoint's HTTP connection manager metrics, taken right before this
+     * request asked for a connection. This reflects the manager's overall state at that instant - e.g.
+     * concurrency leased out to other requests sharing the same manager - not a measurement scoped to
+     * this request alone.
+     */
+    public HttpManagerMetrics getHttpManagerMetrics() {
+        return this.httpManagerMetrics;
     }
 }

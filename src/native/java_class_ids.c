@@ -1069,6 +1069,9 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
 
     s3_request_metrics_properties.is_https_field_id = (*env)->GetFieldID(env, cls, "isHttps", "Z");
 
+    s3_request_metrics_properties.http_manager_metrics_field_id = (*env)->GetFieldID(
+        env, cls, "httpManagerMetrics", "Lsoftware/amazon/awssdk/crt/http/HttpManagerMetrics;");
+
     s3_request_metrics_properties.request_type_field_id = (*env)->GetFieldID(env, cls, "requestType", "I");
 
     s3_request_metrics_properties.ip_address_field_id = (*env)->GetFieldID(env, cls, "ipAddress", "Ljava/lang/String;");

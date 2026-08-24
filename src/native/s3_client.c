@@ -1080,6 +1080,14 @@ static void s_on_s3_meta_request_telemetry_callback(
             env, metrics_object, s3_request_metrics_properties.service_call_duration_ns_field_id, timestamp_value);
     }
 
+    if (aws_s3_request_metrics_get_conn_acquire_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env,
+            metrics_object,
+            s3_request_metrics_properties.connection_acquisition_duration_ns_field_id,
+            timestamp_value);
+    }
+
     // Request/Response info (int) - from req_resp_info_metrics
     int response_status;
     if (aws_s3_request_metrics_get_response_status_code(metrics, &response_status) == AWS_OP_SUCCESS) {

@@ -1051,6 +1051,9 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
     s3_request_metrics_properties.service_call_duration_ns_field_id =
         (*env)->GetFieldID(env, cls, "serviceCallDurationNs", "J");
 
+    s3_request_metrics_properties.connection_acquisition_duration_ns_field_id =
+        (*env)->GetFieldID(env, cls, "connectionAcquisitionDurationNs", "J");
+
     s3_request_metrics_properties.response_status_field_id = (*env)->GetFieldID(env, cls, "responseStatus", "I");
 
     s3_request_metrics_properties.request_id_field_id = (*env)->GetFieldID(env, cls, "requestId", "Ljava/lang/String;");

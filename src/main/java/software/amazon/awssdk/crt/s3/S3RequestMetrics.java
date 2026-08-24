@@ -56,6 +56,7 @@ public class S3RequestMetrics {
     private long retryDelayEndTimestampNs = -1;
     private long retryDelayDurationNs = -1;
     private long serviceCallDurationNs = -1;
+    private long connectionAcquisitionDurationNs = -1;
 
     // Request/Response info metrics
     // Optional: may not be available (defaults to -1 for int, null for String)
@@ -144,6 +145,13 @@ public class S3RequestMetrics {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
         return this.serviceCallDurationNs;
+    }
+
+    public long getConnectionAcquisitionDurationNs() throws CrtRuntimeException {
+        if (this.connectionAcquisitionDurationNs == -1) {
+            throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
+        }
+        return this.connectionAcquisitionDurationNs;
     }
 
     public long getSigningDurationNs() throws CrtRuntimeException {

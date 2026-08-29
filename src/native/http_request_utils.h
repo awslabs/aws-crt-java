@@ -16,10 +16,18 @@ struct aws_http_headers;
 struct aws_http_message;
 struct aws_input_stream;
 
+/**
+ * Create a native aws_input_stream that reads from a Java HttpRequestBodyStream.
+ *
+ * @param use_ffm When true, the stream will call the FFM-style
+ *                sendRequestBody(long, long) -> int method instead of the
+ *                JNI-style sendRequestBody(ByteBuffer) -> boolean method.
+ */
 struct aws_input_stream *aws_input_stream_new_from_java_http_request_body_stream(
     struct aws_allocator *allocator,
     JNIEnv *env,
-    jobject http_request_body_stream);
+    jobject http_request_body_stream,
+    bool use_ffm);
 
 struct aws_http_message *aws_http_request_new_from_java_http_request(
     JNIEnv *env,
@@ -40,7 +48,8 @@ int aws_apply_java_http_request_changes_to_native_request(
     JNIEnv *env,
     jbyteArray marshalled_request,
     jobject jni_body_stream,
-    struct aws_http_message *message);
+    struct aws_http_message *message,
+    bool use_ffm);
 
 /* if this fails a java exception has been set. */
 jobject aws_java_http_request_from_native(JNIEnv *env, struct aws_http_message *message, jobject request_body_stream);

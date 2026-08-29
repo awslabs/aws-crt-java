@@ -1650,7 +1650,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_mqtt5_Mqtt5Client_mqtt5Cl
     }
 
     if (aws_apply_java_http_request_changes_to_native_request(
-            env, jni_marshalled_request, NULL, ws_handshake->http_request)) {
+            env, jni_marshalled_request, NULL, ws_handshake->http_request, false /* use_ffm: MQTT5 path uses JNI */)) {
         error_code = aws_last_error();
         goto done;
     }

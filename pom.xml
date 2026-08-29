@@ -49,12 +49,27 @@
 
     <profiles>
         <profile>
+            <!-- On JDK 9-21, compile at Java 8 level for broad compatibility. -->
             <id>compile-for-java-8</id>
             <activation>
-                <jdk>[9,)</jdk>
+                <jdk>[9,22)</jdk>
             </activation>
             <properties>
                 <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+        <profile>
+            <!--
+                On JDK 22+, compile at Java 22 level so that java.lang.foreign
+                (Foreign Function & Memory API) is available. This is required
+                for the FFM-backed S3 hot paths (useFFM=true).
+            -->
+            <id>compile-for-java-22</id>
+            <activation>
+                <jdk>[22,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>22</maven.compiler.release>
             </properties>
         </profile>
         <profile>

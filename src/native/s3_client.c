@@ -562,6 +562,21 @@ JNIEXPORT void JNICALL
     aws_s3_client_release(client);
 }
 
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientGetMaxActiveConnections(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_client) {
+    (void)jni_class;
+
+    struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
+    if (!client) {
+        aws_jni_throw_runtime_exception(env, "S3Client.getMaxActiveConnections: Invalid/null client");
+        return 0;
+    }
+
+    return (jint)aws_s3_client_get_max_active_connections(client, NULL);
+}
+
 static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
 

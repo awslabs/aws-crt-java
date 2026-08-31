@@ -262,6 +262,15 @@ public class S3Client extends CrtResource {
         return shutdownComplete;
     }
 
+    /**
+     * @return the maximum number of connections this client will establish to a single endpoint. Fixed for
+     * the lifetime of the client - derived from its configured throughput target, or overridden directly via
+     * {@link S3ClientOptions#withMaxConnections}.
+     */
+    public int getMaxActiveConnections() {
+        return s3ClientGetMaxActiveConnections(getNativeHandle());
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -293,6 +302,8 @@ public class S3Client extends CrtResource {
             boolean directIo) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
+
+    private static native int s3ClientGetMaxActiveConnections(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
             int metaRequestType, byte[] operationName,

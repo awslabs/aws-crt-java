@@ -2338,6 +2338,9 @@
         "name": "serviceCallDurationNs"
       },
       {
+        "name": "connectionAcquisitionDurationNs"
+      },
+      {
         "name": "responseStatus"
       },
       {
@@ -2354,6 +2357,12 @@
       },
       {
         "name": "hostAddress"
+      },
+      {
+        "name": "isHttps"
+      },
+      {
+        "name": "httpManagerMetrics"
       },
       {
         "name": "requestType"

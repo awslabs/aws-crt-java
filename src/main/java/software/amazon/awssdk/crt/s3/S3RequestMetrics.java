@@ -6,6 +6,7 @@ package software.amazon.awssdk.crt.s3;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.http.HttpManagerMetrics;
 
 /**
  * An Request is any HTTP request made to the S3 Server. Within CRT,
@@ -22,6 +23,10 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 public class S3RequestMetrics {
     // AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE = 14358
     private static final int AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE = 14358;
+
+    private static final String HTTPS_SCHEME = "https";
+    private static final String HTTP_SCHEME = "http";
+    private static final String SCHEME_SEPARATOR = "://";
 
     // Required timestamp metrics - always available (default to 0)
     private long s3RequestFirstAttemptStartTimestampNs = 0;
@@ -51,6 +56,7 @@ public class S3RequestMetrics {
     private long retryDelayEndTimestampNs = -1;
     private long retryDelayDurationNs = -1;
     private long serviceCallDurationNs = -1;
+    private long connectionAcquisitionDurationNs = -1;
 
     // Request/Response info metrics
     // Optional: may not be available (defaults to -1 for int, null for String)
@@ -62,6 +68,10 @@ public class S3RequestMetrics {
     // Required: always available (default to null, will be set by native code)
     private String requestPathQuery = null;
     private String hostAddress = null;
+    private boolean isHttps = false;
+    // Snapshot of the endpoint's HTTP connection manager metrics, taken right before this request asked
+    // for a connection. Reflects the manager's overall state at that instant, not just this request.
+    private HttpManagerMetrics httpManagerMetrics = null;
 
     // Required: always available (default to 0)
     private int requestType = 0;
@@ -102,11 +112,11 @@ public class S3RequestMetrics {
     }
 
     public String getServiceId() {
-        return "s3";
+        return "S3";
     }
 
     public String getServiceEndpoint() {
-        return this.hostAddress;
+        return (this.isHttps ? HTTPS_SCHEME : HTTP_SCHEME) + SCHEME_SEPARATOR + this.hostAddress;
     }
 
     public String getAwsExtendedRequestId() throws CrtRuntimeException {
@@ -137,6 +147,13 @@ public class S3RequestMetrics {
         return this.serviceCallDurationNs;
     }
 
+    public long getConnectionAcquisitionDurationNs() throws CrtRuntimeException {
+        if (this.connectionAcquisitionDurationNs == -1) {
+            throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
+        }
+        return this.connectionAcquisitionDurationNs;
+    }
+
     public long getSigningDurationNs() throws CrtRuntimeException {
         if (this.signingDurationNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
@@ -148,14 +165,14 @@ public class S3RequestMetrics {
         if (this.receiveStartTimestampNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
-        return this.receiveStartTimestampNs;
+        return this.receiveStartTimestampNs - this.startTimestampNs;
     }
 
     public long getTimeToLastByte() throws CrtRuntimeException {
         if (this.receiveEndTimestampNs == -1) {
             throw new CrtRuntimeException(AWS_ERROR_S3_METRIC_DATA_NOT_AVAILABLE);
         }
-        return this.receiveEndTimestampNs;
+        return this.receiveEndTimestampNs - this.startTimestampNs;
     }
 
     // Please use CRT.awsIsTransientError() to identify transient errors
@@ -165,5 +182,19 @@ public class S3RequestMetrics {
 
     public String getIpAddress() {
         return this.ipAddress;
+    }
+
+    public int getResponseStatus() {
+        return this.responseStatus;
+    }
+
+    /**
+     * @return a snapshot of the endpoint's HTTP connection manager metrics, taken right before this
+     * request asked for a connection. This reflects the manager's overall state at that instant - e.g.
+     * concurrency leased out to other requests sharing the same manager - not a measurement scoped to
+     * this request alone.
+     */
+    public HttpManagerMetrics getHttpManagerMetrics() {
+        return this.httpManagerMetrics;
     }
 }

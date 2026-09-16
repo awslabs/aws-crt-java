@@ -607,4 +607,3 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_na
     }
     return (jlong)(intptr_t)(*env)->GetDirectBufferAddress(env, dbb);
 }
-

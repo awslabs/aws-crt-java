@@ -18,6 +18,7 @@
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
+#include <aws/s3/s3.h>
 #include <aws/s3/s3_client.h>
 #include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
@@ -1950,6 +1951,30 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     }
 
     aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)increment);
+}
+
+/*
+ * Delegates to aws_s3_default_memory_limit_for_throughput — the same
+ * public helper aws_s3_client_new uses internally to size its default
+ * buffer pool. Exposed via S3Client (rather than S3DirectBufferPool)
+ * because the underlying semantic is "what pool size would aws-c-s3
+ * default to?" — not DBZ-specific.
+ *
+ * throughput_target_gbps == 0 defers to aws-c-s3's auto-detect (reads
+ * EC2 platform info and applies the < 10 Gbps right-sizing threshold
+ * internally). Any positive value maps directly to the tier table.
+ */
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemoryLimitForThroughput(
+    JNIEnv *env,
+    jclass cls,
+    jdouble throughput_target_gbps) {
+    (void)env;
+    (void)cls;
+    size_t limit = aws_s3_default_memory_limit_for_throughput((double)throughput_target_gbps);
+    /* size_t on 64-bit platforms fits jlong; on 32-bit platforms the tier
+     * table returns at most 2 GiB (constrained by SIZE_MAX branch in
+     * s_get_default_mem_limit_from_throughput). Safe to cast unconditionally. */
+    return (jlong)limit;
 }
 
 #if UINTPTR_MAX == 0xffffffff

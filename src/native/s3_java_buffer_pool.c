@@ -56,7 +56,7 @@
  */
 
 #include "s3_java_buffer_pool.h"
-#include "crt.h"           /* aws_jni_get_thread_env, AWS_LOGF_*, etc. */
+#include "crt.h"            /* aws_jni_get_thread_env, AWS_LOGF_*, etc. */
 #include "java_class_ids.h" /* s3_direct_buffer_pool_properties (Layer 4) */
 
 #include <aws/common/mutex.h>
@@ -83,9 +83,9 @@ struct java_pool_state {
 
     /* Cached method IDs. Resolved once at factory time so the hot
      * path can CallXxxMethod without GetMethodID round-trips. */
-    jmethodID mid_try_acquire_slot;  /* int  tryAcquireSlot()      (non-blocking; returns -1 on exhaustion) */
-    jmethodID mid_release_slot;      /* void releaseSlot(int)       */
-    jmethodID mid_slot_address;      /* long slotAddress(int)       */
+    jmethodID mid_try_acquire_slot; /* int  tryAcquireSlot()      (non-blocking; returns -1 on exhaustion) */
+    jmethodID mid_release_slot;     /* void releaseSlot(int)       */
+    jmethodID mid_slot_address;     /* long slotAddress(int)       */
 
     /* NOTE: there is no cached `mid_slice_view` — the body callback
      * constructs the ByteBuffer view in C via NewDirectByteBuffer,
@@ -160,18 +160,17 @@ static struct aws_byte_buf s_java_ticket_claim(struct aws_s3_buffer_ticket *t);
 static void s_java_ticket_destroy(void *user_data);
 
 /* Helper forward declarations. */
-static struct aws_s3_buffer_ticket *s_build_java_ticket(
-    struct java_pool_state *ps, jint slot_index, void *slot_addr);
+static struct aws_s3_buffer_ticket *s_build_java_ticket(struct java_pool_state *ps, jint slot_index, void *slot_addr);
 static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index);
 
 static struct aws_s3_buffer_pool_vtable s_java_pool_vtable = {
     .reserve = s_java_pool_reserve,
-    .trim    = s_java_pool_trim,
+    .trim = s_java_pool_trim,
     /* acquire/release left NULL — we use the default ref_count behavior. */
 };
 
 static struct aws_s3_buffer_ticket_vtable s_java_ticket_vtable = {
-    .claim   = s_java_ticket_claim,
+    .claim = s_java_ticket_claim,
     /* acquire/release left NULL — default ref_count behavior. */
 };
 
@@ -239,20 +238,16 @@ static void s_java_ticket_destroy(void *user_data) {
     if (!aws_linked_list_empty(&ps->pending_reserves)) {
         /* Pending future waiting for a slot — hand this slot to it
          * directly, skipping the Java free queue. */
-        struct aws_linked_list_node *node =
-            aws_linked_list_pop_front(&ps->pending_reserves);
+        struct aws_linked_list_node *node = aws_linked_list_pop_front(&ps->pending_reserves);
         aws_mutex_unlock(&ps->pending_lock);
 
-        struct java_pending_reserve *pending =
-            AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
+        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
 
         /* Build a new ticket bound to the same slot. Never returns
          * NULL — aws_mem_calloc aborts on OOM. */
-        struct aws_s3_buffer_ticket *new_ticket =
-            s_build_java_ticket(ps, ts->slot_index, ts->slot_addr);
+        struct aws_s3_buffer_ticket *new_ticket = s_build_java_ticket(ps, ts->slot_index, ts->slot_addr);
 
-        aws_future_s3_buffer_ticket_set_result_by_move(
-            pending->future, &new_ticket);
+        aws_future_s3_buffer_ticket_set_result_by_move(pending->future, &new_ticket);
 
         /* Release the future-acquire we did when we pended. */
         aws_future_s3_buffer_ticket_release(pending->future);
@@ -303,19 +298,16 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     struct aws_s3_buffer_pool_reserve_meta meta) {
 
     struct java_pool_state *ps = pool->impl;
-    struct aws_future_s3_buffer_ticket *future =
-        aws_future_s3_buffer_ticket_new(ps->allocator);
+    struct aws_future_s3_buffer_ticket *future = aws_future_s3_buffer_ticket_new(ps->allocator);
 
     /* Size sanity: our slots are exactly part_size. If the caller asks
      * for more, this pool cannot satisfy it. (The default pool falls
      * back to secondary storage for oversized requests; we deliberately
      * do NOT to keep the implementation simple and correct.) */
     if (meta.size > ps->part_size) {
-        aws_future_s3_buffer_ticket_set_error(
-            future, AWS_ERROR_S3_INVALID_MEMORY_LIMIT_CONFIG);
-        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool: reserve size %zu exceeds slot size %zu",
-            meta.size, ps->part_size);
+        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_INVALID_MEMORY_LIMIT_CONFIG);
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_CLIENT, "S3DirectBufferPool: reserve size %zu exceeds slot size %zu", meta.size, ps->part_size);
         return future;
     }
 
@@ -330,14 +322,14 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     /* NON-BLOCKING acquire. Returns -1 if the pool is exhausted —
      * this MUST NOT block the calling thread. See
      * S3DirectBufferPool#tryAcquireSlot Javadoc for the contract. */
-    jint slot_index = (*env)->CallIntMethod(env, ps->java_pool_global,
-                                             ps->mid_try_acquire_slot);
+    jint slot_index = (*env)->CallIntMethod(env, ps->java_pool_global, ps->mid_try_acquire_slot);
     if (aws_jni_check_and_clear_exception(env)) {
         /* Most likely cause: OutOfMemoryError from ByteBuffer.allocateDirect
          * during lazy growth (MaxDirectMemorySize exhausted, or the JVM
          * could not satisfy the reservation). Also catches unexpected
          * IllegalStateException from a closed pool. */
-        AWS_LOGF_WARN(AWS_LS_S3_CLIENT,
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT,
             "S3DirectBufferPool: tryAcquireSlot threw an exception "
             "(most likely OutOfMemoryError from allocateDirect during "
             "lazy growth); part_size=%zu — failing reserve future",
@@ -353,8 +345,7 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
          * a slot frees. The event-loop returns immediately. */
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
 
-        struct java_pending_reserve *pending = aws_mem_calloc(
-            ps->allocator, 1, sizeof(struct java_pending_reserve));
+        struct java_pending_reserve *pending = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_pending_reserve));
         pending->meta = meta;
         pending->future = future;
         /* Acquire a ref on the future for the time it sits on the
@@ -371,17 +362,16 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
 
     /* Slot acquired. Get its cached native address and build a
      * ticket synchronously. */
-    jlong slot_addr_jl = (*env)->CallLongMethod(env, ps->java_pool_global,
-                                                ps->mid_slot_address, slot_index);
+    jlong slot_addr_jl = (*env)->CallLongMethod(env, ps->java_pool_global, ps->mid_slot_address, slot_index);
     if (aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_WARN(AWS_LS_S3_CLIENT,
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT,
             "S3DirectBufferPool: slotAddress(%d) threw an exception "
             "(likely IllegalStateException from defensive slot-not-allocated check); "
             "returning slot and failing reserve future",
             (int)slot_index);
         /* return the slot we just acquired before failing */
-        (*env)->CallVoidMethod(env, ps->java_pool_global,
-                               ps->mid_release_slot, slot_index);
+        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release_slot, slot_index);
         aws_jni_check_and_clear_exception(env);
         aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_INVALID_STATE);
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
@@ -393,8 +383,7 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     /* Build ticket state. Helper extracted for reuse from the pending
      * drain path in s_java_ticket_destroy. Never returns NULL —
      * aws_mem_calloc aborts on OOM. */
-    struct aws_s3_buffer_ticket *new_ticket = s_build_java_ticket(
-        ps, slot_index, (void *)(uintptr_t)slot_addr_jl);
+    struct aws_s3_buffer_ticket *new_ticket = s_build_java_ticket(ps, slot_index, (void *)(uintptr_t)slot_addr_jl);
 
     aws_future_s3_buffer_ticket_set_result_by_move(future, &new_ticket);
     /* future holds a ref via set_result; ticket is now owned by the
@@ -408,20 +397,18 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
  * (synchronous-success path) and by ticket-destroy (pending-drain
  * path). Returns NULL on allocation failure.
  */
-static struct aws_s3_buffer_ticket *s_build_java_ticket(
-    struct java_pool_state *ps, jint slot_index, void *slot_addr) {
+static struct aws_s3_buffer_ticket *s_build_java_ticket(struct java_pool_state *ps, jint slot_index, void *slot_addr) {
 
     /* aws_mem_calloc aborts on OOM; no NULL check needed. */
-    struct java_ticket_state *ts =
-        aws_mem_calloc(ps->allocator, 1, sizeof(struct java_ticket_state));
+    struct java_ticket_state *ts = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_ticket_state));
 
     ts->pool_state = ps;
     ts->slot_index = slot_index;
-    ts->slot_addr  = slot_addr;
-    ts->capacity   = ps->part_size;
+    ts->slot_addr = slot_addr;
+    ts->capacity = ps->part_size;
 
     ts->ticket.vtable = &s_java_ticket_vtable;
-    ts->ticket.impl   = ts;
+    ts->ticket.impl = ts;
     aws_ref_count_init(&ts->ticket.ref_count, ts, s_java_ticket_destroy);
 
     return &ts->ticket;
@@ -435,10 +422,10 @@ static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index) 
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
     JNIEnv *env = jvm_env_context.env;
     if (env != NULL) {
-        (*env)->CallVoidMethod(env, ps->java_pool_global,
-                               ps->mid_release_slot, slot_index);
+        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release_slot, slot_index);
         if (aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_WARN(AWS_LS_S3_CLIENT,
+            AWS_LOGF_WARN(
+                AWS_LS_S3_CLIENT,
                 "S3DirectBufferPool: releaseSlot(%d) threw an exception "
                 "(likely IllegalStateException from defensive slot-not-allocated check); "
                 "slot may leak from Java-side tracking",
@@ -446,9 +433,8 @@ static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index) 
         }
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     } else {
-        AWS_LOGF_WARN(AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool: could not release slot %d — JVM shutting down",
-            (int)slot_index);
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT, "S3DirectBufferPool: could not release slot %d — JVM shutting down", (int)slot_index);
     }
 }
 
@@ -481,13 +467,10 @@ static void s_java_pool_destroy(void *user_data) {
      * mutex. Each entry holds a ref we acquired in s_java_pool_reserve. */
     aws_mutex_lock(&ps->pending_lock);
     while (!aws_linked_list_empty(&ps->pending_reserves)) {
-        struct aws_linked_list_node *node =
-            aws_linked_list_pop_front(&ps->pending_reserves);
-        struct java_pending_reserve *pending =
-            AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
+        struct aws_linked_list_node *node = aws_linked_list_pop_front(&ps->pending_reserves);
+        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
 
-        aws_future_s3_buffer_ticket_set_error(
-            pending->future, AWS_ERROR_S3_CANCELED);
+        aws_future_s3_buffer_ticket_set_error(pending->future, AWS_ERROR_S3_CANCELED);
         aws_future_s3_buffer_ticket_release(pending->future);
         aws_mem_release(ps->allocator, pending);
     }
@@ -533,8 +516,8 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     struct aws_s3_java_buffer_pool_factory_data *factory_data =
         (struct aws_s3_java_buffer_pool_factory_data *)user_data;
     if (factory_data == NULL || factory_data->java_pool_global == NULL || factory_data->jvm == NULL) {
-        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool factory invoked with NULL user_data or missing JVM/pool ref");
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_CLIENT, "S3DirectBufferPool factory invoked with NULL user_data or missing JVM/pool ref");
         return NULL;
     }
 
@@ -553,8 +536,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
      * AWS_PANIC_OOM in aws-c-common), so no NULL check needed here.
      * From here on, any error must goto error_release_global_ref
      * to clean up the JNI global ref. */
-    struct java_pool_state *ps =
-        aws_mem_calloc(allocator, 1, sizeof(struct java_pool_state));
+    struct java_pool_state *ps = aws_mem_calloc(allocator, 1, sizeof(struct java_pool_state));
     ps->allocator = allocator;
     ps->java_pool_global = java_pool_global;
     ps->jvm = jvm;
@@ -565,8 +547,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
      * s_java_pool_reserve and s_java_ticket_destroy. */
     aws_linked_list_init(&ps->pending_reserves);
     if (aws_mutex_init(&ps->pending_lock) != AWS_OP_SUCCESS) {
-        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool factory: failed to init pending_lock");
+        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT, "S3DirectBufferPool factory: failed to init pending_lock");
         aws_mem_release(allocator, ps);
         goto error_release_global_ref;
     }
@@ -575,19 +556,18 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
      * java_class_ids.c (Layer 4) — we cache copies here for
      * predictable cache behavior. */
     ps->mid_try_acquire_slot = s3_direct_buffer_pool_properties.tryAcquireSlot;
-    ps->mid_release_slot     = s3_direct_buffer_pool_properties.releaseSlot;
-    ps->mid_slot_address     = s3_direct_buffer_pool_properties.slotAddress;
+    ps->mid_release_slot = s3_direct_buffer_pool_properties.releaseSlot;
+    ps->mid_slot_address = s3_direct_buffer_pool_properties.slotAddress;
 
     /* STEP 5: Wire vtable and ref_count. Pool is now valid; the
      * global ref is owned by ps and will be released in
      * s_java_pool_destroy. */
     ps->pool.vtable = &s_java_pool_vtable;
-    ps->pool.impl   = ps;
+    ps->pool.impl = ps;
     aws_ref_count_init(&ps->pool.ref_count, ps, s_java_pool_destroy);
 
-    AWS_LOGF_INFO(AWS_LS_S3_CLIENT,
-        "S3DirectBufferPool factory: pool=%p part_size=%zu",
-        (void *)&ps->pool, ps->part_size);
+    AWS_LOGF_INFO(
+        AWS_LS_S3_CLIENT, "S3DirectBufferPool factory: pool=%p part_size=%zu", (void *)&ps->pool, ps->part_size);
 
     return &ps->pool;
 
@@ -617,12 +597,14 @@ error_release_global_ref:
  * and not relocated by GC, so the address is stable for the buffer's
  * lifetime.
  */
-JNIEXPORT jlong JNICALL
-Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeGetDirectBufferAddress(
-    JNIEnv *env, jclass cls, jobject dbb) {
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeGetDirectBufferAddress(
+    JNIEnv *env,
+    jclass cls,
+    jobject dbb) {
     (void)cls;
     if (dbb == NULL) {
         return 0;
     }
     return (jlong)(intptr_t)(*env)->GetDirectBufferAddress(env, dbb);
 }
+

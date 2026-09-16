@@ -2184,6 +2184,27 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.s3.S3DirectBufferPool",
+    "methods": [
+      {
+        "name": "tryAcquireSlot",
+        "parameterTypes": []
+      },
+      {
+        "name": "releaseSlot",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "slotAddress",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProperties",
     "fields": [
       {

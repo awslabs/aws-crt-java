@@ -657,38 +657,27 @@ public final class S3DirectBufferPool implements AutoCloseable {
     @Override
     public void close() {
         closed = true;
-        // Force synchronous release of every allocated slot's
-        // off-heap memory, matching the native pool's teardown
-        // timing. Without this, DirectByteBuffers linger with their
-        // native memory pinned until the JVM's Cleaner processes
-        // the phantom references during some future GC pass —
-        // seconds to minutes on a quiet JVM — which prevents
-        // process RSS from dropping when a service tears down
-        // and re-creates its S3 client.
+        // No native free required at this point: DirectByteBuffers are
+        // reclaimed by the JVM Cleaner once the strong references in
+        // `slots` are dropped (i.e. when this pool itself is GC'd).
         //
-        // Held under growthLock to serialize against any concurrent
-        // tryAcquireSlot / trim. After close returns, the closed
-        // flag will make future tryAcquireSlot throw, so no new
-        // allocations happen; leased slots that are still in flight
-        // reference their DBB directly (not via slots[i]), so their
-        // native-memory reads remain valid until aws-c-s3 releases
-        // the tickets.
+        // Eagerly invoking DirectBufferCleaner.free here would be UNSAFE:
+        // aws-c-s3 tickets that are still in flight cache raw slot
+        // addresses inside their C-side ticket_state. Those tickets
+        // are only released when the owning aws_s3_client is destroyed
+        // (which drives the pool's aws_ref_count_release chain). Between
+        // the user calling this close() and the last ticket being
+        // released, freeing the underlying memory would be a
+        // use-after-free at the JNI boundary.
         //
-        // WARNING: this frees memory backing DBBs that leased
-        // slots may still reference. Reads/writes through those
-        // buffers after close() returns are use-after-free at the
-        // native level. The client / pool teardown ordering
-        // guarantees that aws-c-s3 has drained all in-flight
-        // requests before close() runs.
-        synchronized (growthLock) {
-            for (int i = 0; i < slots.length; i++) {
-                ByteBuffer dbb = slots[i];
-                if (dbb == null) continue;
-                slots[i] = null;
-                slotAddresses[i] = 0L;
-                DirectBufferCleaner.free(dbb);
-            }
-        }
+        // Trim, by contrast, is safe to free eagerly because the native
+        // client scheduler runs it only while num_requests_in_flight == 0
+        // — see s_java_pool_trim in s3_java_buffer_pool.c.
+        //
+        // The correct teardown order is: close every S3Client that
+        // references this pool first; then drop the pool reference and
+        // let GC run. On JVM exit the OS reclaims all direct memory
+        // regardless.
     }
 
     private void validateIndex(int idx) {

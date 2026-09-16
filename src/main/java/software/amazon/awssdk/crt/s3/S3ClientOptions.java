@@ -250,7 +250,7 @@ public class S3ClientOptions {
     }
 
     /**
-     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
+     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled), in bytes.
      *
      * @see #withReadBackpressureEnabled
      *

@@ -757,6 +757,39 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB);
+
+    /* Phase 2 DBZ opt-in: S3BorrowedBuffer overload (lifetime-controlled zero-copy) */
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed = (*env)->GetMethodID(
+        env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
+
+    /* Phase 2 DBZ opt-in probe: consulted once per meta-request creation to
+     * decide whether to register body_callback_ex (borrowed-buffer path) or
+     * body_callback (existing ByteBuffer/byte[] paths). */
+    s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload =
+        (*env)->GetMethodID(env, cls, "getSupportsBorrowedBufferOverload", "()Z");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload);
+}
+
+/* ------------------------------------------------------------------ */
+/* S3BorrowedBuffer class & constructor (Phase 2 DBZ opt-in)          */
+/* ------------------------------------------------------------------ */
+struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
+
+static void s_cache_s3_borrowed_buffer(JNIEnv *env) {
+    jclass local_cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3BorrowedBuffer");
+    AWS_FATAL_ASSERT(local_cls);
+
+    /* Store a global ref so NewObject can construct instances from any
+     * thread across meta-request lifetimes. Local ref is released after. */
+    s3_borrowed_buffer_properties.class_ref = (jclass)(*env)->NewGlobalRef(env, local_cls);
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.class_ref);
+    (*env)->DeleteLocalRef(env, local_cls);
+
+    /* Package-private constructor: S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
+    s3_borrowed_buffer_properties.ctor = (*env)->GetMethodID(
+        env, s3_borrowed_buffer_properties.class_ref, "<init>", "(JLjava/nio/ByteBuffer;)V");
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.ctor);
 }
 
 /* ------------------------------------------------------------------ */
@@ -2810,6 +2843,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_s3_meta_request_properties(env);
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_s3_direct_buffer_pool(env);
+    s_cache_s3_borrowed_buffer(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
     s_cache_ecc_key_pair(env);

@@ -336,9 +336,18 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onTelemetry;
     jmethodID onErrorResumeToken;
     jmethodID onResponseBodyBB; /* NEW: ByteBuffer overload for DBZ pool path */
+    jmethodID onResponseBodyBorrowed;         /* NEW (Phase 2): S3BorrowedBuffer overload */
+    jmethodID getSupportsBorrowedBufferOverload; /* NEW (Phase 2): opt-in probe */
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
+
+/* S3BorrowedBuffer (Phase 2 DBZ opt-in wrapper) */
+struct java_s3_borrowed_buffer_properties {
+    jclass class_ref;   /* global ref; created via NewGlobalRef in the cache function */
+    jmethodID ctor;     /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
+};
+extern struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
 /* S3DirectBufferPool */
 struct s3_direct_buffer_pool_properties {

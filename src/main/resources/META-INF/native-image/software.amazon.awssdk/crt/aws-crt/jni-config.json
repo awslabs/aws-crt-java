@@ -2184,6 +2184,18 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.s3.S3BorrowedBuffer",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long",
+          "java.nio.ByteBuffer"
+        ]
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.s3.S3DirectBufferPool",
     "methods": [
       {
@@ -2465,6 +2477,26 @@
         "name": "onTelemetry",
         "parameterTypes": [
           "software.amazon.awssdk.crt.s3.S3RequestMetrics"
+        ]
+      },
+      {
+        "name": "onResponseBody",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3BorrowedBuffer",
+          "long",
+          "long"
+        ]
+      },
+      {
+        "name": "getSupportsBorrowedBufferOverload",
+        "parameterTypes": []
+      },
+      {
+        "name": "onResponseBody",
+        "parameterTypes": [
+          "java.nio.ByteBuffer",
+          "long",
+          "long"
         ]
       }
     ]

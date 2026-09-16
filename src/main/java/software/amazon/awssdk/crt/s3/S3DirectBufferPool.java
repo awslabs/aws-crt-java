@@ -46,12 +46,12 @@ import software.amazon.awssdk.crt.Log;
  *
  * <h3>Auto-scaled default</h3>
  * {@code S3DirectBufferPool.create(clientOptions)} — reads the
- * client's {@code throughputTargetGbps} and sizes the pool using the
- * same auto-scaling formula as {@code aws_s3_default_buffer_pool}
- * (2-24 GiB). Reads the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} env
- * var if set. Preserves the current native pool's default footprint
- * with JVM visibility added. Recommended when the operator does not
- * have specific sizing requirements.
+ * client's {@code throughputTargetGbps} and sizes the pool to match
+ * {@code aws_s3_default_buffer_pool}. Reads the
+ * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} env var if set. Preserves the
+ * current native pool's default footprint with JVM visibility added.
+ * Recommended when the operator does not have specific sizing
+ * requirements.
  *
  * <h3>Fixed</h3>
  * {@code S3DirectBufferPool.createFixed(memoryLimitBytes, partSize)} — all
@@ -212,34 +212,82 @@ public final class S3DirectBufferPool implements AutoCloseable {
 
     /**
      * Auto-scaled default: reads {@code clientOptions.throughputTargetGbps}
-     * and sizes the pool using the same formula as
-     * {@code aws_s3_default_buffer_pool}:
-     * <ul>
-     *   <li>&lt; 25 Gbps target -> 2 GiB</li>
-     *   <li>25-75 Gbps -> 4 GiB</li>
-     *   <li>75-100 Gbps -> 8 GiB</li>
-     *   <li>100-200 Gbps -> 16 GiB</li>
-     *   <li>&ge; 200 Gbps -> 24 GiB</li>
-     * </ul>
+     * and {@code clientOptions.partSize}, and sizes the pool via
+     * {@link #createForThroughput(double, int)}.
      *
-     * <p>If the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment
-     * variable is set, its value overrides the auto-scaled result.</p>
-     *
-     * <p>Elastic-mode growth semantics apply (initial slots pre-allocated,
-     * lazy growth up to the ceiling). This preserves the current native
-     * pool's behavior — same memory footprint, same growth-under-spike
-     * pattern — while adding JVM visibility.</p>
+     * <p>Convenience wrapper for callers who already have an
+     * {@code S3ClientOptions} instance. Equivalent to
+     * {@code createForThroughput(clientOptions.getThroughputTargetGbps(),
+     * (int) clientOptions.getPartSize())} (falling back to aws-c-s3's 8 MiB
+     * default when {@code partSize} is unset).</p>
      *
      * @param clientOptions the {@code S3ClientOptions} whose
-     *                      {@code throughputTargetGbps} drives sizing
+     *                      {@code throughputTargetGbps} and {@code partSize}
+     *                      drive sizing
      */
     public static S3DirectBufferPool create(S3ClientOptions clientOptions) {
-        long memoryLimitBytes = resolveAutoScaledMemoryLimit(clientOptions);
-        int partSize = 8 * 1024 * 1024;  // 8 MiB, matches aws-c-s3 default
+        long partSize = clientOptions.getPartSize();
+        int effectivePartSize = partSize > 0 ? (int) partSize : 8 * 1024 * 1024;
+        return createForThroughput(clientOptions.getThroughputTargetGbps(), effectivePartSize);
+    }
+
+    /**
+     * Auto-scaled default with an explicit part size: sizes the pool using
+     * the same tier table as {@code aws_s3_default_buffer_pool}, with slot
+     * capacity set to {@code partSize}. Slot capacity MUST match the
+     * client's configured part size, otherwise every reserve call from
+     * aws-c-s3 will fail with {@code AWS_ERROR_S3_INVALID_MEMORY_LIMIT_CONFIG}
+     * (the native side refuses to hand out a slot smaller than the
+     * requested size).
+     *
+     * <p>Tier-table values live in aws-c-s3's
+     * {@code s_get_default_mem_limit_from_throughput}. This factory calls
+     * the public helper {@code aws_s3_default_memory_limit_for_throughput}
+     * via {@link S3Client#defaultMemoryLimitForThroughput} so the values
+     * always match aws-c-s3's default buffer pool.</p>
+     *
+     * <p>If the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable
+     * is set, its value overrides the tier-table result.</p>
+     *
+     * <p>Elastic-mode growth semantics apply (initial slots pre-allocated,
+     * lazy growth up to the ceiling). Preserves the current native pool's
+     * memory footprint with JVM visibility added.</p>
+     *
+     * @param throughputTargetGbps the client's throughput target in Gbps,
+     *                             typically {@link S3ClientOptions#getThroughputTargetGbps()}.
+     *                             Pass {@code 0.0} for the unknown / non-EC2 fallback.
+     * @param partSize             per-slot size in bytes; must equal the
+     *                             client's configured part size
+     *                             ({@link S3ClientOptions#getPartSize()}) or
+     *                             aws-c-s3's 8 MiB default when unset.
+     * @return a pool sized to match aws-c-s3's default buffer pool for the
+     *         given throughput target, with slots sized to {@code partSize}
+     */
+    public static S3DirectBufferPool createForThroughput(double throughputTargetGbps, int partSize) {
+        long memoryLimitBytes = resolveEnvOverrideBytes();
+        if (memoryLimitBytes <= 0) {
+            memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(throughputTargetGbps);
+        }
         int maxSlots = (int) (memoryLimitBytes / partSize);
         int initialSlots = Math.min(8, maxSlots);  // small warm floor
         validateDirectMemoryCapacity(memoryLimitBytes);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
+    }
+
+    /**
+     * Auto-scaled default using aws-c-s3's default 8 MiB part size.
+     * Convenience wrapper for {@link #createForThroughput(double, int)}
+     * with {@code partSize = 8 MiB}.
+     *
+     * <p>Use this overload only when the client is configured with the
+     * default part size. If the client's {@code partSize} is set to any
+     * other value, use {@link #createForThroughput(double, int)} with a
+     * matching value.</p>
+     *
+     * @param throughputTargetGbps the client's throughput target in Gbps
+     */
+    public static S3DirectBufferPool createForThroughput(double throughputTargetGbps) {
+        return createForThroughput(throughputTargetGbps, 8 * 1024 * 1024);
     }
 
     /**
@@ -591,38 +639,21 @@ public final class S3DirectBufferPool implements AutoCloseable {
     }
 
     /**
-     * Resolves the auto-scaled memory limit based on the client's
-     * throughputTargetGbps setting, matching the native pool's formula.
+     * Reads {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} if set, and returns the
+     * resolved byte count. Returns {@code 0} when the env var is unset,
+     * empty, non-numeric, or non-positive (in which case the caller falls
+     * back to the tier-table default).
      */
-    private static long resolveAutoScaledMemoryLimit(S3ClientOptions clientOptions) {
-        // Check environment variable override first.
+    private static long resolveEnvOverrideBytes() {
         String envOverride = System.getenv("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB");
-        if (envOverride != null && !envOverride.isEmpty()) {
-            try {
-                long gib = Long.parseLong(envOverride.trim());
-                if (gib > 0) {
-                    return gib * 1024L * 1024L * 1024L;
-                }
-            } catch (NumberFormatException ignored) {
-                // Fall through to auto-scaling.
-            }
+        if (envOverride == null || envOverride.isEmpty()) return 0;
+        try {
+            long gib = Long.parseLong(envOverride.trim());
+            if (gib > 0) return gib * 1024L * 1024L * 1024L;
+        } catch (NumberFormatException ignored) {
+            // fall through
         }
-
-        // Auto-scale based on throughputTargetGbps.
-        double gbps = clientOptions.getThroughputTargetGbps();
-        long gib;
-        if (gbps >= 200.0) {
-            gib = 24;
-        } else if (gbps >= 100.0) {
-            gib = 16;
-        } else if (gbps >= 75.0) {
-            gib = 8;
-        } else if (gbps >= 25.0) {
-            gib = 4;
-        } else {
-            gib = 2;
-        }
-        return gib * 1024L * 1024L * 1024L;
+        return 0;
     }
 
     // Implemented in src/native/s3_java_buffer_pool.c via JNI.

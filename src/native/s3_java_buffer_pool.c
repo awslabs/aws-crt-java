@@ -86,6 +86,7 @@ struct java_pool_state {
     jmethodID mid_try_acquire_slot; /* int  tryAcquireSlot()      (non-blocking; returns -1 on exhaustion) */
     jmethodID mid_release_slot;     /* void releaseSlot(int)       */
     jmethodID mid_slot_address;     /* long slotAddress(int)       */
+    jmethodID mid_trim;             /* void trim()                 (idle-time slot cleanup) */
 
     /* NOTE: there is no cached `mid_slice_view` — the body callback
      * constructs the ByteBuffer view in C via NewDirectByteBuffer,
@@ -439,12 +440,47 @@ static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index) 
 }
 
 /*
- * trim() asks us to drop unused memory. We can't actually free
- * individual slots (they're shape-fixed by the Java pool), so this
- * is a no-op. The default pool also treats trim as best-effort. */
+ * Called by aws-c-s3's client on the periodic idleness-gated trim
+ * schedule (see s_s3_client_schedule_buffer_pool_trim_synced in
+ * aws-c-s3/source/s3_client.c). The client only invokes trim when
+ * num_requests_in_flight == 0 at both schedule and execution time,
+ * so we can safely reclaim slots that sit in the pool's free list
+ * without racing an in-flight reader.
+ *
+ * We delegate to S3DirectBufferPool.trim() on the Java side, which
+ * nulls slots[i]/slotAddresses[i] for every free slot with index
+ * >= initialSlots and then forces synchronous native-memory
+ * release via DirectBufferCleaner. This mirrors the native default
+ * pool's aws_mem_release timing — direct memory returns to the OS
+ * in microseconds rather than waiting for the JVM's Cleaner to
+ * process phantom references during some future GC pass.
+ *
+ * Best-effort: any JNI exception is caught and logged; trim is
+ * non-critical and must never bring down the client.
+ */
 static void s_java_pool_trim(struct aws_s3_buffer_pool *pool) {
-    (void)pool;
-    /* deliberate no-op */
+    struct java_pool_state *ps = pool->impl;
+
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        /* JVM shutting down — nothing to do. Slots will be reclaimed
+         * as part of VM teardown. */
+        return;
+    }
+
+    (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_trim);
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* trim() is defensive against nulls / closed pool, so an
+         * exception here is unexpected. Log for diagnosis but do
+         * not propagate — trim is fire-and-forget. */
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT,
+            "S3DirectBufferPool: trim() threw an exception; some direct memory "
+            "may remain pinned until the next GC pass");
+    }
+
+    aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
 }
 
 /*
@@ -558,6 +594,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     ps->mid_try_acquire_slot = s3_direct_buffer_pool_properties.tryAcquireSlot;
     ps->mid_release_slot = s3_direct_buffer_pool_properties.releaseSlot;
     ps->mid_slot_address = s3_direct_buffer_pool_properties.slotAddress;
+    ps->mid_trim = s3_direct_buffer_pool_properties.trim;
 
     /* STEP 5: Wire vtable and ref_count. Pool is now valid; the
      * global ref is owned by ps and will be released in

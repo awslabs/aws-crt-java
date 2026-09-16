@@ -2213,6 +2213,10 @@
         "parameterTypes": [
           "int"
         ]
+      },
+      {
+        "name": "trim",
+        "parameterTypes": []
       }
     ]
   },

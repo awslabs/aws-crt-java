@@ -809,6 +809,12 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
 
     s3_direct_buffer_pool_properties.slotAddress = (*env)->GetMethodID(env, cls, "slotAddress", "(I)J");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.slotAddress);
+
+    /* Pool trim: called from s_java_pool_trim (Layer 3 native
+     * vtable) after aws-c-s3's client-scheduler idleness gate.
+     * Package-private on the Java class. */
+    s3_direct_buffer_pool_properties.trim = (*env)->GetMethodID(env, cls, "trim", "()V");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.trim);
 }
 
 struct java_completable_future_properties completable_future_properties;

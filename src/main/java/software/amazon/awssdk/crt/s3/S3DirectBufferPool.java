@@ -398,7 +398,47 @@ public final class S3DirectBufferPool implements AutoCloseable {
 
         // Fast path: existing free slot in the queue.
         Integer idx = freeIndices.poll();
-        if (idx != null) return idx;
+        if (idx != null) {
+            // Trim may have nulled this slot's DBB during a prior
+            // idle period (see trim() below). We keep the index in
+            // freeIndices when trimming — reallocate here on
+            // demand. Cost is ~50-100 us for 8 MiB, same as the
+            // initial lazy-growth cost, and only paid on the first
+            // re-use of a previously-trimmed slot.
+            //
+            // Volatile read of slots[i] is safe: writes to
+            // slots[i] and slotAddresses[i] during trim happen
+            // under growthLock, and this null check IS the atomic
+            // snapshot. If nulled, we retake the lock and
+            // reallocate; the double-checked pattern below is
+            // safe because slot arrays are only written under
+            // growthLock.
+            if (slots[idx] == null) {
+                synchronized (growthLock) {
+                    if (slots[idx] == null) {
+                        ByteBuffer dbb;
+                        try {
+                            dbb = ByteBuffer.allocateDirect(partSize);
+                        } catch (OutOfMemoryError e) {
+                            // Return the index to the queue so it
+                            // isn't lost. On next attempt the same
+                            // race applies but the reallocation may
+                            // succeed after some other DBB is
+                            // released elsewhere in the JVM.
+                            freeIndices.offer(idx);
+                            Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                                "S3DirectBufferPool: OutOfMemoryError re-allocating "
+                              + "trimmed slot " + idx + " (partSize=" + partSize + " bytes). "
+                              + "Consider raising -XX:MaxDirectMemorySize.");
+                            throw e;
+                        }
+                        slots[idx] = dbb;
+                        slotAddresses[idx] = nativeGetDirectBufferAddress(dbb);
+                    }
+                }
+            }
+            return idx;
+        }
 
         // Slow path: try to grow under lock. Still non-blocking.
         synchronized (growthLock) {
@@ -438,6 +478,105 @@ public final class S3DirectBufferPool implements AutoCloseable {
         // The native side MUST pend its future on the C-side
         // pending_reserves list — NEVER block this thread.
         return -1;
+    }
+
+    /**
+     * Release direct memory backing every currently-free slot with
+     * index {@code >= initialSlots}, matching the native pool's
+     * {@code aws_s3_default_buffer_pool_trim} timing and semantics
+     * as closely as JVM idioms allow.
+     *
+     * <p>Invoked from the native {@code s_java_pool_trim} vtable
+     * function, which is scheduled by aws-c-s3's client with the
+     * same idleness gating as the native pool (5-second delay,
+     * skipped if {@code num_requests_in_flight > 0} at either
+     * schedule or execution time). See
+     * {@code s_s3_client_schedule_buffer_pool_trim_synced} in
+     * {@code aws-c-s3/source/s3_client.c}.</p>
+     *
+     * <h3>Mechanism</h3>
+     * For each currently-free slot at index {@code >= initialSlots}:
+     * <ol>
+     *   <li>Nulls {@code slots[idx]} and {@code slotAddresses[idx]}
+     *       under {@code growthLock}, so a concurrent
+     *       {@code tryAcquireSlot} sees a consistent null state and
+     *       falls into the reallocation path.</li>
+     *   <li>Invokes {@link DirectBufferCleaner#free} on the DBB to
+     *       force synchronous release of the underlying native
+     *       memory. Without this step, the DBB's internal Cleaner
+     *       waits for the next GC pass — plausibly seconds to
+     *       minutes on a quiet JVM — and the JVM's internal
+     *       {@code Bits.reservedMemory} counter stays high,
+     *       causing spurious
+     *       {@code OutOfMemoryError: Direct buffer memory} on
+     *       re-warm under {@code -XX:MaxDirectMemorySize} pressure.</li>
+     *   <li>Leaves the slot index in {@code freeIndices}.
+     *       {@code tryAcquireSlot} detects the null {@code slots[i]}
+     *       and reallocates under {@code growthLock} (cost: one
+     *       {@code allocateDirect(partSize)} call, ~50-100 us for
+     *       8 MiB) on next re-use.</li>
+     * </ol>
+     *
+     * <p>Slots below {@code initialSlots} are never trimmed — they
+     * form the pool's warm floor. Slots that are currently leased
+     * (not in {@code freeIndices}) are never trimmed regardless of
+     * index. Handles fragmentation correctly: any free slot at any
+     * index in {@code [initialSlots, maxSlots)} is a candidate.</p>
+     *
+     * <p><b>Timing invariant:</b> the native side guarantees that
+     * {@code s_java_pool_trim} is only called when
+     * {@code num_requests_in_flight == 0} at execution time. That
+     * means no in-flight ticket can hold a slot whose index sits in
+     * {@code freeIndices}. There is no race between a customer read
+     * of buffer memory and this method's free — the memory is not
+     * being read from anywhere at this instant.</p>
+     */
+    void trim() {
+        if (closed) return;
+
+        // Snapshot the free indices under growthLock. LinkedBlockingQueue's
+        // iterator is weakly consistent — safe to iterate concurrently but
+        // will not necessarily see writes that happen during iteration. We
+        // take the growthLock to serialize against tryAcquireSlot's
+        // reallocation path, which is the only other writer to slots[i] /
+        // slotAddresses[i] during pool life.
+        //
+        // Note: releaseSlot may run concurrently on aws-c-s3 event-loop
+        // threads (adding indices back to freeIndices), but it does NOT
+        // touch slots[i] / slotAddresses[i], so it is safe to run
+        // alongside trim.
+        synchronized (growthLock) {
+            for (Integer idx : freeIndices) {
+                if (idx == null) continue;
+                int i = idx;
+                if (i < initialSlots) continue;   // preserve the warm floor
+                ByteBuffer dbb = slots[i];
+                if (dbb == null) continue;         // already trimmed on a prior cycle
+
+                // Order matters here:
+                // 1. Null the arrays FIRST so any concurrent
+                //    tryAcquireSlot that pops this index from
+                //    freeIndices sees the null and enters the
+                //    reallocation path.
+                // 2. THEN force the native-memory release.
+                //
+                // If the order were reversed and the free happened
+                // before nulling, a concurrent tryAcquireSlot could
+                // pop the index and use slots[i] with a stale
+                // reference — safe because releasing the memory
+                // doesn't null the Java reference automatically, but
+                // subsequent access via the native address would be
+                // a use-after-free.
+                slots[i] = null;
+                slotAddresses[i] = 0L;
+
+                // Force synchronous release of the DBB's off-heap
+                // memory. See DirectBufferCleaner Javadoc for the
+                // Java 9+ / Java 8 dispatch and the reasoning
+                // behind not waiting for GC.
+                DirectBufferCleaner.free(dbb);
+            }
+        }
     }
 
     /**
@@ -518,11 +657,38 @@ public final class S3DirectBufferPool implements AutoCloseable {
     @Override
     public void close() {
         closed = true;
-        // No native free required: DirectByteBuffers are reclaimed by
-        // the JVM Cleaner once the strong references in `slots` are
-        // dropped (i.e. when this pool itself is GC'd). Both eagerly
-        // pre-allocated slots and lazily grown slots are tracked the
-        // same way in the `slots` array.
+        // Force synchronous release of every allocated slot's
+        // off-heap memory, matching the native pool's teardown
+        // timing. Without this, DirectByteBuffers linger with their
+        // native memory pinned until the JVM's Cleaner processes
+        // the phantom references during some future GC pass —
+        // seconds to minutes on a quiet JVM — which prevents
+        // process RSS from dropping when a service tears down
+        // and re-creates its S3 client.
+        //
+        // Held under growthLock to serialize against any concurrent
+        // tryAcquireSlot / trim. After close returns, the closed
+        // flag will make future tryAcquireSlot throw, so no new
+        // allocations happen; leased slots that are still in flight
+        // reference their DBB directly (not via slots[i]), so their
+        // native-memory reads remain valid until aws-c-s3 releases
+        // the tickets.
+        //
+        // WARNING: this frees memory backing DBBs that leased
+        // slots may still reference. Reads/writes through those
+        // buffers after close() returns are use-after-free at the
+        // native level. The client / pool teardown ordering
+        // guarantees that aws-c-s3 has drained all in-flight
+        // requests before close() runs.
+        synchronized (growthLock) {
+            for (int i = 0; i < slots.length; i++) {
+                ByteBuffer dbb = slots[i];
+                if (dbb == null) continue;
+                slots[i] = null;
+                slotAddresses[i] = 0L;
+                DirectBufferCleaner.free(dbb);
+            }
+        }
     }
 
     private void validateIndex(int idx) {

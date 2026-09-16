@@ -731,10 +731,13 @@ static int s_on_s3_meta_request_body_callback_dbb(
      * DBB has no Cleaner — the slot's parent DBB owns the memory. */
     jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, (void *)body->ptr, (jlong)body->len);
     if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_WARN(AWS_LS_S3_META_REQUEST,
+        AWS_LOGF_WARN(
+            AWS_LS_S3_META_REQUEST,
             "id=%p: S3DirectBufferPool: NewDirectByteBuffer failed for "
             "chunk (len=%zu, range_start=%llu); meta-request will fail",
-            (void *)meta_request, body->len, (unsigned long long)range_start);
+            (void *)meta_request,
+            body->len,
+            (unsigned long long)range_start);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
         return AWS_OP_ERR;
@@ -1680,8 +1683,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .headers_callback = s_on_s3_meta_request_headers_callback,
         /* NEW: DBZ pool path uses the ByteBuffer-delivering callback;
          * byte[] path is the default for clients without a pool. */
-        .body_callback = jni_use_dbz_pool ? s_on_s3_meta_request_body_callback_dbb
-                                          : s_on_s3_meta_request_body_callback,
+        .body_callback = jni_use_dbz_pool ? s_on_s3_meta_request_body_callback_dbb : s_on_s3_meta_request_body_callback,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .telemetry_callback = s_on_s3_meta_request_telemetry_callback,

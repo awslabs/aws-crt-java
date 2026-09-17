@@ -12,9 +12,7 @@ import software.amazon.awssdk.crt.Log;
 /**
  * Package-private utility that forces synchronous release of a
  * {@link ByteBuffer#allocateDirect direct ByteBuffer}'s off-heap
- * memory, matching Netty's
- * {@code io.netty.util.internal.PlatformDependent0#freeDirectBufferPrivileged}
- * behavior.
+ * memory.
  *
  * <h2>Why this exists</h2>
  * A DirectByteBuffer's off-heap memory is normally released only when GC
@@ -33,9 +31,8 @@ import software.amazon.awssdk.crt.Log;
  *       reflection into non-exported packages required.</li>
  *   <li><b>Java 8 fallback:</b> reflect into
  *       {@code sun.misc.Cleaner} via
- *       {@code ((sun.nio.ch.DirectBuffer) buffer).cleaner().clean()}.
- *       This is the historical mechanism Netty has shipped since
- *       version 4.x and is well-vetted in production.</li>
+ *       {@code ((sun.nio.ch.DirectBuffer) buffer).cleaner().clean()} —
+ *       the long-established pre-module-system mechanism.</li>
  * </ol>
  *
  * <p>On JVMs that expose neither (rare — some hardened enterprise

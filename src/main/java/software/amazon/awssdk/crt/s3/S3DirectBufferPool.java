@@ -641,7 +641,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * signal to either raise the limit or reduce the throughput target.</p>
      *
      * <p>The 80% threshold leaves headroom for other direct buffer users in
-     * the application (NIO channels, Netty pools, SDK internals).</p>
+     * the application (NIO channels, networking libraries, SDK internals).</p>
      *
      * @param poolCapacityBytes the pool's maximum byte capacity
      *                          ({@code maxSlots × partSize})

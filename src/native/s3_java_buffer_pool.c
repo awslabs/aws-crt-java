@@ -17,9 +17,15 @@
  * LIFETIME INVARIANTS
  * -------------------
  * 1. The Java pool object outlives every ticket. This is enforced by
- *    the S3Client retaining a reference to the pool for its entire
- *    lifetime, and tickets being scoped to in-flight meta requests
- *    on that client.
+ *    EACH TICKET holding a refcount on the native pool (acquired in
+ *    s_build_java_ticket, released at the end of s_java_ticket_destroy).
+ *    The native pool state pins the Java pool object via a JNI global
+ *    ref, so as long as any ticket is alive — including Phase 2
+ *    S3BorrowedBuffer tickets the customer holds past client shutdown
+ *    — the pool state, the Java pool object, and its slot memory all
+ *    remain valid. (Pre-Phase-2 this was enforced by tickets being
+ *    scoped to in-flight meta requests on a client that held the pool
+ *    ref; customer-held borrowed buffers broke that assumption.)
  *
  * 2. A slot's underlying memory address (cached in the ticket) is
  *    stable from tryAcquireSlot() until releaseSlot() runs (or until
@@ -127,9 +133,26 @@ struct java_pending_reserve {
 };
 
 struct java_ticket_state {
-    /* The pool that issued this ticket. We do NOT incref the pool;
-     * the pool lifecycle is governed by the owning client which
-     * outlives all tickets it issued. */
+    /* The pool that issued this ticket. Each ticket HOLDS A REFCOUNT
+     * on the pool (acquired in s_build_java_ticket, released as the
+     * final step of s_java_ticket_destroy).
+     *
+     * WHY: with the Phase 2 S3BorrowedBuffer API, the JAVA CUSTOMER
+     * can hold a ticket reference past meta-request completion and
+     * past client shutdown (close() at any time, or the phantom-ref
+     * GC fallback at a time we don't control). The old assumption
+     * — "the owning client outlives all tickets it issued" — no
+     * longer holds. Without this ref, the client's destroy path
+     * would free java_pool_state and delete the JNI global ref
+     * while a live ticket still points at both; the customer's
+     * eventual close() would then lock a freed mutex (UAF crash)
+     * and the Java pool object (and its DirectByteBuffer slots)
+     * could be GC'd out from under the customer's ByteBuffer view.
+     *
+     * With the ref, the pool state, the JNI global ref, the Java
+     * S3DirectBufferPool object, and therefore the slot memory all
+     * stay alive until the LAST outstanding ticket is released —
+     * borrowed buffers may safely outlive the client. */
     struct java_pool_state *pool_state;
 
     /* The slot index this ticket has checked out of the Java pool.
@@ -261,6 +284,15 @@ static void s_java_ticket_destroy(void *user_data) {
     }
 
     aws_mem_release(ps->allocator, ts);
+
+    /* LAST step: drop this ticket's refcount on the pool. If this is
+     * the final outstanding ticket AND the owning client has already
+     * been destroyed (released its own pool ref), this triggers
+     * s_java_pool_destroy — which frees ps and deletes the JNI global
+     * ref. That is why this MUST come after every use of ps above
+     * (pending_lock, allocator, JNI release). See the java_ticket_state
+     * comment for why tickets ref the pool at all. */
+    aws_s3_buffer_pool_release(&ps->pool);
 }
 
 /* ------------------------------------------------------------------ */
@@ -341,11 +373,46 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     }
 
     if (slot_index < 0) {
-        /* Java pool exhausted. Pend the future on our pending list;
-         * it will be resolved later from s_java_ticket_destroy when
-         * a slot frees. The event-loop returns immediately. */
+        /* Java pool exhausted. */
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
 
+        /* can_block reservations (currently set only by aws-c-s3's
+         * async-write upload path, aws_s3_meta_request_write) MUST NOT
+         * be deferred indefinitely — see the can_block contract in
+         * aws-c-s3/include/aws/s3/s3_buffer_pool.h. Our deferral is
+         * only guaranteed to resolve when held slots are released
+         * INDEPENDENTLY of the waiter's progress. That holds for
+         * download parts (the network completes them) but NOT for
+         * async-write buffered-data tickets, which are held until the
+         * CUSTOMER writes more data: N concurrent async-write uploads
+         * holding all N slots while the app awaits a pending write
+         * future is a permanent deadlock. The default pool escapes
+         * this by granting "forced" buffers beyond its memory limit;
+         * we deliberately do NOT — a hard memory cap is a headline
+         * guarantee of the DBZ pool (see createFixed /
+         * validateDirectMemoryCapacity on the Java side).
+         *
+         * So we fail the reservation loudly instead of deadlocking.
+         * NOTE: this path is unreachable today — aws-crt-java does not
+         * expose the S3 async-write API, so nothing sets can_block.
+         * This is a tripwire: if async write is ever bound, the binder
+         * hits this clear error instead of a silent hang. Revisit with
+         * a bounded-overflow design (explicitly sized overflow
+         * allowance) if that day comes. */
+        if (meta.can_block) {
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_CLIENT,
+                "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) requested while the "
+                "pool is exhausted. The Java DBZ pool does not grant over-limit forced buffers and cannot safely "
+                "defer blocking reservations (deadlock risk). Failing the reservation. Use the default native "
+                "buffer pool for async-write uploads, or size the DBZ pool for the expected concurrency.");
+            aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
+            return future;
+        }
+
+        /* Non-blocking reservation: pend the future on our pending
+         * list; it will be resolved later from s_java_ticket_destroy
+         * when a slot frees. The event-loop returns immediately. */
         struct java_pending_reserve *pending = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_pending_reserve));
         pending->meta = meta;
         pending->future = future;
@@ -402,6 +469,13 @@ static struct aws_s3_buffer_ticket *s_build_java_ticket(struct java_pool_state *
 
     /* aws_mem_calloc aborts on OOM; no NULL check needed. */
     struct java_ticket_state *ts = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_ticket_state));
+
+    /* Each ticket holds a refcount on the pool so the pool state (and
+     * the Java pool object it pins via the JNI global ref) outlives
+     * every outstanding ticket — including S3BorrowedBuffer tickets
+     * the Java customer holds past client shutdown. Released as the
+     * final step of s_java_ticket_destroy. */
+    aws_s3_buffer_pool_acquire(&ps->pool);
 
     ts->pool_state = ps;
     ts->slot_index = slot_index;

@@ -4,14 +4,18 @@
  */
 package software.amazon.awssdk.crt.s3;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLong;
 
 import software.amazon.awssdk.crt.Log;
 
@@ -52,8 +56,87 @@ import software.amazon.awssdk.crt.Log;
  * concurrently reading from it on another thread — use
  * {@link ByteBuffer#duplicate()} or {@link ByteBuffer#slice()} for defensive
  * per-thread views.</p>
+ *
+ * <h3>Leak detection</h3>
+ * <p>A borrowed buffer that is garbage-collected without {@link #close()}
+ * is a <em>leak</em>: the pool slot was held hostage until some future GC
+ * pass, during which the pool may sit exhausted and downloads stall. The
+ * GC fallback recovers the slot (correctness is preserved), but the delay
+ * is unbounded — leaks are application bugs and are reported as such.</p>
+ *
+ * <p>Detection is exact and free: a properly closed buffer never reaches
+ * the internal reference queue, so every queue arrival is by definition a
+ * leak. What costs something is capturing an <em>allocation stack trace</em>
+ * so the report says where the leaked buffer was created. That capture is
+ * sampled, controlled by the {@code aws.crt.s3.leakdetection} system
+ * property (read once at class load):</p>
+ * <ul>
+ *   <li>{@code disabled} — leaks are silently recovered; no reporting.</li>
+ *   <li>{@code simple} (default) — every leak logs a WARN; 1 in 128
+ *       buffers additionally captures its creation stack trace, so a
+ *       recurring leak site is eventually reported with an actionable
+ *       trace. Overhead: one {@code new Throwable()} per 128 buffers
+ *       (about one capture per GiB delivered at 8 MiB parts).</li>
+ *   <li>{@code paranoid} — every buffer captures its creation trace;
+ *       every leak reports with a trace. Intended for tests and leak
+ *       hunts, not steady-state production.</li>
+ * </ul>
+ *
+ * <p>Reports are deduplicated per unique allocation site (Netty-style):
+ * the first leak from a given location logs at WARN with the trace;
+ * repeats from the same location are suppressed. Leaks with no sampled
+ * trace log a single summary WARN pointing at the {@code paranoid}
+ * level.</p>
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
+
+    /** Leak-detection level: no reporting. */
+    private static final int LEAK_DETECTION_DISABLED = 0;
+    /** Leak-detection level: report all leaks; sample traces 1-in-128. */
+    private static final int LEAK_DETECTION_SIMPLE = 1;
+    /** Leak-detection level: report all leaks; trace every buffer. */
+    private static final int LEAK_DETECTION_PARANOID = 2;
+
+    /**
+     * Resolved once at class load from the {@code aws.crt.s3.leakdetection}
+     * system property. Unrecognized values fall back to SIMPLE (fail-safe:
+     * a typo should not silently disable leak reporting).
+     */
+    private static final int LEAK_DETECTION_LEVEL;
+
+    static {
+        String prop = System.getProperty("aws.crt.s3.leakdetection", "simple").trim();
+        if (prop.equalsIgnoreCase("disabled")) {
+            LEAK_DETECTION_LEVEL = LEAK_DETECTION_DISABLED;
+        } else if (prop.equalsIgnoreCase("paranoid")) {
+            LEAK_DETECTION_LEVEL = LEAK_DETECTION_PARANOID;
+        } else {
+            LEAK_DETECTION_LEVEL = LEAK_DETECTION_SIMPLE;
+        }
+    }
+
+    /**
+     * Sampling counter for SIMPLE mode: buffer #0, #128, #256, ... capture
+     * an allocation trace. Power-of-two mask keeps the hot-path cost to one
+     * atomic increment and a bitwise AND.
+     */
+    private static final AtomicLong SAMPLE_COUNTER = new AtomicLong();
+    private static final long SAMPLE_MASK = 127; // 1 in 128
+
+    /** Running total of detected leaks, included in every report. */
+    private static final AtomicLong LEAK_COUNT = new AtomicLong();
+
+    /**
+     * Dedup registry of allocation sites already reported (hash of the
+     * captured stack frames). Bounded so a pathological application cannot
+     * grow it without limit; once full, new sites are still reported (we
+     * prefer duplicate warnings over silence).
+     */
+    private static final Set<Integer> REPORTED_LEAK_SITES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final int MAX_REPORTED_LEAK_SITES = 1024;
+
+    /** Ensures the "untraced leaks occurred" summary WARN logs exactly once. */
+    private static final AtomicBoolean UNTRACED_LEAK_REPORTED = new AtomicBoolean();
 
     /**
      * Reference queue that receives PhantomRef notifications when
@@ -115,7 +198,20 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     S3BorrowedBuffer(long ticketPtr, ByteBuffer view) {
         this.ticketPtr = ticketPtr;
         this.view = view;
-        this.release = new ReleaseAction(this, ticketPtr);
+        // Leak detection: capture an allocation stack trace for a sampled
+        // subset of buffers (all of them at PARANOID). The trace travels
+        // with the ReleaseAction — NOT with this object — so it survives
+        // to the leak report after this buffer has been GC'd. Cost when
+        // sampled: one Throwable fill-in (~1-10 us); when not sampled:
+        // one atomic increment.
+        Throwable allocationTrace = null;
+        if (LEAK_DETECTION_LEVEL == LEAK_DETECTION_PARANOID
+            || (LEAK_DETECTION_LEVEL == LEAK_DETECTION_SIMPLE
+                && (SAMPLE_COUNTER.getAndIncrement() & SAMPLE_MASK) == 0)) {
+            allocationTrace = new Throwable(
+                "S3BorrowedBuffer allocation site (captured for leak detection)");
+        }
+        this.release = new ReleaseAction(this, ticketPtr, allocationTrace);
         LIVE.add(this.release);
     }
 
@@ -193,17 +289,32 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         private final long ticketPtr;
         private final AtomicBoolean released = new AtomicBoolean(false);
 
-        ReleaseAction(S3BorrowedBuffer referent, long ticketPtr) {
+        /**
+         * Allocation stack trace captured at construction when this buffer
+         * was sampled for leak detection; {@code null} when not sampled.
+         * Deliberately does NOT reference the buffer itself (a strong ref
+         * from the action to the referent would prevent the phantom
+         * reference from ever being enqueued).
+         */
+        private final Throwable allocationTrace;
+
+        ReleaseAction(S3BorrowedBuffer referent, long ticketPtr, Throwable allocationTrace) {
             super(referent, RELEASE_QUEUE);
             this.ticketPtr = ticketPtr;
+            this.allocationTrace = allocationTrace;
         }
 
         /**
          * Release the ticket exactly once. Called synchronously from
          * {@link S3BorrowedBuffer#close()} or asynchronously from the
          * cleaner thread. Second and subsequent calls are no-ops.
+         *
+         * @return {@code true} if THIS call performed the release,
+         *         {@code false} if it had already been released. The
+         *         cleaner loop uses this to distinguish a genuine leak
+         *         (GC-path release) from a benign duplicate.
          */
-        void run() {
+        boolean run() {
             if (released.compareAndSet(false, true)) {
                 try {
                     nativeReleaseTicket(ticketPtr);
@@ -214,7 +325,9 @@ public final class S3BorrowedBuffer implements AutoCloseable {
                     Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                         "S3BorrowedBuffer: nativeReleaseTicket threw during release: " + t);
                 }
+                return true;
             }
+            return false;
         }
     }
 
@@ -222,14 +335,24 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * Daemon-thread loop: drains {@link #RELEASE_QUEUE}, invoking each
      * enqueued {@link ReleaseAction}. Handles GC-fallback release for
      * borrowed buffers that were never closed explicitly.
+     *
+     * <p>Leak detection: a properly closed buffer never arrives here —
+     * {@link #close()} clears the phantom reference while the buffer is
+     * still strongly reachable, so it can never be enqueued. Any action
+     * dequeued below whose {@code run()} actually performs the release
+     * is therefore a leak (buffer GC'd without close), and is reported
+     * per the {@code aws.crt.s3.leakdetection} level.</p>
      */
     private static void cleanerLoop() {
         while (true) {
             try {
                 ReleaseAction ra = (ReleaseAction) RELEASE_QUEUE.remove();
-                ra.run();
+                boolean thisCallReleased = ra.run();
                 LIVE.remove(ra);
                 ra.clear();
+                if (thisCallReleased && LEAK_DETECTION_LEVEL != LEAK_DETECTION_DISABLED) {
+                    reportLeak(ra);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
@@ -239,6 +362,57 @@ public final class S3BorrowedBuffer implements AutoCloseable {
                     "S3BorrowedBuffer cleaner loop swallowed exception: " + t);
             }
         }
+    }
+
+    /**
+     * Emits a WARN for a detected leak, deduplicated per allocation site.
+     *
+     * <p>Traced leaks (this buffer was sampled at construction) log once
+     * per unique allocation site with the full creation stack trace.
+     * Untraced leaks log a single summary the first time, directing the
+     * operator to the {@code paranoid} level; subsequent untraced leaks
+     * are counted but not logged (the running count appears in every
+     * traced report).</p>
+     */
+    private static void reportLeak(ReleaseAction ra) {
+        long totalLeaks = LEAK_COUNT.incrementAndGet();
+
+        if (ra.allocationTrace == null) {
+            // Untraced leak: one summary WARN, ever. A recurring leak
+            // site will eventually hit the 1-in-128 sample and produce
+            // a traced report below.
+            if (UNTRACED_LEAK_REPORTED.compareAndSet(false, true)) {
+                Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                    "S3BorrowedBuffer LEAK detected: a borrowed buffer was garbage-collected without close(). "
+                  + "The pool slot was recovered by the GC fallback, but the delay is unbounded and can stall "
+                  + "downloads via pool exhaustion — close() every S3BorrowedBuffer. This buffer's allocation "
+                  + "site was not sampled; set -Daws.crt.s3.leakdetection=paranoid to capture a stack trace "
+                  + "for every buffer. Further untraced-leak warnings are suppressed. (total leaks so far: "
+                  + totalLeaks + ")");
+            }
+            return;
+        }
+
+        // Traced leak: dedup on the allocation site so one leaky loop
+        // doesn't flood the logs.
+        StackTraceElement[] frames = ra.allocationTrace.getStackTrace();
+        Integer siteHash = Arrays.hashCode(frames);
+        if (REPORTED_LEAK_SITES.contains(siteHash)) {
+            return;
+        }
+        if (REPORTED_LEAK_SITES.size() < MAX_REPORTED_LEAK_SITES) {
+            REPORTED_LEAK_SITES.add(siteHash);
+        }
+        // If the registry is full we fall through and report anyway —
+        // duplicate warnings beat silence.
+
+        StringWriter sw = new StringWriter();
+        ra.allocationTrace.printStackTrace(new PrintWriter(sw));
+        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+            "S3BorrowedBuffer LEAK detected: a borrowed buffer was garbage-collected without close(). "
+          + "The pool slot was recovered by the GC fallback, but the delay is unbounded and can stall "
+          + "downloads via pool exhaustion — close() every S3BorrowedBuffer. (total leaks so far: "
+          + totalLeaks + ") Allocation site:\n" + sw);
     }
 
     /**

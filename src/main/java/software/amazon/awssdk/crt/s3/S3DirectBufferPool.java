@@ -47,8 +47,10 @@ import software.amazon.awssdk.crt.Log;
  * <h3>Auto-scaled default</h3>
  * {@code S3DirectBufferPool.create(clientOptions)} — reads the
  * client's {@code throughputTargetGbps} and sizes the pool to match
- * {@code aws_s3_default_buffer_pool}. Reads the
- * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} env var if set. Preserves the
+ * {@code aws_s3_default_buffer_pool}. Honors the
+ * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB}
+ * env vars if set ({@code _IN_MB} takes priority, matching aws-c-s3).
+ * Preserves the
  * current native pool's default footprint with JVM visibility added.
  * Recommended when the operator does not have specific sizing
  * requirements.
@@ -246,8 +248,11 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * via {@link S3Client#defaultMemoryLimitForThroughput} so the values
      * always match aws-c-s3's default buffer pool.</p>
      *
-     * <p>If the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable
-     * is set, its value overrides the tier-table result.</p>
+     * <p>If the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} or
+     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable is set,
+     * its value overrides the tier-table result ({@code _IN_MB} takes
+     * priority when both are set, matching aws-c-s3's own resolution
+     * order in {@code aws_s3_client_new}).</p>
      *
      * <p>Elastic-mode growth semantics apply (initial slots pre-allocated,
      * lazy growth up to the ceiling). Preserves the current native pool's
@@ -523,58 +528,98 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * index. Handles fragmentation correctly: any free slot at any
      * index in {@code [initialSlots, maxSlots)} is a candidate.</p>
      *
-     * <p><b>Timing invariant:</b> the native side guarantees that
-     * {@code s_java_pool_trim} is only called when
-     * {@code num_requests_in_flight == 0} at execution time. That
-     * means no in-flight ticket can hold a slot whose index sits in
-     * {@code freeIndices}. There is no race between a customer read
-     * of buffer memory and this method's free — the memory is not
-     * being read from anywhere at this instant.</p>
+     * <h3>Concurrency design: drain-and-reoffer</h3>
+     * <p>Trim does NOT iterate {@code freeIndices} in place. It
+     * {@code poll()}s every index out of the queue, frees the
+     * candidates, and {@code offer()}s all indices back. This makes
+     * trim atomic per-index against any concurrent
+     * {@code tryAcquireSlot}: once an acquirer polls an index, trim
+     * can never see it (and vice versa), because queue removal is
+     * atomic. The queue's internal lock also provides the
+     * happens-before edge that publishes trim's {@code slots[i] =
+     * null} write to whichever thread later polls that index — a
+     * plain in-place iteration would have neither guarantee
+     * ({@code LinkedBlockingQueue}'s iterator is weakly consistent
+     * and can return an element that a concurrent poll already
+     * removed).</p>
+     *
+     * <p>Today this atomicity is belt-and-braces: aws-c-s3 runs the
+     * trim task on the client's {@code process_work_event_loop}, and
+     * the only reserve path reachable from the Java bindings
+     * ({@code s_acquire_mem_and_prepare_request}) runs on that same
+     * event loop after incrementing {@code num_requests_in_flight} —
+     * so trim and reserve are thread-serialized. But aws-c-s3 also
+     * has an async-write reserve path
+     * ({@code aws_s3_meta_request_write}) that runs on the CALLER's
+     * thread while in-flight may be zero; it is not exposed in
+     * aws-crt-java yet, and this design ensures trim stays correct
+     * if it ever is. Do not weaken this back to in-place iteration.</p>
      */
     void trim() {
         if (closed) return;
 
-        // Snapshot the free indices under growthLock. LinkedBlockingQueue's
-        // iterator is weakly consistent — safe to iterate concurrently but
-        // will not necessarily see writes that happen during iteration. We
-        // take the growthLock to serialize against tryAcquireSlot's
-        // reallocation path, which is the only other writer to slots[i] /
-        // slotAddresses[i] during pool life.
+        // growthLock serializes against tryAcquireSlot's reallocation /
+        // lazy-growth paths — the only other writers to slots[i] and
+        // slotAddresses[i].
         //
-        // Note: releaseSlot may run concurrently on aws-c-s3 event-loop
-        // threads (adding indices back to freeIndices), but it does NOT
-        // touch slots[i] / slotAddresses[i], so it is safe to run
-        // alongside trim.
+        // releaseSlot may run concurrently (a customer closing an
+        // S3BorrowedBuffer can return a slot at any time, including
+        // mid-trim). That is safe: releaseSlot only offers indices into
+        // freeIndices; a newly returned index simply isn't part of this
+        // trim pass's drained snapshot and waits for the next cycle.
         synchronized (growthLock) {
-            for (Integer idx : freeIndices) {
-                if (idx == null) continue;
-                int i = idx;
-                if (i < initialSlots) continue;   // preserve the warm floor
-                ByteBuffer dbb = slots[i];
-                if (dbb == null) continue;         // already trimmed on a prior cycle
+            // Drain the entire free queue into a local snapshot. poll()
+            // removes atomically, so every index we hold here is
+            // invisible to concurrent acquirers for the duration of
+            // this pass.
+            java.util.ArrayList<Integer> drained = new java.util.ArrayList<>();
+            Integer idx;
+            while ((idx = freeIndices.poll()) != null) {
+                drained.add(idx);
+            }
 
-                // Order matters here:
-                // 1. Null the arrays FIRST so any concurrent
-                //    tryAcquireSlot that pops this index from
-                //    freeIndices sees the null and enters the
-                //    reallocation path.
-                // 2. THEN force the native-memory release.
-                //
-                // If the order were reversed and the free happened
-                // before nulling, a concurrent tryAcquireSlot could
-                // pop the index and use slots[i] with a stale
-                // reference — safe because releasing the memory
-                // doesn't null the Java reference automatically, but
-                // subsequent access via the native address would be
-                // a use-after-free.
+            for (Integer boxed : drained) {
+                int i = boxed;
+                if (i < initialSlots) {
+                    continue;   // preserve the warm floor
+                }
+                ByteBuffer dbb = slots[i];
+                if (dbb == null) {
+                    continue;   // already trimmed on a prior cycle
+                }
+
+                // Null the arrays BEFORE freeing so that once the index
+                // is re-offered below, any future acquirer that polls it
+                // observes the null (published via the queue's internal
+                // lock) and enters the reallocation path in
+                // tryAcquireSlot.
                 slots[i] = null;
                 slotAddresses[i] = 0L;
 
                 // Force synchronous release of the DBB's off-heap
                 // memory. See DirectBufferCleaner Javadoc for the
-                // Java 9+ / Java 8 dispatch and the reasoning
-                // behind not waiting for GC.
+                // Java 9+ / Java 8 dispatch and the reasoning behind
+                // not waiting for GC. Safe here: the index is out of
+                // the queue, so no acquirer can be racing us to use
+                // this slot's cached address.
                 DirectBufferCleaner.free(dbb);
+            }
+
+            // Re-offer EVERY drained index (trimmed and warm-floor
+            // alike) so the free queue's contents are unchanged by
+            // trim. Trimmed indices are lazily re-backed by
+            // tryAcquireSlot on next use. offer() on a queue sized to
+            // maxSlots with only drained elements re-inserted cannot
+            // fail, but we assert the invariant anyway.
+            for (Integer boxed : drained) {
+                if (!freeIndices.offer(boxed)) {
+                    // Cannot happen: capacity == maxSlots and every
+                    // index is unique. Log rather than throw — trim is
+                    // fire-and-forget and must never kill the caller.
+                    Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
+                        "S3DirectBufferPool.trim: failed to re-offer slot index "
+                      + boxed + " to the free queue — slot is lost from circulation");
+                }
             }
         }
     }
@@ -794,17 +839,51 @@ public final class S3DirectBufferPool implements AutoCloseable {
     }
 
     /**
-     * Reads {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} if set, and returns the
-     * resolved byte count. Returns {@code 0} when the env var is unset,
-     * empty, non-numeric, or non-positive (in which case the caller falls
-     * back to the tier-table default).
+     * Reads the memory-limit override environment variables and returns
+     * the resolved byte count, mirroring aws-c-s3's resolution order in
+     * {@code aws_s3_client_new} exactly:
+     * <ol>
+     *   <li>{@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} — checked FIRST
+     *       (allows sub-GiB values, e.g. {@code 256} for 256 MiB)</li>
+     *   <li>{@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} — only consulted
+     *       when {@code _IN_MB} is unset or unusable</li>
+     * </ol>
+     *
+     * <p>Keeping this priority identical to the native side matters:
+     * the same env var influences BOTH the native client's own memory
+     * limit AND this pool's sizing. If they read different variables
+     * (or in a different order), a customer setting
+     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB=256} would get a 256 MiB
+     * native limit but a multi-GiB DBZ pool — silent divergence.</p>
+     *
+     * <p>Returns {@code 0} when neither variable is set, or when the
+     * set value is empty, non-numeric, or non-positive (the caller
+     * then falls back to the tier-table default). Note: aws-c-s3
+     * fails client creation on malformed values; we deliberately fall
+     * back instead, because pool construction may happen before any
+     * client exists and a clear native error will follow at client
+     * creation anyway.</p>
      */
     private static long resolveEnvOverrideBytes() {
-        String envOverride = System.getenv("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB");
-        if (envOverride == null || envOverride.isEmpty()) return 0;
+        // _IN_MB takes priority, matching aws-c-s3 (s3_client.c reads
+        // s_memory_limit_mb_env_var before s_memory_limit_gib_env_var).
+        long mbBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
+        if (mbBytes > 0) return mbBytes;
+
+        return parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", 1024L * 1024L * 1024L);
+    }
+
+    /**
+     * Parses the named environment variable as a positive integer and
+     * returns {@code value * unitBytes}, or {@code 0} when unset,
+     * empty, non-numeric, or non-positive.
+     */
+    private static long parsePositiveEnvScaled(String envVarName, long unitBytes) {
+        String raw = System.getenv(envVarName);
+        if (raw == null || raw.isEmpty()) return 0;
         try {
-            long gib = Long.parseLong(envOverride.trim());
-            if (gib > 0) return gib * 1024L * 1024L * 1024L;
+            long units = Long.parseLong(raw.trim());
+            if (units > 0) return units * unitBytes;
         } catch (NumberFormatException ignored) {
             // fall through
         }

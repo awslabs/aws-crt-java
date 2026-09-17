@@ -26,7 +26,7 @@ import software.amazon.awssdk.crt.Log;
  * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}
  * is a <em>slice</em> of a pooled direct buffer, valid <strong>only during
  * the call</strong> — the slot is recycled afterwards. To retain bytes,
- * copy them out inside the call:</p>
+ * copy them out inside the call:
  * <pre>
  *   public int onResponseBody(ByteBuffer buf, long start, long end) {
  *       byte[] copy = new byte[buf.remaining()];
@@ -192,6 +192,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * @param clientOptions the {@code S3ClientOptions} whose
      *                      {@code throughputTargetGbps} and {@code partSize}
      *                      drive sizing
+     * @return a pool sized to match aws-c-s3's defaults for the given options
      */
     public static S3DirectBufferPool create(S3ClientOptions clientOptions) {
         long partSize = clientOptions.getPartSize();
@@ -264,6 +265,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * matching value.</p>
      *
      * @param throughputTargetGbps the client's throughput target in Gbps
+     * @return a pool sized to match aws-c-s3's default buffer pool, with 8 MiB slots
      */
     public static S3DirectBufferPool createForThroughput(double throughputTargetGbps) {
         return createForThroughput(throughputTargetGbps, 8 * 1024 * 1024);
@@ -276,6 +278,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      *
      * @param memoryLimitBytes total off-heap memory budget for the pool
      * @param partSize         per-slot size in bytes
+     * @return a fully eager pool of {@code memoryLimitBytes / partSize} slots
      */
     public static S3DirectBufferPool createFixed(long memoryLimitBytes, int partSize) {
         if (memoryLimitBytes < partSize) {
@@ -317,9 +320,10 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * {@code initialSlots == maxSlots} here to get the same eager
      * behavior</b>.</p>
      *
-     * @param initialSlots number of slots to pre-allocate at construction (>= 0)
-     * @param maxSlots     pool ceiling; tryAcquireSlot grows up to this on demand (>= 1, >= initialSlots)
-     * @param partSize     per-slot size in bytes (> 0)
+     * @param initialSlots number of slots to pre-allocate at construction ({@code >= 0})
+     * @param maxSlots     pool ceiling; tryAcquireSlot grows up to this on demand ({@code >= 1}, {@code >= initialSlots})
+     * @param partSize     per-slot size in bytes ({@code > 0})
+     * @return an elastic pool growing lazily from {@code initialSlots} to {@code maxSlots}
      */
     public static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
         validateDirectMemoryCapacity((long) maxSlots * partSize);
@@ -587,11 +591,11 @@ public final class S3DirectBufferPool implements AutoCloseable {
         return addr;
     }
 
-    /** Returns the per-slot byte size (matches aws-c-s3's part_size config). */
+    /** @return the per-slot byte size (matches aws-c-s3's part_size config) */
     public int partSize()       { return partSize; }
-    /** Returns the pool ceiling — the maximum number of slots the pool may grow to. */
+    /** @return the pool ceiling — the maximum number of slots the pool may grow to */
     public int maxSlots()       { return maxSlots; }
-    /** Returns the number of slots pre-allocated at construction. */
+    /** @return the number of slots pre-allocated at construction */
     public int initialSlots()   { return initialSlots; }
     /**
      * Returns the number of slots currently allocated (eager +
@@ -602,6 +606,8 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * acquiring {@code this}'s monitor to prevent any potential
      * lock-ordering inversion if other methods on this class
      * are ever marked {@code synchronized}.</p>
+     *
+     * @return the number of slots currently allocated
      */
     public int allocatedSlots() {
         synchronized (growthLock) { return allocatedSlots; }
@@ -697,10 +703,18 @@ public final class S3DirectBufferPool implements AutoCloseable {
             // Cannot determine.
         }
 
-        // Fallback: ManagementFactory approach — check the runtime args
-        // for an explicit -XX:MaxDirectMemorySize.
+        // Fallback: check the runtime args for an explicit
+        // -XX:MaxDirectMemorySize. Accessed reflectively because
+        // java.lang.management does not exist on Android.
         try {
-            for (String arg : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+            Class<?> mgmtFactory = Class.forName("java.lang.management.ManagementFactory");
+            Object runtimeMxBean = mgmtFactory.getMethod("getRuntimeMXBean").invoke(null);
+            @SuppressWarnings("unchecked")
+            java.util.List<String> inputArgs = (java.util.List<String>) Class
+                .forName("java.lang.management.RuntimeMXBean")
+                .getMethod("getInputArguments")
+                .invoke(runtimeMxBean);
+            for (String arg : inputArgs) {
                 if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
                     String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
                     long multiplier = 1;

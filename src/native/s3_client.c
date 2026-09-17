@@ -357,7 +357,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jboolean should_stream,
     jdouble disk_throughput_gbps,
     jboolean direct_io,
-    jobject jni_buffer_pool /* NEW: DBZ pool, may be NULL */) {
+    jobject jni_buffer_pool /* optional S3DirectBufferPool, may be NULL */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -524,8 +524,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
-    /* Attach DBZ pool factory if customer supplied a pool. */
-    bool dbz_pool_wiring_failed = false;
+    /* Attach the Java buffer pool factory if the customer supplied a pool. */
+    bool buffer_pool_wiring_failed = false;
     struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
     if (jni_buffer_pool != NULL) {
         factory_data.java_pool_global = (*env)->NewGlobalRef(env, jni_buffer_pool);
@@ -542,7 +542,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
                 AWS_LS_S3_CLIENT,
                 "S3DirectBufferPool: failed to wire the supplied pool (NewGlobalRef/GetJavaVM); "
                 "failing client creation");
-            dbz_pool_wiring_failed = true;
+            buffer_pool_wiring_failed = true;
         } else {
             client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
             client_config.buffer_pool_user_data = &factory_data;
@@ -551,7 +551,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     }
 
     struct aws_s3_client *client = NULL;
-    if (dbz_pool_wiring_failed) {
+    if (buffer_pool_wiring_failed) {
         aws_jni_throw_runtime_exception(
             env, "S3Client.s3ClientNew: failed to wire the supplied S3DirectBufferPool; failing client creation");
     } else {
@@ -714,7 +714,7 @@ cleanup:
 }
 
 /*
- * Body delivery for the DBZ-pool path.
+ * Body delivery for the direct-buffer-pool path.
  *
  * Invoked once per completed part with a cursor pointing into the
  * ticket's slot memory. The ticket is carried in info->ticket — we
@@ -794,14 +794,13 @@ static int s_on_s3_meta_request_body_callback_dbb(
 }
 
 /*
- * Phase 2 DBZ opt-in delivery callback (body_callback_ex). Fires only when
- * a DBZ pool is attached AND the handler overrides
+ * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
+ * direct buffer pool is attached AND the handler overrides
  * onResponseBody(S3BorrowedBuffer, long, long).
  *
  * Acquires an EXTRA ticket ref transferred to the Java S3BorrowedBuffer,
  * released via close()/GC-cleaner (nativeReleaseTicket below). Construction
- * failure before hand-off releases the ref here. Full lifetime handshake:
- * DBZ_SDK_Integration_Plan.md.
+ * failure before hand-off releases the ref here.
  */
 static int s_on_s3_meta_request_body_callback_borrowed(
     struct aws_s3_meta_request *meta_request,
@@ -1673,7 +1672,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean should_stream,
     jdouble disk_throughput_gbps,
     jboolean direct_io,
-    jboolean jni_use_dbz_pool /* NEW: true when client has DBZ pool attached */) {
+    jboolean jni_use_buffer_pool /* true when the client has a direct buffer pool attached */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1799,15 +1798,15 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     /* Body callback selection:
-     *   - DBZ pool attached AND handler opted into borrowed-buffer overload
+     *   - Pool attached AND handler opted into borrowed-buffer overload
      *     → body_callback_ex (lifetime-controlled zero-copy)
-     *   - DBZ pool attached, no opt-in → body_callback = _dbb (transient DBB)
-     *   - No DBZ pool → body_callback = default (byte[] copy)
+     *   - Pool attached, no opt-in → body_callback = _dbb (transient DBB)
+     *   - No pool → body_callback = default (byte[] copy)
      *
      * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
      * we set exactly one below. */
     jboolean supports_borrowed = JNI_FALSE;
-    if (jni_use_dbz_pool) {
+    if (jni_use_buffer_pool) {
         supports_borrowed = (*env)->CallBooleanMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -1815,7 +1814,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_WARN(
                 AWS_LS_S3_META_REQUEST,
-                "getSupportsBorrowedBufferOverload() threw; falling back to non-borrowed DBZ path");
+                "getSupportsBorrowedBufferOverload() threw; falling back to the transient-ByteBuffer path");
             supports_borrowed = JNI_FALSE;
         }
     }
@@ -1829,14 +1828,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        /* NEW: DBZ pool path uses the ByteBuffer-delivering callback;
-         * byte[] path is the default for clients without a pool.
-         * Phase 2: when handler opts into S3BorrowedBuffer AND a pool is
-         * attached, body_callback_ex takes over instead (set below via
-         * conditional assignment; leaving body_callback NULL then). */
+        /* Exactly one of body_callback / body_callback_ex is set — they
+         * are mutually exclusive at aws-c-s3 (dispatch table above). */
         .body_callback = supports_borrowed ? NULL
-                                           : (jni_use_dbz_pool ? s_on_s3_meta_request_body_callback_dbb
-                                                               : s_on_s3_meta_request_body_callback),
+                                           : (jni_use_buffer_pool ? s_on_s3_meta_request_body_callback_dbb
+                                                                  : s_on_s3_meta_request_body_callback),
         .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
@@ -2111,7 +2107,7 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
  * public helper aws_s3_client_new uses internally to size its default
  * buffer pool. Exposed via S3Client (rather than S3DirectBufferPool)
  * because the underlying semantic is "what pool size would aws-c-s3
- * default to?" — not DBZ-specific.
+ * default to?" — not specific to the Java buffer pool.
  *
  * throughput_target_gbps == 0 defers to aws-c-s3's auto-detect (reads
  * EC2 platform info and applies the < 10 Gbps right-sizing threshold
@@ -2131,7 +2127,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemor
 }
 
 /*
- * Phase 2 DBZ opt-in: releases one ref on the aws_s3_buffer_ticket underlying
+ * Releases one ref on the aws_s3_buffer_ticket underlying
  * an S3BorrowedBuffer. Called from Java in two scenarios:
  *   1. Customer calls S3BorrowedBuffer.close() explicitly (happy path)
  *   2. The phantom-reference cleaner fires because the S3BorrowedBuffer

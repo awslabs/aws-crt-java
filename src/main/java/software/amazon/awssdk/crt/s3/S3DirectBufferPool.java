@@ -562,7 +562,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /*
      * NOTE: There is no Java-side `sliceView` method.
      *
-     * The JNI body callback (Layer 3) constructs the ByteBuffer
+     * The JNI body callback constructs the ByteBuffer
      * view delivered to the user directly in C via
      * `NewDirectByteBuffer(env, slot_addr + offset, length)`,
      * avoiding a JNI->Java round-trip per delivered part.

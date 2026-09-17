@@ -20,12 +20,9 @@
  *    EACH TICKET holding a refcount on the native pool (acquired in
  *    s_build_java_ticket, released at the end of s_java_ticket_destroy).
  *    The native pool state pins the Java pool object via a JNI global
- *    ref, so as long as any ticket is alive — including Phase 2
- *    S3BorrowedBuffer tickets the customer holds past client shutdown
- *    — the pool state, the Java pool object, and its slot memory all
- *    remain valid. (Pre-Phase-2 this was enforced by tickets being
- *    scoped to in-flight meta requests on a client that held the pool
- *    ref; customer-held borrowed buffers broke that assumption.)
+ *    ref, so as long as any ticket is alive — including S3BorrowedBuffer
+ *    tickets the customer holds past client shutdown — the pool state,
+ *    the Java pool object, and its slot memory all remain valid.
  *
  * 2. A slot's underlying memory address (cached in the ticket) is
  *    stable from tryAcquireSlot() until releaseSlot() runs (or until
@@ -56,9 +53,9 @@
  *          ticket's release path is the ONLY safe point to mark
  *          that memory reusable. Triggering release while the SDK
  *          subscriber still has a reference produces silent data
- *          corruption. See "Lifetime Implementation Mechanic"
- *          below for the SDK-side wiring that ensures release
- *          fires only after subscriber consumption.
+ *          corruption. Consumers that retain the buffer past the
+ *          callback must hold the ticket (S3BorrowedBuffer) so
+ *          release fires only after consumption.
  *
  * DESIGN NOTE: can_block reservations
  * -----------------------------------
@@ -72,7 +69,7 @@
  * data — N uploads holding all N slots while the app awaits a pending
  * write future is a permanent deadlock). The default pool escapes via
  * over-limit "forced" buffers; we deliberately do not, because a hard
- * memory cap is a headline DBZ-pool guarantee. So exhausted+can_block
+ * memory cap is a headline guarantee of this pool. So exhausted+can_block
  * FAILS LOUDLY. Unreachable today (aws-crt-java does not expose async
  * write) — it is a tripwire for whoever binds it. Revisit with a
  * bounded-overflow design if that happens.
@@ -80,7 +77,7 @@
 
 #include "s3_java_buffer_pool.h"
 #include "crt.h"            /* aws_jni_get_thread_env, AWS_LOGF_*, etc. */
-#include "java_class_ids.h" /* s3_direct_buffer_pool_properties (Layer 4) */
+#include "java_class_ids.h" /* s3_direct_buffer_pool_properties */
 
 #include <aws/common/mutex.h>
 #include <aws/common/ref_count.h>
@@ -92,7 +89,7 @@
 
 struct java_pool_state {
     /* Allocator used for our own state allocations (NOT for slot
-     * memory; that's owned by the Java DBZ pool). */
+     * memory; that's owned by the Java pool object). */
     struct aws_allocator *allocator;
 
     /* JavaVM* captured at factory time. Used to attach the receive
@@ -339,9 +336,9 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
             AWS_LOGF_ERROR(
                 AWS_LS_S3_CLIENT,
                 "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) requested while the "
-                "pool is exhausted. The Java DBZ pool does not grant over-limit forced buffers and cannot safely "
+                "pool is exhausted. S3DirectBufferPool does not grant over-limit forced buffers and cannot safely "
                 "defer blocking reservations (deadlock risk). Failing the reservation. Use the default native "
-                "buffer pool for async-write uploads, or size the DBZ pool for the expected concurrency.");
+                "buffer pool for async-write uploads, or size the pool for the expected concurrency.");
             aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
             return future;
         }
@@ -526,7 +523,7 @@ static void s_java_pool_destroy(void *user_data) {
 
 /*
  * Wired into aws_s3_client_config_options.buffer_pool_factory_fn
- * by Layer 3 (s3_client.c) when the Java caller attaches a pool.
+ * by s3ClientNew (s3_client.c) when the Java caller attaches a pool.
  *
  * `user_data` is a JNI global ref to the S3DirectBufferPool Java
  * object. This factory function takes ownership of that ref. From
@@ -581,9 +578,8 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
         goto error_release_global_ref;
     }
 
-    /* STEP 4: Resolve method IDs once. The method IDs live in
-     * java_class_ids.c (Layer 4) — we cache copies here for
-     * predictable cache behavior. */
+    /* STEP 4: Resolve method IDs once. The IDs live in java_class_ids.c;
+     * we cache copies here for predictable cache behavior. */
     ps->mid_try_acquire_slot = s3_direct_buffer_pool_properties.tryAcquireSlot;
     ps->mid_release_slot = s3_direct_buffer_pool_properties.releaseSlot;
     ps->mid_slot_address = s3_direct_buffer_pool_properties.slotAddress;

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import software.amazon.awssdk.crt.Log;
 
 /**
- * A borrowed view into an S3 response body chunk backed by DBZ pool memory.
+ * A borrowed view into an S3 response body chunk backed by pooled direct-buffer memory.
  *
  * <p>Delivered to handlers that opt in to zero-copy delivery by overriding
  * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
@@ -154,7 +154,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     private volatile int closed = 0;
 
     /**
-     * Called only from native ({@code s_on_body_ex_dbz} in
+     * Called only from native ({@code s_on_s3_meta_request_body_callback_borrowed} in
      * {@code src/native/s3_client.c}). Not part of the public API.
      *
      * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; native
@@ -385,7 +385,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
-     * When the last reference drops the slot returns to the DBZ pool. Safe to
+     * When the last reference drops the slot returns to the pool. Safe to
      * call after JVM shutdown has begun; a null/zero pointer is a no-op.
      */
     private static native void nativeReleaseTicket(long ticketPtr);

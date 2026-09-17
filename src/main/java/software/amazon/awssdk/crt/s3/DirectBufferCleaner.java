@@ -50,7 +50,7 @@ import software.amazon.awssdk.crt.Log;
  * (via {@code get}, {@code put}, or a cached native address) is a
  * use-after-free at the native level and will crash or corrupt
  * data. Callers MUST ensure no other reference to the buffer is
- * used after this call. The DBZ pool enforces this by nulling
+ * used after this call. S3DirectBufferPool enforces this by nulling
  * {@code slots[i]} and {@code slotAddresses[i]} under the growth
  * lock immediately before invoking this helper.
  *

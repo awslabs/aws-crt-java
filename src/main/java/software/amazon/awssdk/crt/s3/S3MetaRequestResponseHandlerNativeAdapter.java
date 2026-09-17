@@ -55,7 +55,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
             bodyBytesIn, objectRangeStart, objectRangeEnd);
     }
 
-    /** Borrowed-buffer path: called from native when handler opted in + DBZ pool attached. */
+    /** Borrowed-buffer path: called from native when handler opted in + direct buffer pool attached. */
     int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
         return this.responseHandler.onResponseBody(buffer, objectRangeStart, objectRangeEnd);
     }

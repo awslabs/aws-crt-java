@@ -105,7 +105,7 @@ public interface S3MetaRequestResponseHandler {
      * Optional zero-copy overload: invoked instead of
      * {@link #onResponseBody(ByteBuffer, long, long)} when the handler
      * overrides this method AND a
-     * {@link S3ClientOptions#withDirectByteBufferPool DBZ pool}
+     * {@link S3ClientOptions#withDirectByteBufferPool direct buffer pool}
      * is attached to the client.
      *
      * <p>The {@link S3BorrowedBuffer} keeps the underlying pool slot alive
@@ -120,7 +120,7 @@ public interface S3MetaRequestResponseHandler {
      * try-with-resources and its contents delegated to the existing
      * {@link #onResponseBody(ByteBuffer, long, long)} overload. This makes
      * opt-in explicit — customers who never touch this method see zero
-     * behavior change under DBZ.</p>
+     * behavior change when a pool is attached.</p>
      *
      * @param buffer  a borrowed direct-buffer view into pool memory;
      *                MUST be closed by the customer if not consumed

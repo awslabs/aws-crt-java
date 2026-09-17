@@ -753,17 +753,17 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
         (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 
-    /* NEW: ByteBuffer overload for DBZ pool path — same method name, different signature */
+    /* ByteBuffer overload — direct-buffer-pool delivery path */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB);
 
-    /* Phase 2 DBZ opt-in: S3BorrowedBuffer overload (lifetime-controlled zero-copy) */
+    /* S3BorrowedBuffer overload — lifetime-controlled zero-copy opt-in */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
 
-    /* Phase 2 DBZ opt-in probe: consulted once per meta-request creation to
+    /* Opt-in probe: consulted once per meta-request creation to
      * decide whether to register body_callback_ex (borrowed-buffer path) or
      * body_callback (existing ByteBuffer/byte[] paths). */
     s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload =
@@ -772,7 +772,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
 }
 
 /* ------------------------------------------------------------------ */
-/* S3BorrowedBuffer class & constructor (Phase 2 DBZ opt-in)          */
+/* S3BorrowedBuffer class & constructor                               */
 /* ------------------------------------------------------------------ */
 struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
@@ -793,7 +793,7 @@ static void s_cache_s3_borrowed_buffer(JNIEnv *env) {
 }
 
 /* ------------------------------------------------------------------ */
-/* S3DirectBufferPool class & methods (DBZ pool Layer 4)              */
+/* S3DirectBufferPool class & methods                                 */
 /* ------------------------------------------------------------------ */
 struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 
@@ -810,9 +810,8 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
     s3_direct_buffer_pool_properties.slotAddress = (*env)->GetMethodID(env, cls, "slotAddress", "(I)J");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.slotAddress);
 
-    /* Pool trim: called from s_java_pool_trim (Layer 3 native
-     * vtable) after aws-c-s3's client-scheduler idleness gate.
-     * Package-private on the Java class. */
+    /* Pool trim: called from s_java_pool_trim after aws-c-s3's
+     * client-scheduler idleness gate. Package-private on the Java class. */
     s3_direct_buffer_pool_properties.trim = (*env)->GetMethodID(env, cls, "trim", "()V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.trim);
 }

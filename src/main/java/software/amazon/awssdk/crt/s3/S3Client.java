@@ -41,7 +41,7 @@ public class S3Client extends CrtResource {
             options.withDirectByteBufferPool(S3DirectBufferPool.create(options));
         }
 
-        // Attaching a DBZ pool switches the memory source from the native 
+        // Attaching a pool switches the memory source from the native
         // default_buffer_pool to the JVM-owned pool.
         if (options.getDirectByteBufferPool() != null) {
             S3DirectBufferPool pool = options.getDirectByteBufferPool();

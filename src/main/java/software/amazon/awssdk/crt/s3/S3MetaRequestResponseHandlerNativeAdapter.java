@@ -11,15 +11,7 @@ import java.nio.ByteBuffer;
 class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
-    /**
-     * True iff the customer's handler overrides
-     * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
-     * Detected once at construction via reflection so the native side can
-     * decide which aws-c-s3 body callback to register at meta-request
-     * creation time (see {@code s3ClientMakeMetaRequest} in
-     * {@code src/native/s3_client.c}). Called from native via a cached
-     * jmethodID on {@link #getSupportsBorrowedBufferOverload()}.
-     */
+    /** True iff the handler overrides onResponseBody(S3BorrowedBuffer, long, long). */
     private final boolean supportsBorrowedBufferOverload;
 
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler) {
@@ -27,15 +19,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         this.supportsBorrowedBufferOverload = detectBorrowedBufferOverload(responseHandler);
     }
 
-    /**
-     * Reflection probe: does the handler override the borrowed-buffer body
-     * callback overload? If the {@code getDeclaringClass()} of the resolved
-     * method is the interface itself, only the default is present and the
-     * customer has NOT opted in.
-     *
-     * <p>Called exactly once per adapter (per meta-request). Reflection
-     * lookup happens off the hot path.</p>
-     */
+    /** Reflection probe: declaringClass != interface means the handler overrode the overload. */
     private static boolean detectBorrowedBufferOverload(S3MetaRequestResponseHandler handler) {
         try {
             java.lang.reflect.Method m = handler.getClass().getMethod(
@@ -49,12 +33,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         }
     }
 
-    /**
-     * Package-private accessor invoked from native ({@code s3ClientMakeMetaRequest})
-     * to select the aws-c-s3 body callback: {@code body_callback_ex} when
-     * this returns true AND a DBZ pool is attached; {@code body_callback}
-     * otherwise.
-     */
+    /** Called from native to select body_callback_ex vs body_callback. */
     boolean getSupportsBorrowedBufferOverload() {
         return supportsBorrowedBufferOverload;
     }
@@ -76,14 +55,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
             bodyBytesIn, objectRangeStart, objectRangeEnd);
     }
 
-    /**
-     * Borrowed-buffer path: called from native ({@code s_on_body_ex_dbz})
-     * when the handler has opted in and a DBZ pool is attached. The native
-     * side has already acquired an extra ref on the underlying ticket and
-     * constructed the {@link S3BorrowedBuffer}; the customer owns the slot's
-     * lifetime from here on and MUST close it (or use one of the auto-close
-     * paths like {@link S3BorrowedBuffer#toByteArray()}).
-     */
+    /** Borrowed-buffer path: called from native when handler opted in + DBZ pool attached. */
     int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
         return this.responseHandler.onResponseBody(buffer, objectRangeStart, objectRangeEnd);
     }

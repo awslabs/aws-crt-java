@@ -82,33 +82,10 @@ public class S3ClientOptions {
     private FileIoOptions fileIoOptions;
 
     /**
-     * Optional Java-owned direct buffer pool. When set, S3 download
-     * responses bypass the default byte[]-copy delivery path and
-     * instead deliver the response body as a {@link java.nio.ByteBuffer}
-     * slice over pool-owned memory.
-     *
-     * <p>Construct the pool via one of:</p>
-     * <ul>
-     *   <li>{@link S3DirectBufferPool#create(long, int)} — fixed-size
-     *       (eager). Pool memory is fully committed at construction.</li>
-     *   <li>{@link S3DirectBufferPool#createElastic(int, int, int)} —
-     *       elastic. Memory tracks demand between {@code initialSlots}
-     *       and {@code maxSlots}; lazy growth on {@code acquireSlot}.</li>
-     * </ul>
-     *
-     * <p>See {@link S3DirectBufferPool} for the lifetime contract:
-     * the ByteBuffer delivered to your handler is valid <strong>only
-     * during the call</strong>. Copy out before returning if you need
-     * to retain the bytes.</p>
-     *
-     * <p><b>Sizing JVM direct memory:</b> set
-     * {@code -XX:MaxDirectMemorySize} to at least
-     * {@code maxSlots × partSize × 1.5} regardless of the factory
-     * used. For the fixed-size factory {@code maxSlots == slotCount},
-     * so the formula collapses to {@code slotCount × partSize × 1.5}.</p>
-     *
-     * <p>Default: {@code null} — the existing byte[]-copy path is used,
-     * exactly as before this option was introduced.</p>
+     * Optional Java-owned direct buffer pool for zero-copy response
+     * delivery. Default: {@code null} (byte[]-copy path, unchanged).
+     * See {@link S3DirectBufferPool} for factories, sizing, and the
+     * lifetime contract.
      */
     private S3DirectBufferPool directByteBufferPool;
 

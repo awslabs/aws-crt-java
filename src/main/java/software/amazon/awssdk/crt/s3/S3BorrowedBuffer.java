@@ -58,35 +58,13 @@ import software.amazon.awssdk.crt.Log;
  * per-thread views.</p>
  *
  * <h3>Leak detection</h3>
- * <p>A borrowed buffer that is garbage-collected without {@link #close()}
- * is a <em>leak</em>: the pool slot was held hostage until some future GC
- * pass, during which the pool may sit exhausted and downloads stall. The
- * GC fallback recovers the slot (correctness is preserved), but the delay
- * is unbounded — leaks are application bugs and are reported as such.</p>
- *
- * <p>Detection is exact and free: a properly closed buffer never reaches
- * the internal reference queue, so every queue arrival is by definition a
- * leak. What costs something is capturing an <em>allocation stack trace</em>
- * so the report says where the leaked buffer was created. That capture is
- * sampled, controlled by the {@code aws.crt.s3.leakdetection} system
- * property (read once at class load):</p>
- * <ul>
- *   <li>{@code disabled} — leaks are silently recovered; no reporting.</li>
- *   <li>{@code simple} (default) — every leak logs a WARN; 1 in 128
- *       buffers additionally captures its creation stack trace, so a
- *       recurring leak site is eventually reported with an actionable
- *       trace. Overhead: one {@code new Throwable()} per 128 buffers
- *       (about one capture per GiB delivered at 8 MiB parts).</li>
- *   <li>{@code paranoid} — every buffer captures its creation trace;
- *       every leak reports with a trace. Intended for tests and leak
- *       hunts, not steady-state production.</li>
- * </ul>
- *
- * <p>Reports are deduplicated per unique allocation site (Netty-style):
- * the first leak from a given location logs at WARN with the trace;
- * repeats from the same location are suppressed. Leaks with no sampled
- * trace log a single summary WARN pointing at the {@code paranoid}
- * level.</p>
+ * <p>A buffer GC'd without {@link #close()} is a leak: the slot is
+ * recovered by the GC fallback, but only after an unbounded delay that
+ * can exhaust the pool. Leaks are reported per the
+ * {@code aws.crt.s3.leakdetection} system property: {@code disabled},
+ * {@code simple} (default — WARN on every leak, allocation trace sampled
+ * 1-in-128), {@code paranoid} (trace every buffer; for tests). Reports
+ * are deduplicated per allocation site.</p>
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
 
@@ -138,21 +116,10 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /** Ensures the "untraced leaks occurred" summary WARN logs exactly once. */
     private static final AtomicBoolean UNTRACED_LEAK_REPORTED = new AtomicBoolean();
 
-    /**
-     * Reference queue that receives PhantomRef notifications when
-     * {@code S3BorrowedBuffer} instances become phantom-reachable
-     * (i.e. GC'd without explicit close). A single daemon thread drains
-     * this queue and releases the associated tickets.
-     */
+    /** Receives phantom refs for buffers GC'd without close; drained by the daemon cleaner thread. */
     private static final ReferenceQueue<S3BorrowedBuffer> RELEASE_QUEUE = new ReferenceQueue<>();
 
-    /**
-     * Strong references to pending release actions. Without this set, the
-     * PhantomReference objects themselves would be GC'd before their
-     * referents, breaking the notification. Entries are removed by the
-     * cleaner thread after the release runs, or by {@link #close()} when
-     * the customer closes explicitly.
-     */
+    /** Keeps ReleaseActions strongly reachable so the phantom refs can enqueue; pruned on release. */
     private static final Set<ReleaseAction> LIVE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     static {
@@ -396,6 +363,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         // Traced leak: dedup on the allocation site so one leaky loop
         // doesn't flood the logs.
         StackTraceElement[] frames = ra.allocationTrace.getStackTrace();
+        // Hash collisions may suppress distinct sites — accepted for a best-effort diagnostic.
         Integer siteHash = Arrays.hashCode(frames);
         if (REPORTED_LEAK_SITES.contains(siteHash)) {
             return;

@@ -524,29 +524,43 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
-    /* NEW: attach DBZ pool factory if customer supplied a pool. */
+    /* Attach DBZ pool factory if customer supplied a pool. */
+    bool dbz_pool_wiring_failed = false;
     struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
     if (jni_buffer_pool != NULL) {
         factory_data.java_pool_global = (*env)->NewGlobalRef(env, jni_buffer_pool);
-        if (factory_data.java_pool_global == NULL) {
-            // TODO: If a customer wants to use a dbz pool but it fails, should we fail client creation
-            // instead of falling back onto a default?
-            AWS_LOGF_WARN(AWS_LS_S3_CLIENT, "S3DirectBufferPool: NewGlobalRef failed; falling back to default pool");
+        /* Package JVM for the factory. Stack allocation is safe because
+         * aws_s3_client_new invokes the factory synchronously. */
+        if (factory_data.java_pool_global == NULL || (*env)->GetJavaVM(env, &factory_data.jvm) != 0) {
+            /* Explicit opt-in must not silently degrade to the default
+             * pool — fail client creation instead. Clear any pending
+             * Java exception (NewGlobalRef OOM) so we can throw our own
+             * below. A partially-created global ref is released by the
+             * !client cleanup path. */
+            aws_jni_check_and_clear_exception(env);
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_CLIENT,
+                "S3DirectBufferPool: failed to wire the supplied pool (NewGlobalRef/GetJavaVM); "
+                "failing client creation");
+            dbz_pool_wiring_failed = true;
         } else {
-            /* Package JVM for the factory. Stack allocation is safe
-             * because aws_s3_client_new invokes the factory
-             * synchronously before returning. */
-            (*env)->GetJavaVM(env, &factory_data.jvm);
-
             client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
             client_config.buffer_pool_user_data = &factory_data;
             AWS_LOGF_INFO(AWS_LS_S3_CLIENT, "S3DirectBufferPool attached to client");
         }
     }
 
-    struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
+    struct aws_s3_client *client = NULL;
+    if (dbz_pool_wiring_failed) {
+        aws_jni_throw_runtime_exception(
+            env, "S3Client.s3ClientNew: failed to wire the supplied S3DirectBufferPool; failing client creation");
+    } else {
+        client = aws_s3_client_new(allocator, &client_config);
+        if (!client) {
+            aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
+        }
+    }
     if (!client) {
-        aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
         /* Clean up stuff. If the factory took ownership of the global
          * ref (in either its success or failure path), it will have
          * NULLed factory_data.java_pool_global. Only release here if
@@ -725,7 +739,7 @@ static int s_on_s3_meta_request_body_callback_dbb(
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
     JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     /* Construct the ByteBuffer view in C via NewDirectByteBuffer.
@@ -742,7 +756,7 @@ static int s_on_s3_meta_request_body_callback_dbb(
             (unsigned long long)range_start);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
         /********** JNI ENV RELEASE **********/
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     /* Deliver to the ByteBuffer-taking adapter method (registered in
@@ -780,27 +794,14 @@ static int s_on_s3_meta_request_body_callback_dbb(
 }
 
 /*
- * Phase 2 DBZ opt-in delivery callback (registered as body_callback_ex).
+ * Phase 2 DBZ opt-in delivery callback (body_callback_ex). Fires only when
+ * a DBZ pool is attached AND the handler overrides
+ * onResponseBody(S3BorrowedBuffer, long, long).
  *
- * Fires when:
- *   (a) the client has a DBZ pool attached, AND
- *   (b) the meta-request's response handler overrides
- *       onResponseBody(S3BorrowedBuffer, long, long).
- *
- * Lifetime handshake (see the design notes in DBZ_SDK_Integration_Plan.md):
- *   1. aws-c-s3 owns one ref on info.ticket for the delivery event.
- *   2. We acquire an EXTRA ref before constructing S3BorrowedBuffer, so the
- *      slot survives past this callback's return.
- *   3. Java's S3BorrowedBuffer owns that extra ref for its lifetime; it is
- *      released either by close() (customer) or by the phantom-reference
- *      cleaner (GC fallback), both routes calling
- *      Java_..._S3BorrowedBuffer_nativeReleaseTicket below.
- *   4. If any construction step fails BEFORE the Java object owns the ref,
- *      we release our extra ref immediately so the ticket does not leak.
- *
- * The DirectByteBuffer view is constructed against body->ptr + body->len,
- * matching the semantics of the non-borrowed DBZ callback (view is sliced
- * to the response body length, not the full slot capacity).
+ * Acquires an EXTRA ticket ref transferred to the Java S3BorrowedBuffer,
+ * released via close()/GC-cleaner (nativeReleaseTicket below). Construction
+ * failure before hand-off releases the ref here. Full lifetime handshake:
+ * DBZ_SDK_Integration_Plan.md.
  */
 static int s_on_s3_meta_request_body_callback_borrowed(
     struct aws_s3_meta_request *meta_request,
@@ -815,7 +816,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
     JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     /* STEP 1: Acquire an extra ref BEFORE any Java construction. If
@@ -837,7 +838,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
             (unsigned long long)info.range_start);
         aws_s3_buffer_ticket_release(info.ticket);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     /* STEP 3: Construct the S3BorrowedBuffer Java object. From this point
@@ -859,7 +860,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
         aws_s3_buffer_ticket_release(info.ticket);
         (*env)->DeleteLocalRef(env, sliced_dbb);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-        return AWS_OP_ERR;
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
     /* STEP 4: Dispatch to Java. The customer's handler MAY close synchronously

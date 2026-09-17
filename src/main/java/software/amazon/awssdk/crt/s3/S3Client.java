@@ -333,21 +333,10 @@ public class S3Client extends CrtResource {
             boolean useDirectByteBufferPool);
 
     /**
-     * Returns aws-c-s3's default memory pool size for a given throughput
-     * target, delegating to the native
-     * {@code aws_s3_default_memory_limit_for_throughput} helper.
-     *
-     * <p>Semantics come from aws-c-s3 — see the docstring on the C API for
-     * the tier table and EC2 auto-detect behavior. Any caller within
-     * aws-crt-java that needs to reason about what pool size aws-c-s3
-     * would default to for a given throughput can use this helper.</p>
-     *
-     * <p>{@code throughputTargetGbps == 0} defers to aws-c-s3's EC2
-     * auto-detect; any positive value maps directly to the tier table.</p>
-     *
-     * <p>Package-private: intended for aws-crt-java internal use only
-     * (currently {@link S3DirectBufferPool#createForThroughput}). Not
-     * exposed as a public API.</p>
+     * Returns aws-c-s3's default memory pool size (bytes) for the given
+     * throughput target ({@code 0} = EC2 auto-detect); delegates to
+     * {@code aws_s3_default_memory_limit_for_throughput}. Package-private —
+     * used by {@link S3DirectBufferPool#createForThroughput}.
      */
     static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);
 }

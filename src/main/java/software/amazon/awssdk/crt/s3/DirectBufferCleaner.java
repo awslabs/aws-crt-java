@@ -17,41 +17,13 @@ import software.amazon.awssdk.crt.Log;
  * behavior.
  *
  * <h2>Why this exists</h2>
- * A {@code DirectByteBuffer} wraps a native allocation obtained from
- * {@code Unsafe.allocateMemory} (which routes through {@code malloc}
- * and, for allocations above glibc's {@code MMAP_THRESHOLD} of 128
- * KiB, through {@code mmap}). The JVM tracks direct memory in an
- * internal {@code Bits.reservedMemory} counter that is checked
- * against {@code -XX:MaxDirectMemorySize} on every subsequent
- * {@code allocateDirect} call.
- *
- * <p>Normally, direct memory is released only when the DBB becomes
- * phantom-reachable AND the JVM decides to run GC AND the JVM's
- * Cleaner processes the phantom reference — which can be seconds
- * to minutes later on a quiet JVM. On the release path, three
- * things happen:</p>
- * <ol>
- *   <li>{@code Unsafe.freeMemory} runs, calling {@code free()}</li>
- *   <li>The JVM's {@code reservedMemory} counter decrements</li>
- *   <li>For {@code mmap}'d blocks, {@code munmap} runs and RSS drops</li>
- * </ol>
- *
- * <p>For a pool that trims DirectByteBuffers during idle periods,
- * "eventually via GC" is not good enough:</p>
- * <ul>
- *   <li><b>Correctness:</b> a customer running with a tight
- *       {@code -XX:MaxDirectMemorySize} can see spurious
- *       {@code OutOfMemoryError: Direct buffer memory} on re-warm
- *       because the JVM still counts the un-cleaned DBBs against
- *       the cap.</li>
- *   <li><b>Observability:</b> {@code jcmd VM.native_memory} and
- *       process RSS both remain high after trim, defeating the
- *       operator's ability to reason about pool sizing.</li>
- * </ul>
- *
- * <p>This class forces {@code Unsafe.freeMemory} to run synchronously
- * at trim time, so the effect matches the native pool's
- * {@code aws_mem_release}: microseconds, not "next GC pass".</p>
+ * A DirectByteBuffer's off-heap memory is normally released only when GC
+ * runs its Cleaner — seconds to minutes on a quiet JVM. Until then the
+ * JVM's direct-memory accounting stays high (spurious
+ * {@code OutOfMemoryError: Direct buffer memory} under
+ * {@code -XX:MaxDirectMemorySize} pressure) and RSS does not drop after
+ * pool trim. This class forces the release synchronously, matching the
+ * native pool's {@code aws_mem_release} timing.
  *
  * <h2>Portability</h2>
  * Two dispatch paths, resolved once at class load:
@@ -116,12 +88,8 @@ final class DirectBufferCleaner {
         Method legacyCleaner = null;
         Method legacyClean = null;
 
-        // Try Java 9+ Unsafe.invokeCleaner(ByteBuffer). This is a
-        // public API since Java 9 explicitly for freeing direct
-        // ByteBuffers. Preferred because it does not require
-        // reflecting into non-exported internal packages, so it
-        // works cleanly under the module system without needing
-        // --add-opens flags.
+        // Java 9+: Unsafe.invokeCleaner(ByteBuffer) — preferred (public API,
+        // no module-system friction).
         try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
             java.lang.reflect.Field theUnsafe = unsafeClass.getDeclaredField("theUnsafe");
@@ -135,40 +103,21 @@ final class DirectBufferCleaner {
             // Fall through — we'll try the Java 8 legacy path next.
         }
 
-        // Try Java 8 legacy path if the Java 9+ path was not
-        // available. On Java 9+ this reflection typically works too
-        // but produces "illegal reflective access" warnings, so we
-        // strongly prefer invokeCleaner where available.
+        // Java 8 fallback: ((DirectBuffer)buf).cleaner().clean(). clean() is
+        // resolved from a 1-byte probe buffer (Cleaner's type differs across
+        // JDKs) and exercised once so failures surface at class load.
         if (mode == MODE_UNSUPPORTED) {
             try {
                 Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
                 legacyCleaner = directBufferClass.getMethod("cleaner");
-                // The Cleaner return type differs across JDK
-                // versions (sun.misc.Cleaner on 8, jdk.internal.ref.Cleaner
-                // on 9+ if reachable). Both expose a public clean()
-                // method, so we resolve it dynamically off a real
-                // instance rather than by class name. That instance
-                // resolution happens in free() below via the returned
-                // cleaner's runtime class.
-                //
-                // Get a probe buffer to resolve the clean() method
-                // signature once. Allocate a tiny 1-byte DBB so the
-                // native cost is negligible; free it immediately via
-                // the resolved cleaner.
                 ByteBuffer probe = ByteBuffer.allocateDirect(1);
                 Object cleanerObj = legacyCleaner.invoke(probe);
                 if (cleanerObj != null) {
                     legacyClean = cleanerObj.getClass().getMethod("clean");
                     legacyClean.setAccessible(true);
-                    // Sanity: exercise it once on the probe so we
-                    // fail fast at class load rather than at first
-                    // trim call.
                     legacyClean.invoke(cleanerObj);
                     mode = MODE_LEGACY_CLEANER;
                 }
-                // If cleanerObj was null, some JVMs don't attach a
-                // cleaner to trivial DBBs. Leave mode as UNSUPPORTED
-                // — the fallback is "let GC handle it later".
             } catch (Throwable t) {
                 legacyCleaner = null;
                 legacyClean = null;

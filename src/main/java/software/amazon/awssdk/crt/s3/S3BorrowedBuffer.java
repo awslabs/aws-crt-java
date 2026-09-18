@@ -217,15 +217,25 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * @throws IllegalStateException if this borrowed buffer has been closed
      */
     public byte[] toByteArray() {
-        if (closed != 0) {
+        // Win the close CAS FIRST so a concurrent close() (or the GC
+        // fallback) cannot release the pool slot while we are still copying
+        // from it — the losing caller becomes a no-op, and the native
+        // release below runs strictly after the copy completes.
+        if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
         }
-        // duplicate() so we do not mutate the shared view's position
-        ByteBuffer dup = view.duplicate();
-        byte[] copy = new byte[dup.remaining()];
-        dup.get(copy);
-        close();
-        return copy;
+        try {
+            // duplicate() so we do not mutate the shared view's position
+            ByteBuffer dup = view.duplicate();
+            byte[] copy = new byte[dup.remaining()];
+            dup.get(copy);
+            return copy;
+        } finally {
+            // Same post-CAS steps as close(); this call owns the transition.
+            release.run();
+            LIVE.remove(release);
+            release.clear();
+        }
     }
 
     /**

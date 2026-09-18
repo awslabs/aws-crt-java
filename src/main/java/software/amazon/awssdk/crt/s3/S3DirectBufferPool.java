@@ -22,20 +22,14 @@ import software.amazon.awssdk.crt.Log;
  * Without that call, the client uses the default native buffer pool
  * and the historical {@code byte[]}-delivery path is unchanged.
  *
- * <h2>Lifetime contract (read this carefully)</h2>
- * When this pool is active, the {@link ByteBuffer} delivered to
- * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}
- * is a <em>slice</em> of a pooled direct buffer, valid <strong>only during
- * the call</strong> — the slot is recycled afterwards. To retain bytes,
- * copy them out inside the call:
- * <pre>
- *   public int onResponseBody(ByteBuffer buf, long start, long end) {
- *       byte[] copy = new byte[buf.remaining()];
- *       buf.get(copy);                  // explicit copy out
- *       myStash.add(copy);              // safe to retain indefinitely
- *       return 0;
- *   }
- * </pre>
+ * <h2>Delivery contract</h2>
+ * Attaching a pool does NOT change the behavior of
+ * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}:
+ * it continues to receive a heap {@code byte[]}-backed {@link ByteBuffer}
+ * that is safe to retain indefinitely, exactly as without a pool. Zero-copy
+ * delivery is available ONLY by overriding
+ * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)},
+ * which hands out a lifetime-controlled view over the pool slot.
  *
  * <h2>Sizing</h2>
  * The pool supports three sizing modes:

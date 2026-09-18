@@ -2506,14 +2506,6 @@
       {
         "name": "getSupportsBorrowedBufferOverload",
         "parameterTypes": []
-      },
-      {
-        "name": "onResponseBody",
-        "parameterTypes": [
-          "java.nio.ByteBuffer",
-          "long",
-          "long"
-        ]
       }
     ]
   },

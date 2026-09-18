@@ -753,11 +753,6 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
         (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 
-    /* ByteBuffer overload — direct-buffer-pool delivery path */
-    s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB =
-        (*env)->GetMethodID(env, cls, "onResponseBody", "(Ljava/nio/ByteBuffer;JJ)I");
-    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB);
-
     /* S3BorrowedBuffer overload — lifetime-controlled zero-copy opt-in */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
@@ -765,7 +760,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
 
     /* Opt-in probe: consulted once per meta-request creation to
      * decide whether to register body_callback_ex (borrowed-buffer path) or
-     * body_callback (existing ByteBuffer/byte[] paths). */
+     * body_callback (the byte[]-copy path). */
     s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload =
         (*env)->GetMethodID(env, cls, "getSupportsBorrowedBufferOverload", "()Z");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload);

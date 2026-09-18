@@ -335,7 +335,6 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onProgress;
     jmethodID onTelemetry;
     jmethodID onErrorResumeToken;
-    jmethodID onResponseBodyBB;                  /* ByteBuffer overload — direct-buffer-pool path */
     jmethodID onResponseBodyBorrowed;            /* S3BorrowedBuffer overload */
     jmethodID getSupportsBorrowedBufferOverload; /* opt-in probe */
 };

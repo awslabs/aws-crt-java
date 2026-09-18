@@ -28,7 +28,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         } catch (NoSuchMethodException e) {
             // The default is defined on S3MetaRequestResponseHandler so this
             // should never happen for a well-formed handler. Treat as "not
-            // opted in" and fall back to the ByteBuffer/byte[] paths.
+            // opted in" and fall back to the byte[] delivery path.
             return false;
         }
     }
@@ -40,19 +40,6 @@ class S3MetaRequestResponseHandlerNativeAdapter {
 
     int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
-    }
-
-    // Direct ByteBuffer path. Called by the pool-aware callback in
-    // s3_client.c when the client was constructed with a pool. The
-    // delivered ByteBuffer is a slice over pool-owned memory.
-    //
-    // WARNING: The ByteBuffer is valid only for the duration of this
-    //          call. The user's handler MUST consume or copy the bytes
-    //          before returning. See S3MetaRequestResponseHandler
-    //          Javadoc for the contract.
-    int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
-        return this.responseHandler.onResponseBody(
-            bodyBytesIn, objectRangeStart, objectRangeEnd);
     }
 
     /** Borrowed-buffer path: called from native when handler opted in + direct buffer pool attached. */

@@ -108,9 +108,10 @@ struct java_pool_state {
     jmethodID mid_slot_address;
     jmethodID mid_trim;
 
-    /* NOTE: there is no cached `mid_slice_view` — the body callback
-     * constructs the ByteBuffer view in C via NewDirectByteBuffer,
-     * avoiding a JNI->Java round-trip per delivery. */
+    /* NOTE: there is no cached `mid_slice_view` — the borrowed-buffer
+     * delivery callback (s3_client.c) constructs the ByteBuffer view in
+     * C via NewDirectByteBuffer, avoiding a JNI->Java round-trip per
+     * delivery. */
 
     /* Per-slot size; mirrors S3DirectBufferPool.partSize(). */
     size_t part_size;

@@ -714,86 +714,6 @@ cleanup:
 }
 
 /*
- * Body delivery for the direct-buffer-pool path.
- *
- * Invoked once per completed part with a cursor pointing into the
- * ticket's slot memory. The ticket is carried in info->ticket — we
- * reach through ticket->impl to recover the slot address, then
- * construct a ByteBuffer view over the range described by the cursor.
- *
- * WARNING: The ByteBuffer slice handed to Java is valid only until
- *          the SDK consumer acknowledges receipt and the ticket is
- *          released. Releasing the ticket while the slice is still
- *          held by Java code causes silent corruption.
- */
-static int s_on_s3_meta_request_body_callback_dbb(
-    struct aws_s3_meta_request *meta_request,
-    const struct aws_byte_cursor *body,
-    uint64_t range_start,
-    void *user_data) {
-
-    struct s3_client_make_meta_request_callback_data *callback_data =
-        (struct s3_client_make_meta_request_callback_data *)user_data;
-
-    /********** JNI ENV ACQUIRE **********/
-    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
-    JNIEnv *env = jvm_env_context.env;
-    if (env == NULL) {
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    /* Construct the ByteBuffer view in C via NewDirectByteBuffer.
-     * body->ptr points into pool-managed slot memory. The returned
-     * DBB has no Cleaner — the slot's parent DBB owns the memory. */
-    jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, (void *)body->ptr, (jlong)body->len);
-    if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_WARN(
-            AWS_LS_S3_META_REQUEST,
-            "id=%p: S3DirectBufferPool: NewDirectByteBuffer failed for "
-            "chunk (len=%zu, range_start=%llu); meta-request will fail",
-            (void *)meta_request,
-            body->len,
-            (unsigned long long)range_start);
-        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-        /********** JNI ENV RELEASE **********/
-        return aws_raise_error(AWS_ERROR_INVALID_STATE);
-    }
-
-    /* Deliver to the ByteBuffer-taking adapter method (registered in
-     * java_class_ids.c). The byte[]-taking method ID is NOT touched
-     * here — that path is exclusively used by the default callback. */
-    uint64_t range_end = range_start + body->len;
-    jint window_increment = (*env)->CallIntMethod(
-        env,
-        callback_data->java_s3_meta_request_response_handler_native_adapter,
-        s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBB,
-        sliced_dbb,
-        (jlong)range_start,
-        (jlong)range_end);
-
-    if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
-        AWS_LOGF_ERROR(
-            AWS_LS_S3_META_REQUEST,
-            "id=%p: Received exception from S3MetaRequest.onResponseBody (ByteBuffer path) callback",
-            (void *)meta_request);
-        (*env)->DeleteLocalRef(env, sliced_dbb);
-        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-        /********** JNI ENV RELEASE **********/
-        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
-    }
-
-    if (window_increment > 0) {
-        aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)window_increment);
-    }
-
-    (*env)->DeleteLocalRef(env, sliced_dbb);
-    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
-    /********** JNI ENV RELEASE **********/
-
-    return AWS_OP_SUCCESS;
-}
-
-/*
  * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
  * direct buffer pool is attached AND the handler overrides
  * onResponseBody(S3BorrowedBuffer, long, long).
@@ -1798,10 +1718,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     /* Body callback selection:
-     *   - Pool attached AND handler opted into borrowed-buffer overload
-     *     → body_callback_ex (lifetime-controlled zero-copy)
-     *   - Pool attached, no opt-in → body_callback = _dbb (transient DBB)
-     *   - No pool → body_callback = default (byte[] copy)
+     *   - Pool attached AND handler opted into the borrowed-buffer overload
+     *     -> body_callback_ex (lifetime-controlled zero-copy)
+     *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
+     *     copy source is a pool slot instead of the default native pool, but
+     *     the handler-facing contract (heap byte[], safe to retain) is
+     *     identical to the no-pool path. Zero-copy delivery is ONLY available
+     *     through the S3BorrowedBuffer overload.
      *
      * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
      * we set exactly one below. */
@@ -1814,7 +1737,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_WARN(
                 AWS_LS_S3_META_REQUEST,
-                "getSupportsBorrowedBufferOverload() threw; falling back to the transient-ByteBuffer path");
+                "getSupportsBorrowedBufferOverload() threw; falling back to the byte[] delivery path");
             supports_borrowed = JNI_FALSE;
         }
     }
@@ -1830,9 +1753,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .headers_callback = s_on_s3_meta_request_headers_callback,
         /* Exactly one of body_callback / body_callback_ex is set — they
          * are mutually exclusive at aws-c-s3 (dispatch table above). */
-        .body_callback = supports_borrowed ? NULL
-                                           : (jni_use_buffer_pool ? s_on_s3_meta_request_body_callback_dbb
-                                                                  : s_on_s3_meta_request_body_callback),
+        .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
         .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,

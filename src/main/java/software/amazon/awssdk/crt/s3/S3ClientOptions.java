@@ -420,13 +420,18 @@ public class S3ClientOptions {
     }
 
     /**
-     * Sets a Java-owned direct buffer pool for zero-copy response body delivery.
+     * Sets a Java-owned direct buffer pool used as the destination memory
+     * for S3 download response bodies.
      *
-     * <p>When set, S3 download responses deliver body bytes as a
-     * {@link java.nio.ByteBuffer} slice over pool-owned off-heap memory,
-     * eliminating the {@code byte[]} allocation and copy on the hot path.</p>
+     * <p>Attaching a pool makes download staging memory JVM-visible (counted
+     * against {@code -XX:MaxDirectMemorySize}, hard-capped, trimmed when
+     * idle) and does NOT change the delivery contract of
+     * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}
+     * — it still receives a heap {@code byte[]}-backed buffer that is safe
+     * to retain. Zero-copy delivery is available only by overriding
+     * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.</p>
      *
-     * @param pool the direct buffer pool, or {@code null} to use the default byte[]-copy path
+     * @param pool the direct buffer pool, or {@code null} to use the default native pool
      * @return this
      * @see S3DirectBufferPool
      */

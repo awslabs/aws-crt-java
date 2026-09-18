@@ -81,6 +81,14 @@ public class S3ClientOptions {
      */
     private FileIoOptions fileIoOptions;
 
+    /**
+     * Optional Java-owned direct buffer pool for zero-copy response
+     * delivery. Default: {@code null} (byte[]-copy path, unchanged).
+     * See {@link S3DirectBufferPool} for factories, sizing, and the
+     * lifetime contract.
+     */
+    private S3DirectBufferPool directByteBufferPool;
+
     public S3ClientOptions() {
         this.computeContentMd5 = false;
     }
@@ -219,7 +227,7 @@ public class S3ClientOptions {
     }
 
     /**
-     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
+     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled), in bytes.
      *
      * @see #withReadBackpressureEnabled
      *
@@ -409,5 +417,35 @@ public class S3ClientOptions {
      */
     public FileIoOptions getFileIoOptions() {
         return fileIoOptions;
+    }
+
+    /**
+     * Sets a Java-owned direct buffer pool used as the destination memory
+     * for S3 download response bodies.
+     *
+     * <p>Attaching a pool makes download staging memory JVM-visible (counted
+     * against {@code -XX:MaxDirectMemorySize}, hard-capped, trimmed when
+     * idle) and does NOT change the delivery contract of
+     * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}
+     * — it still receives a heap {@code byte[]}-backed buffer that is safe
+     * to retain. Zero-copy delivery is available only by overriding
+     * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.</p>
+     *
+     * @param pool the direct buffer pool, or {@code null} to use the default native pool
+     * @return this
+     * @see S3DirectBufferPool
+     */
+    public S3ClientOptions withDirectByteBufferPool(S3DirectBufferPool pool) {
+        this.directByteBufferPool = pool;
+        return this;
+    }
+
+    /**
+     * Returns the configured direct buffer pool, or {@code null} if not set.
+     *
+     * @return the direct buffer pool or null
+     */
+    public S3DirectBufferPool getDirectByteBufferPool() {
+        return directByteBufferPool;
     }
 }

@@ -209,6 +209,10 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * calling {@link #close()}, but avoids position mutation on the shared
      * view.</p>
      *
+     * <p>Because this method closes the buffer, any subsequent
+     * {@link #asByteBuffer()} or {@code toByteArray()} call throws
+     * {@link IllegalStateException}.</p>
+     *
      * @return a heap byte[] containing a copy of the buffer contents
      * @throws IllegalStateException if this borrowed buffer has been closed
      */

@@ -814,6 +814,15 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
      * client-scheduler idleness gate. Package-private on the Java class. */
     s3_direct_buffer_pool_properties.trim = (*env)->GetMethodID(env, cls, "trim", "()V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.trim);
+
+    s3_direct_buffer_pool_properties.partSize = (*env)->GetMethodID(env, cls, "partSize", "()I");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.partSize);
+
+    s3_direct_buffer_pool_properties.tryAttach = (*env)->GetMethodID(env, cls, "tryAttach", "()Z");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.tryAttach);
+
+    s3_direct_buffer_pool_properties.detach = (*env)->GetMethodID(env, cls, "detach", "()V");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.detach);
 }
 
 struct java_completable_future_properties completable_future_properties;

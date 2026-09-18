@@ -7,6 +7,7 @@ package software.amazon.awssdk.crt.s3;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import software.amazon.awssdk.crt.Log;
 
@@ -72,6 +73,20 @@ import software.amazon.awssdk.crt.Log;
  * pool-exhaustion backpressure is implemented on the native side via
  * a pending-reserve-future queue, NOT by blocking the caller (which
  * runs on an aws-c-s3 event-loop thread).
+ *
+ * <h2>One client at a time</h2>
+ * A pool may be attached to at most ONE {@link S3Client} at a time —
+ * attaching a second client while the first is alive fails that
+ * client's construction. Reuse after the previous client has fully
+ * shut down (and every {@link S3BorrowedBuffer} from it has been
+ * closed) is supported. The pool's slot size must equal the client's
+ * effective part size; client construction fails on mismatch.
+ *
+ * <h2>Teardown order</h2>
+ * Close the {@link S3Client} and await its shutdown-complete future
+ * BEFORE calling {@link #close()} on the pool. Closing the pool while
+ * a client is still active causes in-flight transfers to fail with a
+ * buffer-allocation error.
  */
 public final class S3DirectBufferPool implements AutoCloseable {
 
@@ -107,6 +122,18 @@ public final class S3DirectBufferPool implements AutoCloseable {
     private final Object growthLock = new Object();
 
     private volatile boolean closed;
+
+    /**
+     * True while a native S3 client's pool state references this pool.
+     * Set by the native pool factory via {@link #tryAttach()}; cleared
+     * by the native pool-state destructor via {@link #detach()} (which
+     * runs only after the last outstanding ticket releases). Enforces
+     * the one-client-at-a-time contract: the per-client native pending
+     * lists cannot resolve reservations across clients, so sharing one
+     * pool between live clients would deadlock the second client under
+     * exhaustion.
+     */
+    private final AtomicBoolean attachedToClient = new AtomicBoolean(false);
 
     /**
      * Private — use {@link #createFixed(long, int)} or
@@ -591,6 +618,23 @@ public final class S3DirectBufferPool implements AutoCloseable {
         return addr;
     }
 
+    /**
+     * Called from the native pool factory at client creation. CAS-guarded:
+     * returns false when this pool is already attached to a live client,
+     * which fails that client's construction.
+     */
+    boolean tryAttach() {
+        return attachedToClient.compareAndSet(false, true);
+    }
+
+    /**
+     * Called from the native pool-state destructor after the last ticket
+     * releases, re-enabling attachment for a subsequent client.
+     */
+    void detach() {
+        attachedToClient.set(false);
+    }
+
     /** @return the per-slot byte size (matches aws-c-s3's part_size config) */
     public int partSize()       { return partSize; }
     /** @return the pool ceiling — the maximum number of slots the pool may grow to */
@@ -598,8 +642,11 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /** @return the number of slots pre-allocated at construction */
     public int initialSlots()   { return initialSlots; }
     /**
-     * Returns the number of slots currently allocated (eager +
-     * lazy-grown). For diagnostics.
+     * Returns the HIGH-WATER MARK of allocated slots (eager + lazy-grown).
+     * For diagnostics. Monotonic: trim() frees slot memory but never
+     * decrements this counter — it doubles as the lazy-growth index
+     * cursor, so slots this counter covers may currently be trimmed
+     * (unbacked) and will be lazily re-backed on next acquire.
      *
      * <p>Synchronizes only on {@code growthLock} — the same lock
      * that guards writes to {@code allocatedSlots}. Avoids
@@ -613,6 +660,13 @@ public final class S3DirectBufferPool implements AutoCloseable {
         synchronized (growthLock) { return allocatedSlots; }
     }
 
+    /**
+     * Marks the pool closed; subsequent acquires fail. Call ONLY after
+     * every {@link S3Client} using this pool has been closed AND its
+     * shutdown-complete future has resolved — closing earlier causes
+     * in-flight transfers to fail with a buffer-allocation error.
+     * Slot memory is reclaimed by GC once the last ticket releases.
+     */
     @Override
     public void close() {
         closed = true;

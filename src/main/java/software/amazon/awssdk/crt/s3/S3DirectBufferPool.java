@@ -80,7 +80,9 @@ import software.amazon.awssdk.crt.Log;
  * Close the {@link S3Client} and await its shutdown-complete future
  * BEFORE calling {@link #close()} on the pool. Closing the pool while
  * a client is still active causes in-flight transfers to fail with a
- * buffer-allocation error.
+ * buffer-allocation error. {@code close()} immediately frees all unused
+ * slot memory; slots held by unclosed {@link S3BorrowedBuffer}s are
+ * freed as each buffer is closed.
  */
 public final class S3DirectBufferPool implements AutoCloseable {
 
@@ -569,6 +571,21 @@ public final class S3DirectBufferPool implements AutoCloseable {
      */
     void releaseSlot(int slotIndex) {
         validateIndex(slotIndex);
+        if (closed) {
+            // Late release: a borrowed buffer outlived pool.close(). The
+            // native ticket has fully released, so nothing references the
+            // slot's address anymore — free it now instead of queueing it
+            // for reuse that can never happen. Null-tolerant (idempotent).
+            synchronized (growthLock) {
+                ByteBuffer dbb = slots[slotIndex];
+                if (dbb != null) {
+                    slots[slotIndex] = null;
+                    slotAddresses[slotIndex] = 0L;
+                    DirectBufferCleaner.free(dbb);
+                }
+            }
+            return;
+        }
         // Defensive check: the JNI caller should only release indices
         // that were returned by tryAcquireSlot(). Guards the
         // [allocatedSlots, maxSlots) gap during lazy growth — a bug
@@ -655,19 +672,41 @@ public final class S3DirectBufferPool implements AutoCloseable {
     }
 
     /**
-     * Marks the pool closed; subsequent acquires fail. Call ONLY after
-     * every {@link S3Client} using this pool has been closed AND its
-     * shutdown-complete future has resolved — closing earlier causes
-     * in-flight transfers to fail with a buffer-allocation error.
-     * Slot memory is reclaimed by GC once the last ticket releases.
+     * Marks the pool closed and immediately frees every UNUSED slot's
+     * memory. Call ONLY after every {@link S3Client} using this pool has
+     * been closed AND its shutdown-complete future has resolved — closing
+     * earlier causes in-flight transfers to fail with a buffer-allocation
+     * error.
+     *
+     * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
+     * freed here (that would be a use-after-free under the holder); each
+     * one is freed when its buffer is closed. A slot released concurrently
+     * with this call may miss the sweep and fall back to GC reclamation.
+     * Idempotent.</p>
      */
     @Override
     public void close() {
         closed = true;
-        // No eager free: live tickets cache raw slot addresses natively,
-        // so freeing here would be a use-after-free. (Trim can free eagerly
-        // only because it is idleness-gated.) Memory is reclaimed by GC
-        // once the last ticket releases and this pool becomes unreachable.
+        // Eagerly free every free-queue slot. Safe: a queued index is by
+        // definition unleased (no native ticket caches its address), and
+        // polling under growthLock partitions each index to exactly one
+        // party — a racing acquirer that wins a poll keeps a valid slot we
+        // never see. Leased slots are not in the queue; they are freed in
+        // releaseSlot() when their borrowed buffers close (closed == true
+        // branch). No re-offer: the pool is closed for good.
+        synchronized (growthLock) {
+            Integer idx;
+            while ((idx = freeIndices.poll()) != null) {
+                int i = idx;
+                ByteBuffer dbb = slots[i];
+                if (dbb == null) {
+                    continue;   // already trimmed
+                }
+                slots[i] = null;
+                slotAddresses[i] = 0L;
+                DirectBufferCleaner.free(dbb);
+            }
+        }
     }
 
     private void validateIndex(int idx) {

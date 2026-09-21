@@ -41,51 +41,15 @@ import software.amazon.awssdk.crt.Log;
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
 
-    /** Leak-report level: DISABLED, SIMPLE (sample traces 1-in-128), PARANOID (trace every buffer). */
-    private enum LeakDetection { DISABLED, SIMPLE, PARANOID }
-
-    /** From aws.crt.s3.leakdetection at class load. Unrecognized values -> SIMPLE (a typo must not disable reporting). */
-    private static final LeakDetection LEAK_DETECTION_LEVEL;
-
-    static {
-        String prop = System.getProperty("aws.crt.s3.leakdetection", "simple").trim();
-        if (prop.equalsIgnoreCase("disabled")) {
-            LEAK_DETECTION_LEVEL = LeakDetection.DISABLED;
-        } else if (prop.equalsIgnoreCase("paranoid")) {
-            LEAK_DETECTION_LEVEL = LeakDetection.PARANOID;
-        } else {
-            LEAK_DETECTION_LEVEL = LeakDetection.SIMPLE;
-        }
-    }
-
-    /** SIMPLE-mode sampling: every 128th buffer captures an allocation trace. */
-    private static final AtomicLong SAMPLE_COUNTER = new AtomicLong();
-    private static final long SAMPLE_MASK = 127; // 1 in 128
-
-    /** Running total of detected leaks, included in every report. */
-    private static final AtomicLong LEAK_COUNT = new AtomicLong();
-
-    /** Dedup of reported allocation sites (frame hash). Bounded; when full, new sites still report. */
-    private static final Set<Integer> REPORTED_LEAK_SITES = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private static final int MAX_REPORTED_LEAK_SITES = 1024;
-
-    /** Ensures the "untraced leaks occurred" summary WARN logs exactly once. */
-    private static final AtomicBoolean UNTRACED_LEAK_REPORTED = new AtomicBoolean();
-
-    /** Receives phantom refs for buffers GC'd without close; drained by the daemon cleaner thread. */
-    private static final ReferenceQueue<S3BorrowedBuffer> RELEASE_QUEUE = new ReferenceQueue<>();
-
-    /** Keeps ReleaseActions strongly reachable so the phantom refs can enqueue; pruned on release. */
-    private static final Set<ReleaseAction> LIVE = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    static {
-        Thread t = new Thread(S3BorrowedBuffer::cleanerLoop, "aws-crt-s3-borrowed-buffer-cleaner");
-        t.setDaemon(true);
-        t.start();
-    }
+    /* ==================================================================== */
+    /* Core borrowed-buffer API                                             */
+    /* ==================================================================== */
 
     private static final AtomicIntegerFieldUpdater<S3BorrowedBuffer> CLOSED_UPDATER =
         AtomicIntegerFieldUpdater.newUpdater(S3BorrowedBuffer.class, "closed");
+    /** 0 = open, 1 = closed. Compared and set by {@link #close()}. */
+    @SuppressWarnings("unused") // read by CLOSED_UPDATER
+    private volatile int closed = 0;
 
     /** Raw pointer to the underlying aws_s3_buffer_ticket. Valid until nativeReleaseTicket is called. */
     private final long ticketPtr;
@@ -96,18 +60,15 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * {@link ByteBuffer#duplicate()} or {@link ByteBuffer#slice()} if you need
      * an independent position/limit.
      */
-    private final ByteBuffer view;
+    private final ByteBuffer directView;
 
     /**
      * Registered release action. Invoked exactly once — either by {@link #close()}
      * (customer control) or by the cleaner daemon thread when this buffer
-     * becomes phantom-reachable.
+     * becomes phantom-reachable. (The cleaner thread and phantom-reference
+     * fallback are explained in the release-mechanism section below.)
      */
     private final ReleaseAction release;
-
-    /** 0 = open, 1 = closed. CAS'd by {@link #close()}. */
-    @SuppressWarnings("unused") // read by CLOSED_UPDATER
-    private volatile int closed = 0;
 
     /**
      * Called only from native ({@code s_on_s3_meta_request_body_callback_borrowed} in
@@ -115,15 +76,18 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      *
      * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; native
      *                  holds one ref count for us; nativeReleaseTicket decrements it
-     * @param view      direct byte buffer view sliced to the response body length,
+     * @param directView direct byte buffer view sliced to the response body length,
      *                  addressed against the ticket's slot memory
      */
-    S3BorrowedBuffer(long ticketPtr, ByteBuffer view) {
+    S3BorrowedBuffer(long ticketPtr, ByteBuffer directView) {
         this.ticketPtr = ticketPtr;
-        this.view = view;
-        // Leak detection: sampled allocation trace (all buffers at PARANOID).
-        // The trace travels with the ReleaseAction — NOT this object — so it
-        // survives to the leak report after this buffer has been GC'd.
+        this.directView = directView;
+
+        // Leak detection (explained in the leak-detection section at the
+        // bottom of this file): sampled allocation trace (all buffers at
+        // PARANOID). The trace travels with the ReleaseAction (NOT this
+        // object) so it survives to the leak report after this buffer has
+        // been GC'd.
         Throwable allocationTrace = null;
         if (LEAK_DETECTION_LEVEL == LeakDetection.PARANOID
             || (LEAK_DETECTION_LEVEL == LeakDetection.SIMPLE
@@ -137,10 +101,19 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Returns a {@link ByteBuffer} view over the underlying pool slot. The
-     * returned buffer is a shared reference — do not mutate its position or
+     * returned buffer is a shared reference. Do not mutate its position or
      * limit if other threads may be reading concurrently. Use
      * {@link ByteBuffer#duplicate()} or {@link ByteBuffer#slice()} for a
      * private view.
+     *
+     * <p>The returned buffer is a DIRECT buffer over pool memory, not a
+     * heap buffer: it has no backing array ({@link ByteBuffer#hasArray()}
+     * is {@code false}, and {@link ByteBuffer#array()} throws
+     * {@link UnsupportedOperationException}), and it is only valid until
+     * {@link #close()}. Read it through the {@code ByteBuffer} API
+     * ({@code get}, bulk {@code get(byte[])}, channel writes). If you need
+     * a {@code byte[]} — or bytes that outlive this buffer — use
+     * {@link #toByteArray()} instead.</p>
      *
      * @return a direct {@link ByteBuffer} sliced to the response body length
      * @throws IllegalStateException if this borrowed buffer has been closed
@@ -149,7 +122,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         if (closed != 0) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
         }
-        return view;
+        return directView;
     }
 
     /**
@@ -161,7 +134,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * @throws IllegalStateException if this borrowed buffer has been closed
      */
     public byte[] toByteArray() {
-        // Win the close CAS FIRST so a concurrent close() (or the GC
+        // Win the close Compare and Set FIRST so a concurrent close() (or the GC
         // fallback) cannot release the pool slot while we are still copying
         // from it — the losing caller becomes a no-op, and the native
         // release below runs strictly after the copy completes.
@@ -170,15 +143,13 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         }
         try {
             // duplicate() so we do not mutate the shared view's position
-            ByteBuffer dup = view.duplicate();
+            ByteBuffer dup = directView.duplicate();
             byte[] copy = new byte[dup.remaining()];
             dup.get(copy);
             return copy;
         } finally {
-            // Same post-CAS steps as close(); this call owns the transition.
-            release.run();
-            LIVE.remove(release);
-            release.clear();
+            // this call won the Compare and Set, so it owns the release
+            performRelease();
         }
     }
 
@@ -194,13 +165,59 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     @Override
     public void close() {
         if (CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
-            // Run the release synchronously. The cleaner thread may still
-            // pull this from the queue later; ReleaseAction.run() is
-            // idempotent so a duplicate call is a no-op.
-            release.run();
-            LIVE.remove(release);
-            release.clear();  // clear the phantom reference so it doesn't enqueue
+            performRelease();
         }
+    }
+
+    /**
+     * Post-close Compare-and-Set release steps shared by {@link #close()} and
+     * {@link #toByteArray()}. MUST only be called by the thread that won
+     * the {@code closed} 0->1 compare-and-set — the winner owns the
+     * transition. Releases the native ticket synchronously
+     * (ReleaseAction.run() is CAS-idempotent, so a duplicate call from the
+     * cleaner thread is a no-op), drops the bookkeeping reference, and
+     * clears the phantom reference so a properly closed buffer can never
+     * enqueue as a leak.
+     */
+    private void performRelease() {
+        release.run();
+        LIVE.remove(release);
+        release.clear();
+    }
+
+
+    /* ==================================================================== */
+    /* Release mechanism + GC fallback for unclosed buffers                 */
+    /* ==================================================================== */
+
+    /*
+     * Why this exists: releasing the S3BorrowedBuffer pool slot is the
+     * CUSTOMER's job (close()) but customers will sometimes forget. 
+     * Without a fallback, every forgotten buffer would pin its pool slot 
+     * forever. The pool is hard-capped, so sustained leaks drain it until
+     * downloads stall with no error.
+     * 
+     * The functions below recover slots when a forgotten buffer is garbage-collected.
+     * Each buffer registers a phantom reference (ReleaseAction) that the JVM enqueues
+     * after the buffer is GC'd, and a daemon thread drains the queue and releases 
+     * the ticket.
+     * 
+     * This is a safety net, not a lifecycle strategy. Recovery waits on
+     * GC timing, so leaks are also reported — recovery that silently kept
+     * pace would hide the customer's missing close() until it failed at
+     * scale (see the leak-detection section below).
+     */
+
+    /** Receives phantom refs for buffers GC'd without close; drained by the daemon cleaner thread. */
+    private static final ReferenceQueue<S3BorrowedBuffer> RELEASE_QUEUE = new ReferenceQueue<>();
+
+    /** Keeps ReleaseActions strongly reachable so the phantom refs can enqueue; pruned on release. */
+    private static final Set<ReleaseAction> LIVE = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    static {
+        Thread t = new Thread(S3BorrowedBuffer::cleanerLoop, "aws-crt-s3-borrowed-buffer-cleaner");
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -273,6 +290,48 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
+     * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
+     * When the last reference drops the slot returns to the pool. Safe to
+     * call after JVM shutdown has begun; a null/zero pointer is a no-op.
+     */
+    private static native void nativeReleaseTicket(long ticketPtr);
+
+    /* ==================================================================== */
+    /* Leak detection (diagnostics only; no effect on buffer lifetime)      */
+    /* ==================================================================== */
+
+    /** Leak-report level: DISABLED, SIMPLE (sample traces 1-in-128), PARANOID (trace every buffer). */
+    private enum LeakDetection { DISABLED, SIMPLE, PARANOID }
+
+    /** From aws.crt.s3.leakdetection at class load. Unrecognized values -> SIMPLE (a typo must not disable reporting). */
+    private static final LeakDetection LEAK_DETECTION_LEVEL;
+
+    static {
+        String prop = System.getProperty("aws.crt.s3.leakdetection", "simple").trim();
+        if (prop.equalsIgnoreCase("disabled")) {
+            LEAK_DETECTION_LEVEL = LeakDetection.DISABLED;
+        } else if (prop.equalsIgnoreCase("paranoid")) {
+            LEAK_DETECTION_LEVEL = LeakDetection.PARANOID;
+        } else {
+            LEAK_DETECTION_LEVEL = LeakDetection.SIMPLE;
+        }
+    }
+
+    /** SIMPLE-mode sampling: every 128th buffer captures an allocation trace. */
+    private static final AtomicLong SAMPLE_COUNTER = new AtomicLong();
+    private static final long SAMPLE_MASK = 127; // 1 in 128
+
+    /** Running total of detected leaks, included in every report. */
+    private static final AtomicLong LEAK_COUNT = new AtomicLong();
+
+    /** Dedup of reported allocation sites (frame hash). Bounded; when full, new sites still report. */
+    private static final Set<Integer> REPORTED_LEAK_SITES = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final int MAX_REPORTED_LEAK_SITES = 1024;
+
+    /** Ensures the "untraced leaks occurred" summary WARN logs exactly once. */
+    private static final AtomicBoolean UNTRACED_LEAK_REPORTED = new AtomicBoolean();
+
+    /**
      * WARNs for a detected leak. Traced leaks log once per unique allocation
      * site with the creation stack; untraced leaks log one summary ever
      * (pointing at the paranoid level) and are counted thereafter.
@@ -319,10 +378,4 @@ public final class S3BorrowedBuffer implements AutoCloseable {
           + totalLeaks + ") Allocation site:\n" + sw);
     }
 
-    /**
-     * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
-     * When the last reference drops the slot returns to the pool. Safe to
-     * call after JVM shutdown has begun; a null/zero pointer is a no-op.
-     */
-    private static native void nativeReleaseTicket(long ticketPtr);
 }

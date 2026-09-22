@@ -562,6 +562,21 @@ JNIEXPORT void JNICALL
     aws_s3_client_release(client);
 }
 
+JNIEXPORT jint JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientGetMaxActiveConnections(
+    JNIEnv *env,
+    jclass jni_class,
+    jlong jni_s3_client) {
+    (void)jni_class;
+
+    struct aws_s3_client *client = (struct aws_s3_client *)jni_s3_client;
+    if (!client) {
+        aws_jni_throw_runtime_exception(env, "S3Client.getMaxActiveConnections: Invalid/null client");
+        return 0;
+    }
+
+    return (jint)aws_s3_client_get_max_active_connections(client, NULL);
+}
+
 static void s_on_s3_client_shutdown_complete_callback(void *user_data) {
     struct s3_client_callback_data *callback = (struct s3_client_callback_data *)user_data;
 
@@ -1080,6 +1095,14 @@ static void s_on_s3_meta_request_telemetry_callback(
             env, metrics_object, s3_request_metrics_properties.service_call_duration_ns_field_id, timestamp_value);
     }
 
+    if (aws_s3_request_metrics_get_conn_acquire_duration_ns(metrics, &timestamp_value) == AWS_OP_SUCCESS) {
+        (*env)->SetLongField(
+            env,
+            metrics_object,
+            s3_request_metrics_properties.connection_acquisition_duration_ns_field_id,
+            timestamp_value);
+    }
+
     // Request/Response info (int) - from req_resp_info_metrics
     int response_status;
     if (aws_s3_request_metrics_get_response_status_code(metrics, &response_status) == AWS_OP_SUCCESS) {
@@ -1132,6 +1155,22 @@ static void s_on_s3_meta_request_telemetry_callback(
     jstring host_address = aws_jni_string_from_cursor(env, &host_address_cursor);
     (*env)->SetObjectField(env, metrics_object, s3_request_metrics_properties.host_address_field_id, host_address);
     (*env)->DeleteLocalRef(env, host_address);
+
+    bool is_https = aws_s3_request_metrics_get_is_https(metrics);
+    (*env)->SetBooleanField(env, metrics_object, s3_request_metrics_properties.is_https_field_id, (jboolean)is_https);
+
+    struct aws_http_manager_metrics http_manager_metrics;
+    aws_s3_request_metrics_get_http_manager_metrics(metrics, &http_manager_metrics);
+    jobject http_manager_metrics_object = (*env)->NewObject(
+        env,
+        http_manager_metrics_properties.http_manager_metrics_class,
+        http_manager_metrics_properties.constructor_method_id,
+        (jlong)http_manager_metrics.available_concurrency,
+        (jlong)http_manager_metrics.pending_concurrency_acquires,
+        (jlong)http_manager_metrics.leased_concurrency);
+    (*env)->SetObjectField(
+        env, metrics_object, s3_request_metrics_properties.http_manager_metrics_field_id, http_manager_metrics_object);
+    (*env)->DeleteLocalRef(env, http_manager_metrics_object);
 
     // CRT info (String) - from crt_info_metrics
     const struct aws_string *ip_address_string;

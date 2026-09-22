@@ -262,6 +262,16 @@ public class S3Client extends CrtResource {
         return shutdownComplete;
     }
 
+    /**
+     * @return the maximum number of connections this client will keep active at once, across every endpoint it
+     * talks to. The same value is additionally applied as the cap for each individual endpoint's connection pool.
+     * Fixed for the lifetime of the client - derived from its configured throughput target, which
+     * {@link S3ClientOptions#withMaxConnections} can lower but not raise.
+     */
+    public int getMaxActiveConnections() {
+        return s3ClientGetMaxActiveConnections(getNativeHandle());
+    }
+
     /*******************************************************************************
      * native methods
      ******************************************************************************/
@@ -293,6 +303,8 @@ public class S3Client extends CrtResource {
             boolean directIo) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
+
+    private static native int s3ClientGetMaxActiveConnections(long client);
 
     private static native long s3ClientMakeMetaRequest(long clientId, S3MetaRequest metaRequest, byte[] region,
             int metaRequestType, byte[] operationName,

@@ -1952,7 +1952,9 @@ public class S3ClientTest extends CrtTestFixture {
         public long serviceCallDurationNs;
         public int retryCount;
         public String ipAddress;
-        
+        public long connectionAcquisitionDurationNs;
+        public HttpManagerMetrics httpManagerMetrics;
+
         public void captureFrom(S3RequestMetrics metrics) {
             try {
                 this.apiCallDurationNs = metrics.getApiCallDurationNs();
@@ -2001,13 +2003,24 @@ public class S3ClientTest extends CrtTestFixture {
             }
             this.retryCount = metrics.getRetryCount();
             this.ipAddress = metrics.getIpAddress();
+            try {
+                this.connectionAcquisitionDurationNs = metrics.getConnectionAcquisitionDurationNs();
+            } catch (Exception e) {
+                this.connectionAcquisitionDurationNs = -1;
+            }
+            this.httpManagerMetrics = metrics.getHttpManagerMetrics();
         }
         
-        public void validateMetrics() {
+        public void validateMetrics(int maxActiveConnections) {
             Assert.assertTrue("API Call duration should be >= 0", apiCallDurationNs >= 0);
             Assert.assertTrue("API call should be successful", apiCallSuccessful);
-            Assert.assertEquals("Service ID should be s3", "s3", serviceId);
-            Assert.assertNotNull("Service endpoint should not be null", serviceEndpoint);
+            Assert.assertEquals("Service ID should be S3", "S3", serviceId);
+            // This test's S3Client uses no endpoint override and no explicit HTTP scheme, so the
+            // client defaults to https.
+            Assert.assertEquals("Service endpoint should be the https-qualified host",
+                    "https://" + ENDPOINT, serviceEndpoint);
+            Assert.assertEquals("Service endpoint should parse to the expected host",
+                    ENDPOINT, java.net.URI.create(serviceEndpoint).getHost());
             Assert.assertNotNull("Operation name should not be null", operationName);
             Assert.assertFalse("Operation name should not be empty", operationName.isEmpty());
             Assert.assertNotNull("Request ID should not be null", awsRequestId);
@@ -2021,6 +2034,24 @@ public class S3ClientTest extends CrtTestFixture {
             Assert.assertTrue("Service call duration should be >= 0", serviceCallDurationNs >= -1);
             Assert.assertTrue("Retry count should be >= 0", retryCount >= 0);
             Assert.assertTrue("IP Address should be valid", validateIpAddress(ipAddress));
+
+            // The request had to acquire a connection to be sent, so the duration must be recorded.
+            Assert.assertTrue("Connection acquisition duration should be >= 0", connectionAcquisitionDurationNs >= 0);
+            Assert.assertTrue("Connection acquisition duration should be <= API call duration",
+                    connectionAcquisitionDurationNs <= apiCallDurationNs);
+
+            // Snapshot of the endpoint's connection manager taken right before this request acquired a
+            // connection, so it never counts this request's own lease.
+            Assert.assertNotNull("HTTP manager metrics should not be null", httpManagerMetrics);
+            Assert.assertTrue("Leased concurrency should be >= 0", httpManagerMetrics.getLeasedConcurrency() >= 0);
+            Assert.assertTrue("Leased concurrency should not exceed max active connections",
+                    httpManagerMetrics.getLeasedConcurrency() <= maxActiveConnections);
+            Assert.assertTrue("Available concurrency should be >= 0",
+                    httpManagerMetrics.getAvailableConcurrency() >= 0);
+            Assert.assertTrue("Available concurrency should not exceed max active connections",
+                    httpManagerMetrics.getAvailableConcurrency() <= maxActiveConnections);
+            Assert.assertTrue("Pending concurrency acquires should be >= 0",
+                    httpManagerMetrics.getPendingConcurrencyAcquires() >= 0);
         }
 
         private boolean validateIpAddress(String ip) {
@@ -2095,13 +2126,18 @@ public class S3ClientTest extends CrtTestFixture {
                     .withHttpRequest(httpRequest)
                     .withResponseHandler(responseHandler);
 
+            // Client-level cap on concurrent connections. Derived from the throughput target, so it is a
+            // positive constant for the life of the client.
+            int maxActiveConnections = client.getMaxActiveConnections();
+            Assert.assertTrue("Max active connections should be > 0", maxActiveConnections > 0);
+
             try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
                 Assert.assertEquals(Integer.valueOf(0), onFinishedFuture.get());
                 Assert.assertTrue("Telemetry callback should have been called at least once",
                         telemetryCallbackCount.get() > 0);
-                
+
                 // Validate captured metrics on main thread
-                capturedMetrics.validateMetrics();
+                capturedMetrics.validateMetrics(maxActiveConnections);
             }
         } catch (InterruptedException | ExecutionException ex) {
             Assert.fail(ex.getMessage());

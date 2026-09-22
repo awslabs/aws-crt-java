@@ -335,7 +335,7 @@ public class S3Client extends CrtResource {
     /**
      * Returns aws-c-s3's default memory pool size (bytes) for the given
      * throughput target ({@code 0} = EC2 auto-detect); delegates to
-     * {@code aws_s3_default_memory_limit_for_throughput}. Package-private —
+     * {@code aws_s3_default_memory_limit_for_throughput}. Package-private,
      * used by {@link S3DirectBufferPool#createForThroughput}.
      */
     static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);

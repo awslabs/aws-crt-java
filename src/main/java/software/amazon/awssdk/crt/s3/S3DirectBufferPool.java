@@ -32,45 +32,29 @@ import software.amazon.awssdk.crt.Log;
  * which hands out a lifetime-controlled view over the pool slot.
  *
  * <h2>Sizing</h2>
- * The pool supports three sizing modes:
- *
- * <h3>Auto-scaled default</h3>
- * {@code S3DirectBufferPool.create(clientOptions)} — reads the
- * client's {@code throughputTargetGbps} and sizes the pool to match
- * {@code aws_s3_default_buffer_pool}. Honors the
- * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB}
- * env vars if set ({@code _IN_MB} takes priority, matching aws-c-s3).
- * Preserves the
- * current native pool's default footprint with JVM visibility added.
- * Recommended when the operator does not have specific sizing
- * requirements.
- *
- * <h3>Fixed</h3>
- * {@code S3DirectBufferPool.createFixed(memoryLimitBytes, partSize)} — all
- * slots are pre-allocated at construction. Memory budget is fixed at
- * {@code slotCount × partSize} and never changes. Hard-capped: no
- * forced-buffer overrun; a spike beyond capacity throws
- * {@code OutOfMemoryError: Direct buffer memory} at
- * {@code tryAcquireSlot}. Suggested values: {@code partSize = 8 MiB},
- * {@code slotCount = 32} (256 MiB total). Recommended for workloads
- * with predictable throughput and tight container-memory budgets.
- *
- * <h3>Elastic (lazy growth)</h3>
- * {@code S3DirectBufferPool.createElastic(initialSlots, maxSlots, partSize)}
- * — pre-allocates {@code initialSlots}; grows lazily up to {@code maxSlots}.
- * Recommended for variable throughput. See {@link #createElastic} for
- * sizing and cold-start guidance.
+ * Three modes; each factory's Javadoc carries the details:
+ * <ul>
+ *   <li>{@link #create(S3ClientOptions)}. Auto-scaled to match
+ *       aws-c-s3's default pool for the client's throughput target.
+ *       Recommended default.</li>
+ *   <li>{@link #createFixed(long, int)}. Everything pre-allocated,
+ *       hard-capped. For predictable throughput and tight
+ *       container-memory budgets.</li>
+ *   <li>{@link #createElastic(int, int, int)}. Warm floor + lazy
+ *       growth to a ceiling. For variable throughput; see its Javadoc
+ *       for cold-start guidance.</li>
+ * </ul>
  *
  * <h2>Thread safety</h2>
  * All package-private methods are safe for concurrent invocation.
- * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking —
- * pool-exhaustion backpressure is implemented on the native side via
+ * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking.
+ * Pool-exhaustion backpressure is implemented on the native side via
  * a pending-reserve-future queue, NOT by blocking the caller (which
  * runs on an aws-c-s3 event-loop thread).
  *
  * <h2>One client at a time</h2>
- * A pool may be attached to at most ONE {@link S3Client} at a time —
- * attaching a second client while the first is alive fails that
+ * A pool may be attached to at most ONE {@link S3Client} at a time.
+ * Attaching a second client while the first is alive fails that
  * client's construction. Reuse after the previous client has fully
  * shut down (and every {@link S3BorrowedBuffer} from it has been
  * closed) is supported. The pool's slot size must equal the client's
@@ -87,16 +71,16 @@ import software.amazon.awssdk.crt.Log;
 public final class S3DirectBufferPool implements AutoCloseable {
 
     /**
-     * Direct buffers, sized to maxSlots. [0, allocatedSlots) are live;
+     * Direct buffers, sized to maxSlots. [0, nextGrowthIndex) are backed;
      * the rest are null until lazy growth (or nulled again by trim).
-     * WARNING: must outlive every native read — anchored by the
+     * WARNING: must outlive every native read, anchored by the
      * native pool state's JNI global ref on this object.
      */
     private final ByteBuffer[] slots;
 
     /**
      * Cached native addresses, one per allocated slot; 0L when
-     * unallocated/trimmed. Stable — direct memory is not relocated by GC.
+     * unallocated/trimmed. Direct memory is not relocated by GC.
      */
     private final long[] slotAddresses;
 
@@ -108,11 +92,15 @@ public final class S3DirectBufferPool implements AutoCloseable {
     private final int maxSlots;
 
     /**
-     * Number of slots currently allocated (eager + lazy-grown).
-     * Monotonically increases up to {@code maxSlots}; never shrinks.
+     * The next slot index to back during lazy growth; equivalently, the
+     * high-water mark of slot indices ever backed (eager + lazy-grown).
+     * Monotonically increases up to {@code maxSlots} and never shrinks,
+     * even on trim: trim unbacks memory but leaves the index in
+     * circulation, so decrementing this cursor would let growth re-issue
+     * an index still in {@code freeIndices}, a double-lease.
      * Guarded by {@code growthLock} on writes.
      */
-    private int allocatedSlots;
+    private int nextGrowthIndex;
 
     /** Held only on the lazy-growth slow path of {@code tryAcquireSlot()}. */
     private final Object growthLock = new Object();
@@ -132,7 +120,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
     private final AtomicBoolean attachedToClient = new AtomicBoolean(false);
 
     /**
-     * Private — use {@link #createFixed(long, int)} or
+     * Private. Use {@link #createFixed(long, int)} or
      * {@link #createElastic(int, int, int)}.
      *
      * @throws IllegalArgumentException for invalid sizes
@@ -152,7 +140,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
         this.slots         = new ByteBuffer[maxSlots];
         this.slotAddresses = new long[maxSlots];
         this.freeIndices   = new LinkedBlockingQueue<>(maxSlots);
-        this.allocatedSlots = 0;
+        this.nextGrowthIndex = 0;
 
         // Eagerly pre-allocate the first `initialSlots` direct buffers.
         // Remaining slots (up to maxSlots) are allocated on demand in
@@ -178,12 +166,12 @@ public final class S3DirectBufferPool implements AutoCloseable {
                 slotAddresses[i] = nativeGetDirectBufferAddress(dbb);
 
                 freeIndices.add(i);
-                allocatedSlots++;
+                nextGrowthIndex++;
             }
         } catch (OutOfMemoryError e) {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: OutOfMemoryError during eager allocation "
-              + "at slot " + allocatedSlots + " of " + initialSlots
+              + "at slot " + nextGrowthIndex + " of " + initialSlots
               + " (partSize=" + partSize + " bytes). "
               + "Releasing partial allocation. Consider raising "
               + "-XX:MaxDirectMemorySize or reducing pool size.");
@@ -191,12 +179,12 @@ public final class S3DirectBufferPool implements AutoCloseable {
             // the DBBs' off-heap memory as soon as GC runs, rather than
             // waiting for this (about-to-be-thrown) constructor's `this`
             // to become unreachable via stack unwind.
-            for (int j = 0; j < allocatedSlots; j++) {
+            for (int j = 0; j < nextGrowthIndex; j++) {
                 slots[j] = null;
                 slotAddresses[j] = 0L;
             }
             freeIndices.clear();
-            allocatedSlots = 0;
+            nextGrowthIndex = 0;
             throw e;
         }
     }
@@ -226,11 +214,9 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /**
      * Auto-scaled default with an explicit part size: sizes the pool using
      * the same tier table as {@code aws_s3_default_buffer_pool}, with slot
-     * capacity set to {@code partSize}. Slot capacity MUST match the
-     * client's configured part size, otherwise every reserve call from
-     * aws-c-s3 will fail with {@code AWS_ERROR_S3_INVALID_MEMORY_LIMIT_CONFIG}
-     * (the native side refuses to hand out a slot smaller than the
-     * requested size).
+     * capacity set to {@code partSize}. Slot capacity MUST equal the
+     * client's effective part size. The native pool factory validates
+     * this at client creation and FAILS CLIENT CONSTRUCTION on mismatch.
      *
      * <p>Tier-table values live in aws-c-s3's
      * {@code s_get_default_mem_limit_from_throughput}. This factory calls
@@ -269,7 +255,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
             // hides the real cause (limit smaller than one part).
             throw new IllegalArgumentException(
                 "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
-              + partSize + " bytes) — raise the memory limit (AWS_CRT_S3_MEMORY_LIMIT_IN_MB / _IN_GIB) "
+              + partSize + " bytes). Raise the memory limit (AWS_CRT_S3_MEMORY_LIMIT_IN_MB / _IN_GIB) "
               + "or reduce partSize");
         }
         int initialSlots = Math.min(8, maxSlots);  // small warm floor
@@ -297,7 +283,10 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /**
      * Fixed-size pool: pre-allocate {@code memoryLimitBytes / partSize}
      * slots up-front; no lazy growth. Equivalent to
-     * {@code createElastic(slotCount, slotCount, partSize)}.
+     * {@code createElastic(slotCount, slotCount, partSize)}. Hard-capped:
+     * no forced-buffer overrun. A demand spike beyond capacity pends
+     * natively until slots free. Suggested starting point:
+     * {@code partSize = 8 MiB}, 32 slots (256 MiB total).
      *
      * @param memoryLimitBytes total off-heap memory budget for the pool
      * @param partSize         per-slot size in bytes
@@ -353,12 +342,73 @@ public final class S3DirectBufferPool implements AutoCloseable {
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
     }
 
-    // -----------------------------------------------------------------
-    //  Package-private JNI back-call surface.
-    //  These methods are invoked FROM s3_java_buffer_pool.c via JNI.
-    //  They must remain stable signature-wise; the method IDs are
-    //  cached in java_class_ids.c.
-    // -----------------------------------------------------------------
+    /* ==================================================================== */
+    /* Accessors + lifecycle                                                */
+    /* ==================================================================== */
+
+    /** @return the per-slot byte size (matches aws-c-s3's part_size config) */
+    public int partSize()       { return partSize; }
+    /** @return the pool ceiling, the maximum number of slots the pool may grow to */
+    public int maxSlots()       { return maxSlots; }
+    /** @return the number of slots pre-allocated at construction */
+    public int initialSlots()   { return initialSlots; }
+    /**
+     * Peak number of slots ever backed (eager + lazy-grown). For
+     * diagnostics. Some of these slots may currently be trimmed
+     * (unbacked); they are lazily re-backed on next acquire.
+     *
+     * @return the peak number of slots ever allocated
+     */
+    public int peakAllocatedSlots() {
+        synchronized (growthLock) { return nextGrowthIndex; }
+    }
+
+    /**
+     * Marks the pool closed and immediately frees every UNUSED slot's
+     * memory. Call ONLY after every {@link S3Client} using this pool has
+     * been closed AND its shutdown-complete future has resolved. Closing
+     * earlier causes in-flight transfers to fail with a buffer-allocation
+     * error.
+     *
+     * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
+     * freed here (that would be a use-after-free under the holder); each
+     * one is freed when its buffer is closed. A slot released concurrently
+     * with this call may miss the sweep and fall back to GC reclamation.
+     * Idempotent.</p>
+     */
+    @Override
+    public void close() {
+        closed = true;
+        // Eagerly free every free-queue slot. Safe: a queued index is by
+        // definition unleased (no native ticket caches its address), and
+        // polling under growthLock partitions each index to exactly one
+        // party. A racing acquirer that wins a poll keeps a valid slot we
+        // never see. Leased slots are not in the queue; they are freed in
+        // releaseSlot() when their borrowed buffers close (closed == true
+        // branch). No re-offer: the pool is closed for good.
+        synchronized (growthLock) {
+            Integer idx;
+            while ((idx = freeIndices.poll()) != null) {
+                int i = idx;
+                ByteBuffer dbb = slots[i];
+                if (dbb == null) {
+                    continue;   // already trimmed
+                }
+                slots[i] = null;
+                slotAddresses[i] = 0L;
+                DirectBufferCleaner.free(dbb);
+            }
+        }
+    }
+
+    /* ==================================================================== */
+    /* Package-private JNI back-call surface                                */
+    /* ==================================================================== */
+
+    /*
+     * Invoked FROM s3_java_buffer_pool.c via JNI. Signatures must remain
+     * stable; the method IDs are cached in java_class_ids.c.
+     */
 
     /**
      * Non-blocking acquire. Returns a free slot index if one is
@@ -366,7 +416,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * not yet reached {@code maxSlots}. Returns {@code -1} if the
      * pool is fully allocated AND every slot is currently leased.
      *
-     * <p><b>CRITICAL:</b> MUST NOT block — runs on aws-c-s3 event-loop
+     * <p><b>CRITICAL:</b> MUST NOT block. Runs on aws-c-s3 event-loop
      * threads; blocking stalls all I/O on that loop. On -1 the native
      * side pends its future ({@code s_java_pool_reserve}).</p>
      *
@@ -418,19 +468,13 @@ public final class S3DirectBufferPool implements AutoCloseable {
         // Slow path: try to grow under lock. Still non-blocking.
         synchronized (growthLock) {
             // Under lock: only grow if we haven't hit the ceiling.
-            // A concurrent grower may have raised allocatedSlots to
+            // A concurrent grower may have raised nextGrowthIndex to
             // maxSlots between the fast-path poll and this lock.
-            if (allocatedSlots < maxSlots) {
-                int newIdx = allocatedSlots;
-                // ByteBuffer.allocateDirect may throw
-                // OutOfMemoryError: Direct buffer memory if
-                // MaxDirectMemorySize is exceeded. Propagating up is
-                // the right behavior — the customer must size the
-                // JVM direct memory ceiling for maxSlots, not
-                // initialSlots. See createElastic Javadoc. Log a
-                // WARN first so operators see the pool sizing
-                // context in server logs (symmetric with the
-                // constructor's eager-allocation OOM path).
+            if (nextGrowthIndex < maxSlots) {
+                int newIdx = nextGrowthIndex;
+                // OutOfMemoryError propagates (the customer must size
+                // -XX:MaxDirectMemorySize for maxSlots, see
+                // createElastic); WARN first for operator context.
                 ByteBuffer dbb;
                 try {
                     dbb = ByteBuffer.allocateDirect(partSize);
@@ -444,14 +488,14 @@ public final class S3DirectBufferPool implements AutoCloseable {
                 }
                 slots[newIdx] = dbb;
                 slotAddresses[newIdx] = nativeGetDirectBufferAddress(dbb);
-                allocatedSlots++;
+                nextGrowthIndex++;
                 return newIdx;
             }
         }
 
         // Pool fully allocated AND all slots leased. Return sentinel.
         // The native side MUST pend its future on the C-side
-        // pending_reserves list — NEVER block this thread.
+        // pending_reserves list. NEVER block this thread.
         return -1;
     }
 
@@ -479,8 +523,8 @@ public final class S3DirectBufferPool implements AutoCloseable {
      *   <li>Invokes {@link DirectBufferCleaner#free} on the DBB to
      *       force synchronous release of the underlying native
      *       memory. Without this step, the DBB's internal Cleaner
-     *       waits for the next GC pass — plausibly seconds to
-     *       minutes on a quiet JVM — and the JVM's internal
+     *       waits for the next GC pass, plausibly seconds to
+     *       minutes on a quiet JVM, and the JVM's internal
      *       {@code Bits.reservedMemory} counter stays high,
      *       causing spurious
      *       {@code OutOfMemoryError: Direct buffer memory} on
@@ -492,7 +536,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      *       8 MiB) on next re-use.</li>
      * </ol>
      *
-     * <p>Slots below {@code initialSlots} are never trimmed — they
+     * <p>Slots below {@code initialSlots} are never trimmed. They
      * form the pool's warm floor. Slots that are currently leased
      * (not in {@code freeIndices}) are never trimmed regardless of
      * index. Handles fragmentation correctly: any free slot at any
@@ -506,7 +550,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * has neither guarantee (weakly consistent iterator). Today trim and
      * the only Java-reachable reserve path are also serialized on the
      * client's process-work event loop, but aws-c-s3's async-write reserve
-     * path runs on the caller's thread — do NOT weaken this back to
+     * path runs on the caller's thread. Do NOT weaken this back to
      * in-place iteration.</p>
      */
     void trim() {
@@ -516,7 +560,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
         // A concurrent releaseSlot (e.g. S3BorrowedBuffer.close) only
         // offers indices; those just miss this pass.
         synchronized (growthLock) {
-            // Drain the whole queue — drained indices are invisible to
+            // Drain the whole queue. Drained indices are invisible to
             // concurrent acquirers for the duration of this pass.
             java.util.ArrayList<Integer> drained = new java.util.ArrayList<>();
             Integer idx;
@@ -549,23 +593,26 @@ public final class S3DirectBufferPool implements AutoCloseable {
             for (Integer boxed : drained) {
                 if (!freeIndices.offer(boxed)) {
                     // Cannot happen: capacity == maxSlots and every
-                    // index is unique. Log rather than throw — trim is
+                    // index is unique. Log rather than throw. Trim is
                     // fire-and-forget and must never kill the caller.
                     Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                         "S3DirectBufferPool.trim: failed to re-offer slot index "
-                      + boxed + " to the free queue — slot is lost from circulation");
+                      + boxed + " to the free queue. Slot is lost from circulation");
                 }
             }
         }
     }
 
     /**
-     * Return a slot to the free pool.
+     * Return a slot to the free pool, or, when the pool is closed
+     * (a borrowed buffer outlived {@link #close()}), free the slot's
+     * memory immediately instead of queueing it for reuse that can
+     * never happen.
      *
      * <p>Called by the native ticket's {@code release} vtable function
      * when {@code aws_s3_buffer_ticket_release} fires. After this
      * returns, the slot's memory MAY be handed out to a subsequent
-     * {@code tryAcquireSlot()} call and its bytes overwritten — any
+     * {@code tryAcquireSlot()} call and its bytes overwritten. Any
      * outstanding Java reference to a slice of this slot is now
      * UNSAFE to read.</p>
      */
@@ -574,7 +621,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
         if (closed) {
             // Late release: a borrowed buffer outlived pool.close(). The
             // native ticket has fully released, so nothing references the
-            // slot's address anymore — free it now instead of queueing it
+            // slot's address anymore. Free it now instead of queueing it
             // for reuse that can never happen. Null-tolerant (idempotent).
             synchronized (growthLock) {
                 ByteBuffer dbb = slots[slotIndex];
@@ -588,7 +635,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
         }
         // Defensive check: the JNI caller should only release indices
         // that were returned by tryAcquireSlot(). Guards the
-        // [allocatedSlots, maxSlots) gap during lazy growth — a bug
+        // [nextGrowthIndex, maxSlots) gap during lazy growth. A bug
         // here would otherwise be a silent NPE deep in the call.
         ByteBuffer slot = slots[slotIndex];
         if (slot == null) {
@@ -610,8 +657,8 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * avoiding a JNI->Java round-trip per delivered part.
      *
      * The resulting ByteBuffer has the same semantics as a
-     * `slots[slotIndex].duplicate().position(off).limit(off+len)`
-     * — it shares the slot's underlying memory with no Cleaner
+     * `slots[slotIndex].duplicate().position(off).limit(off+len)`.
+     * It shares the slot's underlying memory with no Cleaner
      * attached (the slot's parent DBB owns the memory).
      */
 
@@ -630,9 +677,9 @@ public final class S3DirectBufferPool implements AutoCloseable {
     }
 
     /**
-     * Called from the native pool factory at client creation. CAS-guarded:
-     * returns false when this pool is already attached to a live client,
-     * which fails that client's construction.
+     * Called from the native pool factory at client creation.
+     * Compare-and-set guarded: returns false when this pool is already
+     * attached to a live client, which fails that client's construction.
      */
     boolean tryAttach() {
         return attachedToClient.compareAndSet(false, true);
@@ -646,71 +693,12 @@ public final class S3DirectBufferPool implements AutoCloseable {
         attachedToClient.set(false);
     }
 
-    /** @return the per-slot byte size (matches aws-c-s3's part_size config) */
-    public int partSize()       { return partSize; }
-    /** @return the pool ceiling — the maximum number of slots the pool may grow to */
-    public int maxSlots()       { return maxSlots; }
-    /** @return the number of slots pre-allocated at construction */
-    public int initialSlots()   { return initialSlots; }
-    /**
-     * Returns the HIGH-WATER MARK of allocated slots (eager + lazy-grown).
-     * For diagnostics. Monotonic: trim() frees slot memory but never
-     * decrements this counter — it doubles as the lazy-growth index
-     * cursor, so slots this counter covers may currently be trimmed
-     * (unbacked) and will be lazily re-backed on next acquire.
-     *
-     * <p>Synchronizes only on {@code growthLock} — the same lock
-     * that guards writes to {@code allocatedSlots}. Avoids
-     * acquiring {@code this}'s monitor to prevent any potential
-     * lock-ordering inversion if other methods on this class
-     * are ever marked {@code synchronized}.</p>
-     *
-     * @return the number of slots currently allocated
-     */
-    public int allocatedSlots() {
-        synchronized (growthLock) { return allocatedSlots; }
-    }
+    /* ==================================================================== */
+    /* Internal helpers                                                     */
+    /* ==================================================================== */
 
-    /**
-     * Marks the pool closed and immediately frees every UNUSED slot's
-     * memory. Call ONLY after every {@link S3Client} using this pool has
-     * been closed AND its shutdown-complete future has resolved — closing
-     * earlier causes in-flight transfers to fail with a buffer-allocation
-     * error.
-     *
-     * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
-     * freed here (that would be a use-after-free under the holder); each
-     * one is freed when its buffer is closed. A slot released concurrently
-     * with this call may miss the sweep and fall back to GC reclamation.
-     * Idempotent.</p>
-     */
-    @Override
-    public void close() {
-        closed = true;
-        // Eagerly free every free-queue slot. Safe: a queued index is by
-        // definition unleased (no native ticket caches its address), and
-        // polling under growthLock partitions each index to exactly one
-        // party — a racing acquirer that wins a poll keeps a valid slot we
-        // never see. Leased slots are not in the queue; they are freed in
-        // releaseSlot() when their borrowed buffers close (closed == true
-        // branch). No re-offer: the pool is closed for good.
-        synchronized (growthLock) {
-            Integer idx;
-            while ((idx = freeIndices.poll()) != null) {
-                int i = idx;
-                ByteBuffer dbb = slots[i];
-                if (dbb == null) {
-                    continue;   // already trimmed
-                }
-                slots[i] = null;
-                slotAddresses[i] = 0L;
-                DirectBufferCleaner.free(dbb);
-            }
-        }
-    }
-
-    private void validateIndex(int idx) {
-        // Accept [0, maxSlots) — JNI only passes indices it got from tryAcquireSlot.
+private void validateIndex(int idx) {
+        // Accept [0, maxSlots). JNI only passes indices it got from tryAcquireSlot.
         if (idx < 0 || idx >= maxSlots) {
             throw new IllegalArgumentException("invalid slot index: " + idx);
         }
@@ -772,7 +760,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * determined (non-HotSpot JVM, module access denied, etc.).</p>
      */
     private static long getMaxDirectMemory() {
-        // Try sun.misc.VM.maxDirectMemory() — available on HotSpot/OpenJDK 8-21+.
+        // Try sun.misc.VM.maxDirectMemory(), available on HotSpot/OpenJDK 8-21+.
         try {
             Class<?> vmClass = Class.forName("sun.misc.VM");
             java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
@@ -828,13 +816,11 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /**
      * Resolves {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} (first) then
      * {@code _IN_GIB} to bytes, matching aws-c-s3's order so pool and
-     * native limits never diverge. Returns 0 when unset/unusable —
-     * we fall back to the tier default rather than failing, since a
+     * native limits never diverge. Returns 0 when unset/unusable.
+     * We fall back to the tier default rather than failing, since a
      * malformed value produces a clear native error at client creation.
      */
     private static long resolveEnvOverrideBytes() {
-        // _IN_MB takes priority, matching aws-c-s3 (s3_client.c reads
-        // s_memory_limit_mb_env_var before s_memory_limit_gib_env_var).
         long mbBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
         if (mbBytes > 0) return mbBytes;
 

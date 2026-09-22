@@ -113,7 +113,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * {@link UnsupportedOperationException}), and it is only valid until
      * {@link #close()}. Read it through the {@code ByteBuffer} API
      * ({@code get}, bulk {@code get(byte[])}, channel writes). If you need
-     * a {@code byte[]} — or bytes that outlive this buffer — use
+     * a {@code byte[]}, or bytes that outlive this buffer, use
      * {@link #toByteArray()} instead.</p>
      *
      * @return a direct {@link ByteBuffer} sliced to the response body length
@@ -137,7 +137,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     public byte[] toByteArray() {
         // Win the close Compare and Set FIRST so a concurrent close() (or the GC
         // fallback) cannot release the pool slot while we are still copying
-        // from it — the losing caller becomes a no-op, and the native
+        // from it. The losing caller becomes a no-op, and the native
         // release below runs strictly after the copy completes.
         if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
@@ -155,12 +155,12 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Releases the pool slot. Idempotent — safe to call multiple times from
+     * Releases the pool slot. Idempotent, safe to call multiple times from
      * any thread. The first call performs the release; subsequent calls are
      * no-ops.
      *
      * <p>After {@code close()} returns, the {@link ByteBuffer} previously
-     * returned from {@link #asByteBuffer()} MUST NOT be read — the underlying
+     * returned from {@link #asByteBuffer()} MUST NOT be read. The underlying
      * slot may be reused by another concurrent meta-request.</p>
      */
     @Override
@@ -251,7 +251,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         /**
          * Releases the ticket exactly once; later calls are no-ops.
          *
-         * @return true if THIS call performed the release — the cleaner loop
+         * @return true if THIS call performed the release. The cleaner loop
          *         uses this to distinguish a genuine leak from a benign duplicate
          */
         boolean run() {
@@ -344,7 +344,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     private static final String LEAK_WARNING_PREAMBLE =
         "S3BorrowedBuffer LEAK detected: a borrowed buffer was garbage-collected without close(). "
       + "The pool slot was recovered by the GC fallback, but the delay is unbounded and can stall "
-      + "downloads via pool exhaustion — close() every S3BorrowedBuffer.";
+      + "downloads via pool exhaustion. close() every S3BorrowedBuffer.";
 
     /**
      * WARNs for a detected leak. Traced leaks log once per unique allocation
@@ -372,7 +372,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         // Traced leak: dedup on the allocation site so one leaky loop
         // doesn't flood the logs.
         StackTraceElement[] frames = ra.allocationTrace.getStackTrace();
-        // Hash collisions may suppress distinct sites — accepted for a best-effort diagnostic.
+        // Hash collisions may suppress distinct sites, accepted for a best-effort diagnostic.
         Integer siteHash = Arrays.hashCode(frames);
         if (REPORTED_LEAK_SITES.contains(siteHash)) {
             return;
@@ -380,8 +380,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         if (REPORTED_LEAK_SITES.size() < MAX_REPORTED_LEAK_SITES) {
             REPORTED_LEAK_SITES.add(siteHash);
         }
-        // If the registry is full we fall through and report anyway —
-        // duplicate warnings beat silence.
+        // If the registry is full we fall through and report anyway.
+        // Duplicate warnings beat silence.
 
         StringWriter sw = new StringWriter();
         ra.allocationTrace.printStackTrace(new PrintWriter(sw));

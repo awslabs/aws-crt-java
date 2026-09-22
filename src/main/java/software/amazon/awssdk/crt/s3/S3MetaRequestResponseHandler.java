@@ -90,7 +90,7 @@ public interface S3MetaRequestResponseHandler {
      * <p>
      * WARNING: for a file download with
      * {@link S3MetaRequestOptions#withResponseFileDeleteOnFailure} set true, the deletion
-     * is respected — the partial file is deleted on error, leaving nothing to resume on,
+     * is respected. The partial file is deleted on error, leaving nothing to resume on,
      * and this callback fires with a null token. Do not set responseFileDeleteOnFailure
      * if you intend to resume from this callback's token.
      *
@@ -112,13 +112,13 @@ public interface S3MetaRequestResponseHandler {
      * until {@link S3BorrowedBuffer#close() close()} is called, letting the
      * customer hold the buffer across async boundaries (e.g. queuing into a
      * reactive publisher, writing to {@code AsynchronousFileChannel}). The
-     * buffer's contract requires an explicit close — see the
+     * buffer's contract requires an explicit close. See the
      * {@link S3BorrowedBuffer} class Javadoc for the lifetime rules.</p>
      *
      * <p>Handlers that do NOT override this method never receive borrowed
      * delivery: the client uses the {@code byte[]}-copy path and their bytes
      * arrive through {@link #onResponseBody(ByteBuffer, long, long)} with its
-     * usual safe-to-retain contract. This makes opt-in explicit — customers
+     * usual safe-to-retain contract. This makes opt-in explicit. Customers
      * who never touch this method see zero behavior change when a pool is
      * attached. Zero-copy delivery is ONLY available by overriding this
      * method.</p>

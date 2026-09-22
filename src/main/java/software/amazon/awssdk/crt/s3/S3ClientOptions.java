@@ -426,8 +426,8 @@ public class S3ClientOptions {
      * <p>Attaching a pool makes download staging memory JVM-visible (counted
      * against {@code -XX:MaxDirectMemorySize}, hard-capped, trimmed when
      * idle) and does NOT change the delivery contract of
-     * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}
-     * — it still receives a heap {@code byte[]}-backed buffer that is safe
+     * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
+     * It still receives a heap {@code byte[]}-backed buffer that is safe
      * to retain. Zero-copy delivery is available only by overriding
      * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.</p>
      *

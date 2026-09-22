@@ -26,10 +26,31 @@ public class S3Client extends CrtResource {
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final String region;
+    private final boolean useDirectByteBufferPool;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
+
+        // TODO - THIS SHOULD BE REMOVED ONCE BENCHMARKING IS DONE
+        // Benchmark-only: auto-attach DBZ pool when -Daws.crt.s3.use_dbz=true is set
+        // AND the caller didn't attach a pool. Lets the SDK's S3CrtAsyncClient path
+        // (which doesn't yet expose DBZ APIs) participate in DBZ benchmarks.
+        if (options.getDirectByteBufferPool() == null
+                && "true".equalsIgnoreCase(System.getProperty("aws.crt.s3.use_dbz"))) {
+            options.withDirectByteBufferPool(S3DirectBufferPool.create(options));
+        }
+
+        // Attaching a pool switches the memory source from the native
+        // default_buffer_pool to the JVM-owned pool.
+        if (options.getDirectByteBufferPool() != null) {
+            S3DirectBufferPool pool = options.getDirectByteBufferPool();
+            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool attached: pool capacity = "
+              + pool.maxSlots() + " slots x " + pool.partSize() + " bytes");
+        }
+
+        useDirectByteBufferPool = options.getDirectByteBufferPool() != null;
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -126,7 +147,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo));
+                directIo,
+                options.getDirectByteBufferPool()));
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -226,7 +248,8 @@ public class S3Client extends CrtResource {
                 fioOptionsSet,
                 shouldStream,
                 diskThroughputGbps,
-                directIo);
+                directIo,
+                useDirectByteBufferPool);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -290,7 +313,8 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo) throws CrtRuntimeException;
+            boolean directIo,
+            S3DirectBufferPool directByteBufferPool) throws CrtRuntimeException;
 
     private static native void s3ClientDestroy(long client);
 
@@ -305,5 +329,14 @@ public class S3Client extends CrtResource {
             boolean fioOptionsSet,
             boolean shouldStream,
             double diskThroughputGbps,
-            boolean directIo);
+            boolean directIo,
+            boolean useDirectByteBufferPool);
+
+    /**
+     * Returns aws-c-s3's default memory pool size (bytes) for the given
+     * throughput target ({@code 0} = EC2 auto-detect); delegates to
+     * {@code aws_s3_default_memory_limit_for_throughput}. Package-private,
+     * used by {@link S3DirectBufferPool#createForThroughput}.
+     */
+    static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);
 }

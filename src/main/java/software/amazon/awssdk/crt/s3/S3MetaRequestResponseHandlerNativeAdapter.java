@@ -11,12 +11,40 @@ import java.nio.ByteBuffer;
 class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
+    /** True iff the handler overrides onResponseBody(S3BorrowedBuffer, long, long). */
+    private final boolean supportsBorrowedBufferOverload;
+
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler) {
         this.responseHandler = responseHandler;
+        this.supportsBorrowedBufferOverload = detectBorrowedBufferOverload(responseHandler);
+    }
+
+    /** Reflection probe: declaringClass != interface means the handler overrode the overload. */
+    private static boolean detectBorrowedBufferOverload(S3MetaRequestResponseHandler handler) {
+        try {
+            java.lang.reflect.Method m = handler.getClass().getMethod(
+                "onResponseBody", S3BorrowedBuffer.class, long.class, long.class);
+            return m.getDeclaringClass() != S3MetaRequestResponseHandler.class;
+        } catch (NoSuchMethodException e) {
+            // The default is defined on S3MetaRequestResponseHandler so this
+            // should never happen for a well-formed handler. Treat as "not
+            // opted in" and fall back to the byte[] delivery path.
+            return false;
+        }
+    }
+
+    /** Called from native to select body_callback_ex vs body_callback. */
+    boolean getSupportsBorrowedBufferOverload() {
+        return supportsBorrowedBufferOverload;
     }
 
     int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
+    }
+
+    /** Borrowed-buffer path: called from native when handler opted in + direct buffer pool attached. */
+    int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+        return this.responseHandler.onResponseBody(buffer, objectRangeStart, objectRangeEnd);
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, String errorOperationName, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {

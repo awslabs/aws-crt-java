@@ -474,6 +474,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         .memory_limit_in_bytes = memory_limit_in_bytes,
         /* If fio options not set, let native code to decide the default instead */
         .fio_opts = fio_options_set ? &fio_opts : NULL,
+        /* TODO: Force sequential delivery for java, until out of order pause/resume picked up from java sdk */
+        .out_of_order_delivery = AWS_TRIBOOL_FALSE,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;

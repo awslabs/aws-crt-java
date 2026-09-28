@@ -1051,6 +1051,9 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
     s3_request_metrics_properties.service_call_duration_ns_field_id =
         (*env)->GetFieldID(env, cls, "serviceCallDurationNs", "J");
 
+    s3_request_metrics_properties.connection_acquisition_duration_ns_field_id =
+        (*env)->GetFieldID(env, cls, "connectionAcquisitionDurationNs", "J");
+
     s3_request_metrics_properties.response_status_field_id = (*env)->GetFieldID(env, cls, "responseStatus", "I");
 
     s3_request_metrics_properties.request_id_field_id = (*env)->GetFieldID(env, cls, "requestId", "Ljava/lang/String;");
@@ -1066,6 +1069,11 @@ static void s_cache_s3_request_metrics(JNIEnv *env) {
 
     s3_request_metrics_properties.host_address_field_id =
         (*env)->GetFieldID(env, cls, "hostAddress", "Ljava/lang/String;");
+
+    s3_request_metrics_properties.is_https_field_id = (*env)->GetFieldID(env, cls, "isHttps", "Z");
+
+    s3_request_metrics_properties.http_manager_metrics_field_id =
+        (*env)->GetFieldID(env, cls, "httpManagerMetrics", "Lsoftware/amazon/awssdk/crt/http/HttpManagerMetrics;");
 
     s3_request_metrics_properties.request_type_field_id = (*env)->GetFieldID(env, cls, "requestType", "I");
 

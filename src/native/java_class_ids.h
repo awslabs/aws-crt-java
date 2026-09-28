@@ -475,6 +475,7 @@ struct java_aws_s3_request_metrics {
     jfieldID retry_delay_end_timestamp_ns_field_id;
     jfieldID retry_delay_duration_ns_field_id;
     jfieldID service_call_duration_ns_field_id;
+    jfieldID connection_acquisition_duration_ns_field_id;
     // Request/Response info
     jfieldID response_status_field_id;
     jfieldID request_id_field_id;
@@ -482,6 +483,8 @@ struct java_aws_s3_request_metrics {
     jfieldID operation_name_field_id;
     jfieldID request_path_query_field_id;
     jfieldID host_address_field_id;
+    jfieldID is_https_field_id;
+    jfieldID http_manager_metrics_field_id;
     jfieldID request_type_field_id;
     // CRT info
     jfieldID ip_address_field_id;

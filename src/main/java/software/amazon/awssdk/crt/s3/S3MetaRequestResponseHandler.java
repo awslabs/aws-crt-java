@@ -105,8 +105,8 @@ public interface S3MetaRequestResponseHandler {
      * Optional zero-copy overload: invoked instead of
      * {@link #onResponseBody(ByteBuffer, long, long)} when the handler
      * overrides this method AND a
-     * {@link S3ClientOptions#withDirectByteBufferPool direct buffer pool}
-     * is attached to the client.
+     * {@link S3ClientOptions#withDirectBufferPoolOptions direct buffer pool}
+     * is enabled on the client.
      *
      * <p>The {@link S3BorrowedBuffer} keeps the underlying pool slot alive
      * until {@link S3BorrowedBuffer#close() close()} is called, letting the
@@ -120,19 +120,20 @@ public interface S3MetaRequestResponseHandler {
      * arrive through {@link #onResponseBody(ByteBuffer, long, long)} with its
      * usual safe-to-retain contract. This makes opt-in explicit. Customers
      * who never touch this method see zero behavior change when a pool is
-     * attached. Zero-copy delivery is ONLY available by overriding this
+     * enabled. Zero-copy delivery is ONLY available by overriding this
      * method.</p>
      *
      * @param buffer  a borrowed direct-buffer view into pool memory;
-     *                MUST be closed by the customer if not consumed
-     *                synchronously
+     *                MUST always be closed by the customer (directly, or
+     *                via {@link S3BorrowedBuffer#toByteArray()}), even when
+     *                read synchronously
      * @param objectRangeStart the byte index of the object that this refers
      *                         to (matches the ByteBuffer overload semantics)
      * @param objectRangeEnd   {@code objectRangeStart + buffer.asByteBuffer().remaining()}
      * @return the number of bytes to increment the read window by (same as
      *         the ByteBuffer overload)
      * @see S3BorrowedBuffer
-     * @see S3ClientOptions#withDirectByteBufferPool
+     * @see S3ClientOptions#withDirectBufferPoolOptions
      */
     default int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
         // Unreachable via normal client dispatch (native only routes here

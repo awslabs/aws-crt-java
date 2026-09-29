@@ -86,7 +86,7 @@ public class S3ClientOptions {
      * owned by the client. Default: {@code null} (native pool,
      * byte[]-copy path unchanged). See {@link S3DirectBufferPoolOptions}.
      */
-    private S3DirectBufferPoolOptions directByteBufferPoolOptions;
+    private S3DirectBufferPoolOptions directBufferPoolOptions;
 
     public S3ClientOptions() {
         this.computeContentMd5 = false;
@@ -437,8 +437,8 @@ public class S3ClientOptions {
      * @return this
      * @see S3DirectBufferPoolOptions
      */
-    public S3ClientOptions withDirectByteBufferPool(S3DirectBufferPoolOptions poolOptions) {
-        this.directByteBufferPoolOptions = poolOptions;
+    public S3ClientOptions withDirectBufferPoolOptions(S3DirectBufferPoolOptions poolOptions) {
+        this.directBufferPoolOptions = poolOptions;
         return this;
     }
 
@@ -447,7 +447,7 @@ public class S3ClientOptions {
      *
      * @return the direct buffer pool options or null
      */
-    public S3DirectBufferPoolOptions getDirectByteBufferPool() {
-        return directByteBufferPoolOptions;
+    public S3DirectBufferPoolOptions getDirectBufferPoolOptions() {
+        return directBufferPoolOptions;
     }
 }

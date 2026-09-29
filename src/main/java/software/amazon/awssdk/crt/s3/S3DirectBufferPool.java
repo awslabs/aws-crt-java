@@ -249,8 +249,6 @@ final class S3DirectBufferPool {
     int partSize()       { return partSize; }
     /** @return the pool ceiling, the maximum number of slots the pool may grow to */
     int maxSlots()       { return maxSlots; }
-    /** @return the number of slots pre-allocated at construction */
-    int initialSlots()   { return initialSlots; }
     /**
      * Peak number of slots ever backed (eager + lazy-grown). For
      * diagnostics and tests. Some of these slots may currently be
@@ -270,19 +268,24 @@ final class S3DirectBufferPool {
      *
      * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
      * freed here (that would be a use-after-free under the holder); each
-     * one is freed when its buffer is closed. A slot released concurrently
-     * with this call may miss the sweep and fall back to GC reclamation.
-     * Idempotent.</p>
+     * one is freed when its buffer is closed, including one released
+     * concurrently with this call (see {@link #releaseSlot}). Idempotent.</p>
      */
     void close() {
         closed = true;
-        // Eagerly free every free-queue slot. Safe: a queued index is by
-        // definition unleased (no native ticket caches its address), and
-        // polling under growthLock partitions each index to exactly one
-        // party. A racing acquirer that wins a poll keeps a valid slot we
-        // never see. Leased slots are not in the queue; they are freed in
-        // releaseSlot() when their borrowed buffers close (closed == true
-        // branch). No re-offer: the pool is closed for good.
+        freeQueuedSlots();
+    }
+
+    /**
+     * Frees every slot currently in the free queue. Safe: a queued index is
+     * by definition unleased (no native ticket caches its address), and
+     * polling under growthLock partitions each index to exactly one party.
+     * A racing acquirer that wins a poll keeps a valid slot we never see.
+     * Leased slots are not in the queue; they are freed in releaseSlot()
+     * when their borrowed buffers close (closed == true branch). No
+     * re-offer: only called once the pool is closed for good.
+     */
+    private void freeQueuedSlots() {
         synchronized (growthLock) {
             Integer idx;
             while ((idx = freeIndices.poll()) != null) {
@@ -543,6 +546,15 @@ final class S3DirectBufferPool {
         // NOT zeroed (waste of cycles since they will be overwritten).
         slot.clear();
         freeIndices.offer(slotIndex);
+        // Close race: if close() ran between the closed check above and the
+        // offer, its sweep may have drained the queue before our index
+        // arrived. A sweep that missed our index read the queue's volatile
+        // count before our offer updated it, and close() set `closed` before
+        // sweeping, so this volatile re-read is guaranteed to see true. Sweep
+        // again so the slot is freed instead of stranded in a closed pool.
+        if (closed) {
+            freeQueuedSlots();
+        }
     }
 
     /*

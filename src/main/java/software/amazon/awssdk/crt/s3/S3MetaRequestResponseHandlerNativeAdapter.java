@@ -11,12 +11,23 @@ import java.nio.ByteBuffer;
 class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
-    /** True iff the handler overrides onResponseBody(S3BorrowedBuffer, long, long). */
+    /**
+     * True iff the client has a direct buffer pool AND the handler overrides
+     * onResponseBody(S3BorrowedBuffer, long, long).
+     */
     private final boolean supportsBorrowedBufferOverload;
 
-    S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler) {
+    /**
+     * @param responseHandler      the customer's handler
+     * @param clientHasBufferPool  whether the client has a direct buffer pool;
+     *                             when false the reflection probe is skipped
+     *                             (native never asks without a pool)
+     */
+    S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler,
+                                              boolean clientHasBufferPool) {
         this.responseHandler = responseHandler;
-        this.supportsBorrowedBufferOverload = detectBorrowedBufferOverload(responseHandler);
+        this.supportsBorrowedBufferOverload =
+            clientHasBufferPool && detectBorrowedBufferOverload(responseHandler);
     }
 
     /** Reflection probe: declaringClass != interface means the handler overrode the overload. */

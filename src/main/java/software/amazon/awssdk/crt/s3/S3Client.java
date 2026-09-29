@@ -28,7 +28,6 @@ public class S3Client extends CrtResource {
     private final String region;
     /** Client-owned direct buffer pool, or null. Closed in onShutdownComplete. */
     private final S3DirectBufferPool directBufferPool;
-    private final boolean useDirectByteBufferPool;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
@@ -38,9 +37,9 @@ public class S3Client extends CrtResource {
         // Benchmark-only: auto-attach DBZ pool when -Daws.crt.s3.use_dbz=true is set
         // AND the caller didn't attach a pool. Lets the SDK's S3CrtAsyncClient path
         // (which doesn't yet expose DBZ APIs) participate in DBZ benchmarks.
-        if (options.getDirectByteBufferPool() == null
+        if (options.getDirectBufferPoolOptions() == null
                 && "true".equalsIgnoreCase(System.getProperty("aws.crt.s3.use_dbz"))) {
-            options.withDirectByteBufferPool(S3DirectBufferPoolOptions.auto());
+            options.withDirectBufferPoolOptions(S3DirectBufferPoolOptions.auto());
         }
 
         int proxyConnectionType = 0;
@@ -107,15 +106,13 @@ public class S3Client extends CrtResource {
         // owns it: closed in onShutdownComplete, or in the catch below if
         // native client creation fails. Created immediately before the
         // try so no other failure can orphan it.
-        S3DirectBufferPoolOptions poolOptions = options.getDirectByteBufferPool();
+        S3DirectBufferPoolOptions poolOptions = options.getDirectBufferPoolOptions();
         directBufferPool = poolOptions != null ? S3DirectBufferPool.fromOptions(poolOptions, options) : null;
         if (directBufferPool != null) {
             Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool created: capacity = "
               + directBufferPool.maxSlots() + " slots x " + directBufferPool.partSize() + " bytes");
         }
-
-        useDirectByteBufferPool = directBufferPool != null;
 
         try {
             acquireNativeHandle(s3ClientNew(this,
@@ -218,7 +215,7 @@ public class S3Client extends CrtResource {
 
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
-                options.getResponseHandler());
+                options.getResponseHandler(), directBufferPool != null);
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
         byte[] requestFilePath = null;
@@ -269,7 +266,7 @@ public class S3Client extends CrtResource {
                 shouldStream,
                 diskThroughputGbps,
                 directIo,
-                useDirectByteBufferPool);
+                directBufferPool != null);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 

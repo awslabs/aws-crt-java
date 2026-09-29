@@ -546,6 +546,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     if (factory_data == NULL || factory_data->java_pool_global == NULL || factory_data->jvm == NULL) {
         AWS_LOGF_ERROR(
             AWS_LS_S3_CLIENT, "S3DirectBufferPool factory invoked with NULL user_data or missing JVM/pool ref");
+        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -638,6 +639,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
 
 error_clean_ps:
     /* Failure after ps + mutex were initialized (validation step). */
+    aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     aws_mutex_clean_up(&ps->pending_lock);
     aws_mem_release(allocator, ps);
 

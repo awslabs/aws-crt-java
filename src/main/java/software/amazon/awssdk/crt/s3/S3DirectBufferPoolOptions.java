@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 /**
  * Sizing for the Java-owned direct buffer pool that an {@link S3Client}
  * uses as the destination memory for download response bodies. Pass one
- * to {@link S3ClientOptions#withDirectByteBufferPool(S3DirectBufferPoolOptions)}.
+ * to {@link S3ClientOptions#withDirectBufferPoolOptions(S3DirectBufferPoolOptions)}.
  *
  * <h2>Opt-in</h2>
  * Without this option the client uses the default native buffer pool

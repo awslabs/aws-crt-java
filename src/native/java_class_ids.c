@@ -753,7 +753,7 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
         (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 
-    /* S3BorrowedBuffer overload — lifetime-controlled zero-copy opt-in */
+    /* S3BorrowedBuffer overload: lifetime-controlled zero-copy opt-in */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);

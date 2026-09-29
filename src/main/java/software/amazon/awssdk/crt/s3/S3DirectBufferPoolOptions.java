@@ -24,8 +24,7 @@ import java.nio.ByteBuffer;
  * it continues to receive a heap {@code byte[]}-backed {@link ByteBuffer}
  * that is safe to retain indefinitely. Zero-copy delivery is available
  * ONLY by overriding
- * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)},
- * which hands out a lifetime-controlled view over a pool slot.
+ * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
  *
  * <h2>Sizing</h2>
  * Every pool has a warm floor of pre-allocated slots and a ceiling; each
@@ -80,9 +79,8 @@ public final class S3DirectBufferPoolOptions {
      * default for the client's throughput target. 8 slots (fewer if the
      * ceiling is smaller) are pre-allocated and kept through trim.
      *
-     * <p>Growth above the floor runs {@code ByteBuffer.allocateDirect}
-     * on an aws-c-s3 event-loop thread; see {@link #elastic(int, int)}
-     * for the cold-start cost.</p>
+     * <p>Growth above the floor allocates on an aws-c-s3 event-loop
+     * thread; see {@link #elastic(int, int)} for the cost.</p>
      *
      * @return options for an automatically sized pool
      */

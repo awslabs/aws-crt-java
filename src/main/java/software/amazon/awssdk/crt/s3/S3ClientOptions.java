@@ -81,11 +81,7 @@ public class S3ClientOptions {
      */
     private FileIoOptions fileIoOptions;
 
-    /**
-     * Optional sizing for a Java-owned direct buffer pool, created and
-     * owned by the client. Default: {@code null} (native pool,
-     * byte[]-copy path unchanged). See {@link S3DirectBufferPoolOptions}.
-     */
+    /** Optional direct buffer pool sizing; see {@link #withDirectBufferPoolOptions}. */
     private S3DirectBufferPoolOptions directBufferPoolOptions;
 
     public S3ClientOptions() {
@@ -421,12 +417,11 @@ public class S3ClientOptions {
     /**
      * Enables a Java-owned direct buffer pool as the destination memory
      * for S3 download response bodies. The client creates the pool from
-     * these options at construction, sized to its own part size, and frees
-     * it when its shutdown completes.
+     * these options at construction, sized to its own part size; the client
+     * closes it when its shutdown completes. Slots held by unclosed borrowed
+     * buffers are freed as each buffer closes.
      *
-     * <p>The pool makes download staging memory JVM-visible (counted
-     * against {@code -XX:MaxDirectMemorySize}, hard-capped, trimmed when
-     * idle) and does NOT change the delivery contract of
+     * <p>Enabling the pool does NOT change the delivery contract of
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
      * It still receives a heap {@code byte[]}-backed buffer that is safe
      * to retain. Zero-copy delivery is available only by overriding

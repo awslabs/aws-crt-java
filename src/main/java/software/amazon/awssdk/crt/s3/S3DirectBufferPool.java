@@ -25,10 +25,10 @@ import software.amazon.awssdk.crt.Log;
  * size. The native factory re-checks equality at client creation as a
  * guard against Java and native part-size resolution diverging.</p>
  *
- * <p>Thread safety: every method is safe for concurrent invocation.
- * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking; they
- * run on aws-c-s3 event-loop threads. Pool-exhaustion backpressure is
- * implemented natively via a pending-reserve-future queue.</p>
+ * <p>Thread safety: all methods are safe for concurrent invocation.
+ * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking
+ * (they run on aws-c-s3 event-loop threads); exhaustion backpressure
+ * is handled natively.</p>
  *
  * <p>Lifetime: slots leased by unclosed {@link S3BorrowedBuffer}s outlive
  * both the client and {@link #close()}; each is freed when its buffer is
@@ -106,26 +106,17 @@ final class S3DirectBufferPool {
         this.nextGrowthIndex = 0;
 
         // Eagerly pre-allocate the first `initialSlots` direct buffers.
-        // Remaining slots (up to maxSlots) are allocated on demand in
-        // tryAcquireSlot() under growthLock.
-        //
-        // If allocateDirect throws OutOfMemoryError partway through, we
-        // catch it, release strong references to any DBBs we did
-        // allocate (so GC + Cleaner can reclaim their off-heap memory
-        // promptly), log a diagnostic, and rethrow so the caller sees
-        // the OOM.
+        // Remaining slots are allocated on demand in tryAcquireSlot().
+        // On partial OOM: null allocated refs so GC can reclaim off-heap
+        // memory promptly, log, and rethrow.
         try {
             for (int i = 0; i < initialSlots; i++) {
-                // ByteBuffer.allocateDirect returns off-heap memory managed
-                // by the JVM's internal Bits accounting. The address is
-                // stable; the underlying memory is reclaimed only via the
-                // Cleaner attached to the buffer when it becomes unreachable.
-                // Keeping the buffer in `slots[i]` is what prevents that.
+                // slots[i] holds the buffer, keeping its off-heap memory
+                // (and the cached address below) alive.
                 ByteBuffer dbb = ByteBuffer.allocateDirect(partSize);
                 slots[i] = dbb;
 
-                // Cache the native address. JNI will use this to construct
-                // aws_byte_buf without crossing back into Java per chunk.
+                // Cache the native address so JNI avoids a call per part.
                 slotAddresses[i] = nativeGetDirectBufferAddress(dbb);
 
                 freeIndices.add(i);
@@ -138,10 +129,7 @@ final class S3DirectBufferPool {
               + " (partSize=" + partSize + " bytes). "
               + "Releasing partial allocation. Consider raising "
               + "-XX:MaxDirectMemorySize or reducing pool size.");
-            // Null out our strong references so the Cleaner can reclaim
-            // the DBBs' off-heap memory as soon as GC runs, rather than
-            // waiting for this (about-to-be-thrown) constructor's `this`
-            // to become unreachable via stack unwind.
+            // Null refs so Cleaner can reclaim off-heap memory promptly.
             for (int j = 0; j < nextGrowthIndex; j++) {
                 slots[j] = null;
                 slotAddresses[j] = 0L;
@@ -420,27 +408,18 @@ final class S3DirectBufferPool {
      *       under {@code growthLock}, so a concurrent
      *       {@code tryAcquireSlot} sees a consistent null state and
      *       falls into the reallocation path.</li>
-     *   <li>Invokes {@link DirectBufferCleaner#free} on the DBB to
-     *       force synchronous release of the underlying native
-     *       memory. Without this step, the DBB's internal Cleaner
-     *       waits for the next GC pass, plausibly seconds to
-     *       minutes on a quiet JVM, and the JVM's internal
-     *       {@code Bits.reservedMemory} counter stays high,
-     *       causing spurious
-     *       {@code OutOfMemoryError: Direct buffer memory} on
-     *       re-warm under {@code -XX:MaxDirectMemorySize} pressure.</li>
+     *   <li>Invokes {@link DirectBufferCleaner#free} to release native
+     *       memory synchronously (see {@link DirectBufferCleaner});
+     *       otherwise direct-memory accounting lags until GC and
+     *       re-warm can hit {@code OutOfMemoryError}.</li>
      *   <li>Leaves the slot index in {@code freeIndices}.
      *       {@code tryAcquireSlot} detects the null {@code slots[i]}
-     *       and reallocates under {@code growthLock} (cost: one
-     *       {@code allocateDirect(partSize)} call, ~50-100 us for
-     *       8 MiB) on next re-use.</li>
+     *       and reallocates under {@code growthLock} on next re-use.</li>
      * </ol>
      *
-     * <p>Slots below {@code initialSlots} are never trimmed. They
-     * form the pool's warm floor. Slots that are currently leased
-     * (not in {@code freeIndices}) are never trimmed regardless of
-     * index. Handles fragmentation correctly: any free slot at any
-     * index in {@code [initialSlots, maxSlots)} is a candidate.</p>
+     * <p>Slots below {@code initialSlots} are never trimmed (warm floor).
+     * Leased slots (not in {@code freeIndices}) are never trimmed
+     * regardless of index.</p>
      *
      * <h3>Concurrency: drain-and-reoffer</h3>
      * <p>Trim {@code poll()}s every index out, frees candidates, and
@@ -504,17 +483,14 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Return a slot to the free pool, or, when the pool is closed
-     * (a borrowed buffer outlived {@link #close()}), free the slot's
-     * memory immediately instead of queueing it for reuse that can
-     * never happen.
+     * Return a slot to the free pool, or free it immediately when the
+     * pool is closed.
      *
-     * <p>Called by the native ticket's {@code release} vtable function
-     * when {@code aws_s3_buffer_ticket_release} fires. After this
-     * returns, the slot's memory MAY be handed out to a subsequent
+     * <p>After this returns, the slot MAY be re-issued to a subsequent
      * {@code tryAcquireSlot()} call and its bytes overwritten. Any
-     * outstanding Java reference to a slice of this slot is now
-     * UNSAFE to read.</p>
+     * outstanding view is UNSAFE to read. When the pool is closed,
+     * the slot is freed instead of queued for reuse that can never
+     * happen.</p>
      */
     void releaseSlot(int slotIndex) {
         validateIndex(slotIndex);
@@ -558,17 +534,10 @@ final class S3DirectBufferPool {
     }
 
     /*
-     * NOTE: There is no Java-side `sliceView` method.
-     *
-     * The JNI body callback constructs the ByteBuffer
-     * view delivered to the user directly in C via
-     * `NewDirectByteBuffer(env, slot_addr + offset, length)`,
-     * avoiding a JNI->Java round-trip per delivered part.
-     *
-     * The resulting ByteBuffer has the same semantics as a
-     * `slots[slotIndex].duplicate().position(off).limit(off+len)`.
-     * It shares the slot's underlying memory with no Cleaner
-     * attached (the slot's parent DBB owns the memory).
+     * No Java-side sliceView: views are built in C with
+     * NewDirectByteBuffer over the slot address, avoiding a JNI
+     * round-trip per part. They share slot memory and have no
+     * Cleaner (the slot's buffer owns the memory).
      */
 
     long slotAddress(int slotIndex) {
@@ -598,21 +567,15 @@ final class S3DirectBufferPool {
 
     /**
      * Fail-fast check: verify that the JVM's {@code MaxDirectMemorySize}
-     * can accommodate the pool's maximum capacity.
-     *
-     * <p>Direct ByteBuffer memory is bounded by {@code -XX:MaxDirectMemorySize}
-     * (defaults to {@code -Xmx} if not explicitly set). If the pool's ceiling
-     * exceeds 80% of that limit, allocation will eventually fail with
-     * {@code OutOfMemoryError: Direct buffer memory} at an unpredictable time
-     * during transfers. Failing at construction gives the operator a clear
-     * signal to either raise the limit or reduce the throughput target.</p>
-     *
-     * <p>The 80% threshold leaves headroom for other direct buffer users in
-     * the application (NIO channels, networking libraries, SDK internals).</p>
+     * can accommodate the pool's maximum capacity. A ceiling above 80%
+     * would OOM unpredictably mid-transfer; failing at construction gives
+     * an actionable error. The 20% headroom is for other direct-buffer
+     * users (NIO channels, networking libraries, SDK internals).
      *
      * @param poolCapacityBytes the pool's maximum byte capacity
      *                          ({@code maxSlots × partSize})
-     * @throws IllegalStateException if the pool cannot fit
+     * @throws IllegalStateException if the ceiling exceeds 80% of
+     *                               {@code MaxDirectMemorySize}
      */
     private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
         long maxDirectMemory = getMaxDirectMemory();
@@ -644,13 +607,7 @@ final class S3DirectBufferPool {
         }
     }
 
-    /**
-     * Retrieves the JVM's maximum direct memory limit.
-     *
-     * <p>Uses {@code sun.misc.VM.maxDirectMemory()} via reflection for
-     * HotSpot/OpenJDK. Returns {@code -1} if the value cannot be
-     * determined (non-HotSpot JVM, module access denied, etc.).</p>
-     */
+    /** Returns the JVM's {@code MaxDirectMemorySize} via reflective probes, or -1 if it cannot be determined. */
     private static long getMaxDirectMemory() {
         // Try sun.misc.VM.maxDirectMemory(), available on HotSpot/OpenJDK 8-21+.
         try {
@@ -707,10 +664,8 @@ final class S3DirectBufferPool {
 
     /**
      * Resolves {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} (first) then
-     * {@code _IN_GIB} to bytes, matching aws-c-s3's order so pool and
-     * native limits never diverge. Returns 0 when unset/unusable.
-     * We fall back to the tier default rather than failing, since a
-     * malformed value produces a clear native error at client creation.
+     * {@code _IN_GIB} to bytes, matching aws-c-s3's order. Returns
+     * 0 when unset or unusable.
      */
     private static long resolveEnvOverrideBytes() {
         long mbBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);

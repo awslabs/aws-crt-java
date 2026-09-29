@@ -27,25 +27,24 @@ import software.amazon.awssdk.crt.Log;
  *
  * <p>The buffer keeps its pool slot alive until {@link #close()} so it may
  * be held across async boundaries and past client shutdown. Every buffer
- * MUST be closed to allow the slot to be recycled to another request. Once closed
- * the {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.
+ * MUST be closed so the slot can be reused. Once closed the
+ * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.
  * Unclosed buffers are recovered on GC and reported as leaks
  * per the {@code aws.crt.s3.leakdetection} system property
  * ({@code disabled} | {@code simple}, the default | {@code paranoid}).</p>
  *
- * <p>{@link #close()} is idempotent. {@link #toByteArray()} (copy to heap,
- * then close) succeeds at most once and later calls throw. Both are safe to
- * call from any thread. {@link #asByteBuffer()} returns a
+ * <p>{@link #close()} is idempotent. {@link #toByteArray()} copies to
+ * heap and closes; it succeeds at most once and later calls throw. Both
+ * are safe to call from any thread. {@link #asByteBuffer()} returns a
  * shared view. Use {@link ByteBuffer#duplicate()} for independent
  * position/limit if it may be read from more than one place or thread.</p>
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
-     * Atomically compare-and-sets {@code closed}. Exactly one caller
-     * ever wins the open->closed transition. A shared static updater over
-     * a plain int field is used instead of a per-instance {@code AtomicInteger}
-     * to avoid one wrapper allocation per buffer on the per-chunk hot path.
+     * Atomically guards the open-to-closed transition: exactly one caller wins
+     * the CAS. A shared static updater over a plain int field avoids one
+     * wrapper allocation per buffer on the per-chunk hot path.
      */
     private static final AtomicIntegerFieldUpdater<S3BorrowedBuffer> CLOSED_UPDATER =
         AtomicIntegerFieldUpdater.newUpdater(S3BorrowedBuffer.class, "closed");
@@ -64,11 +63,9 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Registered release action. Invoked exactly once, either by {@link #close()}
-     * (customer control) or by the cleaner daemon thread when this buffer
-     * becomes phantom-reachable (completely unreachable and unretrievable; for
-     * us, the buffer was dropped without {@code close()} ever being called).
-     * The cleaner thread and phantom-reference fallback are explained in the
-     * release-mechanism section below.
+     * (customer control) or by the cleaner daemon thread if the buffer is
+     * garbage-collected without close() (it becomes phantom-reachable; see the
+     * release-mechanism section below).
      */
     private final ReleaseAction release;
 
@@ -76,8 +73,9 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * Called only from native ({@code s_on_s3_meta_request_body_callback_borrowed} in
      * {@code src/native/s3_client.c}). Not part of the public API.
      *
-     * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; native
-     *                  holds one ref count for us; nativeReleaseTicket decrements it
+     * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; carries
+     *                  one extra ticket ref owned by this object, dropped by
+     *                  nativeReleaseTicket
      * @param directView direct byte buffer view sliced to the response body length,
      *                  addressed against the ticket's slot memory
      */
@@ -85,10 +83,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         this.ticketPtr = ticketPtr;
         this.directView = directView;
 
-        // Leak detection (explained in the leak-detection section): sampled allocation
-        // trace (all buffers at PARANOID). The trace travels with the ReleaseAction
-        // (NOT this object) so it survives to the leak report after this buffer has
-        // been GC'd.
+        // Sampled allocation trace (every buffer at PARANOID). Stored on the
+        // ReleaseAction, not this object, so it survives GC of this buffer.
         Throwable allocationTrace = null;
         if (Leaks.LEVEL == LeakDetection.PARANOID
             || (Leaks.LEVEL == LeakDetection.SIMPLE
@@ -135,11 +131,9 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * @throws IllegalStateException if this borrowed buffer has been closed
      */
     public byte[] toByteArray() {
-        // Win the close Compare and Set FIRST so a concurrent close() cannot
-        // release the pool slot while we are still copying from it. The
-        // losing caller becomes a no-op, and the native release below runs
-        // strictly after the copy completes. (The GC fallback cannot fire
-        // mid-copy: this call holds `this` reachable until performRelease().)
+        // Win the close CAS first so a concurrent close() cannot release the
+        // slot mid-copy. The loser no-ops. GC fallback cannot fire mid-copy
+        // because this call keeps `this` reachable until performRelease().
         if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
         }
@@ -172,14 +166,11 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Release steps run after winning the close compare-and-set, shared by {@link #close()} and
-     * {@link #toByteArray()}. MUST only be called by the thread that won
-     * the {@code closed} 0->1 compare-and-set. The winner owns the
-     * transition. Releases the native ticket synchronously
-     * (ReleaseAction.run() is CAS-idempotent, so a duplicate call from the
-     * cleaner thread is a no-op), drops the bookkeeping reference, and
-     * clears the phantom reference so a properly closed buffer can never
-     * enqueue as a leak.
+     * Shared release steps for {@link #close()} and {@link #toByteArray()}.
+     * Precondition: caller won the {@code closed} 0-to-1 CAS. Releases
+     * the ticket (ReleaseAction.run() is CAS-idempotent), removes from
+     * LIVE, and clears the phantom ref so a closed buffer never reports
+     * as a leak.
      */
     private void performRelease() {
         release.run();
@@ -192,21 +183,12 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /* ==================================================================== */
 
     /*
-     * Why this exists: releasing the S3BorrowedBuffer pool slot is the
-     * CUSTOMER's job (close()) but customers will sometimes forget.
-     * Without a fallback, every forgotten buffer would pin its pool slot
-     * forever. The pool is hard-capped, so sustained leaks drain it until
-     * downloads stall with no error.
-     *
-     * The functions below recover slots when a forgotten buffer is garbage-collected.
-     * Each buffer registers a phantom reference (ReleaseAction) that the JVM enqueues
-     * after the buffer is GC'd, and a daemon thread drains the queue and releases
-     * the ticket.
-     *
-     * This is a safety net, not a lifecycle strategy. Recovery waits on
-     * GC timing, so leaks are also reported. Recovery that silently kept
-     * pace would hide the customer's missing close() until it failed at
-     * scale (see the leak-detection section below).
+     * Why this exists: customers will sometimes forget close(). Without a
+     * fallback each forgotten buffer pins its slot forever, and a hard-capped
+     * pool stalls silently. Each buffer registers a phantom reference the JVM
+     * enqueues after GC; a daemon thread releases the ticket. This is a safety
+     * net, not a lifecycle strategy, so leaks are also reported (see the
+     * leak-detection section below).
      */
 
     /**
@@ -237,8 +219,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /**
      * Per-buffer cleanup action, doubling as the phantom reference for the
      * GC fallback. Kept strongly reachable via {@code GcFallback.LIVE} until released.
-     * MUST NOT reference the enclosing buffer. A strong ref to the referent
-     * would prevent the phantom reference from ever enqueueing.
+     * MUST NOT reference the enclosing buffer; a strong ref to the referent would
+     * prevent the phantom reference from ever enqueueing.
      */
     private static final class ReleaseAction extends PhantomReference<S3BorrowedBuffer> {
 

@@ -99,10 +99,9 @@ final class DirectBufferCleaner {
     private DirectBufferCleaner() {}
 
     /**
-     * Forces synchronous release of buffer's off-heap
-     * memory. After this call returns memory has been freed. Outside
-     * of the {@code UNSUPPORTED} case or a failure, there is nothing
-     * remaining to GC.
+     * Forces synchronous release of buffer's off-heap memory. On return
+     * the memory is freed, except in the {@code UNSUPPORTED} case or on
+     * failure, where GC reclaims it.
      *
      * <p>Idempotent: invoking {@code free} more than once on the
      * same buffer is a no-op after the first call.</p>

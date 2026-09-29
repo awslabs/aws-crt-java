@@ -353,8 +353,8 @@ struct s3_direct_buffer_pool_properties {
     jmethodID tryAcquireSlot;
     jmethodID releaseSlot;
     jmethodID slotAddress;
-    jmethodID trim;     /* void trim() -- called from s_java_pool_trim */
-    jmethodID partSize; /* int partSize() -- factory slot-size validation */
+    jmethodID trim;     /* void trim(): called from s_java_pool_trim */
+    jmethodID partSize; /* int partSize(): factory slot-size validation */
 };
 extern struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 

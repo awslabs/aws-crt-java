@@ -27,9 +27,11 @@ struct aws_s3_java_buffer_pool_factory_data {
  * when S3ClientOptions.withDirectBufferPoolOptions(...) is set; the
  * Java S3Client creates the pool and passes it to s3ClientNew.
  *
- * `user_data` is the global JNI ref to the S3DirectBufferPool Java
- * object. The factory takes ownership of that ref for the lifetime
- * of the pool — releasing it in the pool's destroy path.
+ * `user_data` points to an aws_s3_java_buffer_pool_factory_data struct
+ * containing the JVM pointer and the JNI global ref to the
+ * S3DirectBufferPool Java object. The factory takes ownership of the
+ * global ref (clearing the caller's field) and releases it in the
+ * pool's destroy path, or on its own failure paths.
  *
  * Returns NULL and raises an aws_error on failure (e.g. missing JVM
  * or pool ref, slot-size mismatch). aws-c-s3 then fails client

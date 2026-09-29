@@ -115,18 +115,15 @@ public interface S3MetaRequestResponseHandler {
      * buffer's contract requires an explicit close. See the
      * {@link S3BorrowedBuffer} class Javadoc for the lifetime rules.</p>
      *
-     * <p>Handlers that do NOT override this method never receive borrowed
-     * delivery: the client uses the {@code byte[]}-copy path and their bytes
-     * arrive through {@link #onResponseBody(ByteBuffer, long, long)} with its
-     * usual safe-to-retain contract. This makes opt-in explicit. Customers
-     * who never touch this method see zero behavior change when a pool is
-     * enabled. Zero-copy delivery is ONLY available by overriding this
-     * method.</p>
+     * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
+     * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no
+     * behavior change even when a pool is enabled. Zero-copy delivery is
+     * only available by overriding this overload.</p>
      *
-     * @param buffer  a borrowed direct-buffer view into pool memory;
-     *                MUST always be closed by the customer (directly, or
-     *                via {@link S3BorrowedBuffer#toByteArray()}), even when
-     *                read synchronously
+     * @param buffer  a borrowed direct-buffer view into pool memory; MUST
+     *                always be closed (directly, or via
+     *                {@link S3BorrowedBuffer#toByteArray()}, which copies
+     *                then closes)
      * @param objectRangeStart the byte index of the object that this refers
      *                         to (matches the ByteBuffer overload semantics)
      * @param objectRangeEnd   {@code objectRangeStart + buffer.asByteBuffer().remaining()}

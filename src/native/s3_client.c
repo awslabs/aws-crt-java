@@ -535,7 +535,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
          * aws_s3_client_new invokes the factory synchronously. */
         if (factory_data.java_pool_global == NULL || (*env)->GetJavaVM(env, &factory_data.jvm) != 0) {
             /* Explicit opt-in must not silently degrade to the default
-             * pool — fail client creation instead. Clear any pending
+             * pool; fail client creation instead. Clear any pending
              * Java exception (NewGlobalRef OOM) so we can throw our own
              * below. A partially-created global ref is released by the
              * !client cleanup path. */
@@ -820,7 +820,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
             (void *)meta_request);
         /* Extra ref is still held by the S3BorrowedBuffer object; the
          * cleaner will release it when the object becomes phantom-reachable.
-         * We do NOT release here — that would double-release. */
+         * We do NOT release here; that would double-release. */
         (*env)->DeleteLocalRef(env, borrowed);
         (*env)->DeleteLocalRef(env, sliced_dbb);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
@@ -1792,7 +1792,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        /* Exactly one of body_callback / body_callback_ex is set — they
+        /* Exactly one of body_callback / body_callback_ex is set; they
          * are mutually exclusive at aws-c-s3 (dispatch table above). */
         .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
         .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
@@ -2065,11 +2065,11 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 }
 
 /*
- * Delegates to aws_s3_default_memory_limit_for_throughput — the same
+ * Delegates to aws_s3_default_memory_limit_for_throughput, the same
  * public helper aws_s3_client_new uses internally to size its default
  * buffer pool. Exposed via S3Client (rather than S3DirectBufferPool)
  * because the underlying semantic is "what pool size would aws-c-s3
- * default to?" — not specific to the Java buffer pool.
+ * default to?", not specific to the Java buffer pool.
  *
  * throughput_target_gbps == 0 defers to aws-c-s3's auto-detect (reads
  * EC2 platform info and applies the < 10 Gbps right-sizing threshold

@@ -65,9 +65,9 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /**
      * Registered release action. Invoked exactly once, either by {@link #close()}
      * (customer control) or by the cleaner daemon thread when this buffer
-     * becomes phantom-reachable (completely unreachable and unretrievable, in this
-     * case, dropped out of all scope without close() being called is what we care about).
-     * The cleaner thread and phantom-reference fallback are explained in the 
+     * becomes phantom-reachable (completely unreachable and unretrievable; for
+     * us, the buffer was dropped without {@code close()} ever being called).
+     * The cleaner thread and phantom-reference fallback are explained in the
      * release-mechanism section below.
      */
     private final ReleaseAction release;
@@ -135,10 +135,11 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * @throws IllegalStateException if this borrowed buffer has been closed
      */
     public byte[] toByteArray() {
-        // Win the close Compare and Set FIRST so a concurrent close() (or the GC
-        // fallback) cannot release the pool slot while we are still copying
-        // from it. The losing caller becomes a no-op, and the native
-        // release below runs strictly after the copy completes.
+        // Win the close Compare and Set FIRST so a concurrent close() cannot
+        // release the pool slot while we are still copying from it. The
+        // losing caller becomes a no-op, and the native release below runs
+        // strictly after the copy completes. (The GC fallback cannot fire
+        // mid-copy: this call holds `this` reachable until performRelease().)
         if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
         }
@@ -171,7 +172,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Post-close Compare-and-Set release steps shared by {@link #close()} and
+     * Release steps run after winning the close compare-and-set, shared by {@link #close()} and
      * {@link #toByteArray()}. MUST only be called by the thread that won
      * the {@code closed} 0->1 compare-and-set. The winner owns the
      * transition. Releases the native ticket synchronously
@@ -186,23 +187,22 @@ public final class S3BorrowedBuffer implements AutoCloseable {
         release.clear();
     }
 
-
     /* ==================================================================== */
     /* Release mechanism + GC fallback for unclosed buffers                 */
     /* ==================================================================== */
 
     /*
      * Why this exists: releasing the S3BorrowedBuffer pool slot is the
-     * CUSTOMER's job (close()) but customers will sometimes forget. 
-     * Without a fallback, every forgotten buffer would pin its pool slot 
+     * CUSTOMER's job (close()) but customers will sometimes forget.
+     * Without a fallback, every forgotten buffer would pin its pool slot
      * forever. The pool is hard-capped, so sustained leaks drain it until
      * downloads stall with no error.
-     * 
+     *
      * The functions below recover slots when a forgotten buffer is garbage-collected.
      * Each buffer registers a phantom reference (ReleaseAction) that the JVM enqueues
-     * after the buffer is GC'd, and a daemon thread drains the queue and releases 
+     * after the buffer is GC'd, and a daemon thread drains the queue and releases
      * the ticket.
-     * 
+     *
      * This is a safety net, not a lifecycle strategy. Recovery waits on
      * GC timing, so leaks are also reported. Recovery that silently kept
      * pace would hide the customer's missing close() until it failed at
@@ -300,8 +300,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
-     * When the last reference drops the slot returns to the pool. Safe to
-     * call after JVM shutdown has begun; a null/zero pointer is a no-op.
+     * When the last reference drops, the slot returns to the pool (or is
+     * freed, if the pool is closed). A null/zero pointer is a no-op.
      */
     private static native void nativeReleaseTicket(long ticketPtr);
 

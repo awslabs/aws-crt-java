@@ -32,17 +32,22 @@ import software.amazon.awssdk.crt.Log;
  * which hands out a lifetime-controlled view over the pool slot.
  *
  * <h2>Sizing</h2>
- * Three modes; each factory's Javadoc carries the details:
+ * Every pool has a warm floor of pre-allocated slots and a ceiling. Slots
+ * above the floor are allocated on demand and freed again by trim once the
+ * client goes idle (no requests in flight for 5 seconds). The factories
+ * differ only in how the floor and ceiling are chosen; each factory's
+ * Javadoc carries the details:
  * <ul>
- *   <li>{@link #create(S3ClientOptions)}. Auto-scaled to match
- *       aws-c-s3's default pool for the client's throughput target.
- *       Recommended default.</li>
- *   <li>{@link #createFixed(long, int)}. Everything pre-allocated,
- *       hard-capped. For predictable throughput and tight
- *       container-memory budgets.</li>
- *   <li>{@link #createElastic(int, int, int)}. Warm floor + lazy
- *       growth to a ceiling. For variable throughput; see its Javadoc
- *       for cold-start guidance.</li>
+ *   <li>{@link #create(S3ClientOptions)} /
+ *       {@link #createForThroughput(double, int)}. Ceiling sized to
+ *       aws-c-s3's default memory limit for the throughput target, with
+ *       8 slots pre-allocated (fewer if the ceiling is smaller) and kept
+ *       through trim. Recommended default.</li>
+ *   <li>{@link #createElastic(int, int, int)}. Caller-chosen floor and
+ *       ceiling. See its Javadoc for cold-start guidance.</li>
+ *   <li>{@link #createFixed(long, int)}. Floor equals ceiling: everything
+ *       pre-allocated, never grows or trims, no allocation on the event
+ *       loop. For tight container-memory budgets.</li>
  * </ul>
  *
  * <h2>Thread safety</h2>
@@ -102,9 +107,19 @@ public final class S3DirectBufferPool implements AutoCloseable {
      */
     private int nextGrowthIndex;
 
-    /** Held only on the lazy-growth slow path of {@code tryAcquireSlot()}. */
+    /**
+     * Guards all writes to {@code slots[]} and {@code slotAddresses[]}.
+     * Serializes lazy growth, re-backing of trimmed slots, {@link #trim()},
+     * the {@link #close()} sweep, and the closed-pool branch of
+     * {@link #releaseSlot(int)}.
+     */
     private final Object growthLock = new Object();
 
+    /**
+     * Set by {@link #close()}. Once set, acquires throw, {@link #trim()}
+     * skips, and {@link #releaseSlot(int)} frees slots instead of
+     * re-queueing them.
+     */
     private volatile boolean closed;
 
     /**
@@ -120,7 +135,9 @@ public final class S3DirectBufferPool implements AutoCloseable {
     private final AtomicBoolean attachedToClient = new AtomicBoolean(false);
 
     /**
-     * Private. Use {@link #createFixed(long, int)} or
+     * Private. Use {@link #create(S3ClientOptions)},
+     * {@link #createForThroughput(double, int)},
+     * {@link #createFixed(long, int)}, or
      * {@link #createElastic(int, int, int)}.
      *
      * @throws IllegalArgumentException for invalid sizes
@@ -198,7 +215,9 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * {@code S3ClientOptions} instance. Equivalent to
      * {@code createForThroughput(clientOptions.getThroughputTargetGbps(),
      * (int) clientOptions.getPartSize())} (falling back to aws-c-s3's 8 MiB
-     * default when {@code partSize} is unset).</p>
+     * default when {@code partSize} is unset). The resulting pool grows
+     * on demand and trims when idle; see
+     * {@link #createForThroughput(double, int)}.</p>
      *
      * @param clientOptions the {@code S3ClientOptions} whose
      *                      {@code throughputTargetGbps} and {@code partSize}
@@ -230,9 +249,14 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * priority when both are set, matching aws-c-s3's own resolution
      * order in {@code aws_s3_client_new}).</p>
      *
-     * <p>Elastic-mode growth semantics apply (initial slots pre-allocated,
-     * lazy growth up to the ceiling). Preserves the current native pool's
-     * memory footprint with JVM visibility added.</p>
+     * <p>The pool is elastic: 8 slots (fewer if the ceiling is smaller) are
+     * pre-allocated and kept through trim; slots above that are allocated
+     * on demand up to the ceiling and freed again by trim once the client
+     * goes idle. Each growth allocates on the calling aws-c-s3 event-loop
+     * thread; see {@link #createElastic(int, int, int)} for the cold-start
+     * cost, or use {@link #createFixed(long, int)} to pre-allocate
+     * everything. The ceiling matches aws-c-s3's default buffer pool's
+     * memory footprint, with the memory now visible to the JVM.</p>
      *
      * @param throughputTargetGbps the client's throughput target in Gbps,
      *                             typically {@link S3ClientOptions#getThroughputTargetGbps()}.

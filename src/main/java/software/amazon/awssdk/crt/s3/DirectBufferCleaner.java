@@ -14,7 +14,7 @@ import software.amazon.awssdk.crt.Log;
  * {@link ByteBuffer#allocateDirect direct ByteBuffer}'s off-heap
  * memory when the pool retires a slot (trim, pool close, or a
  * slot released after close).
- * 
+ *
  * A DirectByteBuffer's off-heap memory is only released when GC
  * runs its cleaner. This class forces the release synchronously.
  * We handle Java 9+ and Java 8. If we detect a JVM that doesn't
@@ -89,9 +89,9 @@ final class DirectBufferCleaner {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: neither sun.misc.Unsafe.invokeCleaner nor "
               + "sun.nio.ch.DirectBuffer.cleaner() is available on this JVM. "
-              + "Slot retirement (trim/close) will null references and rely on GC + Cleaner for "
-              + "actual native-memory release. RSS drop and MaxDirectMemorySize "
-              + "accounting will lag trim events by one or more GC cycles.");
+              + "Slot retirement (trim, pool close, or a slot released after close) will null "
+              + "references and rely on GC + Cleaner for actual native-memory release. RSS drop "
+              + "and MaxDirectMemorySize accounting will lag each retirement by one or more GC cycles.");
         }
     }
 
@@ -133,8 +133,8 @@ final class DirectBufferCleaner {
                 case UNSUPPORTED:
                 default:
                     // The reference-drop the caller already performed
-                    // will let GC clean up eventually. Related GC cleanup 
-                    // WARN was logged at class load.
+                    // will let GC clean up eventually. The one-time
+                    // degradation WARN was logged at class load.
                     return;
             }
         } catch (Throwable t) {

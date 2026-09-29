@@ -526,7 +526,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
-    /* Attach the Java buffer pool factory if the customer supplied a pool. */
+    /* Attach the Java buffer pool factory if S3Client created a pool. */
     bool buffer_pool_wiring_failed = false;
     struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
     if (jni_buffer_pool != NULL) {
@@ -542,7 +542,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
             aws_jni_check_and_clear_exception(env);
             AWS_LOGF_ERROR(
                 AWS_LS_S3_CLIENT,
-                "S3DirectBufferPool: failed to wire the supplied pool (NewGlobalRef/GetJavaVM); "
+                "S3DirectBufferPool: failed to wire the pool (NewGlobalRef/GetJavaVM); "
                 "failing client creation");
             buffer_pool_wiring_failed = true;
         } else {
@@ -555,7 +555,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     struct aws_s3_client *client = NULL;
     if (buffer_pool_wiring_failed) {
         aws_jni_throw_runtime_exception(
-            env, "S3Client.s3ClientNew: failed to wire the supplied S3DirectBufferPool; failing client creation");
+            env, "S3Client.s3ClientNew: failed to wire the S3DirectBufferPool; failing client creation");
     } else {
         client = aws_s3_client_new(allocator, &client_config);
         if (!client) {

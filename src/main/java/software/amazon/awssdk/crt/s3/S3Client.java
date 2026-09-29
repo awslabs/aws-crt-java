@@ -26,6 +26,8 @@ public class S3Client extends CrtResource {
     private final static Charset UTF8 = java.nio.charset.StandardCharsets.UTF_8;
     private final CompletableFuture<Void> shutdownComplete = new CompletableFuture<>();
     private final String region;
+    /** Client-owned direct buffer pool, or null. Closed in onShutdownComplete. */
+    private final S3DirectBufferPool directBufferPool;
     private final boolean useDirectByteBufferPool;
 
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
@@ -38,19 +40,8 @@ public class S3Client extends CrtResource {
         // (which doesn't yet expose DBZ APIs) participate in DBZ benchmarks.
         if (options.getDirectByteBufferPool() == null
                 && "true".equalsIgnoreCase(System.getProperty("aws.crt.s3.use_dbz"))) {
-            options.withDirectByteBufferPool(S3DirectBufferPool.create(options));
+            options.withDirectByteBufferPool(S3DirectBufferPoolOptions.auto());
         }
-
-        // Attaching a pool switches the memory source from the native
-        // default_buffer_pool to the JVM-owned pool.
-        if (options.getDirectByteBufferPool() != null) {
-            S3DirectBufferPool pool = options.getDirectByteBufferPool();
-            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                "S3DirectBufferPool attached: pool capacity = "
-              + pool.maxSlots() + " slots x " + pool.partSize() + " bytes");
-        }
-
-        useDirectByteBufferPool = options.getDirectByteBufferPool() != null;
 
         int proxyConnectionType = 0;
         String proxyHost = null;
@@ -111,44 +102,67 @@ public class S3Client extends CrtResource {
             didCreateSigningConfig = true;
         }
 
-        acquireNativeHandle(s3ClientNew(this,
-                region.getBytes(UTF8),
-                options.getClientBootstrap().getNativeHandle(),
-                tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
-                signingConfig,
-                options.getPartSize(),
-                options.getMultiPartUploadThreshold(),
-                options.getThroughputTargetGbps(),
-                options.getReadBackpressureEnabled(),
-                options.getInitialReadWindowSize(),
-                options.getMaxConnections(),
-                options.getStandardRetryOptions(),
-                options.getComputeContentMd5(),
-                proxyConnectionType,
-                proxyHost != null ? proxyHost.getBytes(UTF8) : null,
-                proxyPort,
-                proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
-                proxyAuthorizationType,
-                proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
-                proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
-                noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
-                environmentVariableProxyConnectionType,
-                environmentVariableProxyTlsConnectionOptions != null
-                        ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
-                        : 0,
-                environmentVariableType,
-                options.getConnectTimeoutMs(),
-                options.getTcpKeepAliveOptions(),
-                monitoringThroughputThresholdInBytesPerSecond,
-                monitoringFailureIntervalInSeconds,
-                options.getEnableS3Express(),
-                options.getS3ExpressCredentialsProviderFactory(),
-                options.getMemoryLimitInBytes(),
-                fioOptionsSet,
-                shouldStream,
-                diskThroughputGbps,
-                directIo,
-                options.getDirectByteBufferPool()));
+        // A pool switches the memory source from the native
+        // default_buffer_pool to a JVM-owned pool. The client creates and
+        // owns it: closed in onShutdownComplete, or in the catch below if
+        // native client creation fails. Created immediately before the
+        // try so no other failure can orphan it.
+        S3DirectBufferPoolOptions poolOptions = options.getDirectByteBufferPool();
+        directBufferPool = poolOptions != null ? S3DirectBufferPool.fromOptions(poolOptions, options) : null;
+        if (directBufferPool != null) {
+            Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool created: capacity = "
+              + directBufferPool.maxSlots() + " slots x " + directBufferPool.partSize() + " bytes");
+        }
+
+        useDirectByteBufferPool = directBufferPool != null;
+
+        try {
+            acquireNativeHandle(s3ClientNew(this,
+                    region.getBytes(UTF8),
+                    options.getClientBootstrap().getNativeHandle(),
+                    tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
+                    signingConfig,
+                    options.getPartSize(),
+                    options.getMultiPartUploadThreshold(),
+                    options.getThroughputTargetGbps(),
+                    options.getReadBackpressureEnabled(),
+                    options.getInitialReadWindowSize(),
+                    options.getMaxConnections(),
+                    options.getStandardRetryOptions(),
+                    options.getComputeContentMd5(),
+                    proxyConnectionType,
+                    proxyHost != null ? proxyHost.getBytes(UTF8) : null,
+                    proxyPort,
+                    proxyTlsContext != null ? proxyTlsContext.getNativeHandle() : 0,
+                    proxyAuthorizationType,
+                    proxyAuthorizationUsername != null ? proxyAuthorizationUsername.getBytes(UTF8) : null,
+                    proxyAuthorizationPassword != null ? proxyAuthorizationPassword.getBytes(UTF8) : null,
+                    noProxyHosts != null ? noProxyHosts.getBytes(UTF8) : null,
+                    environmentVariableProxyConnectionType,
+                    environmentVariableProxyTlsConnectionOptions != null
+                            ? environmentVariableProxyTlsConnectionOptions.getNativeHandle()
+                            : 0,
+                    environmentVariableType,
+                    options.getConnectTimeoutMs(),
+                    options.getTcpKeepAliveOptions(),
+                    monitoringThroughputThresholdInBytesPerSecond,
+                    monitoringFailureIntervalInSeconds,
+                    options.getEnableS3Express(),
+                    options.getS3ExpressCredentialsProviderFactory(),
+                    options.getMemoryLimitInBytes(),
+                    fioOptionsSet,
+                    shouldStream,
+                    diskThroughputGbps,
+                    directIo,
+                    directBufferPool));
+        } catch (RuntimeException | Error e) {
+            // No native client means no shutdown callback: free the pool here.
+            if (directBufferPool != null) {
+                directBufferPool.close();
+            }
+            throw e;
+        }
 
         addReferenceTo(options.getClientBootstrap());
         if(didCreateSigningConfig) {
@@ -158,6 +172,12 @@ public class S3Client extends CrtResource {
     }
 
     private void onShutdownComplete() {
+        // No meta request can acquire a slot after shutdown. Frees every
+        // unused slot now; slots held by unclosed S3BorrowedBuffers are
+        // freed as each buffer closes.
+        if (directBufferPool != null) {
+            directBufferPool.close();
+        }
         releaseReferences();
 
         this.shutdownComplete.complete(null);
@@ -348,7 +368,7 @@ public class S3Client extends CrtResource {
      * Returns aws-c-s3's default memory pool size (bytes) for the given
      * throughput target ({@code 0} = EC2 auto-detect); delegates to
      * {@code aws_s3_default_memory_limit_for_throughput}. Package-private,
-     * used by {@link S3DirectBufferPool#createForThroughput}.
+     * used by {@code S3DirectBufferPool} automatic sizing.
      */
     static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);
 }

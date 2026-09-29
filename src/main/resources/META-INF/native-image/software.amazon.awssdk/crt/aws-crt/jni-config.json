@@ -2221,14 +2221,6 @@
       {
         "name": "partSize",
         "parameterTypes": []
-      },
-      {
-        "name": "tryAttach",
-        "parameterTypes": []
-      },
-      {
-        "name": "detach",
-        "parameterTypes": []
       }
     ]
   },

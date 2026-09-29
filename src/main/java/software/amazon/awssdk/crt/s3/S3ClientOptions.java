@@ -82,12 +82,11 @@ public class S3ClientOptions {
     private FileIoOptions fileIoOptions;
 
     /**
-     * Optional Java-owned direct buffer pool for zero-copy response
-     * delivery. Default: {@code null} (byte[]-copy path, unchanged).
-     * See {@link S3DirectBufferPool} for factories, sizing, and the
-     * lifetime contract.
+     * Optional sizing for a Java-owned direct buffer pool, created and
+     * owned by the client. Default: {@code null} (native pool,
+     * byte[]-copy path unchanged). See {@link S3DirectBufferPoolOptions}.
      */
-    private S3DirectBufferPool directByteBufferPool;
+    private S3DirectBufferPoolOptions directByteBufferPoolOptions;
 
     public S3ClientOptions() {
         this.computeContentMd5 = false;
@@ -420,10 +419,12 @@ public class S3ClientOptions {
     }
 
     /**
-     * Sets a Java-owned direct buffer pool used as the destination memory
-     * for S3 download response bodies.
+     * Enables a Java-owned direct buffer pool as the destination memory
+     * for S3 download response bodies. The client creates the pool from
+     * these options at construction, sized to its own part size, and frees
+     * it when its shutdown completes.
      *
-     * <p>Attaching a pool makes download staging memory JVM-visible (counted
+     * <p>The pool makes download staging memory JVM-visible (counted
      * against {@code -XX:MaxDirectMemorySize}, hard-capped, trimmed when
      * idle) and does NOT change the delivery contract of
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
@@ -431,21 +432,22 @@ public class S3ClientOptions {
      * to retain. Zero-copy delivery is available only by overriding
      * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.</p>
      *
-     * @param pool the direct buffer pool, or {@code null} to use the default native pool
+     * @param poolOptions pool sizing (for example {@link S3DirectBufferPoolOptions#auto()}),
+     *                    or {@code null} to use the default native pool
      * @return this
-     * @see S3DirectBufferPool
+     * @see S3DirectBufferPoolOptions
      */
-    public S3ClientOptions withDirectByteBufferPool(S3DirectBufferPool pool) {
-        this.directByteBufferPool = pool;
+    public S3ClientOptions withDirectByteBufferPool(S3DirectBufferPoolOptions poolOptions) {
+        this.directByteBufferPoolOptions = poolOptions;
         return this;
     }
 
     /**
-     * Returns the configured direct buffer pool, or {@code null} if not set.
+     * Returns the configured direct buffer pool sizing, or {@code null} if not set.
      *
-     * @return the direct buffer pool or null
+     * @return the direct buffer pool options or null
      */
-    public S3DirectBufferPool getDirectByteBufferPool() {
-        return directByteBufferPool;
+    public S3DirectBufferPoolOptions getDirectByteBufferPool() {
+        return directByteBufferPoolOptions;
     }
 }

@@ -24,8 +24,8 @@ struct aws_s3_java_buffer_pool_factory_data {
  * (declared in aws-c-s3/include/aws/s3/s3_buffer_pool.h).
  *
  * Wired into aws_s3_client_config_options.buffer_pool_factory_fn
- * when the Java caller has attached a non-null pool to
- * S3ClientOptions via withDirectByteBufferPool(...).
+ * when S3ClientOptions.withDirectByteBufferPool(...) is set; the
+ * Java S3Client creates the pool and passes it to s3ClientNew.
  *
  * `user_data` is the global JNI ref to the S3DirectBufferPool Java
  * object. The factory takes ownership of that ref for the lifetime

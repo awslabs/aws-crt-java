@@ -7,73 +7,34 @@ package software.amazon.awssdk.crt.s3;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import software.amazon.awssdk.crt.Log;
 
 /**
- * A Java-owned pool of pre-allocated {@link ByteBuffer#allocateDirect
- * direct ByteBuffer} slots used as the destination memory for
- * {@code aws-c-s3} response bodies on the CRT-based S3 client.
+ * Internal. A Java-owned pool of {@link ByteBuffer#allocateDirect direct
+ * ByteBuffer} slots used as the destination memory for {@code aws-c-s3}
+ * response bodies. Customers configure it through
+ * {@link S3DirectBufferPoolOptions}; {@link S3Client} creates one pool per
+ * client at construction ({@link #fromOptions}) and closes it when its
+ * shutdown completes. The pool is never shared between clients: each
+ * client's native pool state keeps its own pending-reserve list, and a
+ * slot released by one client could never wake a reservation pended by
+ * another.
  *
- * <h2>Opt-in</h2>
- * Attach a pool to a {@link S3Client} via
- * {@link S3ClientOptions#withDirectByteBufferPool(S3DirectBufferPool)}.
- * Without that call, the client uses the default native buffer pool
- * and the historical {@code byte[]}-delivery path is unchanged.
+ * <p>Each slot holds one part, so slot size is the client's resolved part
+ * size. The native factory re-checks equality at client creation as a
+ * guard against Java and native part-size resolution diverging.</p>
  *
- * <h2>Delivery contract</h2>
- * Attaching a pool does NOT change the behavior of
- * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}:
- * it continues to receive a heap {@code byte[]}-backed {@link ByteBuffer}
- * that is safe to retain indefinitely, exactly as without a pool. Zero-copy
- * delivery is available ONLY by overriding
- * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)},
- * which hands out a lifetime-controlled view over the pool slot.
+ * <p>Thread safety: every method is safe for concurrent invocation.
+ * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking; they
+ * run on aws-c-s3 event-loop threads. Pool-exhaustion backpressure is
+ * implemented natively via a pending-reserve-future queue.</p>
  *
- * <h2>Sizing</h2>
- * Every pool has a warm floor of pre-allocated slots and a ceiling. Slots
- * above the floor are allocated on demand and freed again by trim once the
- * client goes idle (no requests in flight for 5 seconds). The factories
- * differ only in how the floor and ceiling are chosen; each factory's
- * Javadoc carries the details:
- * <ul>
- *   <li>{@link #create(S3ClientOptions)} /
- *       {@link #createForThroughput(double, int)}. Ceiling sized to
- *       aws-c-s3's default memory limit for the throughput target, with
- *       8 slots pre-allocated (fewer if the ceiling is smaller) and kept
- *       through trim. Recommended default.</li>
- *   <li>{@link #createElastic(int, int, int)}. Caller-chosen floor and
- *       ceiling. See its Javadoc for cold-start guidance.</li>
- *   <li>{@link #createFixed(long, int)}. Floor equals ceiling: everything
- *       pre-allocated, never grows or trims, no allocation on the event
- *       loop. For tight container-memory budgets.</li>
- * </ul>
- *
- * <h2>Thread safety</h2>
- * All package-private methods are safe for concurrent invocation.
- * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking.
- * Pool-exhaustion backpressure is implemented on the native side via
- * a pending-reserve-future queue, NOT by blocking the caller (which
- * runs on an aws-c-s3 event-loop thread).
- *
- * <h2>One client at a time</h2>
- * A pool may be attached to at most ONE {@link S3Client} at a time.
- * Attaching a second client while the first is alive fails that
- * client's construction. Reuse after the previous client has fully
- * shut down (and every {@link S3BorrowedBuffer} from it has been
- * closed) is supported. The pool's slot size must equal the client's
- * effective part size; client construction fails on mismatch.
- *
- * <h2>Teardown order</h2>
- * Close the {@link S3Client} and await its shutdown-complete future
- * BEFORE calling {@link #close()} on the pool. Closing the pool while
- * a client is still active causes in-flight transfers to fail with a
- * buffer-allocation error. {@code close()} immediately frees all unused
- * slot memory; slots held by unclosed {@link S3BorrowedBuffer}s are
- * freed as each buffer is closed.
+ * <p>Lifetime: slots leased by unclosed {@link S3BorrowedBuffer}s outlive
+ * both the client and {@link #close()}; each is freed when its buffer is
+ * closed (or recovered by the buffer's GC fallback).</p>
  */
-public final class S3DirectBufferPool implements AutoCloseable {
+final class S3DirectBufferPool {
 
     /**
      * Direct buffers, sized to maxSlots. [0, nextGrowthIndex) are backed;
@@ -123,22 +84,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
     private volatile boolean closed;
 
     /**
-     * True while a native S3 client's pool state references this pool.
-     * Set by the native pool factory via {@link #tryAttach()}; cleared
-     * by the native pool-state destructor via {@link #detach()} (which
-     * runs only after the last outstanding ticket releases). Enforces
-     * the one-client-at-a-time contract: the per-client native pending
-     * lists cannot resolve reservations across clients, so sharing one
-     * pool between live clients would deadlock the second client under
-     * exhaustion.
-     */
-    private final AtomicBoolean attachedToClient = new AtomicBoolean(false);
-
-    /**
-     * Private. Use {@link #create(S3ClientOptions)},
-     * {@link #createForThroughput(double, int)},
-     * {@link #createFixed(long, int)}, or
-     * {@link #createElastic(int, int, int)}.
+     * Private: {@link S3Client} builds pools via {@link #fromOptions}.
      *
      * @throws IllegalArgumentException for invalid sizes
      */
@@ -207,161 +153,90 @@ public final class S3DirectBufferPool implements AutoCloseable {
     }
 
     /**
-     * Auto-scaled default: reads {@code clientOptions.throughputTargetGbps}
-     * and {@code clientOptions.partSize}, and sizes the pool via
-     * {@link #createForThroughput(double, int)}.
+     * Builds the pool for one client. Called by the {@link S3Client}
+     * constructor before native client creation.
      *
-     * <p>Convenience wrapper for callers who already have an
-     * {@code S3ClientOptions} instance. Equivalent to
-     * {@code createForThroughput(clientOptions.getThroughputTargetGbps(),
-     * (int) clientOptions.getPartSize())} (falling back to aws-c-s3's 8 MiB
-     * default when {@code partSize} is unset). The resulting pool grows
-     * on demand and trims when idle; see
-     * {@link #createForThroughput(double, int)}.</p>
-     *
-     * @param clientOptions the {@code S3ClientOptions} whose
-     *                      {@code throughputTargetGbps} and {@code partSize}
-     *                      drive sizing
-     * @return a pool sized to match aws-c-s3's defaults for the given options
+     * @param poolOptions   the customer's sizing choice
+     * @param clientOptions the client's options; supplies part size,
+     *                      throughput target, and memory limit
+     * @return a pool whose slot size equals the client's resolved part size
+     * @throws IllegalArgumentException if the sizing yields no slot
+     * @throws IllegalStateException    if the ceiling does not fit in
+     *                                  {@code -XX:MaxDirectMemorySize}
      */
-    public static S3DirectBufferPool create(S3ClientOptions clientOptions) {
-        long partSize = clientOptions.getPartSize();
-        int effectivePartSize = partSize > 0 ? (int) partSize : 8 * 1024 * 1024;
-        return createForThroughput(clientOptions.getThroughputTargetGbps(), effectivePartSize);
+    static S3DirectBufferPool fromOptions(S3DirectBufferPoolOptions poolOptions, S3ClientOptions clientOptions) {
+        int partSize = resolvePartSize(clientOptions);
+        switch (poolOptions.getMode()) {
+            case FIXED:
+                return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
+            case ELASTIC:
+                return createElastic(poolOptions.getInitialSlots(), poolOptions.getMaxSlots(), partSize);
+            case AUTO:
+            default:
+                return createAuto(clientOptions, partSize);
+        }
     }
 
     /**
-     * Auto-scaled default with an explicit part size: sizes the pool using
-     * the same tier table as {@code aws_s3_default_buffer_pool}, with slot
-     * capacity set to {@code partSize}. Slot capacity MUST equal the
-     * client's effective part size. The native pool factory validates
-     * this at client creation and FAILS CLIENT CONSTRUCTION on mismatch.
-     *
-     * <p>Tier-table values live in aws-c-s3's
-     * {@code s_get_default_mem_limit_from_throughput}. This factory calls
-     * the public helper {@code aws_s3_default_memory_limit_for_throughput}
-     * via {@link S3Client#defaultMemoryLimitForThroughput} so the values
-     * always match aws-c-s3's default buffer pool.</p>
-     *
-     * <p>If the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} or
-     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable is set,
-     * its value overrides the tier-table result ({@code _IN_MB} takes
-     * priority when both are set, matching aws-c-s3's own resolution
-     * order in {@code aws_s3_client_new}).</p>
-     *
-     * <p>The pool is elastic: 8 slots (fewer if the ceiling is smaller) are
-     * pre-allocated and kept through trim; slots above that are allocated
-     * on demand up to the ceiling and freed again by trim once the client
-     * goes idle. Each growth allocates on the calling aws-c-s3 event-loop
-     * thread; see {@link #createElastic(int, int, int)} for the cold-start
-     * cost, or use {@link #createFixed(long, int)} to pre-allocate
-     * everything. The ceiling matches aws-c-s3's default buffer pool's
-     * memory footprint, with the memory now visible to the JVM.</p>
-     *
-     * @param throughputTargetGbps the client's throughput target in Gbps,
-     *                             typically {@link S3ClientOptions#getThroughputTargetGbps()}.
-     *                             Pass {@code 0.0} for the unknown / non-EC2 fallback.
-     * @param partSize             per-slot size in bytes; must equal the
-     *                             client's configured part size
-     *                             ({@link S3ClientOptions#getPartSize()}) or
-     *                             aws-c-s3's 8 MiB default when unset.
-     * @return a pool sized to match aws-c-s3's default buffer pool for the
-     *         given throughput target, with slots sized to {@code partSize}
+     * The client's part size, or aws-c-s3's 8 MiB default when unset.
+     * Must match the native client's resolution; the native factory
+     * fails client creation if it does not.
      */
-    public static S3DirectBufferPool createForThroughput(double throughputTargetGbps, int partSize) {
-        long memoryLimitBytes = resolveEnvOverrideBytes();
-        if (memoryLimitBytes <= 0) {
-            memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(throughputTargetGbps);
+    private static int resolvePartSize(S3ClientOptions clientOptions) {
+        long partSize = clientOptions.getPartSize();
+        if (partSize <= 0) {
+            return 8 * 1024 * 1024;
         }
-        int maxSlots = (int) (memoryLimitBytes / partSize);
+        if (partSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                "partSize (" + partSize + ") exceeds the direct buffer pool's maximum slot size");
+        }
+        return (int) partSize;
+    }
+
+    /**
+     * Sized like aws-c-s3's default buffer pool: ceiling = the client's
+     * memory limit, resolved in {@code aws_s3_client_new}'s order
+     * (explicit {@code memoryLimitInBytes}, then the
+     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code _IN_GIB} env var,
+     * then {@code aws_s3_default_memory_limit_for_throughput}); floor =
+     * 8 slots, or the ceiling if smaller.
+     */
+    private static S3DirectBufferPool createAuto(S3ClientOptions clientOptions, int partSize) {
+        long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
+        if (memoryLimitBytes <= 0) {
+            memoryLimitBytes = resolveEnvOverrideBytes();
+        }
+        if (memoryLimitBytes <= 0) {
+            memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(clientOptions.getThroughputTargetGbps());
+        }
+        int maxSlots = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
         if (maxSlots < 1) {
             // Without this, the constructor's generic "maxSlots must be >= 1"
             // hides the real cause (limit smaller than one part).
             throw new IllegalArgumentException(
                 "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
-              + partSize + " bytes). Raise the memory limit (AWS_CRT_S3_MEMORY_LIMIT_IN_MB / _IN_GIB) "
-              + "or reduce partSize");
+              + partSize + " bytes). Raise the memory limit or reduce partSize");
         }
         int initialSlots = Math.min(8, maxSlots);  // small warm floor
-        validateDirectMemoryCapacity(memoryLimitBytes);
+        validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
     }
 
-    /**
-     * Auto-scaled default using aws-c-s3's default 8 MiB part size.
-     * Convenience wrapper for {@link #createForThroughput(double, int)}
-     * with {@code partSize = 8 MiB}.
-     *
-     * <p>Use this overload only when the client is configured with the
-     * default part size. If the client's {@code partSize} is set to any
-     * other value, use {@link #createForThroughput(double, int)} with a
-     * matching value.</p>
-     *
-     * @param throughputTargetGbps the client's throughput target in Gbps
-     * @return a pool sized to match aws-c-s3's default buffer pool, with 8 MiB slots
-     */
-    public static S3DirectBufferPool createForThroughput(double throughputTargetGbps) {
-        return createForThroughput(throughputTargetGbps, 8 * 1024 * 1024);
-    }
-
-    /**
-     * Fixed-size pool: pre-allocate {@code memoryLimitBytes / partSize}
-     * slots up-front; no lazy growth. Equivalent to
-     * {@code createElastic(slotCount, slotCount, partSize)}. Hard-capped:
-     * no forced-buffer overrun. A demand spike beyond capacity pends
-     * natively until slots free. Suggested starting point:
-     * {@code partSize = 8 MiB}, 32 slots (256 MiB total).
-     *
-     * @param memoryLimitBytes total off-heap memory budget for the pool
-     * @param partSize         per-slot size in bytes
-     * @return a fully eager pool of {@code memoryLimitBytes / partSize} slots
-     */
-    public static S3DirectBufferPool createFixed(long memoryLimitBytes, int partSize) {
+    /** Floor == ceiling == {@code memoryLimitBytes / partSize}: fully eager, never grows or trims. */
+    private static S3DirectBufferPool createFixed(long memoryLimitBytes, int partSize) {
         if (memoryLimitBytes < partSize) {
             throw new IllegalArgumentException(
                 "memoryLimitBytes (" + memoryLimitBytes
               + ") must be >= partSize (" + partSize + ")");
         }
-        validateDirectMemoryCapacity(memoryLimitBytes);
-        int slotCount = (int) (memoryLimitBytes / partSize);
+        int slotCount = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
+        validateDirectMemoryCapacity((long) slotCount * partSize);
         return new S3DirectBufferPool(partSize, slotCount, slotCount);
     }
 
-    /**
-     * Elastic pool: pre-allocate {@code initialSlots} up-front; grow
-     * lazily up to {@code maxSlots} on demand from {@code tryAcquireSlot}.
-     * Memory tracks actual workload between
-     * {@code initialSlots × partSize} (steady-state floor) and
-     * {@code maxSlots × partSize} (ceiling).
-     *
-     * <p>This mode mirrors the {@code aws-c-s3} default pool's
-     * lazy-allocation-within-ceiling semantics. Use when workload
-     * throughput is variable and you want memory consumption to
-     * track demand.</p>
-     *
-     * <p>{@code -XX:MaxDirectMemorySize} must accommodate
-     * {@code maxSlots × partSize × 1.5} (pool ceiling + 50% headroom
-     * for other DBB users in the application). Otherwise growth
-     * under spike throws {@code OutOfMemoryError: Direct buffer memory}.</p>
-     *
-     * <p><b>Warning: Cold-start cost.</b> Each growth runs
-     * {@code ByteBuffer.allocateDirect(partSize)} synchronously on
-     * the calling thread (typically an aws-c-s3 event-loop thread).
-     * Per-growth cost is ~50-100 us for {@code partSize = 8 MiB}.
-     * In the worst case, a sudden burst can trigger
-     * {@code maxSlots - initialSlots} growths in rapid succession,
-     * accumulating to ~ms of event-loop work before reaching
-     * steady state. <b>For event-loop-sensitive workloads, prefer
-     * {@link #createFixed} (fully eager), or pass
-     * {@code initialSlots == maxSlots} here to get the same eager
-     * behavior</b>.</p>
-     *
-     * @param initialSlots number of slots to pre-allocate at construction ({@code >= 0})
-     * @param maxSlots     pool ceiling; tryAcquireSlot grows up to this on demand ({@code >= 1}, {@code >= initialSlots})
-     * @param partSize     per-slot size in bytes ({@code > 0})
-     * @return an elastic pool growing lazily from {@code initialSlots} to {@code maxSlots}
-     */
-    public static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
+    /** Caller-chosen floor and ceiling (validated by the options factory and the constructor). */
+    private static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
         validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
     }
@@ -370,29 +245,28 @@ public final class S3DirectBufferPool implements AutoCloseable {
     /* Accessors + lifecycle                                                */
     /* ==================================================================== */
 
-    /** @return the per-slot byte size (matches aws-c-s3's part_size config) */
-    public int partSize()       { return partSize; }
+    /** @return the per-slot byte size (the client's resolved part size) */
+    int partSize()       { return partSize; }
     /** @return the pool ceiling, the maximum number of slots the pool may grow to */
-    public int maxSlots()       { return maxSlots; }
+    int maxSlots()       { return maxSlots; }
     /** @return the number of slots pre-allocated at construction */
-    public int initialSlots()   { return initialSlots; }
+    int initialSlots()   { return initialSlots; }
     /**
      * Peak number of slots ever backed (eager + lazy-grown). For
-     * diagnostics. Some of these slots may currently be trimmed
-     * (unbacked); they are lazily re-backed on next acquire.
+     * diagnostics and tests. Some of these slots may currently be
+     * trimmed (unbacked); they are lazily re-backed on next acquire.
      *
      * @return the peak number of slots ever allocated
      */
-    public int peakAllocatedSlots() {
+    int peakAllocatedSlots() {
         synchronized (growthLock) { return nextGrowthIndex; }
     }
 
     /**
      * Marks the pool closed and immediately frees every UNUSED slot's
-     * memory. Call ONLY after every {@link S3Client} using this pool has
-     * been closed AND its shutdown-complete future has resolved. Closing
-     * earlier causes in-flight transfers to fail with a buffer-allocation
-     * error.
+     * memory. Called by {@link S3Client} when its shutdown completes (and
+     * on client-construction failure), when no meta request can acquire
+     * a slot any more.
      *
      * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
      * freed here (that would be a use-after-free under the holder); each
@@ -400,8 +274,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
      * with this call may miss the sweep and fall back to GC reclamation.
      * Idempotent.</p>
      */
-    @Override
-    public void close() {
+    void close() {
         closed = true;
         // Eagerly free every free-queue slot. Safe: a queued index is by
         // definition unleased (no native ticket caches its address), and
@@ -498,7 +371,7 @@ public final class S3DirectBufferPool implements AutoCloseable {
                 int newIdx = nextGrowthIndex;
                 // OutOfMemoryError propagates (the customer must size
                 // -XX:MaxDirectMemorySize for maxSlots, see
-                // createElastic); WARN first for operator context.
+                // S3DirectBufferPoolOptions.elastic); WARN first for operator context.
                 ByteBuffer dbb;
                 try {
                     dbb = ByteBuffer.allocateDirect(partSize);
@@ -700,28 +573,11 @@ public final class S3DirectBufferPool implements AutoCloseable {
         return addr;
     }
 
-    /**
-     * Called from the native pool factory at client creation.
-     * Compare-and-set guarded: returns false when this pool is already
-     * attached to a live client, which fails that client's construction.
-     */
-    boolean tryAttach() {
-        return attachedToClient.compareAndSet(false, true);
-    }
-
-    /**
-     * Called from the native pool-state destructor after the last ticket
-     * releases, re-enabling attachment for a subsequent client.
-     */
-    void detach() {
-        attachedToClient.set(false);
-    }
-
     /* ==================================================================== */
     /* Internal helpers                                                     */
     /* ==================================================================== */
 
-private void validateIndex(int idx) {
+    private void validateIndex(int idx) {
         // Accept [0, maxSlots). JNI only passes indices it got from tryAcquireSlot.
         if (idx < 0 || idx >= maxSlots) {
             throw new IllegalArgumentException("invalid slot index: " + idx);
@@ -770,9 +626,9 @@ private void validateIndex(int idx) {
               + "but MaxDirectMemorySize is " + maxMiB + " MiB "
               + "(80% usable = " + (availableForPool / (1024 * 1024)) + " MiB). "
               + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
-              + "or use S3DirectBufferPool.createFixed(memoryLimitBytes, partSize) / "
-              + "S3DirectBufferPool.createElastic(initialSlots, maxSlots, partSize) "
-              + "to manually size the pool within available direct memory.");
+              + "or use S3DirectBufferPoolOptions.fixed(memoryLimitBytes) / "
+              + "S3DirectBufferPoolOptions.elastic(initialSlots, maxSlots) "
+              + "to size the pool within available direct memory.");
         }
     }
 

@@ -475,12 +475,13 @@ static void s_java_pool_trim(struct aws_s3_buffer_pool *pool) {
 }
 
 /*
- * Invoked via aws_ref_count when the pool's refcount reaches zero,
- * which happens when the owning aws_s3_client is destroyed. Fails
- * any remaining pending-reserve futures, releases our global JNI
- * ref, and frees state. The Java pool itself remains valid (the
- * application may still hold a reference and create a new client)
- * — we only release OUR claim on it.
+ * Invoked via aws_ref_count when the pool's refcount reaches zero:
+ * after the owning aws_s3_client is destroyed AND every outstanding
+ * ticket (including customer-held S3BorrowedBuffers) has released.
+ * Fails any remaining pending-reserve futures, releases our global
+ * JNI ref, and frees state. The Java pool was created by, and is
+ * closed by, the owning S3Client (at shutdown complete); this only
+ * drops the native claim on it.
  *
  * Under normal teardown, pending_reserves should be empty — the
  * client's meta-request shutdown is supposed to cancel outstanding
@@ -508,11 +509,6 @@ static void s_java_pool_destroy(void *user_data) {
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
     JNIEnv *env = jvm_env_context.env;
     if (env != NULL) {
-        /* Re-enable attachment for a subsequent client. Runs only after
-         * the last outstanding ticket released (tickets hold pool refs),
-         * so a re-attach can never race live tickets from this state. */
-        (*env)->CallVoidMethod(env, ps->java_pool_global, s3_direct_buffer_pool_properties.detach);
-        aws_jni_check_and_clear_exception(env);
         (*env)->DeleteGlobalRef(env, ps->java_pool_global);
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     }
@@ -529,7 +525,7 @@ static void s_java_pool_destroy(void *user_data) {
 
 /*
  * Wired into aws_s3_client_config_options.buffer_pool_factory_fn
- * by s3ClientNew (s3_client.c) when the Java caller attaches a pool.
+ * by s3ClientNew (s3_client.c) when S3Client created a pool.
  *
  * `user_data` is a JNI global ref to the S3DirectBufferPool Java
  * object. This factory function takes ownership of that ref. From
@@ -584,25 +580,17 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
         goto error_release_global_ref;
     }
 
-    /* STEP 4: Validate the pool against this client and claim it, in
-     * one JNI env block. Both checks are fail-fast at client creation:
+    /* STEP 4: Validate slot size against this client (fail-fast at
+     * client creation). Tickets report capacity = config.part_size (the
+     * client's resolved part size) over slots the Java pool allocated at
+     * its own partSize(). If the client's is larger, aws-c-s3 would write
+     * past the end of the slot allocation (native heap corruption); if
+     * smaller, slots are silently underused. S3Client builds the pool
+     * from the part size it resolves, so a mismatch means the Java and
+     * native part-size resolution have diverged; require exact equality.
      *
-     * (a) SLOT-SIZE EQUALITY. Tickets report capacity = config.part_size
-     *     (the client's resolved part size) over slots the Java pool
-     *     allocated at its own partSize(). If the client's is larger,
-     *     aws-c-s3 would write past the end of the slot allocation
-     *     (native heap corruption); if smaller, slots are silently
-     *     underused. Require exact equality.
-     *
-     * (b) SINGLE-CLIENT ATTACH. Pending-reserve lists live on this
-     *     per-client pool state; a second live client sharing the pool
-     *     could pend a reservation that no ticket release ever resolves
-     *     (deadlock under exhaustion). tryAttach() CAS-guards the pool;
-     *     detach() in s_java_pool_destroy re-enables reuse after full
-     *     teardown.
-     *
-     * tryAttach is called LAST among fallible steps so no error path
-     * below needs to un-attach. */
+     * One-pool-one-client needs no check here: the pool is created by
+     * S3Client for its own use and is not reachable by customers. */
     {
         struct aws_jvm_env_context validate_env = aws_jni_acquire_thread_env(ps->jvm);
         JNIEnv *env = validate_env.env;
@@ -620,22 +608,9 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
             AWS_LOGF_ERROR(
                 AWS_LS_S3_CLIENT,
                 "S3DirectBufferPool slot size (%d bytes) does not match the client's effective part size "
-                "(%zu bytes). The pool's partSize must equal S3ClientOptions.partSize (or aws-c-s3's default "
-                "when unset). Failing client creation.",
+                "(%zu bytes). Java and native part-size resolution have diverged. Failing client creation.",
                 (int)java_slot_size,
                 config.part_size);
-            aws_jni_release_thread_env(ps->jvm, &validate_env);
-            goto error_clean_ps;
-        }
-
-        jboolean attached =
-            (*env)->CallBooleanMethod(env, ps->java_pool_global, s3_direct_buffer_pool_properties.tryAttach);
-        if (aws_jni_check_and_clear_exception(env) || !attached) {
-            AWS_LOGF_ERROR(
-                AWS_LS_S3_CLIENT,
-                "S3DirectBufferPool is already attached to a live S3 client. A pool may serve at most one "
-                "client at a time (per-client reservation queues cannot resolve across clients). Failing "
-                "client creation.");
             aws_jni_release_thread_env(ps->jvm, &validate_env);
             goto error_clean_ps;
         }
@@ -662,8 +637,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     return &ps->pool;
 
 error_clean_ps:
-    /* Failure after ps + mutex were initialized (validation/attach step).
-     * The pool was NOT attached (tryAttach is the last fallible call). */
+    /* Failure after ps + mutex were initialized (validation step). */
     aws_mutex_clean_up(&ps->pending_lock);
     aws_mem_release(allocator, ps);
 

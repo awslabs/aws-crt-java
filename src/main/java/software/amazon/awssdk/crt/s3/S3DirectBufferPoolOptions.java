@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
  * download staging memory comes from {@link ByteBuffer#allocateDirect
  * direct ByteBuffers}: JVM-visible (counted against
  * {@code -XX:MaxDirectMemorySize}), hard-capped, and trimmed when idle.
+ * The cap applies to memory the pool is using. On JVMs where direct
+ * memory cannot be freed on demand, memory the pool has released is
+ * returned only after a GC cycle, so actual direct memory can briefly
+ * exceed the cap (still bounded by {@code -XX:MaxDirectMemorySize}).
  *
  * <h2>Delivery contract</h2>
  * Enabling the pool does NOT change the behavior of

@@ -12,8 +12,8 @@ import software.amazon.awssdk.crt.Log;
 /**
  * Package-private utility that forces synchronous release of a
  * {@link ByteBuffer#allocateDirect direct ByteBuffer}'s off-heap
- * memory when the pool retires a slot (trim, pool close, or a
- * slot released after close).
+ * memory when the pool frees a block or dedicated buffer (trim,
+ * making room, pool close, request finish, or a release after close).
  *
  * A DirectByteBuffer's off-heap memory is only released when GC
  * runs its cleaner. This class forces the release synchronously.
@@ -89,8 +89,9 @@ final class DirectBufferCleaner {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: neither sun.misc.Unsafe.invokeCleaner nor "
               + "sun.nio.ch.DirectBuffer.cleaner() is available on this JVM. "
-              + "Slot retirement (trim, pool close, or a slot released after close) will null "
-              + "references and rely on GC + Cleaner for actual native-memory release. RSS drop "
+              + "Freeing a pool block or dedicated buffer (trim, making room, pool close, request "
+              + "finish, or a release after close) will null references and rely on GC + Cleaner "
+              + "for actual native-memory release. RSS drop "
               + "and MaxDirectMemorySize accounting will lag each retirement by one or more GC cycles.");
         }
     }
@@ -110,8 +111,17 @@ final class DirectBufferCleaner {
      * code path reads or writes the buffer, or a cached native
      * address of it, after this call returns.</p>
      *
-     * @param buffer the direct ByteBuffer to release; may be
-     *               null or non-direct (no-op in both cases)
+     * <p>The pool stops counting the memory before calling this, so
+     * when the release falls back to GC (unsupported JVM or failure)
+     * the memory stays allocated until a GC cycle even though the pool
+     * treats it as available. It is still bounded by
+     * {@code -XX:MaxDirectMemorySize}.</p>
+     *
+     * @param buffer the direct ByteBuffer to release; MUST be the buffer
+     *               returned by {@link ByteBuffer#allocateDirect}, not a
+     *               slice or duplicate (on Java 9+ that fails and falls
+     *               back to GC; on Java 8 it silently does nothing). May
+     *               be null or non-direct (no-op in both cases)
      */
     static void free(ByteBuffer buffer) {
         if (buffer == null || !buffer.isDirect()) {

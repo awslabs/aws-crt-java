@@ -603,26 +603,31 @@ void aws_s3_java_buffer_pool_release_request(struct aws_s3_buffer_pool *pool, vo
  * closed by, the owning S3Client (at shutdown complete); this only
  * drops the native claim on it.
  *
- * Under normal teardown, pending_reserves should be empty (the
- * client's meta-request shutdown is supposed to cancel outstanding
- * reserves). We handle non-empty defensively to avoid leaking
- * unresolved futures.
+ * Under normal teardown, pending_reserves is empty: each meta request's
+ * finish hook (aws_s3_java_buffer_pool_release_request) fails that
+ * request's still-pending reserves, and the pool outlives every meta
+ * request. We handle non-empty defensively to avoid leaking unresolved
+ * futures.
  */
 static void s_java_pool_destroy(void *user_data) {
     struct java_pool_state *ps = user_data;
 
-    /* Fail any leftover pending reserves before tearing down the
-     * mutex. Each entry holds a ref we acquired in s_java_pool_reserve. */
+    /* Fail any leftover pending reserves before tearing down the mutex.
+     * Collect under the lock, resolve after unlocking (future callbacks
+     * run synchronously). Each entry holds a future ref we acquired in
+     * s_java_pool_reserve; s_resolve_pending_list drops it. */
+    struct aws_linked_list resolved;
+    aws_linked_list_init(&resolved);
     aws_mutex_lock(&ps->pending_lock);
     while (!aws_linked_list_empty(&ps->pending_reserves)) {
         struct aws_linked_list_node *node = aws_linked_list_pop_front(&ps->pending_reserves);
         struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
-
-        aws_future_s3_buffer_ticket_set_error(pending->future, AWS_ERROR_S3_CANCELED);
-        aws_future_s3_buffer_ticket_release(pending->future);
-        aws_mem_release(ps->allocator, pending);
+        pending->ticket = NULL;
+        pending->error_code = AWS_ERROR_S3_CANCELED;
+        aws_linked_list_push_back(&resolved, node);
     }
     aws_mutex_unlock(&ps->pending_lock);
+    s_resolve_pending_list(ps, &resolved);
     aws_mutex_clean_up(&ps->pending_lock);
 
     /******** JNI ENV ACQUIRE ********/

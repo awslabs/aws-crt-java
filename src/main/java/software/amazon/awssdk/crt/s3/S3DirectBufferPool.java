@@ -162,8 +162,9 @@ final class S3DirectBufferPool {
         this.blockAddresses = new long[numBlocks];
         this.usedMask = new int[numBlocks];
 
-        // Eager floor. On partial OOM: drop allocated refs so GC can reclaim
-        // the off-heap memory promptly, log, and rethrow.
+        // Eager floor. On partial OOM: free the blocks already allocated
+        // right away (direct memory is scarce at exactly this point, so do
+        // not leave them for GC), log, and rethrow.
         try {
             for (int b = 0; b < floorBlocks; b++) {
                 backBlock(b);
@@ -174,6 +175,9 @@ final class S3DirectBufferPool {
               + " block(s) (" + BLOCK_SLOTS + " x " + partSize + " bytes each). "
               + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
             for (int b = 0; b < numBlocks; b++) {
+                if (blocks[b] != null) {
+                    DirectBufferCleaner.free(blocks[b]);
+                }
                 blocks[b] = null;
                 blockAddresses[b] = 0L;
             }
@@ -198,10 +202,10 @@ final class S3DirectBufferPool {
         int partSize = resolvePartSize(clientOptions);
         switch (poolOptions.getMode()) {
             case FIXED:
-                checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize);
+                checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize, partSize);
                 return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
             case ELASTIC:
-                checkMemoryLimitMatches(clientOptions, (long) poolOptions.getMaxSlots() * partSize);
+                checkMemoryLimitMatches(clientOptions, (long) poolOptions.getMaxSlots() * partSize, partSize);
                 return createElastic(poolOptions.getInitialSlots(), poolOptions.getMaxSlots(), partSize);
             case AUTO:
             default:
@@ -213,14 +217,19 @@ final class S3DirectBufferPool {
      * For fixed/elastic pools the pool ceiling IS the client's memory; an
      * explicit, different memoryLimitInBytes would give aws-c-s3 a
      * different limit than the pool enforces. Refuse rather than override.
+     * The ceiling is a whole number of parts, so a fixed() size that is not
+     * a multiple of partSize rounds down; the message says so, because the
+     * caller may have passed the same number to both options.
      */
-    private static void checkMemoryLimitMatches(S3ClientOptions clientOptions, long ceilingBytes) {
+    private static void checkMemoryLimitMatches(S3ClientOptions clientOptions, long ceilingBytes, int partSize) {
         long explicit = clientOptions.getMemoryLimitInBytes();
         if (explicit > 0 && explicit != ceilingBytes) {
             throw new IllegalArgumentException(
                 "S3ClientOptions.memoryLimitInBytes (" + explicit + ") conflicts with the direct buffer pool's "
-              + "ceiling (" + ceilingBytes + " bytes). Leave memoryLimitInBytes unset (the pool ceiling is used), "
-              + "set it to the ceiling, or use S3DirectBufferPoolOptions.auto() to size the pool from it.");
+              + "ceiling (" + ceilingBytes + " bytes). The ceiling is a whole number of parts (" + partSize
+              + " bytes each), rounded down from the pool size. Leave memoryLimitInBytes unset (the pool ceiling "
+              + "is used), set it to " + ceilingBytes + ", or use S3DirectBufferPoolOptions.auto() to size the "
+              + "pool from it.");
         }
     }
 

@@ -54,10 +54,18 @@ import java.nio.ByteBuffer;
  * part size is set). Up to 4 parts are served from contiguous free slots
  * in an existing block, with no new allocation. Larger buffers are
  * dedicated to the request that needs them: allocated within the same
- * ceiling (unused blocks, floor included, are freed to make room), reused
- * only by that request, and freed when it finishes. Only a pool that can
- * grow allocates dedicated buffers. A request that can never fit fails
- * with the reason logged. The pool never silently changes what the
+ * ceiling, reused only by that request, and freed when it finishes. Each
+ * such request pays its own allocation (which zero-fills the memory);
+ * the default native pool instead shares same-size blocks across
+ * requests. With aws-c-s3's default sizing, automatic download ranges fit
+ * in 4 slots; a large explicit memory limit with few connections can
+ * produce larger ranges. To make room for a dedicated buffer the pool
+ * frees fully unused blocks, floor included; freed floor blocks are
+ * allocated again on demand. Only a pool that can grow allocates
+ * dedicated buffers. A request that can never fit fails with the reason
+ * logged. Waiting requests are served strictly in order, so a large
+ * request waiting for memory also holds back smaller requests queued
+ * behind it. The pool never silently changes what the
  * customer configured; a multipart upload fails up front with the reason
  * when it would need a part size larger than an explicitly set
  * {@link S3ClientOptions#withPartSize partSize}, or larger than half the
@@ -69,7 +77,8 @@ import java.nio.ByteBuffer;
  * The client creates the pool at construction and owns it: one pool per
  * client, never shared. When the client's shutdown completes, the pool
  * frees all unused memory. Memory held by unclosed {@link S3BorrowedBuffer}s
- * stays valid and is freed as each buffer is closed. Client shutdown does
+ * stays valid and is freed as each buffer is closed; until then, an
+ * unclosed buffer keeps its whole 16-slot block allocated. Client shutdown does
  * not close borrowed buffers: the customer MUST close each one. An unclosed
  * buffer is only recovered by the GC fallback, after an unbounded delay,
  * and is reported as a leak.
@@ -115,10 +124,11 @@ public final class S3DirectBufferPoolOptions {
 
     /**
      * Fully pre-allocated pool of {@code memoryLimitBytes / partSize}
-     * slots. Never grows or trims, so nothing is ever allocated on the
-     * event loop. A demand spike beyond capacity waits natively until
-     * slots free up. Serves no buffer larger than one part (see the class
-     * doc). For tight container-memory budgets.
+     * slots (rounded down to whole parts). Never grows or trims, so
+     * nothing is ever allocated on the event loop. A demand spike beyond
+     * capacity waits natively until slots free up. Serves buffers of up to
+     * 4 parts from contiguous slots but no larger (see the class doc). For
+     * tight container-memory budgets.
      *
      * @param memoryLimitBytes total off-heap budget for the pool; must be
      *                         at least one part

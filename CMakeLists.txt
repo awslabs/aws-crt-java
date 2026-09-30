@@ -73,19 +73,20 @@ if (BUILD_DEPS)
             CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
         )
 
-        set(UNSAFE_TREAT_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings-as-errors when building S2N")
-        # On Intel Macs, Homebrew installs to /usr/local which is in the default header search path.
-        # Without this, s2n's libcrypto detection picks up Homebrew's OpenSSL instead of bundled aws-lc.
-        # ARM Macs use /opt/homebrew (not in default search paths) so they don't need this.
-        if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
-            set(_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED ${CMAKE_NO_SYSTEM_FROM_IMPORTED})
-            set(CMAKE_NO_SYSTEM_FROM_IMPORTED ON)
-        endif()
-        add_subdirectory(crt/s2n)
-        if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
-            set(CMAKE_NO_SYSTEM_FROM_IMPORTED ${_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED})
-            unset(_AWS_CRT_PREV_NO_SYSTEM_FROM_IMPORTED)
-        endif()
+
+        # prebuild s2n-tls.
+        aws_prebuild_dependency(
+            DEPENDENCY_NAME S2N
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/s2n
+            CMAKE_ARGUMENTS
+                -DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF
+                -DBUILD_TESTING=OFF
+                # On Intel Macs, Homebrew installs to /usr/local, which is in the default
+                # system header search path. Without this flag, s2n picks up Homebrew's OpenSSL
+                # headers instead of the bundled aws-lc headers. Not needed on ARM where Homebrew
+                # uses /opt/homebrew (not in default search paths), but harmless to set everywhere.
+                -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
+        )
     endif()
     add_subdirectory(crt/aws-c-sdkutils)
     add_subdirectory(crt/aws-c-io)
@@ -217,17 +218,17 @@ if (NOT ANDROID)
         message(STATUS "Overriding JAVA_HOME to ${OVERRIDE_JAVA_HOME}")
 
         if(NOT IS_ABSOLUTE "${OVERRIDE_JAVA_HOME}")
-            # Convert to absolute path if it isn't already. 
+            # Convert to absolute path if it isn't already.
             # CMAKE_FIND_ROOT_PATH seems to require path to be absolute
             get_filename_component(ABSOLUTE_JAVA_HOME "${OVERRIDE_JAVA_HOME}" ABSOLUTE)
         endif()
 
-        # Note: dockcross images come without java installed. 
+        # Note: dockcross images come without java installed.
         # we download java manually for the target architecture, but the since its not an
-        # artifact generated within dockcross, it gets ignored during cross compilation 
+        # artifact generated within dockcross, it gets ignored during cross compilation
         # (due to recent changes in which cross compile flags dockcross is passing to cmake)
         # Specifically, CMAKE_FIND_ROOT_PATH_MODE_LIBRARY/INCLUDE changed from BOTH to ONLY,
-        # which makes CMake only check `CMAKE_FIND_ROOT_PATH` for dependencies. 
+        # which makes CMake only check `CMAKE_FIND_ROOT_PATH` for dependencies.
         # Add java artifacts as additional cross compile dep.
         list(APPEND CMAKE_FIND_ROOT_PATH "${ABSOLUTE_JAVA_HOME}")
     endif()

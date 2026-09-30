@@ -29,6 +29,14 @@ public class S3Client extends CrtResource {
     /** Client-owned direct buffer pool, or null. Closed in onShutdownComplete. */
     private final S3DirectBufferPool directBufferPool;
 
+    /**
+     * Upload-sizing inputs for the direct-buffer-pool pre-checks in
+     * makeMetaRequest: whether the customer set partSize, and the
+     * client's multipart threshold (0 = aws-c-s3 default).
+     */
+    private final boolean partSizeExplicit;
+    private final long clientMultipartUploadThreshold;
+
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
@@ -114,13 +122,35 @@ public class S3Client extends CrtResource {
               + directBufferPool.maxSlots() + " slots x " + directBufferPool.partSize() + " bytes");
         }
 
+        partSizeExplicit = options.getPartSize() > 0;
+        clientMultipartUploadThreshold = options.getMultiPartUploadThreshold();
+
+        // With a pool, hand native the part size and memory limit the pool
+        // was sized from, never overriding values the customer set:
+        // - memory limit: lets aws-c-s3's max-part-size check and download
+        //   range sizing see the pool's real capacity.
+        // - part size: a pool that cannot grow cannot allocate dedicated
+        //   buffers for ranges beyond a slot run, so pin the part size
+        //   (disabling aws-c-s3's automatic download range sizing, which
+        //   only runs when no part size is set).
+        long nativePartSize = options.getPartSize();
+        long nativeMemoryLimit = options.getMemoryLimitInBytes();
+        if (directBufferPool != null) {
+            if (!partSizeExplicit && !directBufferPool.servesOversize()) {
+                nativePartSize = directBufferPool.partSize();
+            }
+            if (nativeMemoryLimit <= 0) {
+                nativeMemoryLimit = directBufferPool.nativeMemoryLimitBytes();
+            }
+        }
+
         try {
             acquireNativeHandle(s3ClientNew(this,
                     region.getBytes(UTF8),
                     options.getClientBootstrap().getNativeHandle(),
                     tlsCtx != null ? tlsCtx.getNativeHandle() : 0,
                     signingConfig,
-                    options.getPartSize(),
+                    nativePartSize,
                     options.getMultiPartUploadThreshold(),
                     options.getThroughputTargetGbps(),
                     options.getReadBackpressureEnabled(),
@@ -147,7 +177,7 @@ public class S3Client extends CrtResource {
                     monitoringFailureIntervalInSeconds,
                     options.getEnableS3Express(),
                     options.getS3ExpressCredentialsProviderFactory(),
-                    options.getMemoryLimitInBytes(),
+                    nativeMemoryLimit,
                     fioOptionsSet,
                     shouldStream,
                     diskThroughputGbps,
@@ -213,6 +243,10 @@ public class S3Client extends CrtResource {
             throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
         }
 
+        if (directBufferPool != null) {
+            checkUploadPartSizeForBufferPool(options);
+        }
+
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
                 options.getResponseHandler(), directBufferPool != null);
@@ -266,7 +300,7 @@ public class S3Client extends CrtResource {
                 shouldStream,
                 diskThroughputGbps,
                 directIo,
-                directBufferPool != null);
+                directBufferPool != null ? directBufferPool.nativePoolState() : 0L);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -275,6 +309,96 @@ public class S3Client extends CrtResource {
             signingConfig.close();
         }
         return metaRequest;
+    }
+
+    /** S3's maximum number of parts per multipart upload. */
+    private static final long MAX_UPLOAD_PARTS = 10_000;
+    /** S3's minimum multipart upload part size (aws-c-s3 g_s3_min_upload_part_size). */
+    private static final long MIN_UPLOAD_PART_SIZE = 5L * 1024 * 1024;
+    /** aws-c-s3's upper bound on part size (g_default_max_part_size). */
+    private static final long MAX_UPLOAD_PART_SIZE = 5L * 1024 * 1024 * 1024;
+
+    /**
+     * With a direct buffer pool, fail a multipart upload up front when
+     * aws-c-s3 would change its part size behind the customer's back or
+     * beyond what the pool can hold. Without a pool, aws-c-s3 silently
+     * raises the part size (to at least 5 MiB, and to stay within 10,000
+     * parts); with one, we refuse instead when:
+     * <ul>
+     *   <li>the customer set {@code partSize} explicitly, or the pool cannot
+     *       grow (so it cannot serve larger buffers); or</li>
+     *   <li>the required part size exceeds what the pool allows (half its
+     *       memory limit, capped at 5 GiB, matching aws-c-s3's own limit).</li>
+     * </ul>
+     * Skipped when the content length is unknown or a resume token is used
+     * (the token's part size is honored).
+     */
+    private void checkUploadPartSizeForBufferPool(S3MetaRequestOptions options) {
+        if (options.getMetaRequestType() != S3MetaRequestOptions.MetaRequestType.PUT_OBJECT
+                || options.getResumeToken() != null) {
+            return;
+        }
+        long contentLength = uploadContentLength(options);
+        if (contentLength < 0) {
+            return;
+        }
+        long partSize = directBufferPool.partSize();
+        long threshold = clientMultipartUploadThreshold > 0
+                ? clientMultipartUploadThreshold
+                : Math.max(partSize, MIN_UPLOAD_PART_SIZE);
+        if (contentLength <= threshold) {
+            return;     // single PUT; part size does not apply
+        }
+        long required = Math.max(MIN_UPLOAD_PART_SIZE,
+                (contentLength + MAX_UPLOAD_PARTS - 1) / MAX_UPLOAD_PARTS);
+        if (required <= partSize) {
+            return;
+        }
+        String need = "Uploading " + contentLength + " bytes needs a part size of at least " + required
+                + " bytes (S3 allows at most " + MAX_UPLOAD_PARTS + " parts of at least "
+                + MIN_UPLOAD_PART_SIZE + " bytes), but the part size is " + partSize + " bytes. ";
+        if (partSizeExplicit) {
+            throw new IllegalArgumentException(need
+                + "With a direct buffer pool the explicitly configured partSize is never raised "
+                + "automatically; set S3ClientOptions.withPartSize to at least " + required + ".");
+        }
+        if (!directBufferPool.servesOversize()) {
+            if (required > directBufferPool.maxGroupBytes()) {
+                throw new IllegalArgumentException(need
+                    + "This direct buffer pool cannot grow (floor equals ceiling), so the largest part it holds "
+                    + "is " + directBufferPool.maxGroupBytes() + " bytes; use S3DirectBufferPoolOptions.auto() "
+                    + "or elastic(), or set S3ClientOptions.withPartSize to at least " + required + ".");
+            }
+            return;
+        }
+        long limit = Math.min(directBufferPool.ceilingBytes() / 2, MAX_UPLOAD_PART_SIZE);
+        if (required > limit) {
+            throw new IllegalArgumentException(need
+                + "The largest part this direct buffer pool allows is " + limit + " bytes (half its "
+                + directBufferPool.ceilingBytes() + "-byte ceiling, capped at " + MAX_UPLOAD_PART_SIZE
+                + "); raise the pool's memory limit.");
+        }
+    }
+
+    /** Content length of an upload from its file or Content-Length header, or -1 if unknown. */
+    private static long uploadContentLength(S3MetaRequestOptions options) {
+        if (options.getRequestFilePath() != null) {
+            try {
+                return java.nio.file.Files.size(options.getRequestFilePath());
+            } catch (java.io.IOException | SecurityException e) {
+                return -1;  // native reports the file error
+            }
+        }
+        for (software.amazon.awssdk.crt.http.HttpHeader header : options.getHttpRequest().getHeaders()) {
+            if ("Content-Length".equalsIgnoreCase(header.getName())) {
+                try {
+                    return Long.parseLong(header.getValue().trim());
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+        return -1;
     }
 
     /**
@@ -359,7 +483,7 @@ public class S3Client extends CrtResource {
             boolean shouldStream,
             double diskThroughputGbps,
             boolean directIo,
-            boolean useDirectByteBufferPool);
+            long directBufferPoolState);
 
     /**
      * Returns aws-c-s3's default memory pool size (bytes) for the given

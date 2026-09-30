@@ -350,11 +350,14 @@ extern struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
 /* S3DirectBufferPool */
 struct s3_direct_buffer_pool_properties {
-    jmethodID tryAcquireSlot;
-    jmethodID releaseSlot;
-    jmethodID slotAddress;
-    jmethodID trim;     /* void trim(): called from s_java_pool_trim */
-    jmethodID partSize; /* int partSize(): factory slot-size validation */
+    jmethodID tryAcquire;         /* long tryAcquire(long size, long owner) */
+    jmethodID tryReuseOwnIdle;    /* long tryReuseOwnIdle(long size, long owner) */
+    jmethodID leaseAddress;       /* long leaseAddress(long handle) */
+    jmethodID release;            /* void release(long handle) */
+    jmethodID releaseRequest;     /* void releaseRequest(long owner) */
+    jmethodID trim;               /* void trim(): called from s_java_pool_trim */
+    jmethodID partSize;           /* int partSize(): factory slot-size validation */
+    jmethodID setNativePoolState; /* void setNativePoolState(long): factory */
 };
 extern struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 

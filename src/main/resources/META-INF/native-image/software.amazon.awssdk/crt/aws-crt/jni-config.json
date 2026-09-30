@@ -2199,19 +2199,35 @@
     "name": "software.amazon.awssdk.crt.s3.S3DirectBufferPool",
     "methods": [
       {
-        "name": "tryAcquireSlot",
-        "parameterTypes": []
-      },
-      {
-        "name": "releaseSlot",
+        "name": "tryAcquire",
         "parameterTypes": [
-          "int"
+          "long",
+          "long"
         ]
       },
       {
-        "name": "slotAddress",
+        "name": "tryReuseOwnIdle",
         "parameterTypes": [
-          "int"
+          "long",
+          "long"
+        ]
+      },
+      {
+        "name": "leaseAddress",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "release",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "releaseRequest",
+        "parameterTypes": [
+          "long"
         ]
       },
       {
@@ -2221,6 +2237,12 @@
       {
         "name": "partSize",
         "parameterTypes": []
+      },
+      {
+        "name": "setNativePoolState",
+        "parameterTypes": [
+          "long"
+        ]
       }
     ]
   },

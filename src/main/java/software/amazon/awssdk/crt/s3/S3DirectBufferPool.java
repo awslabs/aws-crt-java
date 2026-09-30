@@ -5,90 +5,140 @@
 package software.amazon.awssdk.crt.s3;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import software.amazon.awssdk.crt.Log;
 
 /**
- * Internal. A Java-owned pool of {@link ByteBuffer#allocateDirect direct
- * ByteBuffer} slots used as the destination memory for {@code aws-c-s3}
- * response bodies. Customers configure it through
+ * Internal. A Java-owned buffer pool used as the destination memory for
+ * {@code aws-c-s3} transfers. Customers configure it through
  * {@link S3DirectBufferPoolOptions}; {@link S3Client} creates one pool per
  * client at construction ({@link #fromOptions}) and closes it when its
  * shutdown completes. The pool is never shared between clients: each
  * client's native pool state keeps its own pending-reserve list, and a
- * slot released by one client could never wake a reservation pended by
+ * lease released by one client could never wake a reservation pended by
  * another.
  *
- * <p>Each slot holds one part, so slot size is the client's resolved part
- * size. The native factory re-checks equality at client creation as a
- * guard against Java and native part-size resolution diverging.</p>
+ * <h2>Layout (mirrors aws-c-s3's default pool)</h2>
+ * Memory is allocated in blocks of up to {@value #BLOCK_SLOTS} contiguous
+ * slots, each block one {@link ByteBuffer#allocateDirect direct ByteBuffer}.
+ * A slot holds one part, so slot size is the client's resolved part size
+ * (the native factory re-checks equality at client creation). Reservations
+ * are served three ways:
+ * <ul>
+ *   <li>Up to one part: a single slot.</li>
+ *   <li>Up to {@value #MAX_GROUP_SLOTS} parts (for example aws-c-s3's
+ *       automatic download ranges): a run of contiguous slots inside one
+ *       block, like the default pool's multi-chunk primary allocations. No
+ *       new memory is allocated when a backed block has a free run.</li>
+ *   <li>Larger: a dedicated direct buffer owned by the meta request that
+ *       needs it (uploads raised past S3's 10,000-part limit, resumed
+ *       uploads with a larger part size, very large download ranges). It is
+ *       retained and reused only by that request while the request is
+ *       active, never trimmed from under it, and freed when the request
+ *       finishes ({@link #releaseRequest}). Making room for it frees
+ *       fully unused blocks, floor included. A pool that cannot grow
+ *       (floor == ceiling) never allocates after construction, so it
+ *       serves no dedicated buffers.</li>
+ * </ul>
+ * Blocks and dedicated buffers share one byte budget,
+ * {@code maxSlots * partSize}, so the ceiling is hard.
  *
- * <p>Thread safety: all methods are safe for concurrent invocation.
- * {@code tryAcquireSlot} and {@code releaseSlot} are non-blocking
- * (they run on aws-c-s3 event-loop threads); exhaustion backpressure
- * is handled natively.</p>
+ * <h2>Concurrency</h2>
+ * Every method synchronizes on {@code lock}. Native callers (reserve,
+ * ticket release, trim, request finish) additionally hold the native pool
+ * state's {@code pending_lock} around their JNI calls, so acquires and
+ * releases are serialized and pending reservations cannot be stranded.
+ * Lock order: native pending_lock, then {@code lock}. Nothing here calls
+ * into native code that takes pending_lock.
  *
- * <p>Lifetime: slots leased by unclosed {@link S3BorrowedBuffer}s outlive
- * both the client and {@link #close()}; each is freed when its buffer is
- * closed (or recovered by the buffer's GC fallback).</p>
+ * <p>Lifetime: leases held by unclosed {@link S3BorrowedBuffer}s outlive
+ * both the client and {@link #close()}; their memory is freed when the last
+ * lease on it is released (or recovered by the buffer's GC fallback).</p>
  */
 final class S3DirectBufferPool {
 
-    /**
-     * Direct buffers, sized to maxSlots. [0, nextGrowthIndex) are backed;
-     * the rest are null until lazy growth (or nulled again by trim).
-     * WARNING: must outlive every native read, anchored by the
-     * native pool state's JNI global ref on this object.
-     */
-    private final ByteBuffer[] slots;
+    /** Slots per block (aws-c-s3's default pool uses 16 chunks per block). */
+    static final int BLOCK_SLOTS = 16;
 
-    /**
-     * Cached native addresses, one per allocated slot; 0L when
-     * unallocated/trimmed. Direct memory is not relocated by GC.
-     */
-    private final long[] slotAddresses;
+    /** Largest contiguous run served from a block; larger requests get a dedicated buffer (native: 4 chunks). */
+    static final int MAX_GROUP_SLOTS = 4;
 
-    /** Index queue of free slots; acquire = take, release = offer. */
-    private final BlockingQueue<Integer> freeIndices;
+    /* tryAcquire results besides a lease handle (handles are >= 0). */
+    static final long EXHAUSTED = -1;
+    static final long IMPOSSIBLE = -2;
+
+    /** Handle tag for dedicated buffers; slot-run handles have it clear. */
+    private static final long DEDICATED_TAG = 1L << 62;
 
     private final int partSize;
-    private final int initialSlots;
     private final int maxSlots;
+    private final int numBlocks;
+    /** Blocks allocated at construction and never trimmed (the warm floor). */
+    private final int floorBlocks;
+
+    /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
+    private final long ceilingBytes;
 
     /**
-     * The next slot index to back during lazy growth; equivalently, the
-     * high-water mark of slot indices ever backed (eager + lazy-grown).
-     * Monotonically increases up to {@code maxSlots} and never shrinks,
-     * even on trim: trim unbacks memory but leaves the index in
-     * circulation, so decrementing this cursor would let growth re-issue
-     * an index still in {@code freeIndices}, a double-lease.
-     * Guarded by {@code growthLock} on writes.
+     * Memory limit S3Client hands the native client when none is set, so
+     * aws-c-s3's max-part-size check and range sizing match this pool: the
+     * resolved limit for auto pools, the ceiling otherwise.
      */
-    private int nextGrowthIndex;
+    private final long nativeMemoryLimitBytes;
+
+    /** Native pool state pointer (set by the native factory); passed back on meta requests. */
+    private volatile long nativePoolState;
+
+    private final Object lock = new Object();
 
     /**
-     * Guards all writes to {@code slots[]} and {@code slotAddresses[]}.
-     * Serializes lazy growth, re-backing of trimmed slots, {@link #trim()},
-     * the {@link #close()} sweep, and the closed-pool branch of
-     * {@link #releaseSlot(int)}.
+     * Backing buffer per block; null until first needed (or after trim).
+     * WARNING: must outlive every native read of a lease into it; anchored
+     * by the native pool state's JNI global ref on this object.
      */
-    private final Object growthLock = new Object();
+    private final ByteBuffer[] blocks;
+    /** Cached native base address per block; 0 when unbacked. */
+    private final long[] blockAddresses;
+    /** Per-block occupancy bitmask (bit i = slot i leased). */
+    private final int[] usedMask;
 
-    /**
-     * Set by {@link #close()}. Once set, acquires throw, {@link #trim()}
-     * skips, and {@link #releaseSlot(int)} frees slots instead of
-     * re-queueing them.
-     */
+    /** Backed block bytes plus every dedicated buffer; never exceeds ceilingBytes. */
+    private long committedBytes;
+
+    /** One dedicated buffer. */
+    private static final class Dedicated {
+        final ByteBuffer buffer;
+        final long address;
+        final long owner;
+        /** Owner's meta request finished (or pool closed): free on release. */
+        boolean orphaned;
+
+        Dedicated(ByteBuffer buffer, long address, long owner) {
+            this.buffer = buffer;
+            this.address = address;
+            this.owner = owner;
+        }
+    }
+
+    private final Map<Long, Dedicated> leasedDedicated = new HashMap<>();
+    /** Released dedicated buffers kept for reuse by their owning request. */
+    private final Map<Long, ArrayList<Dedicated>> idleDedicatedByOwner = new HashMap<>();
+    private long nextDedicatedId;
+
+    /** Set by {@link #close()}: acquires throw; released memory is freed instead of kept. */
     private volatile boolean closed;
 
     /**
      * Private: {@link S3Client} builds pools via {@link #fromOptions}.
+     * {@code initialSlots} rounds up to whole blocks for the eager floor.
      *
      * @throws IllegalArgumentException for invalid sizes
      */
-    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots) {
+    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots, long nativeMemoryLimitBytes) {
         if (partSize <= 0)       throw new IllegalArgumentException("partSize must be > 0");
         if (initialSlots < 0)    throw new IllegalArgumentException("initialSlots must be >= 0");
         if (maxSlots < 1)        throw new IllegalArgumentException("maxSlots must be >= 1");
@@ -96,46 +146,38 @@ final class S3DirectBufferPool {
             throw new IllegalArgumentException(
                 "initialSlots (" + initialSlots + ") must be <= maxSlots (" + maxSlots + ")");
         }
+        if ((long) Math.min(BLOCK_SLOTS, maxSlots) * partSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                "partSize (" + partSize + ") is too large: one " + BLOCK_SLOTS
+              + "-slot block must fit in a single direct buffer");
+        }
 
-        this.partSize      = partSize;
-        this.initialSlots  = initialSlots;
-        this.maxSlots      = maxSlots;
-        this.slots         = new ByteBuffer[maxSlots];
-        this.slotAddresses = new long[maxSlots];
-        this.freeIndices   = new LinkedBlockingQueue<>(maxSlots);
-        this.nextGrowthIndex = 0;
+        this.partSize = partSize;
+        this.maxSlots = maxSlots;
+        this.numBlocks = (maxSlots + BLOCK_SLOTS - 1) / BLOCK_SLOTS;
+        this.floorBlocks = (initialSlots + BLOCK_SLOTS - 1) / BLOCK_SLOTS;
+        this.ceilingBytes = (long) maxSlots * partSize;
+        this.nativeMemoryLimitBytes = nativeMemoryLimitBytes;
+        this.blocks = new ByteBuffer[numBlocks];
+        this.blockAddresses = new long[numBlocks];
+        this.usedMask = new int[numBlocks];
 
-        // Eagerly pre-allocate the first `initialSlots` direct buffers.
-        // Remaining slots are allocated on demand in tryAcquireSlot().
-        // On partial OOM: null allocated refs so GC can reclaim off-heap
-        // memory promptly, log, and rethrow.
+        // Eager floor. On partial OOM: drop allocated refs so GC can reclaim
+        // the off-heap memory promptly, log, and rethrow.
         try {
-            for (int i = 0; i < initialSlots; i++) {
-                // slots[i] holds the buffer, keeping its off-heap memory
-                // (and the cached address below) alive.
-                ByteBuffer dbb = ByteBuffer.allocateDirect(partSize);
-                slots[i] = dbb;
-
-                // Cache the native address so JNI avoids a call per part.
-                slotAddresses[i] = nativeGetDirectBufferAddress(dbb);
-
-                freeIndices.add(i);
-                nextGrowthIndex++;
+            for (int b = 0; b < floorBlocks; b++) {
+                backBlock(b);
             }
         } catch (OutOfMemoryError e) {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
-                "S3DirectBufferPool: OutOfMemoryError during eager allocation "
-              + "at slot " + nextGrowthIndex + " of " + initialSlots
-              + " (partSize=" + partSize + " bytes). "
-              + "Releasing partial allocation. Consider raising "
-              + "-XX:MaxDirectMemorySize or reducing pool size.");
-            // Null refs so Cleaner can reclaim off-heap memory promptly.
-            for (int j = 0; j < nextGrowthIndex; j++) {
-                slots[j] = null;
-                slotAddresses[j] = 0L;
+                "S3DirectBufferPool: OutOfMemoryError during eager allocation of " + floorBlocks
+              + " block(s) (" + BLOCK_SLOTS + " x " + partSize + " bytes each). "
+              + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
+            for (int b = 0; b < numBlocks; b++) {
+                blocks[b] = null;
+                blockAddresses[b] = 0L;
             }
-            freeIndices.clear();
-            nextGrowthIndex = 0;
+            committedBytes = 0;
             throw e;
         }
     }
@@ -156,8 +198,10 @@ final class S3DirectBufferPool {
         int partSize = resolvePartSize(clientOptions);
         switch (poolOptions.getMode()) {
             case FIXED:
+                checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize);
                 return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
             case ELASTIC:
+                checkMemoryLimitMatches(clientOptions, (long) poolOptions.getMaxSlots() * partSize);
                 return createElastic(poolOptions.getInitialSlots(), poolOptions.getMaxSlots(), partSize);
             case AUTO:
             default:
@@ -166,7 +210,23 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * The client's part size, or aws-c-s3's 8 MiB default when unset.
+     * For fixed/elastic pools the pool ceiling IS the client's memory; an
+     * explicit, different memoryLimitInBytes would give aws-c-s3 a
+     * different limit than the pool enforces. Refuse rather than override.
+     */
+    private static void checkMemoryLimitMatches(S3ClientOptions clientOptions, long ceilingBytes) {
+        long explicit = clientOptions.getMemoryLimitInBytes();
+        if (explicit > 0 && explicit != ceilingBytes) {
+            throw new IllegalArgumentException(
+                "S3ClientOptions.memoryLimitInBytes (" + explicit + ") conflicts with the direct buffer pool's "
+              + "ceiling (" + ceilingBytes + " bytes). Leave memoryLimitInBytes unset (the pool ceiling is used), "
+              + "set it to the ceiling, or use S3DirectBufferPoolOptions.auto() to size the pool from it.");
+        }
+    }
+
+    /**
+     * The client's part size, or aws-c-s3's 8 MiB default when unset
+     * (must match g_default_part_size_fallback in aws-c-s3's s3_util.c).
      * Must match the native client's resolution; the native factory
      * fails client creation if it does not.
      */
@@ -188,7 +248,7 @@ final class S3DirectBufferPool {
      * (explicit {@code memoryLimitInBytes}, then the
      * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code _IN_GIB} env var,
      * then {@code aws_s3_default_memory_limit_for_throughput}); floor =
-     * 8 slots, or the ceiling if smaller.
+     * one block.
      */
     private static S3DirectBufferPool createAuto(S3ClientOptions clientOptions, int partSize) {
         long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
@@ -206,9 +266,9 @@ final class S3DirectBufferPool {
                 "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
               + partSize + " bytes). Raise the memory limit or reduce partSize");
         }
-        int initialSlots = Math.min(8, maxSlots);  // small warm floor
+        int initialSlots = Math.min(BLOCK_SLOTS, maxSlots);  // warm floor: one block
         validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
+        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, memoryLimitBytes);
     }
 
     /** Floor == ceiling == {@code memoryLimitBytes / partSize}: fully eager, never grows or trims. */
@@ -220,13 +280,13 @@ final class S3DirectBufferPool {
         }
         int slotCount = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
         validateDirectMemoryCapacity((long) slotCount * partSize);
-        return new S3DirectBufferPool(partSize, slotCount, slotCount);
+        return new S3DirectBufferPool(partSize, slotCount, slotCount, (long) slotCount * partSize);
     }
 
     /** Caller-chosen floor and ceiling (validated by the options factory and the constructor). */
     private static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
         validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots);
+        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, (long) maxSlots * partSize);
     }
 
     /* ==================================================================== */
@@ -235,56 +295,49 @@ final class S3DirectBufferPool {
 
     /** @return the per-slot byte size (the client's resolved part size) */
     int partSize()       { return partSize; }
-    /** @return the pool ceiling, the maximum number of slots the pool may grow to */
+    /** @return the pool ceiling in slots */
     int maxSlots()       { return maxSlots; }
+    /** @return the byte budget shared by blocks and dedicated buffers */
+    long ceilingBytes()  { return ceilingBytes; }
+    /** @return the memory limit S3Client passes to the native client when none is set explicitly */
+    long nativeMemoryLimitBytes() { return nativeMemoryLimitBytes; }
+    /** @return the largest reservation served from blocks, without a dedicated buffer */
+    long maxGroupBytes() { return (long) Math.min(MAX_GROUP_SLOTS, Math.min(BLOCK_SLOTS, maxSlots)) * partSize; }
     /**
-     * Peak number of slots ever backed (eager + lazy-grown). For
-     * diagnostics and tests. Some of these slots may currently be
-     * trimmed (unbacked); they are lazily re-backed on next acquire.
-     *
-     * @return the peak number of slots ever allocated
+     * @return whether dedicated (larger than {@link #maxGroupBytes()}) buffers
+     *         can be served; false when the floor covers every block, so the
+     *         pool never allocates after construction
      */
-    int peakAllocatedSlots() {
-        synchronized (growthLock) { return nextGrowthIndex; }
+    boolean servesOversize() { return floorBlocks < numBlocks; }
+    /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
+    long committedBytes() {
+        synchronized (lock) { return committedBytes; }
     }
+    /** @return the native pool state pointer, 0 until the native factory runs */
+    long nativePoolState() { return nativePoolState; }
 
     /**
-     * Marks the pool closed and immediately frees every UNUSED slot's
-     * memory. Called by {@link S3Client} when its shutdown completes (and
-     * on client-construction failure), when no meta request can acquire
-     * a slot any more.
-     *
-     * <p>Slots still leased by unclosed {@link S3BorrowedBuffer}s are NOT
-     * freed here (that would be a use-after-free under the holder); each
-     * one is freed when its buffer is closed, including one released
-     * concurrently with this call (see {@link #releaseSlot}). Idempotent.</p>
+     * Marks the pool closed and immediately frees every unused block and
+     * idle dedicated buffer. Called by {@link S3Client} when its shutdown
+     * completes (and on client-construction failure). Memory still leased by
+     * unclosed {@link S3BorrowedBuffer}s is freed when released. Idempotent.
      */
     void close() {
-        closed = true;
-        freeQueuedSlots();
-    }
-
-    /**
-     * Frees every slot currently in the free queue. Safe: a queued index is
-     * by definition unleased (no native ticket caches its address), and
-     * polling under growthLock partitions each index to exactly one party.
-     * A racing acquirer that wins a poll keeps a valid slot we never see.
-     * Leased slots are not in the queue; they are freed in releaseSlot()
-     * when their borrowed buffers close (closed == true branch). No
-     * re-offer: only called once the pool is closed for good.
-     */
-    private void freeQueuedSlots() {
-        synchronized (growthLock) {
-            Integer idx;
-            while ((idx = freeIndices.poll()) != null) {
-                int i = idx;
-                ByteBuffer dbb = slots[i];
-                if (dbb == null) {
-                    continue;   // already trimmed
+        synchronized (lock) {
+            closed = true;
+            for (int b = 0; b < numBlocks; b++) {
+                if (blocks[b] != null && usedMask[b] == 0) {
+                    unbackBlock(b);
                 }
-                slots[i] = null;
-                slotAddresses[i] = 0L;
-                DirectBufferCleaner.free(dbb);
+            }
+            for (ArrayList<Dedicated> idle : idleDedicatedByOwner.values()) {
+                for (Dedicated d : idle) {
+                    freeDedicated(d);
+                }
+            }
+            idleDedicatedByOwner.clear();
+            for (Dedicated d : leasedDedicated.values()) {
+                d.orphaned = true;
             }
         }
     }
@@ -295,275 +348,287 @@ final class S3DirectBufferPool {
 
     /*
      * Invoked FROM s3_java_buffer_pool.c via JNI. Signatures must remain
-     * stable; the method IDs are cached in java_class_ids.c.
+     * stable; the method IDs are cached in java_class_ids.c and listed in
+     * jni-config.json. Handles: slot runs encode (block, start, count);
+     * dedicated buffers carry DEDICATED_TAG.
      */
+
+    /** Called once by the native factory. */
+    void setNativePoolState(long state) {
+        nativePoolState = state;
+    }
 
     /**
-     * Non-blocking acquire. Returns a free slot index if one is
-     * immediately available, OR grows a new slot if the pool has
-     * not yet reached {@code maxSlots}. Returns {@code -1} if the
-     * pool is fully allocated AND every slot is currently leased.
+     * Non-blocking acquire of {@code size} bytes for meta request
+     * {@code owner}. MUST NOT block (runs on aws-c-s3 event-loop threads);
+     * on {@link #EXHAUSTED} native pends its future.
      *
-     * <p><b>CRITICAL:</b> MUST NOT block. Runs on aws-c-s3 event-loop
-     * threads; blocking stalls all I/O on that loop. On -1 the native
-     * side pends its future ({@code s_java_pool_reserve}).</p>
-     *
-     * <h3>Three stages</h3>
-     * <ol>
-     *   <li>Fast path: poll a free index (re-backing it if trim freed it).</li>
-     *   <li>Lazy growth: allocateDirect under {@code growthLock} while below
-     *       {@code maxSlots}.</li>
-     *   <li>Exhausted: return -1; native side pends its future.</li>
-     * </ol>
+     * @return a lease handle; {@link #EXHAUSTED} when capacity is currently
+     *         taken; or {@link #IMPOSSIBLE} when this pool can never serve
+     *         the size (reason logged; native fails the reservation)
+     * @throws IllegalStateException if the pool is closed
      */
-    int tryAcquireSlot() {
+    long tryAcquire(long size, long owner) {
         if (closed) throw new IllegalStateException("pool is closed");
+        if (size <= 0) size = 1;
+        long slotsNeeded = (size + partSize - 1) / partSize;
+        synchronized (lock) {
+            if (slotsNeeded <= MAX_GROUP_SLOTS && slotsNeeded <= Math.min(BLOCK_SLOTS, maxSlots)) {
+                return acquireRunLocked((int) slotsNeeded);
+            }
+            return acquireDedicatedLocked(size, owner);
+        }
+    }
 
-        // Fast path: existing free slot in the queue.
-        Integer idx = freeIndices.poll();
-        if (idx != null) {
-            // Re-back the slot if trim() freed it. The outer check is a
-            // racy fast-path read; the re-check under growthLock (the only
-            // writer to slots[i]) is definitive, and trim's null write is
-            // published to us via the queue's lock (drain-and-reoffer).
-            if (slots[idx] == null) {
-                synchronized (growthLock) {
-                    if (slots[idx] == null) {
-                        ByteBuffer dbb;
-                        try {
-                            dbb = ByteBuffer.allocateDirect(partSize);
-                        } catch (OutOfMemoryError e) {
-                            // Return the index to the queue so it
-                            // isn't lost. On next attempt the same
-                            // race applies but the reallocation may
-                            // succeed after some other DBB is
-                            // released elsewhere in the JVM.
-                            freeIndices.offer(idx);
-                            Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
-                                "S3DirectBufferPool: OutOfMemoryError re-allocating "
-                              + "trimmed slot " + idx + " (partSize=" + partSize + " bytes). "
-                              + "Consider raising -XX:MaxDirectMemorySize.");
-                            throw e;
-                        }
-                        slots[idx] = dbb;
-                        slotAddresses[idx] = nativeGetDirectBufferAddress(dbb);
-                    }
+    /**
+     * Reuse-only acquire: serves {@code size} from {@code owner}'s own idle
+     * dedicated buffers, never consuming budget. Native uses it to let a
+     * request past the FIFO queue (otherwise a request waiting at the head
+     * for budget held by another request's retained buffers could deadlock
+     * with that request's next part queued behind it).
+     *
+     * @return a lease handle, or {@link #EXHAUSTED}
+     */
+    long tryReuseOwnIdle(long size, long owner) {
+        // Only requests that themselves need a dedicated buffer may reuse one.
+        if (closed || size <= maxGroupBytes()) return EXHAUSTED;
+        synchronized (lock) {
+            return reuseIdleLocked(size, owner);
+        }
+    }
+
+    /** @return the native address of a lease */
+    long leaseAddress(long handle) {
+        synchronized (lock) {
+            if ((handle & DEDICATED_TAG) != 0) {
+                Dedicated d = leasedDedicated.get(handle);
+                if (d == null) throw new IllegalStateException("leaseAddress: dedicated lease not held");
+                return d.address;
+            }
+            int b = runBlock(handle);
+            if (blockAddresses[b] == 0L) throw new IllegalStateException("leaseAddress: block not backed");
+            return blockAddresses[b] + (long) runStart(handle) * partSize;
+        }
+    }
+
+    /**
+     * Returns a lease. Slot runs go back to their block (a fully free block
+     * on a closed pool is freed). A dedicated buffer returns to its owner's
+     * idle list, or is freed when its owner has finished or the pool is
+     * closed. After this returns the memory MAY be re-issued and
+     * overwritten; any outstanding view of it is UNSAFE to read.
+     */
+    void release(long handle) {
+        synchronized (lock) {
+            if ((handle & DEDICATED_TAG) != 0) {
+                Dedicated d = leasedDedicated.remove(handle);
+                if (d == null) throw new IllegalStateException("release: dedicated lease not held");
+                if (closed || d.orphaned) {
+                    freeDedicated(d);
+                } else {
+                    idleDedicatedByOwner.computeIfAbsent(d.owner, k -> new ArrayList<>()).add(d);
+                }
+                return;
+            }
+            int b = runBlock(handle);
+            int mask = runMask(handle);
+            if ((usedMask[b] & mask) != mask) throw new IllegalStateException("release: slot run not leased");
+            usedMask[b] &= ~mask;
+            if (closed && usedMask[b] == 0 && blocks[b] != null) {
+                unbackBlock(b);
+            }
+        }
+    }
+
+    /**
+     * The meta request {@code owner} finished: free its idle dedicated
+     * buffers and mark its still-leased ones (for example held by an
+     * unclosed borrowed buffer) to be freed on release. Called from the
+     * native finish callback, while the meta request is still alive, so its
+     * address (the owner key) cannot yet belong to another request.
+     */
+    void releaseRequest(long owner) {
+        synchronized (lock) {
+            ArrayList<Dedicated> idle = idleDedicatedByOwner.remove(owner);
+            if (idle != null) {
+                for (Dedicated d : idle) {
+                    freeDedicated(d);
                 }
             }
-            return idx;
-        }
-
-        // Slow path: try to grow under lock. Still non-blocking.
-        synchronized (growthLock) {
-            // Under lock: only grow if we haven't hit the ceiling.
-            // A concurrent grower may have raised nextGrowthIndex to
-            // maxSlots between the fast-path poll and this lock.
-            if (nextGrowthIndex < maxSlots) {
-                int newIdx = nextGrowthIndex;
-                // OutOfMemoryError propagates (the customer must size
-                // -XX:MaxDirectMemorySize for maxSlots, see
-                // S3DirectBufferPoolOptions.elastic); WARN first for operator context.
-                ByteBuffer dbb;
-                try {
-                    dbb = ByteBuffer.allocateDirect(partSize);
-                } catch (OutOfMemoryError e) {
-                    Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
-                        "S3DirectBufferPool: OutOfMemoryError during lazy growth "
-                      + "at slot " + newIdx + " of " + maxSlots
-                      + " (partSize=" + partSize + " bytes). "
-                      + "Consider raising -XX:MaxDirectMemorySize or reducing maxSlots.");
-                    throw e;
+            for (Dedicated d : leasedDedicated.values()) {
+                if (d.owner == owner) {
+                    d.orphaned = true;
                 }
-                slots[newIdx] = dbb;
-                slotAddresses[newIdx] = nativeGetDirectBufferAddress(dbb);
-                nextGrowthIndex++;
-                return newIdx;
             }
         }
+    }
 
-        // Pool fully allocated AND all slots leased. Return sentinel.
-        // The native side MUST pend its future on the C-side
-        // pending_reserves list. NEVER block this thread.
+    /**
+     * Frees every fully unused block above the warm floor. Scheduled by
+     * aws-c-s3 with the same idleness gating as the native pool (5-second
+     * delay, skipped if {@code num_requests_in_flight > 0} at either schedule
+     * or execution time; see {@code s_s3_client_schedule_buffer_pool_trim_synced}).
+     * Dedicated buffers of active requests are never trimmed; they are freed
+     * when their request finishes.
+     */
+    void trim() {
+        synchronized (lock) {
+            if (closed) return;
+            for (int b = floorBlocks; b < numBlocks; b++) {
+                if (blocks[b] != null && usedMask[b] == 0) {
+                    unbackBlock(b);
+                }
+            }
+        }
+    }
+
+    /* ==================================================================== */
+    /* Allocation internals (caller holds lock)                             */
+    /* ==================================================================== */
+
+    /** First fit: a free run of {@code count} slots in a backed block, else back a new block. */
+    private long acquireRunLocked(int count) {
+        for (int b = 0; b < numBlocks; b++) {
+            if (blocks[b] != null) {
+                int start = findRun(b, count);
+                if (start >= 0) {
+                    return leaseRun(b, start, count);
+                }
+            }
+        }
+        for (int b = 0; b < numBlocks; b++) {
+            if (blocks[b] == null && blockSlots(b) >= count) {
+                long bytes = (long) blockSlots(b) * partSize;
+                if (committedBytes + bytes > ceilingBytes) {
+                    return EXHAUSTED;   // dedicated buffers hold the budget
+                }
+                backBlock(b);
+                return leaseRun(b, 0, count);
+            }
+        }
+        return EXHAUSTED;
+    }
+
+    private long acquireDedicatedLocked(long size, long owner) {
+        if (!servesOversize()) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool: a " + size + "-byte buffer was requested, larger than the " + maxGroupBytes()
+              + " bytes this pool serves from its blocks, and the pool's floor equals its ceiling so it never "
+              + "allocates past construction. Use S3DirectBufferPoolOptions.auto() or elastic(), or a larger partSize.");
+            return IMPOSSIBLE;
+        }
+        if (size > ceilingBytes || size > Integer.MAX_VALUE) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool: a " + size + "-byte buffer was requested, which exceeds the pool ceiling of "
+              + ceilingBytes + " bytes. Raise the pool's memory limit or use a smaller part size.");
+            return IMPOSSIBLE;
+        }
+        long reused = reuseIdleLocked(size, owner);
+        if (reused != EXHAUSTED) {
+            return reused;
+        }
+        // Make room by freeing fully unused blocks (highest first, floor included).
+        for (int b = numBlocks - 1; b >= 0 && committedBytes + size > ceilingBytes; b--) {
+            if (blocks[b] != null && usedMask[b] == 0) {
+                unbackBlock(b);
+            }
+        }
+        if (committedBytes + size > ceilingBytes) {
+            return EXHAUSTED;
+        }
+        ByteBuffer dbb;
+        try {
+            dbb = ByteBuffer.allocateDirect((int) size);
+        } catch (OutOfMemoryError e) {
+            Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool: OutOfMemoryError allocating a " + size + "-byte dedicated buffer. "
+              + "Consider raising -XX:MaxDirectMemorySize.");
+            throw e;
+        }
+        committedBytes += dbb.capacity();
+        return leaseDedicated(new Dedicated(dbb, nativeGetDirectBufferAddress(dbb), owner));
+    }
+
+    /** Best fit among the owner's idle dedicated buffers. */
+    private long reuseIdleLocked(long size, long owner) {
+        ArrayList<Dedicated> idle = idleDedicatedByOwner.get(owner);
+        if (idle == null) {
+            return EXHAUSTED;
+        }
+        int best = -1;
+        for (int i = 0; i < idle.size(); i++) {
+            int cap = idle.get(i).buffer.capacity();
+            if (cap >= size && (best < 0 || cap < idle.get(best).buffer.capacity())) {
+                best = i;
+            }
+        }
+        if (best < 0) {
+            return EXHAUSTED;
+        }
+        Dedicated d = idle.remove(best);
+        if (idle.isEmpty()) {
+            idleDedicatedByOwner.remove(owner);
+        }
+        return leaseDedicated(d);
+    }
+
+    private long leaseDedicated(Dedicated d) {
+        long handle = DEDICATED_TAG | nextDedicatedId++;
+        leasedDedicated.put(handle, d);
+        return handle;
+    }
+
+    private int blockSlots(int b) {
+        return Math.min(BLOCK_SLOTS, maxSlots - b * BLOCK_SLOTS);
+    }
+
+    private int findRun(int b, int count) {
+        int slots = blockSlots(b);
+        int want = (1 << count) - 1;
+        for (int start = 0; start + count <= slots; start++) {
+            if ((usedMask[b] & (want << start)) == 0) {
+                return start;
+            }
+        }
         return -1;
     }
 
-    /**
-     * Release direct memory backing every currently-free slot with
-     * index {@code >= initialSlots}, matching the native pool's
-     * {@code aws_s3_default_buffer_pool_trim} timing and semantics
-     * as closely as JVM idioms allow.
-     *
-     * <p>Invoked from the native {@code s_java_pool_trim} vtable
-     * function, which is scheduled by aws-c-s3's client with the
-     * same idleness gating as the native pool (5-second delay,
-     * skipped if {@code num_requests_in_flight > 0} at either
-     * schedule or execution time). See
-     * {@code s_s3_client_schedule_buffer_pool_trim_synced} in
-     * {@code aws-c-s3/source/s3_client.c}.</p>
-     *
-     * <h3>Mechanism</h3>
-     * For each currently-free slot at index {@code >= initialSlots}:
-     * <ol>
-     *   <li>Nulls {@code slots[idx]} and {@code slotAddresses[idx]}
-     *       under {@code growthLock}, so a concurrent
-     *       {@code tryAcquireSlot} sees a consistent null state and
-     *       falls into the reallocation path.</li>
-     *   <li>Invokes {@link DirectBufferCleaner#free} to release native
-     *       memory synchronously (see {@link DirectBufferCleaner});
-     *       otherwise direct-memory accounting lags until GC and
-     *       re-warm can hit {@code OutOfMemoryError}.</li>
-     *   <li>Leaves the slot index in {@code freeIndices}.
-     *       {@code tryAcquireSlot} detects the null {@code slots[i]}
-     *       and reallocates under {@code growthLock} on next re-use.</li>
-     * </ol>
-     *
-     * <p>Slots below {@code initialSlots} are never trimmed (warm floor).
-     * Leased slots (not in {@code freeIndices}) are never trimmed
-     * regardless of index.</p>
-     *
-     * <h3>Concurrency: drain-and-reoffer</h3>
-     * <p>Trim {@code poll()}s every index out, frees candidates, and
-     * {@code offer()}s all back. Queue removal is atomic, so trim and
-     * concurrent acquirers can never hold the same index, and the queue's
-     * lock publishes the {@code slots[i] = null} write. In-place iteration
-     * has neither guarantee (weakly consistent iterator). Today trim and
-     * the only Java-reachable reserve path are also serialized on the
-     * client's process-work event loop, but aws-c-s3's async-write reserve
-     * path runs on the caller's thread. Do NOT weaken this back to
-     * in-place iteration.</p>
-     */
-    void trim() {
-        if (closed) return;
-
-        // growthLock serializes against tryAcquireSlot's slot writes.
-        // A concurrent releaseSlot (e.g. S3BorrowedBuffer.close) only
-        // offers indices; those just miss this pass.
-        synchronized (growthLock) {
-            // Drain the whole queue. Drained indices are invisible to
-            // concurrent acquirers for the duration of this pass.
-            java.util.ArrayList<Integer> drained = new java.util.ArrayList<>();
-            Integer idx;
-            while ((idx = freeIndices.poll()) != null) {
-                drained.add(idx);
-            }
-
-            for (Integer boxed : drained) {
-                int i = boxed;
-                if (i < initialSlots) {
-                    continue;   // preserve the warm floor
-                }
-                ByteBuffer dbb = slots[i];
-                if (dbb == null) {
-                    continue;   // already trimmed on a prior cycle
-                }
-
-                // Null BEFORE freeing; published to future acquirers via
-                // the re-offer below.
-                slots[i] = null;
-                slotAddresses[i] = 0L;
-
-                // Synchronous native-memory release (see DirectBufferCleaner).
-                // Safe: the index is out of the queue, so no acquirer races us.
-                DirectBufferCleaner.free(dbb);
-            }
-
-            // Re-offer every drained index; trim leaves queue contents
-            // unchanged. Cannot fail (capacity == maxSlots), but check anyway.
-            for (Integer boxed : drained) {
-                if (!freeIndices.offer(boxed)) {
-                    // Cannot happen: capacity == maxSlots and every
-                    // index is unique. Log rather than throw. Trim is
-                    // fire-and-forget and must never kill the caller.
-                    Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
-                        "S3DirectBufferPool.trim: failed to re-offer slot index "
-                      + boxed + " to the free queue. Slot is lost from circulation");
-                }
-            }
-        }
+    private long leaseRun(int b, int start, int count) {
+        usedMask[b] |= ((1 << count) - 1) << start;
+        return ((long) b << 16) | ((long) start << 8) | count;
     }
 
-    /**
-     * Return a slot to the free pool, or free it immediately when the
-     * pool is closed.
-     *
-     * <p>After this returns, the slot MAY be re-issued to a subsequent
-     * {@code tryAcquireSlot()} call and its bytes overwritten. Any
-     * outstanding view is UNSAFE to read. When the pool is closed,
-     * the slot is freed instead of queued for reuse that can never
-     * happen.</p>
-     */
-    void releaseSlot(int slotIndex) {
-        validateIndex(slotIndex);
-        if (closed) {
-            // Late release: a borrowed buffer outlived pool.close(). The
-            // native ticket has fully released, so nothing references the
-            // slot's address anymore. Free it now instead of queueing it
-            // for reuse that can never happen. Null-tolerant (idempotent).
-            synchronized (growthLock) {
-                ByteBuffer dbb = slots[slotIndex];
-                if (dbb != null) {
-                    slots[slotIndex] = null;
-                    slotAddresses[slotIndex] = 0L;
-                    DirectBufferCleaner.free(dbb);
-                }
-            }
-            return;
-        }
-        // Defensive check: the JNI caller should only release indices
-        // that were returned by tryAcquireSlot(). Guards the
-        // [nextGrowthIndex, maxSlots) gap during lazy growth. A bug
-        // here would otherwise be a silent NPE deep in the call.
-        ByteBuffer slot = slots[slotIndex];
-        if (slot == null) {
-            throw new IllegalStateException(
-                "releaseSlot(" + slotIndex + "): slot has not been allocated");
-        }
-        // clear() resets position=0 and limit=capacity; the bytes are
-        // NOT zeroed (waste of cycles since they will be overwritten).
-        slot.clear();
-        freeIndices.offer(slotIndex);
-        // Close race: if close() ran between the closed check above and the
-        // offer, its sweep may have drained the queue before our index
-        // arrived. A sweep that missed our index read the queue's volatile
-        // count before our offer updated it, and close() set `closed` before
-        // sweeping, so this volatile re-read is guaranteed to see true. Sweep
-        // again so the slot is freed instead of stranded in a closed pool.
-        if (closed) {
-            freeQueuedSlots();
-        }
+    private static int runBlock(long handle) { return (int) (handle >>> 16); }
+    private static int runStart(long handle) { return (int) ((handle >>> 8) & 0xFF); }
+    private static int runMask(long handle) {
+        int count = (int) (handle & 0xFF);
+        return ((1 << count) - 1) << runStart(handle);
     }
 
-    /*
-     * No Java-side sliceView: views are built in C with
-     * NewDirectByteBuffer over the slot address, avoiding a JNI
-     * round-trip per part. They share slot memory and have no
-     * Cleaner (the slot's buffer owns the memory).
-     */
+    private void backBlock(int b) {
+        ByteBuffer dbb = ByteBuffer.allocateDirect(blockSlots(b) * partSize);
+        blocks[b] = dbb;
+        blockAddresses[b] = nativeGetDirectBufferAddress(dbb);
+        committedBytes += dbb.capacity();
+    }
 
-    long slotAddress(int slotIndex) {
-        validateIndex(slotIndex);
-        // Defensive check: silent 0L would flow to native as a NULL
-        // pointer and crash on memcpy far from the source of the bug.
-        // The JNI caller should only query addresses for indices
-        // returned by tryAcquireSlot().
-        long addr = slotAddresses[slotIndex];
-        if (addr == 0L) {
-            throw new IllegalStateException(
-                "slotAddress(" + slotIndex + "): slot has not been allocated");
-        }
-        return addr;
+    /** Frees a fully unused block. Null before free so no stale address is ever handed out. */
+    private void unbackBlock(int b) {
+        ByteBuffer dbb = blocks[b];
+        blocks[b] = null;
+        blockAddresses[b] = 0L;
+        committedBytes -= dbb.capacity();
+        DirectBufferCleaner.free(dbb);
+    }
+
+    private void freeDedicated(Dedicated d) {
+        committedBytes -= d.buffer.capacity();
+        DirectBufferCleaner.free(d.buffer);
     }
 
     /* ==================================================================== */
     /* Internal helpers                                                     */
     /* ==================================================================== */
-
-    private void validateIndex(int idx) {
-        // Accept [0, maxSlots). JNI only passes indices it got from tryAcquireSlot.
-        if (idx < 0 || idx >= maxSlots) {
-            throw new IllegalArgumentException("invalid slot index: " + idx);
-        }
-    }
 
     /**
      * Fail-fast check: verify that the JVM's {@code MaxDirectMemorySize}

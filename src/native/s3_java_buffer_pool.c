@@ -9,27 +9,28 @@
  * (so the body callback can deliver it as a ByteBuffer slice without
  * an extra JNI copy).
  *
- * The pool is backed by a fixed array of DirectByteBuffer slots
- * owned by the S3DirectBufferPool Java object. Each ticket leases
- * one slot. When the ticket is released, the slot returns to the
- * Java pool's free queue.
+ * The pool's memory is owned by the S3DirectBufferPool Java object:
+ * blocks of contiguous part-sized slots, plus per-request dedicated
+ * buffers for reservations larger than a slot run (see that class). Each
+ * ticket leases one slot, a contiguous run of slots, or a dedicated
+ * buffer. When the ticket is released, the lease returns to the Java
+ * pool.
  *
  * LIFETIME INVARIANTS
  * -------------------
  * 1. The Java pool object outlives every ticket. This is enforced by
  *    EACH TICKET holding a refcount on the native pool (acquired in
- *    s_build_java_ticket, released at the end of s_java_ticket_destroy).
+ *    s_try_acquire_locked, released at the end of s_java_ticket_destroy).
  *    The native pool state pins the Java pool object via a JNI global
  *    ref, so as long as any ticket is alive (including S3BorrowedBuffer
  *    tickets the customer holds past client shutdown), the pool state,
- *    the Java pool object, and its slot memory all remain valid.
+ *    the Java pool object, and its memory all remain valid.
  *
- * 2. A slot's underlying memory address (cached in the ticket) is
- *    stable from tryAcquireSlot() until releaseSlot() runs (or until
- *    the slot is handed to a pending future from s_java_ticket_destroy).
- *    DirectByteBuffer memory is off-heap and NEVER moved by GC, so
- *    the cached address remains valid as long as the Java pool holds
- *    its strong reference to the slot.
+ * 2. A lease's memory address (cached in the ticket) is stable from
+ *    acquire (tryAcquire/tryReuseOwnIdle) until its release runs.
+ *    DirectByteBuffer memory is off-heap and NEVER moved by GC, and the
+ *    Java pool never frees memory under a live lease, so the cached
+ *    address remains valid until release.
  *
  * 3. The aws_byte_buf returned from s_java_ticket_claim has
  *    .allocator == NULL. This is essential. aws-c-s3 appends body
@@ -42,11 +43,12 @@
  *
  * 4. NON-BLOCKING RESERVE PATH. s_java_pool_reserve is called on the
  *    aws-c-s3 client's event-loop thread. It MUST NOT block. When
- *    the Java pool reports exhaustion (tryAcquireSlot returns -1),
- *    we push an unresolved future onto pending_reserves and return
+ *    the Java pool reports exhaustion (an acquire returns -1), we
+ *    push an unresolved future onto pending_reserves and return
  *    immediately. The future is resolved later from s_java_ticket_destroy
- *    when a slot is released, mirroring the default pool's
- *    pending_reserves pattern.
+ *    when a lease is released, mirroring the default pool's
+ *    pending_reserves pattern. Reserve, release, and trim all run under
+ *    pending_lock (see java_pool_state.pending_reserves).
  *
  * WARNING: Body callbacks invoked downstream of claim() see a
  *          cursor pointing into Java DirectByteBuffer memory. The
@@ -85,25 +87,25 @@
 /* ------------------------------------------------------------------ */
 
 struct java_pool_state {
-    /* Allocator used for our own state allocations (NOT for slot
-     * memory; that's owned by the Java pool object). */
+    /* Allocator used for our own state allocations (NOT for pool memory;
+     * that's owned by the Java pool object). */
     struct aws_allocator *allocator;
 
-    /* JavaVM* captured at factory time. Used to attach the receive
-     * thread (which may not have a JNIEnv*) when invoking the back
-     * callbacks below. */
+    /* JavaVM* captured at factory time. Used to attach threads (which may
+     * not have a JNIEnv*) when calling back into the Java pool. */
     JavaVM *jvm;
 
     /* Global JNI reference to the S3DirectBufferPool Java object.
      * Owned by this state; released in s_java_pool_destroy. */
     jobject java_pool_global;
 
-    /* Cached method IDs. Resolved once at factory time so the hot
-     * path can CallXxxMethod without GetMethodID round-trips. */
-    jmethodID mid_try_acquire_slot;
-    jmethodID mid_release_slot;
-    jmethodID mid_slot_address;
-    jmethodID mid_trim;
+    /* Cached method IDs (see S3DirectBufferPool's JNI back-call surface). */
+    jmethodID mid_try_acquire;        /* long tryAcquire(long size, long owner) */
+    jmethodID mid_try_reuse_own_idle; /* long tryReuseOwnIdle(long size, long owner) */
+    jmethodID mid_lease_address;      /* long leaseAddress(long handle) */
+    jmethodID mid_release;            /* void release(long handle) */
+    jmethodID mid_release_request;    /* void releaseRequest(long owner) */
+    jmethodID mid_trim;               /* void trim() */
 
     /* NOTE: there is no cached `mid_slice_view`. The borrowed-buffer
      * delivery callback (s3_client.c) constructs the ByteBuffer view in
@@ -114,16 +116,28 @@ struct java_pool_state {
     size_t part_size;
 
     /*
-     * Pending reserve futures, FIFO. Each entry holds an acquired
-     * ref on a not-yet-resolved aws_future_s3_buffer_ticket and the
-     * original reserve_meta. Drained from s_java_ticket_destroy
-     * when a slot becomes available.
+     * Pending reserve futures, FIFO. Each entry holds an acquired ref on a
+     * not-yet-resolved aws_future_s3_buffer_ticket and the original
+     * reserve_meta. Drained when a lease is released or a meta request
+     * finishes.
      *
-     * GUARDED BY pending_lock.
+     * GUARDED BY pending_lock. pending_lock is also held around every
+     * reserve attempt, release, trim, and request finish (including their
+     * JNI calls), so an attempt-then-pend can never interleave with a
+     * release-then-drain (which would strand the pended future with
+     * capacity free). Lock order: pending_lock, then the Java pool's lock.
+     * Futures are always resolved after unlocking: their callbacks run
+     * synchronously.
      *
-     * Mirrors the aws-c-s3 default pool's pending_reserves pattern;
-     * see s_default_pool_reserve in
-     * aws-c-s3/source/s3_default_buffer_pool.c.
+     * Strict FIFO for anything that consumes capacity: while a reservation
+     * is pending, later ones queue behind it. This is what keeps in-order
+     * downloads deadlock-free: each meta request reserves its parts in
+     * order, so a part held for in-order delivery always has every earlier
+     * part already served and is only waiting on network I/O, never on
+     * the queue. The one bypass is reuse of the requester's own idle
+     * dedicated buffer (tryReuseOwnIdle), which consumes no capacity; it
+     * prevents a request waiting at the head for budget retained by
+     * another request from blocking that other request's next part.
      */
     struct aws_linked_list pending_reserves;
     struct aws_mutex pending_lock;
@@ -134,31 +148,40 @@ struct java_pool_state {
     struct aws_s3_buffer_pool pool;
 };
 
-/* Pending-reserve list node. One per outstanding-but-unresolved
- * reserve future. Built by s_java_pool_reserve when the Java pool
- * is exhausted; consumed by s_java_ticket_destroy when a slot
- * frees. */
+/* Pending-reserve list node. One per outstanding-but-unresolved reserve
+ * future. Built by s_java_pool_reserve when the pool is exhausted (or
+ * others are already waiting); consumed by the drain. */
 struct java_pending_reserve {
     struct aws_linked_list_node node;
     struct aws_future_s3_buffer_ticket *future;
     struct aws_s3_buffer_pool_reserve_meta meta;
+    /* Outcome filled in while draining under pending_lock, applied after
+     * unlocking: a ticket on success, else an error code. */
+    struct aws_s3_buffer_ticket *ticket;
+    int error_code;
 };
+
+/* Handle tag for dedicated buffers (mirrors S3DirectBufferPool.DEDICATED_TAG). */
+#define JAVA_POOL_DEDICATED_TAG ((jlong)1 << 62)
 
 struct java_ticket_state {
     /* Issuing pool. Each ticket holds a refcount on it (acquired in
-     * s_build_java_ticket, released at the end of s_java_ticket_destroy);
+     * s_try_acquire_locked, released at the end of s_java_ticket_destroy);
      * see LIFETIME INVARIANTS #1 in the file preamble. */
     struct java_pool_state *pool_state;
 
-    /* The slot index this ticket has checked out of the Java pool.
-     * Returned to the pool's free queue in s_java_ticket_destroy. */
-    jint slot_index;
+    /* Java lease handle: a slot run or a dedicated buffer. Returned via
+     * S3DirectBufferPool.release in s_java_ticket_destroy. */
+    jlong handle;
 
-    /* Cached native address of the slot's DirectByteBuffer memory.
-     * Stable from acquire to release (see invariant #2 above). */
-    void *slot_addr;
+    /* Owning meta request (the owner key for dedicated buffers). */
+    void *owner;
 
-    /* Capacity = part_size; cached for convenience. */
+    /* Cached native address of the lease's memory. Stable from acquire to
+     * release (see invariant #2 above). */
+    void *lease_addr;
+
+    /* Bytes claim() exposes: the reserved size (the lease may be larger). */
     size_t capacity;
 
     /* The polymorphic header. Same embedding rationale as above. */
@@ -173,19 +196,34 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     struct aws_s3_buffer_pool *pool,
     struct aws_s3_buffer_pool_reserve_meta meta);
 static void s_java_pool_trim(struct aws_s3_buffer_pool *pool);
+static uint64_t s_java_pool_derive_aligned_buffer_size(struct aws_s3_buffer_pool *pool, uint64_t size);
 static void s_java_pool_destroy(void *user_data);
 
 static struct aws_byte_buf s_java_ticket_claim(struct aws_s3_buffer_ticket *t);
 static void s_java_ticket_destroy(void *user_data);
 
 /* Helper forward declarations. */
-static struct aws_s3_buffer_ticket *s_build_java_ticket(struct java_pool_state *ps, jint slot_index, void *slot_addr);
-static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index);
+static int s_try_acquire_locked(
+    struct java_pool_state *ps,
+    JNIEnv *env,
+    size_t size,
+    void *owner,
+    bool reuse_only,
+    struct aws_s3_buffer_ticket **out_ticket);
+static void s_drain_pending_locked(
+    struct java_pool_state *ps,
+    JNIEnv *env,
+    void *released_owner,
+    struct aws_linked_list *out_resolved);
+static void s_resolve_pending_list(struct java_pool_state *ps, struct aws_linked_list *resolved);
 
 static struct aws_s3_buffer_pool_vtable s_java_pool_vtable = {
     .reserve = s_java_pool_reserve,
     .trim = s_java_pool_trim,
-    /* acquire/release left NULL: default ref_count behavior. */
+    .derive_aligned_buffer_size = s_java_pool_derive_aligned_buffer_size,
+    /* acquire/release left NULL: default ref_count behavior. add_special_size /
+     * release_special_size left NULL: contiguous slot runs and per-request
+     * dedicated buffers already serve repeated large sizes without churn. */
 };
 
 static struct aws_s3_buffer_ticket_vtable s_java_ticket_vtable = {
@@ -198,64 +236,56 @@ static struct aws_s3_buffer_ticket_vtable s_java_ticket_vtable = {
 /* ------------------------------------------------------------------ */
 
 /*
- * Invoked by aws-c-s3 on the first body chunk of a part (lazy claim,
- * see s_s3_meta_request_incoming_body in
- * aws-c-s3/source/s3_meta_request.c).
+ * Invoked by aws-c-s3 when it first needs the buffer (lazy claim).
  *
- * Returns an aws_byte_buf pointing at the slot's native memory. The
- * receive path will then append HTTP body bytes into this buffer via
- * aws_byte_buf_append. Because .allocator == NULL, no realloc will
- * be attempted; see invariant #3 in the file preamble.
+ * Returns an aws_byte_buf pointing at the lease's native memory with
+ * .allocator == NULL, so no realloc will be attempted (invariant #3 in the
+ * file preamble).
  *
  * IMPORTANT: claim() may run more than once per ticket (the default pool
  * returns the same buffer on repeated claims); each call returns a buffer
- * over the same slot, since slot_addr never moves.
+ * over the same memory, since lease_addr never moves.
  */
 static struct aws_byte_buf s_java_ticket_claim(struct aws_s3_buffer_ticket *t) {
     struct java_ticket_state *ts = t->impl;
-    return aws_byte_buf_from_empty_array(ts->slot_addr, ts->capacity);
-    /* .buffer = ts->slot_addr
-     * .capacity = part_size
-     * .len = 0       (filled in by aws_byte_buf_append as chunks arrive)
-     * .allocator = NULL  ← critical, see invariant #3 */
+    return aws_byte_buf_from_empty_array(ts->lease_addr, ts->capacity);
 }
 
 /*
- * Ticket refcount hit zero: the safe point to dispose of the slot.
- * Two outcomes: (a) pending_reserves non-empty: hand the slot directly
- * to the next pending future (skips the free queue, no re-grab race);
- * (b) otherwise return the slot to the Java free queue.
- * See the preamble WARNING for why early release corrupts data.
+ * Ticket refcount hit zero: the safe point to dispose of its lease. Under
+ * pending_lock the lease returns to the Java pool and pending reservations
+ * are retried (see s_drain_pending_locked). Futures are resolved after
+ * unlocking. See the preamble WARNING for why early release corrupts data.
  */
 static void s_java_ticket_destroy(void *user_data) {
     struct java_ticket_state *ts = user_data;
     struct java_pool_state *ps = ts->pool_state;
 
-    aws_mutex_lock(&ps->pending_lock);
+    struct aws_linked_list resolved;
+    aws_linked_list_init(&resolved);
 
-    if (!aws_linked_list_empty(&ps->pending_reserves)) {
-        /* Pending future waiting for a slot. Hand this slot to it
-         * directly, skipping the Java free queue. */
-        struct aws_linked_list_node *node = aws_linked_list_pop_front(&ps->pending_reserves);
-        aws_mutex_unlock(&ps->pending_lock);
-
-        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
-
-        /* Build a new ticket bound to the same slot. Never returns
-         * NULL; aws_mem_calloc aborts on OOM. */
-        struct aws_s3_buffer_ticket *new_ticket = s_build_java_ticket(ps, ts->slot_index, ts->slot_addr);
-
-        aws_future_s3_buffer_ticket_set_result_by_move(pending->future, &new_ticket);
-
-        /* Release the future-acquire we did when we pended. */
-        aws_future_s3_buffer_ticket_release(pending->future);
-        aws_mem_release(ps->allocator, pending);
+    /******** JNI ENV ACQUIRE ********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        AWS_LOGF_WARN(AWS_LS_S3_CLIENT, "S3DirectBufferPool: could not release a buffer; JVM shutting down");
     } else {
+        aws_mutex_lock(&ps->pending_lock);
+        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release, ts->handle);
+        if (aws_jni_check_and_clear_exception(env)) {
+            AWS_LOGF_WARN(
+                AWS_LS_S3_CLIENT,
+                "S3DirectBufferPool: release threw an exception (defensive not-leased check); "
+                "the buffer may leak from Java-side tracking");
+        }
+        bool dedicated = (ts->handle & JAVA_POOL_DEDICATED_TAG) != 0;
+        s_drain_pending_locked(ps, env, dedicated ? ts->owner : NULL, &resolved);
         aws_mutex_unlock(&ps->pending_lock);
-
-        /* No pending requests. Return slot to Java's free queue. */
-        s_release_slot_via_jni(ps, ts->slot_index);
+        aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     }
+    /******** JNI ENV RELEASE ********/
+
+    s_resolve_pending_list(ps, &resolved);
 
     aws_mem_release(ps->allocator, ts);
 
@@ -264,17 +294,159 @@ static void s_java_ticket_destroy(void *user_data) {
     aws_s3_buffer_pool_release(&ps->pool);
 }
 
+/*
+ * Retries pending reservations after capacity may have freed. Caller holds
+ * pending_lock and a JNIEnv; served or failed entries move to out_resolved.
+ *
+ * 1. Strict FIFO from the head, stopping at the first that still cannot
+ *    be served (see java_pool_state.pending_reserves for why).
+ * 2. When a dedicated buffer was just returned to released_owner's idle
+ *    list, that owner's remaining pending entries may reuse it (no
+ *    capacity consumed, so FIFO is not bypassed for capacity).
+ */
+static void s_drain_pending_locked(
+    struct java_pool_state *ps,
+    JNIEnv *env,
+    void *released_owner,
+    struct aws_linked_list *out_resolved) {
+
+    while (!aws_linked_list_empty(&ps->pending_reserves)) {
+        struct java_pending_reserve *head =
+            AWS_CONTAINER_OF(aws_linked_list_front(&ps->pending_reserves), struct java_pending_reserve, node);
+        struct aws_s3_buffer_ticket *ticket = NULL;
+        int result = s_try_acquire_locked(ps, env, head->meta.size, head->meta.meta_request, false, &ticket);
+        if (result == -1) {
+            break; /* still exhausted: wait for the next release */
+        }
+        if (result == AWS_OP_SUCCESS) {
+            head->ticket = ticket;
+        } else {
+            head->error_code = result;
+        }
+        aws_linked_list_pop_front(&ps->pending_reserves);
+        aws_linked_list_push_back(out_resolved, &head->node);
+    }
+
+    if (released_owner == NULL) {
+        return;
+    }
+    struct aws_linked_list_node *node = aws_linked_list_begin(&ps->pending_reserves);
+    while (node != aws_linked_list_end(&ps->pending_reserves)) {
+        struct aws_linked_list_node *next = aws_linked_list_next(node);
+        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
+        if (pending->meta.meta_request == released_owner) {
+            struct aws_s3_buffer_ticket *ticket = NULL;
+            if (s_try_acquire_locked(ps, env, pending->meta.size, released_owner, true, &ticket) == AWS_OP_SUCCESS) {
+                pending->ticket = ticket;
+                aws_linked_list_remove(node);
+                aws_linked_list_push_back(out_resolved, node);
+            }
+        }
+        node = next;
+    }
+}
+
+/* Applies drained outcomes. MUST be called without pending_lock held. */
+static void s_resolve_pending_list(struct java_pool_state *ps, struct aws_linked_list *resolved) {
+    while (!aws_linked_list_empty(resolved)) {
+        struct java_pending_reserve *pending =
+            AWS_CONTAINER_OF(aws_linked_list_pop_front(resolved), struct java_pending_reserve, node);
+        if (pending->ticket != NULL) {
+            aws_future_s3_buffer_ticket_set_result_by_move(pending->future, &pending->ticket);
+        } else {
+            aws_future_s3_buffer_ticket_set_error(pending->future, pending->error_code);
+        }
+        /* Release the future-acquire we did when we pended. */
+        aws_future_s3_buffer_ticket_release(pending->future);
+        aws_mem_release(ps->allocator, pending);
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* POOL vtable.                                                       */
 /* ------------------------------------------------------------------ */
 
 /*
+ * One non-blocking acquire attempt from the Java pool (a slot, a
+ * contiguous slot run, or a dedicated buffer; see S3DirectBufferPool).
+ * With reuse_only, only the owner's own idle dedicated buffers are tried.
+ * Caller holds pending_lock and a JNIEnv.
+ *
+ * Returns AWS_OP_SUCCESS with *out_ticket set; -1 when the pool is
+ * currently exhausted (caller pends); or an aws error code when the
+ * request can never be served or a JNI call failed (caller fails it).
+ */
+static int s_try_acquire_locked(
+    struct java_pool_state *ps,
+    JNIEnv *env,
+    size_t size,
+    void *owner,
+    bool reuse_only,
+    struct aws_s3_buffer_ticket **out_ticket) {
+
+    *out_ticket = NULL;
+
+    /* MUST NOT block; see S3DirectBufferPool#tryAcquire. */
+    jlong handle = (*env)->CallLongMethod(
+        env,
+        ps->java_pool_global,
+        reuse_only ? ps->mid_try_reuse_own_idle : ps->mid_try_acquire,
+        (jlong)size,
+        (jlong)(uintptr_t)owner);
+    if (aws_jni_check_and_clear_exception(env)) {
+        /* Most likely OutOfMemoryError from allocateDirect, or
+         * IllegalStateException from a closed pool. */
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT,
+            "S3DirectBufferPool: acquire of %zu bytes threw an exception (most likely OutOfMemoryError from "
+            "allocateDirect, or a closed pool). Failing reservation",
+            size);
+        return AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED;
+    }
+    if (handle == -1) {
+        return -1;
+    }
+    if (handle < 0) {
+        /* Never servable; the Java pool logged the reason. */
+        return AWS_ERROR_S3_PART_SIZE_EXCEEDS_MEMORY_LIMIT;
+    }
+
+    jlong addr = (*env)->CallLongMethod(env, ps->java_pool_global, ps->mid_lease_address, handle);
+    if (aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_WARN(
+            AWS_LS_S3_CLIENT,
+            "S3DirectBufferPool: leaseAddress threw (defensive check); returning the lease and failing the "
+            "reservation");
+        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release, handle);
+        aws_jni_check_and_clear_exception(env);
+        return AWS_ERROR_INVALID_STATE;
+    }
+
+    /* Never returns NULL; aws_mem_calloc aborts on OOM. */
+    struct java_ticket_state *ts = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_ticket_state));
+    /* Pool ref (see LIFETIME INVARIANTS #1 in the preamble). */
+    aws_s3_buffer_pool_acquire(&ps->pool);
+    ts->pool_state = ps;
+    ts->handle = handle;
+    ts->owner = owner;
+    ts->lease_addr = (void *)(uintptr_t)addr;
+    ts->capacity = size;
+    ts->ticket.vtable = &s_java_ticket_vtable;
+    ts->ticket.impl = ts;
+    aws_ref_count_init(&ts->ticket.ref_count, ts, s_java_ticket_destroy);
+
+    *out_ticket = &ts->ticket;
+    return AWS_OP_SUCCESS;
+}
+
+/*
  * Reserve a buffer ticket. NON-BLOCKING (preamble invariant #4).
- * Outcomes: (a) slot available (or lazily grown): resolve the future
- * synchronously; (b) exhausted: pend the future on pending_reserves,
- * resolved later from s_java_ticket_destroy; (c) exhausted+can_block:
- * fail loudly (preamble DESIGN NOTE).
- * meta.size > part_size fails the future rather than truncating.
+ * Outcomes: (a) served now: resolve the future synchronously; (b)
+ * exhausted, or earlier reservations still pending (strict FIFO, except
+ * reuse of the requester's own idle dedicated buffer): pend the future;
+ * (c) exhausted+can_block: fail loudly (preamble DESIGN NOTE); (d) never
+ * servable (for example larger than the pool ceiling): fail with the
+ * reason logged by the Java pool.
  */
 static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     struct aws_s3_buffer_pool *pool,
@@ -282,17 +454,6 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
 
     struct java_pool_state *ps = pool->impl;
     struct aws_future_s3_buffer_ticket *future = aws_future_s3_buffer_ticket_new(ps->allocator);
-
-    /* Size sanity: our slots are exactly part_size. If the caller asks
-     * for more, this pool cannot satisfy it. (The default pool falls
-     * back to secondary storage for oversized requests; we deliberately
-     * do NOT to keep the implementation simple and correct.) */
-    if (meta.size > ps->part_size) {
-        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_INVALID_MEMORY_LIMIT_CONFIG);
-        AWS_LOGF_ERROR(
-            AWS_LS_S3_CLIENT, "S3DirectBufferPool: reserve size %zu exceeds slot size %zu", meta.size, ps->part_size);
-        return future;
-    }
 
     /******** JNI ENV ACQUIRE ********/
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
@@ -302,140 +463,64 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
         return future;
     }
 
-    /* NON-BLOCKING acquire. Returns -1 if the pool is exhausted;
-     * this MUST NOT block the calling thread. See
-     * S3DirectBufferPool#tryAcquireSlot Javadoc for the contract. */
-    jint slot_index = (*env)->CallIntMethod(env, ps->java_pool_global, ps->mid_try_acquire_slot);
-    if (aws_jni_check_and_clear_exception(env)) {
-        /* Most likely cause: OutOfMemoryError from ByteBuffer.allocateDirect
-         * during lazy growth (MaxDirectMemorySize exhausted, or the JVM
-         * could not satisfy the reservation). Also catches unexpected
-         * IllegalStateException from a closed pool. */
-        AWS_LOGF_WARN(
-            AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool: tryAcquireSlot threw an exception "
-            "(most likely OutOfMemoryError from allocateDirect during "
-            "lazy growth); part_size=%zu. Failing reserve future",
-            ps->part_size);
-        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
-        aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
-        return future;
-    }
+    struct aws_s3_buffer_ticket *ticket = NULL;
+    bool pended = false;
 
-    if (slot_index < 0) {
-        /* Java pool exhausted. */
-        aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
-
-        /* Deferring can_block risks deadlock; see "DESIGN NOTE:
-         * can_block" in the preamble. Fail loudly. */
-        if (meta.can_block) {
-            AWS_LOGF_ERROR(
-                AWS_LS_S3_CLIENT,
-                "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) requested while the "
-                "pool is exhausted. S3DirectBufferPool does not grant over-limit forced buffers and cannot safely "
-                "defer blocking reservations (deadlock risk). Failing the reservation. Use the default native "
-                "buffer pool for async-write uploads, or size the pool for the expected concurrency.");
-            aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
-            return future;
-        }
-
-        /* Non-blocking reservation: pend the future on our pending
-         * list; it will be resolved later from s_java_ticket_destroy
-         * when a slot frees. The event-loop returns immediately. */
+    aws_mutex_lock(&ps->pending_lock);
+    bool queue_empty = aws_linked_list_empty(&ps->pending_reserves);
+    int result = s_try_acquire_locked(ps, env, meta.size, meta.meta_request, !queue_empty, &ticket);
+    if (result == -1 && !meta.can_block) {
+        /* Pend; resolved by the drain. The event loop returns immediately. */
         struct java_pending_reserve *pending = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_pending_reserve));
         pending->meta = meta;
         pending->future = future;
-        /* Acquire a ref on the future for the time it sits on the
-         * pending list. Released when we resolve it (or when the
-         * pool is destroyed with pending entries). */
+        /* Ref for the time the future sits on the pending list. Released
+         * when resolved (or when the pool is destroyed with entries). */
         aws_future_s3_buffer_ticket_acquire(pending->future);
-
-        aws_mutex_lock(&ps->pending_lock);
         aws_linked_list_push_back(&ps->pending_reserves, &pending->node);
-        aws_mutex_unlock(&ps->pending_lock);
-
-        return future;
+        pended = true;
     }
-
-    /* Slot acquired. Get its cached native address and build a
-     * ticket synchronously. */
-    jlong slot_addr_jl = (*env)->CallLongMethod(env, ps->java_pool_global, ps->mid_slot_address, slot_index);
-    if (aws_jni_check_and_clear_exception(env)) {
-        AWS_LOGF_WARN(
-            AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool: slotAddress(%d) threw an exception "
-            "(likely IllegalStateException from defensive slot-not-allocated check); "
-            "returning slot and failing reserve future",
-            (int)slot_index);
-        /* return the slot we just acquired before failing */
-        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release_slot, slot_index);
-        aws_jni_check_and_clear_exception(env);
-        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_INVALID_STATE);
-        aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
-        return future;
-    }
+    aws_mutex_unlock(&ps->pending_lock);
     aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     /******** JNI ENV RELEASE ********/
 
-    /* Build ticket state. Helper extracted for reuse from the pending
-     * drain path in s_java_ticket_destroy. Never returns NULL;
-     * aws_mem_calloc aborts on OOM. */
-    struct aws_s3_buffer_ticket *new_ticket = s_build_java_ticket(ps, slot_index, (void *)(uintptr_t)slot_addr_jl);
-
-    aws_future_s3_buffer_ticket_set_result_by_move(future, &new_ticket);
-    /* future holds a ref via set_result; ticket is now owned by the
-     * future, then by aws-c-s3 once it pops it. */
-
+    if (pended) {
+        return future;
+    }
+    if (result == AWS_OP_SUCCESS) {
+        /* future holds a ref via set_result; aws-c-s3 owns the ticket once
+         * it pops it. */
+        aws_future_s3_buffer_ticket_set_result_by_move(future, &ticket);
+        return future;
+    }
+    if (result == -1) {
+        /* Exhausted + can_block: deferring risks deadlock; see "DESIGN
+         * NOTE: can_block" in the preamble. Fail loudly. */
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_CLIENT,
+            "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) requested while the "
+            "pool is exhausted. S3DirectBufferPool does not grant over-limit forced buffers and cannot safely "
+            "defer blocking reservations (deadlock risk). Failing the reservation. Use the default native "
+            "buffer pool for async-write uploads, or size the pool for the expected concurrency.");
+        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
+        return future;
+    }
+    aws_future_s3_buffer_ticket_set_error(future, result);
     return future;
 }
 
 /*
- * Helper: build a ticket bound to the given slot. Used by reserve
- * (synchronous-success path) and by ticket-destroy (pending-drain
- * path). Never returns NULL (aws_mem_calloc aborts on OOM).
+ * Rounds a buffer size up to a whole number of slots, like the default
+ * pool's chunk alignment. aws-c-s3 applies it to automatic download range
+ * sizes and adjusted upload part sizes, so they fill slot runs exactly.
  */
-static struct aws_s3_buffer_ticket *s_build_java_ticket(struct java_pool_state *ps, jint slot_index, void *slot_addr) {
-
-    /* aws_mem_calloc aborts on OOM; no NULL check needed. */
-    struct java_ticket_state *ts = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_ticket_state));
-
-    /* Pool ref (see LIFETIME INVARIANTS #1 in the preamble). */
-    aws_s3_buffer_pool_acquire(&ps->pool);
-
-    ts->pool_state = ps;
-    ts->slot_index = slot_index;
-    ts->slot_addr = slot_addr;
-    ts->capacity = ps->part_size;
-
-    ts->ticket.vtable = &s_java_ticket_vtable;
-    ts->ticket.impl = ts;
-    aws_ref_count_init(&ts->ticket.ref_count, ts, s_java_ticket_destroy);
-
-    return &ts->ticket;
-}
-
-/*
- * Helper: release a slot back to the Java free queue. Called only
- * when there is no pending future to hand the slot to directly.
- */
-static void s_release_slot_via_jni(struct java_pool_state *ps, jint slot_index) {
-    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
-    JNIEnv *env = jvm_env_context.env;
-    if (env != NULL) {
-        (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release_slot, slot_index);
-        if (aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_WARN(
-                AWS_LS_S3_CLIENT,
-                "S3DirectBufferPool: releaseSlot(%d) threw an exception "
-                "(likely IllegalStateException from defensive slot-not-allocated check); "
-                "slot may leak from Java-side tracking",
-                (int)slot_index);
-        }
-        aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
-    } else {
-        AWS_LOGF_WARN(
-            AWS_LS_S3_CLIENT, "S3DirectBufferPool: could not release slot %d; JVM shutting down", (int)slot_index);
+static uint64_t s_java_pool_derive_aligned_buffer_size(struct aws_s3_buffer_pool *pool, uint64_t size) {
+    struct java_pool_state *ps = pool->impl;
+    uint64_t slots = size / ps->part_size;
+    if (size % ps->part_size != 0) {
+        ++slots;
     }
+    return slots * ps->part_size;
 }
 
 /*
@@ -450,16 +535,19 @@ static void s_java_pool_trim(struct aws_s3_buffer_pool *pool) {
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
     JNIEnv *env = jvm_env_context.env;
     if (env == NULL) {
-        /* JVM shutting down; nothing to do. Slots will be reclaimed
-         * as part of VM teardown. */
+        /* JVM shutting down; nothing to do. Memory is reclaimed as part of
+         * VM teardown. */
         return;
     }
 
+    aws_mutex_lock(&ps->pending_lock);
     (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_trim);
-    if (aws_jni_check_and_clear_exception(env)) {
-        /* trim() is defensive against nulls / closed pool, so an
-         * exception here is unexpected. Log for diagnosis but do
-         * not propagate; trim is fire-and-forget. */
+    bool trim_threw = aws_jni_check_and_clear_exception(env);
+    aws_mutex_unlock(&ps->pending_lock);
+    if (trim_threw) {
+        /* trim() is defensive against a closed pool, so an exception here
+         * is unexpected. Log for diagnosis but do not propagate; trim is
+         * fire-and-forget. */
         AWS_LOGF_WARN(
             AWS_LS_S3_CLIENT,
             "S3DirectBufferPool: trim() threw an exception; some direct memory "
@@ -467,6 +555,43 @@ static void s_java_pool_trim(struct aws_s3_buffer_pool *pool) {
     }
 
     aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
+}
+
+void aws_s3_java_buffer_pool_release_request(struct aws_s3_buffer_pool *pool, void *owner) {
+    struct java_pool_state *ps = pool->impl;
+
+    struct aws_linked_list resolved;
+    aws_linked_list_init(&resolved);
+
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        return;
+    }
+
+    aws_mutex_lock(&ps->pending_lock);
+    (*env)->CallVoidMethod(env, ps->java_pool_global, ps->mid_release_request, (jlong)(uintptr_t)owner);
+    if (aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_WARN(AWS_LS_S3_CLIENT, "S3DirectBufferPool: releaseRequest threw an exception");
+    }
+    /* The request is gone: fail any of its reservations still pending. */
+    struct aws_linked_list_node *node = aws_linked_list_begin(&ps->pending_reserves);
+    while (node != aws_linked_list_end(&ps->pending_reserves)) {
+        struct aws_linked_list_node *next = aws_linked_list_next(node);
+        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
+        if (pending->meta.meta_request == owner) {
+            pending->error_code = AWS_ERROR_S3_CANCELED;
+            aws_linked_list_remove(node);
+            aws_linked_list_push_back(&resolved, node);
+        }
+        node = next;
+    }
+    /* Its freed buffers may let others through. */
+    s_drain_pending_locked(ps, env, NULL, &resolved);
+    aws_mutex_unlock(&ps->pending_lock);
+    aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
+
+    s_resolve_pending_list(ps, &resolved);
 }
 
 /*
@@ -611,14 +736,29 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
             aws_jni_release_thread_env(ps->jvm, &validate_env);
             goto error_clean_ps;
         }
+
+        /* Publish the pool state pointer to Java; S3Client passes it back on
+         * each meta request so the request's shutdown can release its
+         * dedicated buffers (aws_s3_java_buffer_pool_release_request). */
+        (*env)->CallVoidMethod(
+            env,
+            ps->java_pool_global,
+            s3_direct_buffer_pool_properties.setNativePoolState,
+            (jlong)(uintptr_t)&ps->pool);
+        if (aws_jni_check_and_clear_exception(env)) {
+            aws_jni_release_thread_env(ps->jvm, &validate_env);
+            goto error_clean_ps;
+        }
         aws_jni_release_thread_env(ps->jvm, &validate_env);
     }
 
     /* STEP 5: Resolve method IDs once. The IDs live in java_class_ids.c;
      * we cache copies here for predictable cache behavior. */
-    ps->mid_try_acquire_slot = s3_direct_buffer_pool_properties.tryAcquireSlot;
-    ps->mid_release_slot = s3_direct_buffer_pool_properties.releaseSlot;
-    ps->mid_slot_address = s3_direct_buffer_pool_properties.slotAddress;
+    ps->mid_try_acquire = s3_direct_buffer_pool_properties.tryAcquire;
+    ps->mid_try_reuse_own_idle = s3_direct_buffer_pool_properties.tryReuseOwnIdle;
+    ps->mid_lease_address = s3_direct_buffer_pool_properties.leaseAddress;
+    ps->mid_release = s3_direct_buffer_pool_properties.release;
+    ps->mid_release_request = s3_direct_buffer_pool_properties.releaseRequest;
     ps->mid_trim = s3_direct_buffer_pool_properties.trim;
 
     /* STEP 6: Wire vtable and ref_count. Pool is now valid; the

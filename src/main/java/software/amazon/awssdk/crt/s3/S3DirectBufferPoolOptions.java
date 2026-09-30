@@ -29,8 +29,10 @@ import java.nio.ByteBuffer;
  * <h2>Sizing</h2>
  * Every pool has a warm floor of pre-allocated slots and a ceiling; each
  * slot holds one part, so slot size is always the client's part size.
- * Slots above the floor are allocated on demand and freed again by trim
- * once the client goes idle (no requests in flight for 5 seconds). The
+ * Like aws-c-s3's default pool, memory is allocated in blocks of 16
+ * contiguous slots (the floor rounds up to whole blocks). Blocks above the
+ * floor are allocated on demand and freed again by trim once the client
+ * goes idle (no requests in flight for 5 seconds). The
  * factories differ only in how the floor and ceiling are chosen:
  * <ul>
  *   <li>{@link #auto()}. Recommended default.</li>
@@ -39,13 +41,35 @@ import java.nio.ByteBuffer;
  * </ul>
  * Every factory checks at client construction that the ceiling fits
  * within 80% of {@code -XX:MaxDirectMemorySize}, and fails client
- * construction otherwise.
+ * construction otherwise. The ceiling is also handed to the client as its
+ * memory limit unless {@link S3ClientOptions#withMemoryLimitInBytes} is set
+ * (for fixed and elastic pools an explicit, different limit fails client
+ * construction).
+ *
+ * <h2>Parts larger than one slot</h2>
+ * As with the default native pool, the client may need buffers larger
+ * than its part size: uploads whose part size aws-c-s3 raises to stay
+ * within S3's 10,000-part limit, resumed uploads with a larger part size,
+ * and downloads with aws-c-s3's automatic range sizing (used only when no
+ * part size is set). Up to 4 parts are served from contiguous free slots
+ * in an existing block, with no new allocation. Larger buffers are
+ * dedicated to the request that needs them: allocated within the same
+ * ceiling (unused blocks, floor included, are freed to make room), reused
+ * only by that request, and freed when it finishes. Only a pool that can
+ * grow allocates dedicated buffers. A request that can never fit fails
+ * with the reason logged. The pool never silently changes what the
+ * customer configured; a multipart upload fails up front with the reason
+ * when it would need a part size larger than an explicitly set
+ * {@link S3ClientOptions#withPartSize partSize}, or larger than half the
+ * pool ceiling (capped at 5 GiB). A fixed pool does not grow, so it keeps
+ * downloads at its part size and fails uploads that need more than 4
+ * parts' worth.
  *
  * <h2>Lifetime</h2>
  * The client creates the pool at construction and owns it: one pool per
  * client, never shared. When the client's shutdown completes, the pool
- * frees every unused slot. Slots held by unclosed {@link S3BorrowedBuffer}s
- * stay valid and are freed as each buffer is closed. Client shutdown does
+ * frees all unused memory. Memory held by unclosed {@link S3BorrowedBuffer}s
+ * stays valid and is freed as each buffer is closed. Client shutdown does
  * not close borrowed buffers: the customer MUST close each one. An unclosed
  * buffer is only recovered by the GC fallback, after an unbounded delay,
  * and is reported as a leak.
@@ -76,8 +100,9 @@ public final class S3DirectBufferPoolOptions {
      * {@link S3ClientOptions#withMemoryLimitInBytes} if set, else the
      * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code _IN_GIB} environment
      * variable ({@code _IN_MB} wins when both are set), else aws-c-s3's
-     * default for the client's throughput target. 8 slots (fewer if the
-     * ceiling is smaller) are pre-allocated and kept through trim.
+     * default for the client's throughput target. One block (16 slots,
+     * fewer if the ceiling is smaller) is pre-allocated and kept through
+     * trim (it may be reclaimed for a dedicated buffer).
      *
      * <p>Growth above the floor allocates on an aws-c-s3 event-loop
      * thread; see {@link #elastic(int, int)} for the cost.</p>
@@ -92,7 +117,8 @@ public final class S3DirectBufferPoolOptions {
      * Fully pre-allocated pool of {@code memoryLimitBytes / partSize}
      * slots. Never grows or trims, so nothing is ever allocated on the
      * event loop. A demand spike beyond capacity waits natively until
-     * slots free up. For tight container-memory budgets.
+     * slots free up. Serves no buffer larger than one part (see the class
+     * doc). For tight container-memory budgets.
      *
      * @param memoryLimitBytes total off-heap budget for the pool; must be
      *                         at least one part
@@ -107,16 +133,18 @@ public final class S3DirectBufferPoolOptions {
     }
 
     /**
-     * Pool with {@code initialSlots} pre-allocated and kept through trim,
-     * growing on demand up to {@code maxSlots}. Memory tracks demand
+     * Pool with {@code initialSlots} (rounded up to whole 16-slot blocks)
+     * pre-allocated and kept through trim (reclaimable for a dedicated
+     * buffer), growing on demand in blocks up to {@code maxSlots}. Memory tracks demand
      * between {@code initialSlots × partSize} and {@code maxSlots × partSize}.
      *
-     * <p><b>Warning: cold-start cost.</b> Each growth runs
-     * {@code ByteBuffer.allocateDirect(partSize)} synchronously on an
-     * aws-c-s3 event-loop thread (~50-100 us for 8 MiB parts). A sudden
-     * burst can trigger {@code maxSlots - initialSlots} growths in quick
-     * succession. For event-loop-sensitive workloads use {@link #fixed(long)},
-     * or pass {@code initialSlots == maxSlots}.</p>
+     * <p><b>Warning: cold-start cost.</b> Each growth allocates one 16-slot
+     * block with {@code ByteBuffer.allocateDirect}, which zero-fills it,
+     * synchronously on an aws-c-s3 event-loop thread and under the pool's
+     * lock (several milliseconds for a 128 MiB block of 8 MiB parts). A
+     * sudden burst can grow several blocks in quick succession. For
+     * event-loop-sensitive workloads use {@link #fixed(long)}, or pass
+     * {@code initialSlots == maxSlots}.</p>
      *
      * @param initialSlots slots pre-allocated at client construction ({@code >= 0})
      * @param maxSlots     ceiling ({@code >= 1}, {@code >= initialSlots})

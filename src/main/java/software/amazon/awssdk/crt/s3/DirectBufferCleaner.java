@@ -19,6 +19,11 @@ import software.amazon.awssdk.crt.Log;
  * runs its cleaner. This class forces the release synchronously.
  * We handle Java 9+ and Java 8. If we detect a JVM that doesn't
  * expose manual release, we fall back on GC collection.
+ * Until released, the memory still counts against
+ * {@code -XX:MaxDirectMemorySize} (a regrow after trim can fail with
+ * {@code OutOfMemoryError: Direct buffer memory}) and RSS does not drop.
+ * Package-private on purpose: forcing a cleaner is only safe for a
+ * caller that exclusively owns the buffer, as the pool does.
  */
 final class DirectBufferCleaner {
 
@@ -44,7 +49,8 @@ final class DirectBufferCleaner {
         Method legacyCleaner = null;
         Method legacyClean = null;
 
-        // Java 9+: Unsafe.invokeCleaner(ByteBuffer)
+        // Java 9+: Unsafe.invokeCleaner(ByteBuffer). Preferred: it needs no
+        // access to non-exported JDK internals, so no illegal-access warnings.
         try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
             java.lang.reflect.Field theUnsafe = unsafeClass.getDeclaredField("theUnsafe");

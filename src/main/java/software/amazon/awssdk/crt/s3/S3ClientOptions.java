@@ -415,11 +415,12 @@ public class S3ClientOptions {
     }
 
     /**
-     * Enables a Java-owned direct buffer pool as the destination memory
-     * for S3 download response bodies. The client creates the pool from
-     * these options at construction, sized to its own part size; the client
-     * closes it when its shutdown completes. Slots held by unclosed borrowed
-     * buffers are freed as each buffer closes.
+     * Enables a Java-owned direct buffer pool for all of the client's part
+     * buffers (download response bodies and multipart upload parts), in
+     * place of the default native buffer pool. The client creates the pool
+     * from these options at construction, sized to its own part size; the
+     * client closes it when its shutdown completes. Pool memory held by
+     * unclosed borrowed buffers is freed as each buffer closes.
      *
      * <p>Enabling the pool does NOT change the delivery contract of
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.

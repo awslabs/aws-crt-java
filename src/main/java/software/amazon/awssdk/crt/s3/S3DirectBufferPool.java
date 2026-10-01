@@ -204,8 +204,8 @@ final class S3DirectBufferPool {
                 checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize, partSize);
                 return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
             case ELASTIC:
-                checkMemoryLimitMatches(clientOptions, (long) poolOptions.getMaxSlots() * partSize, partSize);
-                return createElastic(poolOptions.getInitialSlots(), poolOptions.getMaxSlots(), partSize);
+                checkMemoryLimitMatches(clientOptions, poolOptions.getMaxBytes() / partSize * partSize, partSize);
+                return createElastic(poolOptions.getMinBytes(), poolOptions.getMaxBytes(), partSize);
             case AUTO:
             default:
                 return createAuto(clientOptions, partSize);
@@ -291,8 +291,19 @@ final class S3DirectBufferPool {
         return new S3DirectBufferPool(partSize, slotCount, slotCount, (long) slotCount * partSize);
     }
 
-    /** Caller-chosen floor and ceiling (validated by the options factory and the constructor). */
-    private static S3DirectBufferPool createElastic(int initialSlots, int maxSlots, int partSize) {
+    /**
+     * Caller-chosen floor and ceiling in bytes (sign and ordering validated by
+     * the options factory). Ceiling rounds down to whole parts, like
+     * {@link #createFixed}; floor rounds up to whole parts, capped at the
+     * ceiling (the constructor then rounds it up to whole blocks).
+     */
+    private static S3DirectBufferPool createElastic(long minBytes, long maxBytes, int partSize) {
+        if (maxBytes < partSize) {
+            throw new IllegalArgumentException(
+                "maxBytes (" + maxBytes + ") must be >= partSize (" + partSize + ")");
+        }
+        int maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
+        int initialSlots = (int) Math.min(maxSlots, (minBytes + partSize - 1) / partSize);
         validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots, (long) maxSlots * partSize);
     }
@@ -675,7 +686,7 @@ final class S3DirectBufferPool {
               + "(80% usable = " + (availableForPool / (1024 * 1024)) + " MiB). "
               + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
               + "or use S3DirectBufferPoolOptions.fixed(memoryLimitBytes) / "
-              + "S3DirectBufferPoolOptions.elastic(initialSlots, maxSlots) "
+              + "S3DirectBufferPoolOptions.elastic(minBytes, maxBytes) "
               + "to size the pool within available direct memory.");
         }
     }

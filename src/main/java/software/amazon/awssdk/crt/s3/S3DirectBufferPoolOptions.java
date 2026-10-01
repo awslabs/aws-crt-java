@@ -141,8 +141,9 @@ public final class S3DirectBufferPoolOptions {
      * <p>One block (16 parts, or fewer if the ceiling is smaller) is
      * allocated up front and kept when the pool trims; it may be freed to
      * make room for a buffer larger than 4 parts. Above that, the pool grows
-     * on demand and shrinks when idle. Growing allocates on an aws-c-s3
-     * event-loop thread; see {@link #elastic(long, long)} for the cost.</p>
+     * on demand and shrinks when idle. Each time it grows it briefly delays
+     * other requests on the client; see {@link #elastic(long, long)} for
+     * details.</p>
      *
      * @return options for an automatically sized pool
      */
@@ -161,8 +162,8 @@ public final class S3DirectBufferPoolOptions {
      *   <li><b>When full:</b> new requests wait until memory frees up.</li>
      *   <li><b>Largest buffer:</b> 4 parts. A request that needs more fails,
      *       with the reason logged (see the class doc).</li>
-     *   <li><b>Event loop:</b> nothing is ever allocated on an aws-c-s3
-     *       event-loop thread.</li>
+     *   <li><b>No allocation pauses:</b> memory is never allocated or freed
+     *       after the client is created.</li>
      * </ul>
      *
      * @param memoryLimitBytes total off-heap budget for the pool; must be
@@ -193,12 +194,12 @@ public final class S3DirectBufferPoolOptions {
      *       idle.</li>
      * </ul>
      *
-     * <p><b>Warning: cold-start cost.</b> Each growth allocates one 16-slot
-     * block with {@code ByteBuffer.allocateDirect}, which zero-fills it,
-     * synchronously on an aws-c-s3 event-loop thread and under the pool's
-     * lock (several milliseconds for a 128 MiB block of 8 MiB parts). A
-     * sudden burst can grow several blocks in quick succession. For
-     * event-loop-sensitive workloads use {@link #fixed(long)}.</p>
+     * <p><b>Note: growth cost.</b> Each time the pool grows it allocates and
+     * zero-fills one 16-part block (128 MiB with 8 MiB parts), which takes
+     * several milliseconds and briefly delays other requests on the client.
+     * A sudden burst can grow several blocks in quick succession, and the
+     * same happens again after the pool has shrunk while idle. If your
+     * workload can't tolerate these pauses, use {@link #fixed(long)}.</p>
      *
      * @param minBytes memory allocated at client construction and kept
      *                 through trim ({@code >= 0}; 0 means no warm floor)

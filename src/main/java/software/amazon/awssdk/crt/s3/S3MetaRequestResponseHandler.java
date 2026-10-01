@@ -122,6 +122,14 @@ public interface S3MetaRequestResponseHandler {
      * after an unbounded delay, and is reported as a leak. A throw from
      * this method also fails the meta request.</p>
      *
+     * <p>Holding a buffer open is not flow control: it keeps only its own
+     * pool memory leased, the client keeps downloading further parts into
+     * other pool memory, and once the pool is exhausted every request on
+     * the client waits. To pause this download, enable
+     * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
+     * return 0 (or a small increment) from this method, and call
+     * {@link S3MetaRequest#incrementReadWindow} when ready for more.</p>
+     *
      * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
      * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no
      * behavior change even when a pool is enabled. Zero-copy delivery is

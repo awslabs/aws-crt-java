@@ -125,8 +125,10 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Copies the buffer contents into a new heap {@code byte[]} (safe to hold
-     * indefinitely) and closes this borrowed buffer. Subsequent
-     * {@link #asByteBuffer()} or {@code toByteArray()} calls throw.
+     * indefinitely) and closes this borrowed buffer, returning its pool
+     * memory so the client can reuse it for further parts of this or other
+     * requests. Subsequent {@link #asByteBuffer()} or {@code toByteArray()}
+     * calls throw.
      *
      * @return a heap byte[] copy of the buffer contents
      * @throws IllegalStateException if this borrowed buffer has been closed
@@ -151,7 +153,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Releases the pool memory. Idempotent, safe to call multiple times from
+     * Releases the pool memory so the client can reuse it for further parts
+     * of this or other requests. Idempotent, safe to call multiple times from
      * any thread. The first call performs the release; subsequent calls are
      * no-ops.
      *

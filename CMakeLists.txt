@@ -61,11 +61,6 @@ if (BUILD_DEPS)
             list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
         endif()
 
-        if (ANDROID)
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
-            list(APPEND AWSLC_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
-        endif()
-
         # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
         aws_prebuild_dependency(
             DEPENDENCY_NAME AWSLC
@@ -84,9 +79,13 @@ if (BUILD_DEPS)
             -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
         )
 
-        if (ANDROID)
-            list(APPEND S2N_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
-            list(APPEND S2N_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
+        # When cross-compiling (e.g. Android), toolchains set CMAKE_FIND_ROOT_PATH_MODE_* to ONLY, so
+        # find_library()/find_path() re-root CMAKE_PREFIX_PATH under the sysroot and can't see the
+        # aws-lc install. aws_prebuild_dependency adds that install to our CMAKE_FIND_ROOT_PATH but
+        # doesn't forward it to the next prebuild, so pass it explicitly for s2n's find_package(crypto).
+        if (CMAKE_CROSSCOMPILING)
+            string(REPLACE ";" "\\\\;" S2N_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}")
+            list(APPEND S2N_CMAKE_ARGUMENTS -DCMAKE_FIND_ROOT_PATH=${S2N_FIND_ROOT_PATH})
         endif()
 
         # prebuild s2n-tls.

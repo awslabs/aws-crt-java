@@ -74,18 +74,26 @@ if (BUILD_DEPS)
         )
 
 
+        set(S2N_CMAKE_ARGUMENTS
+            -DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF
+            -DBUILD_TESTING=OFF
+            # On Intel Macs, Homebrew installs to /usr/local, which is in the default
+            # system header search path. Without this flag, s2n picks up Homebrew's OpenSSL
+            # headers instead of the bundled aws-lc headers. Not needed on ARM where Homebrew
+            # uses /opt/homebrew (not in default search paths), but harmless to set everywhere.
+            -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
+        )
+
+        if (ANDROID)
+            list(APPEND S2N_CMAKE_ARGUMENTS -DANDROID_DEPS_DIR=${ANDROID_DEPS_DIR})
+            list(APPEND S2N_CMAKE_ARGUMENTS -DAWS_LIBRARY_OUTPUT_DIR="${AWS_LIBRARY_OUTPUT_DIR}")
+        endif()
+
         # prebuild s2n-tls.
         aws_prebuild_dependency(
             DEPENDENCY_NAME S2N
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crt/s2n
-            CMAKE_ARGUMENTS
-                -DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF
-                -DBUILD_TESTING=OFF
-                # On Intel Macs, Homebrew installs to /usr/local, which is in the default
-                # system header search path. Without this flag, s2n picks up Homebrew's OpenSSL
-                # headers instead of the bundled aws-lc headers. Not needed on ARM where Homebrew
-                # uses /opt/homebrew (not in default search paths), but harmless to set everywhere.
-                -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON
+            CMAKE_ARGUMENTS ${S2N_CMAKE_ARGUMENTS}
         )
     endif()
     add_subdirectory(crt/aws-c-sdkutils)

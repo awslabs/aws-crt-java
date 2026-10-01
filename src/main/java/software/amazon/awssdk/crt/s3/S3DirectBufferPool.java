@@ -7,7 +7,6 @@ package software.amazon.awssdk.crt.s3;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import software.amazon.awssdk.crt.Log;

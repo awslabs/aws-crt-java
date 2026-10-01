@@ -25,9 +25,9 @@ import software.amazon.awssdk.crt.Log;
  * delivery by overriding
  * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
  *
- * <p>The buffer keeps its pool slot alive until {@link #close()} so it may
+ * <p>The buffer keeps its pool memory leased until {@link #close()} so it may
  * be held across async boundaries and past client shutdown. Every buffer
- * MUST be closed so the slot can be reused. Once closed the
+ * MUST be closed so the pool memory can be reused. Once closed the
  * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.
  * Unclosed buffers are recovered on GC and reported as leaks
  * per the {@code aws.crt.s3.leakdetection} system property
@@ -56,7 +56,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     private final long ticketPtr;
 
     /**
-     * Direct view over pool slot memory, sliced to the response body chunk
+     * Direct view over the leased pool memory, sliced to the response body chunk
      * length. The one shared instance returned by {@link #asByteBuffer()}.
      */
     private final ByteBuffer directView;
@@ -70,14 +70,15 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     private final ReleaseAction release;
 
     /**
-     * Called only from native ({@code s_on_s3_meta_request_body_callback_borrowed} in
+     * Created only by native code ({@code s_on_s3_meta_request_body_callback_borrowed} in
      * {@code src/native/s3_client.c}). Not part of the public API.
      *
      * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; carries
      *                  one extra ticket ref owned by this object, dropped by
      *                  nativeReleaseTicket
      * @param directView direct byte buffer view sliced to the response body length,
-     *                  addressed against the ticket's slot memory
+     *                  over the ticket's leased pool memory (a slot run or a
+     *                  dedicated buffer)
      */
     S3BorrowedBuffer(long ticketPtr, ByteBuffer directView) {
         this.ticketPtr = ticketPtr;
@@ -97,7 +98,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Returns a {@link ByteBuffer} view over the underlying pool slot. The
+     * Returns a {@link ByteBuffer} view over the underlying pool memory. The
      * returned buffer is a shared reference. Do not mutate its position or
      * limit if other threads may be reading concurrently. Use
      * {@link ByteBuffer#duplicate()} or {@link ByteBuffer#slice()} for a
@@ -132,7 +133,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      */
     public byte[] toByteArray() {
         // Win the close CAS first so a concurrent close() cannot release the
-        // slot mid-copy. The loser no-ops. GC fallback cannot fire mid-copy
+        // pool memory mid-copy. The loser no-ops. GC fallback cannot fire mid-copy
         // because this call keeps `this` reachable until performRelease().
         if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
@@ -150,13 +151,13 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Releases the pool slot. Idempotent, safe to call multiple times from
+     * Releases the pool memory. Idempotent, safe to call multiple times from
      * any thread. The first call performs the release; subsequent calls are
      * no-ops.
      *
      * <p>After {@code close()} returns, the {@link ByteBuffer} previously
      * returned from {@link #asByteBuffer()} MUST NOT be read. The underlying
-     * slot may be reused by another concurrent meta-request.</p>
+     * pool memory may be reused by another concurrent meta-request.</p>
      */
     @Override
     public void close() {
@@ -184,7 +185,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /*
      * Why this exists: customers will sometimes forget close(). Without a
-     * fallback each forgotten buffer pins its slot forever, and a hard-capped
+     * fallback each forgotten buffer pins its pool memory forever, and a hard-capped
      * pool stalls silently. Each buffer registers a phantom reference the JVM
      * enqueues after GC; a daemon thread releases the ticket. This is a safety
      * net, not a lifecycle strategy, so leaks are also reported (see the
@@ -295,8 +296,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
 
     /**
      * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
-     * When the last reference drops, the slot returns to the pool (or is
-     * freed, if the pool is closed). A null/zero pointer is a no-op.
+     * When the last reference drops, the memory returns to the pool (or is
+     * freed, if the pool is closed). A zero pointer is a no-op.
      */
     private static native void nativeReleaseTicket(long ticketPtr);
 
@@ -347,7 +348,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /** Shared opener for both leak WARN variants below. */
     private static final String LEAK_WARNING_PREAMBLE =
         "S3BorrowedBuffer LEAK detected: a borrowed buffer was garbage-collected without close(). "
-      + "The pool slot was recovered by the GC fallback, but the delay is unbounded and can stall "
+      + "The pool memory was recovered by the GC fallback, but the delay is unbounded and can stall "
       + "downloads via pool exhaustion. close() every S3BorrowedBuffer.";
 
     /**

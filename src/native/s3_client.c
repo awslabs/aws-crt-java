@@ -765,8 +765,9 @@ static int s_on_s3_meta_request_body_callback_borrowed(
      * is deferred to close()/GC. */
     aws_s3_buffer_ticket_acquire(info.ticket);
 
-    /* STEP 2: Construct the DirectByteBuffer view over the slot memory,
-     * sliced to the response body length (not the full slot capacity). */
+    /* STEP 2: Construct the DirectByteBuffer view over the ticket's leased
+     * pool memory, sliced to the response body length (not the full lease
+     * capacity). */
     jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, (void *)body->ptr, (jlong)body->len);
     if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_WARN(
@@ -1776,7 +1777,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
      *   - Pool attached AND handler opted into the borrowed-buffer overload
      *     -> body_callback_ex (lifetime-controlled zero-copy)
      *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
-     *     copy source is a pool slot instead of the default native pool, but
+     *     copy source is Java pool memory instead of the default native pool, but
      *     the handler-facing contract (heap byte[], safe to retain) is
      *     identical to the no-pool path. Zero-copy delivery is ONLY available
      *     through the S3BorrowedBuffer overload.
@@ -2117,8 +2118,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemor
  *      became unreachable without close() (GC fallback / leak recovery)
  *
  * When this call drops the ticket's ref count to zero, s_java_ticket_destroy
- * (or the default pool's ticket destructor) fires and the slot returns to
- * the pool.
+ * fires and the leased memory returns to the pool (or is freed, if the pool
+ * is closed). Borrowed buffers only exist with the Java direct buffer pool.
  *
  * ticketPtr == 0 is a defensive no-op (should not happen from well-formed
  * Java, but the Java side treats close() as idempotent so we tolerate it).

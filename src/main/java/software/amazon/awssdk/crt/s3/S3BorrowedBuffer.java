@@ -95,7 +95,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * Created only by native code ({@code s_on_s3_meta_request_body_callback_borrowed} in
      * {@code src/native/s3_client.c}). Not part of the public API.
      *
-     * @param ticketPtr raw {@code struct aws_s3_buffer_ticket *} address; carries
+     * @param ticketPtr raw native buffer-ticket address; carries
      *                  one extra ticket ref owned by this object, dropped by
      *                  nativeReleaseTicket
      * @param directView direct byte buffer view sliced to the response body length,
@@ -319,7 +319,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Releases one reference on the aws_s3_buffer_ticket at the given pointer.
+     * Releases one reference on the native buffer ticket at the given pointer.
      * When the last reference drops, the memory returns to the pool (or is
      * freed, if the pool is closed). A zero pointer is a no-op.
      */

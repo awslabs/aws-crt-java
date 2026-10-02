@@ -11,8 +11,8 @@ import java.util.Map;
 import software.amazon.awssdk.crt.Log;
 
 /**
- * Internal. A Java-owned buffer pool used as the destination memory for
- * {@code aws-c-s3} transfers. Customers configure it through
+ * Internal. A Java-owned buffer pool that replaces the default native
+ * buffer pool as the memory for the S3 client's transfers. Customers configure it through
  * {@link S3DirectBufferPoolOptions}; {@link S3Client} creates one pool per
  * client at construction ({@link #fromOptions}) and closes it when its
  * shutdown completes. The pool is never shared between clients: each
@@ -20,7 +20,7 @@ import software.amazon.awssdk.crt.Log;
  * lease released by one client could never wake a reservation pended by
  * another.
  *
- * <h2>Layout (mirrors aws-c-s3's default pool)</h2>
+ * <h2>Layout (mirrors the default native buffer pool)</h2>
  * Memory is allocated in blocks of up to {@value #BLOCK_SLOTS} contiguous
  * slots, each block one {@link ByteBuffer#allocateDirect direct ByteBuffer}.
  * A slot holds one part, so slot size is the client's resolved part size
@@ -37,14 +37,14 @@ import software.amazon.awssdk.crt.Log;
  * ways:</p>
  * <ul>
  *   <li>Up to one part: a single slot.</li>
- *   <li>Up to {@value #MAX_GROUP_SLOTS} parts (for example aws-c-s3's
+ *   <li>Up to {@value #MAX_GROUP_SLOTS} parts (for example the client's
  *       automatic download ranges): a run of contiguous slots inside one
  *       block, like the default pool's multi-chunk primary allocations. No
  *       new memory is allocated when a backed block has a free run.</li>
  *   <li>Larger: a dedicated direct buffer for that one reservation
  *       (uploads raised past S3's 10,000-part limit, resumed uploads with a
  *       larger part size, download ranges above {@value #MAX_GROUP_SLOTS}
- *       parts, which aws-c-s3's default sizing only produces with a large
+ *       parts, which the client's default sizing only produces with a large
  *       explicit memory limit and few connections). It is allocated (and
  *       zero-filled) on acquire and freed on release, so it never holds
  *       budget while idle; the default native pool instead keeps same-size
@@ -69,7 +69,7 @@ import software.amazon.awssdk.crt.Log;
  * deadlock-free.
  *
  * <p>Growth backs a whole block with {@code allocateDirect} (which
- * zero-fills) on the reserving thread, usually an aws-c-s3 event-loop
+ * zero-fills) on the reserving thread, usually a native event-loop
  * thread, while holding both locks, so other reserves and releases wait
  * for it. The native wait queue is strict FIFO for anything that consumes
  * capacity, so a large waiting request holds back smaller ones behind
@@ -81,7 +81,7 @@ import software.amazon.awssdk.crt.Log;
  */
 final class S3DirectBufferPool {
 
-    /** Slots per block (aws-c-s3's default pool uses 16 chunks per block). */
+    /** Slots per block (the default native buffer pool uses 16 chunks per block). */
     static final int BLOCK_SLOTS = 16;
 
     /** Largest contiguous run served from a block; larger requests get a dedicated buffer (native: 4 chunks). */
@@ -243,9 +243,9 @@ final class S3DirectBufferPool {
             }
             case AUTO:
             default: {
-                // Sized like aws-c-s3's default buffer pool. Floor: one block.
-                // Ceiling: the client's memory limit, resolved in
-                // aws_s3_client_new's order (see S3DirectBufferPoolOptions#auto()).
+                // Sized like the default native buffer pool. Floor: one block.
+                // Ceiling: the client's memory limit, resolved in the native
+                // client's order (see S3DirectBufferPoolOptions#auto()).
                 long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
                 if (memoryLimitBytes <= 0) {
                     memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
@@ -287,8 +287,8 @@ final class S3DirectBufferPool {
 
     /**
      * For fixed/elastic pools the pool ceiling IS the client's memory; an
-     * explicit, different memoryLimitInBytes would give aws-c-s3 a
-     * different limit than the pool enforces. Refuse rather than override.
+     * explicit, different memoryLimitInBytes would give the native client
+     * a different limit than the pool enforces. Refuse rather than override.
      * The ceiling is a whole number of parts, so a fixed() or elastic()
      * size that is not a multiple of partSize rounds down; the message says
      * so, because the caller may have passed the same number to both
@@ -307,10 +307,9 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * The client's part size, or aws-c-s3's 8 MiB default when unset. Must
-     * match the native client's resolution ({@code g_default_part_size_fallback}
-     * in aws-c-s3's s3_util.c); the native factory fails client creation if
-     * it does not.
+     * The client's part size, or the native client's 8 MiB default when
+     * unset. Must match the native client's resolution; the native factory
+     * fails client creation if it does not.
      */
     private static int resolvePartSize(S3ClientOptions clientOptions) {
         long partSize = clientOptions.getPartSize();
@@ -375,7 +374,7 @@ final class S3DirectBufferPool {
 
     /**
      * Non-blocking acquire of {@code size} bytes. MUST NOT block (runs on
-     * aws-c-s3 event-loop threads); on {@link #EXHAUSTED} native pends its
+     * native event-loop threads); on {@link #EXHAUSTED} native pends its
      * future.
      *
      * @return a lease handle; {@link #EXHAUSTED} when capacity is currently
@@ -435,10 +434,10 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Frees every fully unused block above the floor. Scheduled by
-     * aws-c-s3 with the same idleness gating as the native pool (5-second
-     * delay, skipped if {@code num_requests_in_flight > 0} at either schedule
-     * or execution time; see {@code s_s3_client_schedule_buffer_pool_trim_synced}).
+     * Frees every fully unused block above the floor. Scheduled by the
+     * native client with the same idleness gating as the default native
+     * buffer pool (5 seconds after the client goes idle, skipped if any
+     * request is in flight at either point).
      * Dedicated buffers are never idle (they are freed on release), so trim
      * never sees them.
      */
@@ -679,8 +678,8 @@ final class S3DirectBufferPool {
         if (raw == null || raw.isEmpty()) return 0;
         try {
             long units = Long.parseLong(raw.trim());
-            // multiplyExact: silent overflow would wrap to a bogus limit;
-            // aws-c-s3 uses aws_mul_u64_checked for the same reason.
+            // multiplyExact: silent overflow would wrap to a bogus limit (the
+            // native client checks for overflow for the same reason).
             if (units > 0) return Math.multiplyExact(units, unitBytes);
         } catch (NumberFormatException | ArithmeticException ignored) {
             // fall through

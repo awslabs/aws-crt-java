@@ -32,7 +32,7 @@ public class S3Client extends CrtResource {
     /**
      * Upload-sizing inputs for the direct-buffer-pool pre-checks in
      * makeMetaRequest: whether the customer set partSize, and the
-     * client's multipart threshold (0 = aws-c-s3 default).
+     * client's multipart threshold (0 = native default).
      */
     private final boolean partSizeExplicit;
     private final long clientMultipartUploadThreshold;
@@ -127,15 +127,16 @@ public class S3Client extends CrtResource {
 
         // With a pool, hand native the part size and memory limit the pool
         // was sized from, never overriding values the customer set:
-        // - memory limit (fixed/elastic only): the ceiling, so aws-c-s3's
-        //   max-part-size check and download range sizing see the pool's
-        //   real capacity. auto() pools leave it to aws-c-s3, which resolves
-        //   the env vars and tier default exactly as the pool did (and fails
-        //   client creation on a malformed env var, as it does without a pool).
+        // - memory limit (fixed/elastic only): the ceiling, so the native
+        //   client's max-part-size check and download range sizing see the
+        //   pool's real capacity. auto() pools leave it to the native client,
+        //   which resolves the env vars and tier default exactly as the pool
+        //   did (and fails client creation on a malformed env var, as it does
+        //   without a pool).
         // - part size: a pool that cannot grow cannot allocate dedicated
         //   buffers for ranges beyond a slot run, so pin the part size
-        //   (disabling aws-c-s3's automatic download range sizing, which
-        //   only runs when no part size is set).
+        //   (disabling the native client's automatic download range sizing,
+        //   which only runs when no part size is set).
         long nativePartSize = options.getPartSize();
         long nativeMemoryLimit = options.getMemoryLimitInBytes();
         if (directBufferPool != null) {
@@ -317,22 +318,23 @@ public class S3Client extends CrtResource {
 
     /** S3's maximum number of parts per multipart upload. */
     private static final long MAX_UPLOAD_PARTS = 10_000;
-    /** S3's minimum multipart upload part size (aws-c-s3 g_s3_min_upload_part_size). */
+    /** S3's minimum multipart upload part size. */
     private static final long MIN_UPLOAD_PART_SIZE = 5L * 1024 * 1024;
-    /** aws-c-s3's upper bound on part size (g_default_max_part_size). */
+    /** S3's maximum upload part size (the native client's upper bound). */
     private static final long MAX_UPLOAD_PART_SIZE = 5L * 1024 * 1024 * 1024;
 
     /**
      * With a direct buffer pool, fail a multipart upload up front when
-     * aws-c-s3 would change its part size behind the customer's back or
-     * beyond what the pool can hold. Without a pool, aws-c-s3 silently
+     * the native client would change its part size behind the customer's
+     * back or beyond what the pool can hold. Without a pool, it silently
      * raises the part size (to at least 5 MiB, and to stay within 10,000
      * parts); with one, we refuse instead when:
      * <ul>
      *   <li>the customer set {@code partSize} explicitly, or the pool cannot
      *       grow (so it cannot serve larger buffers); or</li>
      *   <li>the required part size exceeds what the pool allows (half its
-     *       memory limit, capped at 5 GiB, matching aws-c-s3's own limit).</li>
+     *       memory limit, capped at 5 GiB, matching the native client's own
+     *       limit).</li>
      * </ul>
      * Skipped when the content length is unknown or a resume token is used
      * (the token's part size is honored).
@@ -490,9 +492,8 @@ public class S3Client extends CrtResource {
             boolean hasDirectBufferPool);
 
     /**
-     * Returns aws-c-s3's default memory pool size (bytes) for the given
-     * throughput target ({@code 0} = EC2 auto-detect); delegates to
-     * {@code aws_s3_default_memory_limit_for_throughput}. Package-private,
+     * Returns the default native buffer pool's memory limit (bytes) for the
+     * given throughput target ({@code 0} = EC2 auto-detect). Package-private,
      * used by {@code S3DirectBufferPool} automatic sizing.
      */
     static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);

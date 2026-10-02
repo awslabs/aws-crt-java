@@ -2184,6 +2184,49 @@
     ]
   },
   {
+    "name": "software.amazon.awssdk.crt.s3.S3BorrowedBuffer",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long",
+          "java.nio.ByteBuffer"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "software.amazon.awssdk.crt.s3.S3DirectBufferPool",
+    "methods": [
+      {
+        "name": "tryAcquire",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "leaseAddress",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "release",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "trim",
+        "parameterTypes": []
+      },
+      {
+        "name": "partSize",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "software.amazon.awssdk.crt.s3.S3ExpressCredentialsProperties",
     "fields": [
       {
@@ -2454,6 +2497,18 @@
         "parameterTypes": [
           "software.amazon.awssdk.crt.s3.S3RequestMetrics"
         ]
+      },
+      {
+        "name": "onResponseBody",
+        "parameterTypes": [
+          "software.amazon.awssdk.crt.s3.S3BorrowedBuffer",
+          "long",
+          "long"
+        ]
+      },
+      {
+        "name": "getSupportsBorrowedBufferOverload",
+        "parameterTypes": []
       }
     ]
   },

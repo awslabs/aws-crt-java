@@ -90,7 +90,7 @@ public interface S3MetaRequestResponseHandler {
      * <p>
      * WARNING: for a file download with
      * {@link S3MetaRequestOptions#withResponseFileDeleteOnFailure} set true, the deletion
-     * is respected — the partial file is deleted on error, leaving nothing to resume on,
+     * is respected. The partial file is deleted on error, leaving nothing to resume on,
      * and this callback fires with a null token. Do not set responseFileDeleteOnFailure
      * if you intend to resume from this callback's token.
      *
@@ -99,5 +99,60 @@ public interface S3MetaRequestResponseHandler {
      *        resumable state was captured
      */
     default void onErrorResumeToken(final int errorCode, final ResumeToken resumeToken) {
+    }
+
+    /**
+     * Optional zero-copy overload: invoked instead of
+     * {@link #onResponseBody(ByteBuffer, long, long)} when the handler
+     * overrides this method AND a
+     * {@link S3ClientOptions#withDirectBufferPoolOptions direct buffer pool}
+     * is enabled on the client.
+     *
+     * <p>The {@link S3BorrowedBuffer} keeps the underlying pool memory leased
+     * until {@link S3BorrowedBuffer#close() close()} is called, letting the
+     * customer hold the buffer across async boundaries (e.g. queuing into a
+     * reactive publisher, writing to {@code AsynchronousFileChannel}). The
+     * buffer's contract requires an explicit close. See the
+     * {@link S3BorrowedBuffer} class Javadoc for the lifetime rules.</p>
+     *
+     * <p>Close the buffer on every exit path, including when this method
+     * throws: use try-with-resources or a {@code finally} block when
+     * consuming it synchronously. A buffer that is neither closed nor
+     * handed off before an exception is only recovered by the GC fallback,
+     * after an unbounded delay, and is reported as a leak. A throw from
+     * this method also fails the meta request.</p>
+     *
+     * <p>Holding a buffer open is not flow control: it keeps only its own
+     * pool memory leased, the client keeps downloading further parts into
+     * other pool memory, and once the pool is exhausted every request on
+     * the client waits. To pause this download, enable
+     * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
+     * return 0 (or a small increment) from this method, and call
+     * {@link S3MetaRequest#incrementReadWindow} when ready for more.</p>
+     *
+     * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
+     * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no
+     * behavior change even when a pool is enabled. Zero-copy delivery is
+     * only available by overriding this overload.</p>
+     *
+     * @param buffer  a borrowed direct-buffer view into pool memory; MUST
+     *                always be closed (directly, or via
+     *                {@link S3BorrowedBuffer#toByteArray()}, which copies
+     *                then closes)
+     * @param objectRangeStart the byte index of the object that this refers
+     *                         to (matches the ByteBuffer overload semantics)
+     * @param objectRangeEnd   {@code objectRangeStart + buffer.asByteBuffer().remaining()}
+     * @return the number of bytes to increment the read window by (same as
+     *         the ByteBuffer overload)
+     * @see S3BorrowedBuffer
+     * @see S3ClientOptions#withDirectBufferPoolOptions
+     */
+    default int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+        // Unreachable via normal client dispatch (native only routes here
+        // when the handler overrides this method), but kept safe for direct
+        // invocation: copy to heap so the ByteBuffer overload's
+        // safe-to-retain contract holds unconditionally.
+        // toByteArray() copies and closes the buffer.
+        return onResponseBody(ByteBuffer.wrap(buffer.toByteArray()), objectRangeStart, objectRangeEnd);
     }
 }

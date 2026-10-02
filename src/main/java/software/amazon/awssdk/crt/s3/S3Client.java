@@ -365,9 +365,9 @@ public class S3Client extends CrtResource {
         if (!directBufferPool.servesOversize()) {
             if (required > directBufferPool.maxGroupBytes()) {
                 throw new IllegalArgumentException(need
-                    + "This direct buffer pool cannot grow (floor equals ceiling), so the largest part it holds "
-                    + "is " + directBufferPool.maxGroupBytes() + " bytes; use S3DirectBufferPoolOptions.auto() "
-                    + "or elastic(), or set S3ClientOptions.withPartSize to at least " + required + ".");
+                    + "A fixed() direct buffer pool holds parts of at most " + directBufferPool.maxGroupBytes()
+                    + " bytes; use S3DirectBufferPoolOptions.auto() or elastic(), or set "
+                    + "S3ClientOptions.withPartSize to at least " + required + ".");
             }
             return;
         }

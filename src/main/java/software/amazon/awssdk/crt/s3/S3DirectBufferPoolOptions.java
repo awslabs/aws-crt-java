@@ -202,9 +202,11 @@ public final class S3DirectBufferPoolOptions {
      * pool yourself while still letting it grow and shrink with demand.
      *
      * <ul>
-     *   <li><b>Floor:</b> {@code minBytes}, rounded up to a multiple of 16
-     *       parts (never above the ceiling), is allocated when the client is
-     *       created and kept while idle.</li>
+     *   <li><b>Floor:</b> memory allocated when the client is created and
+     *       kept while idle. The pool allocates 16 parts at a time, so this
+     *       is {@code minBytes} rounded down to a multiple of 16 parts (or
+     *       the whole pool, if {@code minBytes} reaches the ceiling); it is
+     *       never more than you asked for.</li>
      *   <li><b>Ceiling:</b> {@code maxBytes}, rounded down to whole parts; the
      *       pool never uses more than that.</li>
      *   <li><b>In between:</b> the pool grows on demand 16 parts at a time,

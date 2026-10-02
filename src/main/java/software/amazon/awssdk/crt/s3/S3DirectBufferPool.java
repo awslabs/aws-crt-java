@@ -45,16 +45,21 @@ import software.amazon.awssdk.crt.Log;
  *       floor included; freed floor blocks are backed again on demand.</li>
  * </ul>
  * Blocks and dedicated buffers share one byte budget,
- * {@code maxSlots * partSize}, so the ceiling is hard. A pool that cannot
- * grow (floor == ceiling) never allocates after construction: it serves no
- * dedicated buffers, and {@link S3Client} pins its download ranges to the
- * part size so downloads never need more than one slot. With aws-c-s3's
+ * {@code maxSlots * partSize}, so the ceiling is hard. A fixed pool never
+ * allocates after construction: it serves no dedicated buffers, and
+ * {@link S3Client} pins its download ranges to the part size so downloads
+ * never need more than one slot. The floor is the leading blocks wholly
+ * covered by the requested floor slots, so it never exceeds what was
+ * asked for. With aws-c-s3's
  * default sizing, automatic download ranges otherwise fit in
  * {@value #MAX_GROUP_SLOTS} slots; a large explicit memory limit with few
  * connections can produce larger ones.
  *
  * <h2>Concurrency</h2>
- * Every method synchronizes on {@code lock}. Native callers (reserve,
+ * Every method that reads or changes block or dedicated-buffer state
+ * synchronizes on {@code lock}; the immutable accessors,
+ * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
+ * checks do not need it. Native callers (reserve,
  * ticket release, trim, request finish) additionally hold the native pool
  * state's {@code pending_lock} around their JNI calls, so acquires and
  * releases are serialized and pending reservations cannot be stranded.
@@ -93,6 +98,8 @@ final class S3DirectBufferPool {
     private final int numBlocks;
     /** Blocks allocated at construction and never trimmed (the floor). */
     private final int floorBlocks;
+    /** {@code fixed()} pool: never allocates or frees after construction, so serves no dedicated buffers. */
+    private final boolean fixed;
 
     /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
     private final long ceilingBytes;
@@ -148,11 +155,13 @@ final class S3DirectBufferPool {
 
     /**
      * Private: {@link S3Client} builds pools via {@link #fromOptions}.
-     * {@code initialSlots} rounds up to whole blocks for the eager floor.
+     * {@code initialSlots} rounds down to whole blocks for the eager floor
+     * (a final partial block counts when the floor reaches the ceiling).
      *
      * @throws IllegalArgumentException for invalid sizes
      */
-    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots, long nativeMemoryLimitBytes) {
+    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots, long nativeMemoryLimitBytes,
+                               boolean fixed) {
         if (partSize <= 0)       throw new IllegalArgumentException("partSize must be > 0");
         if (initialSlots < 0)    throw new IllegalArgumentException("initialSlots must be >= 0");
         if (maxSlots < 1)        throw new IllegalArgumentException("maxSlots must be >= 1");
@@ -173,7 +182,8 @@ final class S3DirectBufferPool {
         this.partSize = partSize;
         this.maxSlots = maxSlots;
         this.numBlocks = (maxSlots + BLOCK_SLOTS - 1) / BLOCK_SLOTS;
-        this.floorBlocks = (initialSlots + BLOCK_SLOTS - 1) / BLOCK_SLOTS;
+        this.floorBlocks = initialSlots == maxSlots ? numBlocks : initialSlots / BLOCK_SLOTS;
+        this.fixed = fixed;
         this.ceilingBytes = (long) maxSlots * partSize;
         this.nativeMemoryLimitBytes = nativeMemoryLimitBytes;
         this.blocks = new ByteBuffer[numBlocks];
@@ -212,22 +222,40 @@ final class S3DirectBufferPool {
      * @param clientOptions the client's options; supplies part size,
      *                      throughput target, and memory limit
      * @return a pool whose slot size equals the client's resolved part size
-     * @throws IllegalArgumentException if the sizing yields no slot
-     * @throws IllegalStateException    if the ceiling does not fit in
+     * @throws IllegalArgumentException if the sizing yields less than one
+     *                                  part, an explicit memoryLimitInBytes
+     *                                  does not match a fixed or elastic
+     *                                  ceiling, or partSize is too large for
+     *                                  the pool
+     * @throws IllegalStateException    if the ceiling does not fit in 80% of
      *                                  {@code -XX:MaxDirectMemorySize}
      */
     static S3DirectBufferPool fromOptions(S3DirectBufferPoolOptions poolOptions, S3ClientOptions clientOptions) {
         int partSize = resolvePartSize(clientOptions);
         switch (poolOptions.getMode()) {
             case FIXED:
+                requireAtLeastOnePart("memoryLimitBytes", poolOptions.getMemoryLimitBytes(), partSize);
                 checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize, partSize);
                 return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
             case ELASTIC:
+                requireAtLeastOnePart("maxBytes", poolOptions.getMaxBytes(), partSize);
                 checkMemoryLimitMatches(clientOptions, poolOptions.getMaxBytes() / partSize * partSize, partSize);
                 return createElastic(poolOptions.getMinBytes(), poolOptions.getMaxBytes(), partSize);
             case AUTO:
             default:
                 return createAuto(clientOptions, partSize);
+        }
+    }
+
+    /**
+     * Size check that runs before {@link #checkMemoryLimitMatches}, so a size
+     * below one part reports that cause rather than a mismatch with a
+     * 0-byte ceiling.
+     */
+    private static void requireAtLeastOnePart(String name, long bytes, int partSize) {
+        if (bytes < partSize) {
+            throw new IllegalArgumentException(
+                name + " (" + bytes + ") must be >= partSize (" + partSize + ")");
         }
     }
 
@@ -293,36 +321,28 @@ final class S3DirectBufferPool {
         }
         int initialSlots = Math.min(BLOCK_SLOTS, maxSlots);  // floor: one block
         validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, memoryLimitBytes);
+        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, memoryLimitBytes, false);
     }
 
     /** Floor == ceiling == {@code memoryLimitBytes / partSize}: fully eager, never grows or trims. */
     private static S3DirectBufferPool createFixed(long memoryLimitBytes, int partSize) {
-        if (memoryLimitBytes < partSize) {
-            throw new IllegalArgumentException(
-                "memoryLimitBytes (" + memoryLimitBytes
-              + ") must be >= partSize (" + partSize + ")");
-        }
         int slotCount = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
         validateDirectMemoryCapacity((long) slotCount * partSize);
-        return new S3DirectBufferPool(partSize, slotCount, slotCount, (long) slotCount * partSize);
+        return new S3DirectBufferPool(partSize, slotCount, slotCount, (long) slotCount * partSize, true);
     }
 
     /**
      * Caller-chosen floor and ceiling in bytes (sign and ordering validated by
-     * the options factory). Ceiling rounds down to whole parts, like
-     * {@link #createFixed}; floor rounds up to whole parts, capped at the
-     * ceiling (the constructor then rounds it up to whole blocks).
+     * the options factory; maxBytes >= partSize by {@link #fromOptions}).
+     * Ceiling rounds down to whole parts, like {@link #createFixed}; floor
+     * rounds up to whole parts, capped at the ceiling (the constructor then
+     * keeps only the whole blocks it covers).
      */
     private static S3DirectBufferPool createElastic(long minBytes, long maxBytes, int partSize) {
-        if (maxBytes < partSize) {
-            throw new IllegalArgumentException(
-                "maxBytes (" + maxBytes + ") must be >= partSize (" + partSize + ")");
-        }
         int maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
         int initialSlots = (int) Math.min(maxSlots, (minBytes + partSize - 1) / partSize);
         validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, (long) maxSlots * partSize);
+        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, (long) maxSlots * partSize, false);
     }
 
     /* ==================================================================== */
@@ -341,10 +361,10 @@ final class S3DirectBufferPool {
     long maxGroupBytes() { return (long) Math.min(MAX_GROUP_SLOTS, Math.min(BLOCK_SLOTS, maxSlots)) * partSize; }
     /**
      * @return whether dedicated (larger than {@link #maxGroupBytes()}) buffers
-     *         can be served; false when the floor covers every block, so the
-     *         pool never allocates after construction
+     *         can be served; false only for fixed pools, which never allocate
+     *         after construction
      */
-    boolean servesOversize() { return floorBlocks < numBlocks; }
+    boolean servesOversize() { return !fixed; }
     /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
     long committedBytes() {
         synchronized (lock) { return committedBytes; }
@@ -536,7 +556,7 @@ final class S3DirectBufferPool {
             if (blocks[b] == null && blockSlots(b) >= count) {
                 long bytes = (long) blockSlots(b) * partSize;
                 if (committedBytes + bytes > ceilingBytes) {
-                    return EXHAUSTED;   // dedicated buffers hold the budget
+                    continue;   // dedicated buffers hold the budget; a smaller (last) block may still fit
                 }
                 backBlock(b);
                 return leaseRun(b, 0, count);
@@ -549,9 +569,8 @@ final class S3DirectBufferPool {
         if (!servesOversize()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: a " + size + "-byte buffer was requested, larger than the " + maxGroupBytes()
-              + " bytes this pool serves from its blocks, and this pool can't grow (fixed(), or elastic() with "
-              + "minBytes equal to maxBytes). Use S3DirectBufferPoolOptions.auto() or elastic() with room to grow, "
-              + "or a larger partSize.");
+              + " bytes this pool serves from its blocks, and a fixed() pool never allocates a separate buffer. "
+              + "Use S3DirectBufferPoolOptions.auto() or elastic(), or a larger partSize.");
             return IMPOSSIBLE;
         }
         if (size > ceilingBytes || size > Integer.MAX_VALUE) {
@@ -742,7 +761,9 @@ final class S3DirectBufferPool {
                 .forName("java.lang.management.RuntimeMXBean")
                 .getMethod("getInputArguments")
                 .invoke(runtimeMxBean);
-            for (String arg : inputArgs) {
+            // The JVM uses the last occurrence if the flag is given more than once.
+            for (int i = inputArgs.size() - 1; i >= 0; i--) {
+                String arg = inputArgs.get(i);
                 if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
                     String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
                     long multiplier = 1;

@@ -20,24 +20,49 @@ import java.util.concurrent.atomic.AtomicLong;
 import software.amazon.awssdk.crt.Log;
 
 /**
- * A borrowed view into an S3 response body chunk backed by pooled
- * direct-buffer memory. Delivered to handlers that opt in to zero-copy
- * delivery by overriding
+ * One chunk of an S3 response body, read directly from the client's direct
+ * buffer pool memory (see {@link S3DirectBufferPoolOptions}) with no copy.
+ * Delivered to handlers that override
  * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
+ * The chunk starts at that callback's {@code objectRangeStart}; its length
+ * is {@code asByteBuffer().remaining()}.
  *
- * <p>The buffer keeps its pool memory leased until {@link #close()} so it may
- * be held across async boundaries and past client shutdown. Every buffer
- * MUST be closed so the pool memory can be reused. Once closed the
- * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.
- * Unclosed buffers are recovered on GC and reported as leaks
- * per the {@code aws.crt.s3.leakdetection} system property
- * ({@code disabled} | {@code simple}, the default | {@code paranoid}).</p>
+ * <pre>{@code
+ * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+ *     try (S3BorrowedBuffer b = buffer) {
+ *         digest.update(b.asByteBuffer());
+ *     }
+ *     return (int) (objectRangeEnd - objectRangeStart);
+ * }
+ * }</pre>
  *
- * <p>{@link #close()} is idempotent. {@link #toByteArray()} copies to
- * heap and closes; it succeeds at most once and later calls throw. Both
- * are safe to call from any thread. {@link #asByteBuffer()} returns a
- * shared view. Use {@link ByteBuffer#duplicate()} for independent
- * position/limit if it may be read from more than one place or thread.</p>
+ * <p>The buffer holds its memory until {@link #close()}, so you can keep it
+ * after the callback returns, pass it to another thread, or hold it past
+ * client shutdown. Every buffer MUST be closed, on every path including
+ * exceptions: until it is closed its memory can't be reused, and once the
+ * pool runs out, every request on the client waits. Holding a buffer open
+ * is not flow control; to pause a download, use read backpressure (see
+ * the {@code onResponseBody} overload). Once a buffer is closed, the
+ * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.</p>
+ *
+ * <p>{@link #close()} can be called any number of times.
+ * {@link #toByteArray()} copies the data to a heap {@code byte[]} and
+ * closes the buffer; it works once and later calls throw. Both are safe to
+ * call from any thread. {@link #asByteBuffer()} returns one shared view;
+ * use {@link ByteBuffer#duplicate()} if it may be read from more than one
+ * place or thread.</p>
+ *
+ * <p>A buffer that is never closed is recovered only when it is
+ * garbage-collected, after an unbounded delay, and is reported as a leak.
+ * The {@code aws.crt.s3.leakdetection} system property controls the
+ * report:</p>
+ * <ul>
+ *   <li>{@code simple} (default): logs warnings, and captures the
+ *       allocation stack trace for 1 in 128 buffers.</li>
+ *   <li>{@code paranoid}: captures a stack trace for every buffer. Useful
+ *       for tracking down a leak, but costs more.</li>
+ *   <li>{@code disabled}: no warnings.</li>
+ * </ul>
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
 
@@ -160,7 +185,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      *
      * <p>After {@code close()} returns, the {@link ByteBuffer} previously
      * returned from {@link #asByteBuffer()} MUST NOT be read. The underlying
-     * pool memory may be reused by another concurrent meta-request.</p>
+     * pool memory may be reused by another request.</p>
      */
     @Override
     public void close() {

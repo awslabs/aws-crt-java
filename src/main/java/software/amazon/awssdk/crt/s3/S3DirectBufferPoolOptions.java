@@ -7,102 +7,115 @@ package software.amazon.awssdk.crt.s3;
 import java.nio.ByteBuffer;
 
 /**
- * Sizing for the Java-owned direct buffer pool that an {@link S3Client}
- * uses for all of its part buffers, in place of the default native buffer
- * pool. Pass one
- * to {@link S3ClientOptions#withDirectBufferPoolOptions(S3DirectBufferPoolOptions)}.
+ * Settings for an optional direct buffer pool that holds an
+ * {@link S3Client}'s transfer memory in Java direct memory. To turn the
+ * pool on, pass these options to
+ * {@link S3ClientOptions#withDirectBufferPoolOptions(S3DirectBufferPoolOptions)}
+ * when you create the client.
+ *
+ * <p>The client splits each upload and download into parts and holds the
+ * parts in flight in memory. By default that memory is native memory the
+ * JVM cannot see or limit. With the pool, the memory comes from
+ * {@link ByteBuffer#allocateDirect direct ByteBuffers} instead: it counts
+ * against {@code -XX:MaxDirectMemorySize}, never grows past a limit you
+ * control, and is given back when the client is idle.</p>
  *
  * <h2>Opt-in</h2>
- * Without this option the client uses the default native buffer pool
- * and the historical {@code byte[]}-delivery path is unchanged. With it,
- * part buffers come from {@link ByteBuffer#allocateDirect
- * direct ByteBuffers}: JVM-visible (counted against
- * {@code -XX:MaxDirectMemorySize}), hard-capped, and trimmed when idle.
- * The cap applies to memory the pool is using. On JVMs where direct
- * memory cannot be freed on demand, memory the pool has released is
- * returned only after a GC cycle, so actual direct memory can briefly
- * exceed the cap (still bounded by {@code -XX:MaxDirectMemorySize}).
+ * The pool is off unless you set these options. Without them the client
+ * behaves exactly as before. With them, existing response handlers keep
+ * working unchanged; reading response data without a copy is a separate,
+ * optional step (see Delivery).
+ *
+ * <h2>Example</h2>
+ * <pre>{@code
+ * S3ClientOptions options = new S3ClientOptions()
+ *     .withRegion("us-west-2")
+ *     .withClientBootstrap(bootstrap)
+ *     .withCredentialsProvider(credentialsProvider)
+ *     .withDirectBufferPoolOptions(S3DirectBufferPoolOptions.auto());
+ * S3Client client = new S3Client(options);
+ * }</pre>
+ *
+ * <h2>Choosing a factory</h2>
+ * <ul>
+ *   <li>{@link #auto()}: recommended. Sized automatically; grows with
+ *       demand and shrinks when idle.</li>
+ *   <li>{@link #fixed(long)}: a fixed amount of memory, allocated up front.
+ *       Use it when you need a hard, predictable memory budget.</li>
+ *   <li>{@link #elastic(long, long)}: grows and shrinks between a minimum
+ *       and maximum you choose.</li>
+ * </ul>
  *
  * <h2>Sizing</h2>
- * Every pool has a warm floor of pre-allocated slots and a ceiling; each
- * slot holds one part, so slot size is always the client's part size.
- * Like aws-c-s3's default pool, memory is allocated in blocks of 16
- * contiguous slots (the floor rounds up to whole blocks). Blocks above the
- * floor are allocated on demand and freed again by trim once the client
- * goes idle (no requests in flight for 5 seconds). The
- * factories differ only in how the floor and ceiling are chosen:
+ * Every pool has a floor and a ceiling:
  * <ul>
- *   <li>{@link #auto()}. Recommended default.</li>
- *   <li>{@link #elastic(long, long)}. Caller-chosen floor and ceiling.</li>
- *   <li>{@link #fixed(long)}. Floor equals ceiling: never grows or trims.</li>
+ *   <li><b>Floor:</b> memory allocated when the client is created and kept
+ *       even while the client is idle.</li>
+ *   <li><b>Ceiling:</b> the most memory the pool will ever use. When it is
+ *       reached, new requests wait until memory is freed.</li>
  * </ul>
- * Every factory checks at client construction that the ceiling fits
- * within 80% of {@code -XX:MaxDirectMemorySize}, and fails client
- * construction otherwise. The ceiling is also handed to the client as its
- * memory limit unless {@link S3ClientOptions#withMemoryLimitInBytes} is set
- * (for fixed and elastic pools an explicit, different limit fails client
- * construction).
+ * Memory is counted in parts ({@link S3ClientOptions#withPartSize}, 8 MiB
+ * by default), so byte sizes you pass are rounded to whole parts. Between
+ * the floor and the ceiling, the pool grows as needed and gives memory
+ * back when idle.
  *
- * <h2>Delivery contract</h2>
- * Enabling the pool does NOT change the behavior of
- * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}:
- * it continues to receive a heap {@code byte[]}-backed {@link ByteBuffer}
- * that is safe to retain indefinitely. Zero-copy delivery is available
- * ONLY by overriding
- * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
- * The two overloads are mutually exclusive per request, chosen when the
- * request is made: if the handler overrides the borrowed-buffer overload
- * (and the pool is enabled), every body chunk goes to it and the
- * {@code ByteBuffer} overload is never called by the client. Without the
- * pool, the borrowed-buffer override is ignored and the {@code ByteBuffer}
- * overload receives every chunk.
+ * <p>How {@link S3ClientOptions#withMemoryLimitInBytes} works with the
+ * pool depends on the factory:</p>
+ * <ul>
+ *   <li>{@link #auto()}: it sets the ceiling. Use it to cap how much memory
+ *       the pool can use.</li>
+ *   <li>{@link #fixed(long)} and {@link #elastic(long, long)}: the size you
+ *       pass to the factory is the ceiling, so you don't need to set it. If
+ *       you do, it must equal the pool's ceiling (the factory size rounded
+ *       down to whole parts); otherwise creating the client fails, and the
+ *       error message gives the value to use.</li>
+ * </ul>
+ *
+ * <p><b>JVM direct memory limit:</b> the pool's memory counts against
+ * {@code -XX:MaxDirectMemorySize}, which by default equals the maximum
+ * heap size ({@code -Xmx}). The ceiling must fit within 80% of that limit,
+ * or creating the client throws; raise {@code -XX:MaxDirectMemorySize} or
+ * choose a smaller ceiling.</p>
+ *
+ * <h2>Delivery</h2>
+ * Handlers that override
+ * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}
+ * receive each chunk straight from pool memory, with no copy into a heap
+ * {@code byte[]}. The client calls exactly one {@code onResponseBody}
+ * overload per request, and calls the borrowed-buffer one only when the
+ * pool is enabled.
  *
  * <h2>Uploads</h2>
- * Multipart uploads take each part's buffer from this pool and hold it
- * until the part completes (including retries); single-part uploads stream
- * from their source and do not use the pool. Uploads and downloads share
- * the same ceiling and wait queue, so a large upload can make downloads
- * wait and vice versa. Uploads gain the same memory visibility and cap,
- * but there is no zero-copy upload path: {@link S3BorrowedBuffer} applies
- * to downloads only. Limits on upload part size are described under
- * Parts larger than one slot.
+ * Multipart uploads hold each part in this pool until the part completes,
+ * including retries; single-part uploads don't use it. Uploads and
+ * downloads share the same ceiling, so a large upload can make downloads
+ * wait, and the other way round. Uploads get the same memory visibility
+ * and limit, but no copy is avoided: {@link S3BorrowedBuffer} is for
+ * downloads only. Limits on upload part size are listed under Large
+ * parts.
  *
  * <h2>Lifetime</h2>
- * The client creates the pool at construction and owns it: one pool per
- * client, never shared. When the client's shutdown completes, the pool
- * frees all unused memory. Memory held by unclosed {@link S3BorrowedBuffer}s
- * stays valid and is freed as each buffer is closed; until then, an
- * unclosed buffer keeps its whole 16-slot block allocated. Client shutdown does
- * not close borrowed buffers: the customer MUST close each one. An unclosed
- * buffer is only recovered by the GC fallback, after an unbounded delay,
- * and is reported as a leak.
+ * The client creates the pool and owns it; each client has its own. When
+ * the client shuts down, the pool frees its unused memory immediately.
+ * Borrowed buffers keep their memory until they are closed, even after
+ * shutdown; see {@link S3BorrowedBuffer}.
  *
- * <h2>Parts larger than one slot</h2>
- * As with the default native pool, the client may need buffers larger
- * than its part size: uploads whose part size aws-c-s3 raises to stay
- * within S3's 10,000-part limit, resumed uploads with a larger part size,
- * and downloads with aws-c-s3's automatic range sizing (used only when no
- * part size is set). Up to 4 parts are served from contiguous free slots
- * in an existing block, with no new allocation. Larger buffers are
- * dedicated to the request that needs them: allocated within the same
- * ceiling, reused only by that request, and freed when it finishes. Each
- * such request pays its own allocation (which zero-fills the memory);
- * the default native pool instead shares same-size blocks across
- * requests. With aws-c-s3's default sizing, automatic download ranges fit
- * in 4 slots; a large explicit memory limit with few connections can
- * produce larger ranges. To make room for a dedicated buffer the pool
- * frees fully unused blocks, floor included; freed floor blocks are
- * allocated again on demand. Only a pool that can grow allocates
- * dedicated buffers. A request that can never fit fails with the reason
- * logged. Waiting requests are served strictly in order, so a large
- * request waiting for memory also holds back smaller requests queued
- * behind it. The pool never silently changes what the
- * customer configured; a multipart upload fails up front with the reason
- * when it would need a part size larger than an explicitly set
- * {@link S3ClientOptions#withPartSize partSize}, or larger than half the
- * pool ceiling (capped at 5 GiB). A fixed pool does not grow, so it keeps
- * downloads at its part size and fails uploads that need more than 4
- * parts' worth.
+ * <h2>Large parts</h2>
+ * Usually there is nothing to do: the client uses larger parts on its own
+ * when it needs them, for example for uploads too big for S3's
+ * 10,000-part limit at the configured part size. These limits apply:
+ * <ul>
+ *   <li>If you set {@link S3ClientOptions#withPartSize partSize}
+ *       explicitly, it is never raised: an upload that would need larger
+ *       parts is rejected when the request is made, with the part size to
+ *       use.</li>
+ *   <li>An upload part can be at most half the ceiling, and never more
+ *       than 5 GiB; an upload that needs larger parts is rejected when the
+ *       request is made.</li>
+ * </ul>
+ * {@link #fixed(long)} pools have a further limit on very large uploads;
+ * see that method.
+ * A request that can never fit in the pool fails, with the reason logged.
  *
  * <p>Instances are immutable and may be reused across clients; each client
  * builds its own pool from them.</p>
@@ -125,8 +138,8 @@ public final class S3DirectBufferPoolOptions {
     }
 
     /**
-     * Recommended default. Sizes the pool the same way aws-c-s3 sizes its
-     * default buffer pool, so no tuning is needed.
+     * Recommended default. Sizes the pool automatically, so no tuning is
+     * needed.
      *
      * <p>The ceiling is the most memory the pool will use. It is taken from
      * the sources below, in priority order: the first one that is set is
@@ -135,13 +148,13 @@ public final class S3DirectBufferPoolOptions {
      *   <li>{@link S3ClientOptions#withMemoryLimitInBytes}</li>
      *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} environment variable</li>
      *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable</li>
-     *   <li>aws-c-s3's default for the client's throughput target</li>
+     *   <li>a default based on
+     *       {@link S3ClientOptions#withThroughputTargetGbps}</li>
      * </ol>
      *
-     * <p>One block (16 parts, or fewer if the ceiling is smaller) is
-     * allocated up front and kept when the pool trims; it may be freed to
-     * make room for a buffer larger than 4 parts. Above that, the pool grows
-     * on demand and shrinks when idle. Each time it grows it briefly delays
+     * <p>The floor is 16 parts (128 MiB with the default part size), or the
+     * whole pool if the ceiling is smaller. Above that, the pool grows on
+     * demand and shrinks when idle. Each time it grows it briefly delays
      * other requests on the client; see {@link #elastic(long, long)} for
      * details.</p>
      *
@@ -157,11 +170,15 @@ public final class S3DirectBufferPoolOptions {
      * predictable memory budget, for example in a tight container.
      *
      * <ul>
-     *   <li><b>Size:</b> {@code memoryLimitBytes / partSize} parts, rounded
-     *       down to whole parts.</li>
+     *   <li><b>Size:</b> {@code memoryLimitBytes}, rounded down to whole
+     *       parts ({@link S3ClientOptions#withPartSize}, 8 MiB by
+     *       default).</li>
      *   <li><b>When full:</b> new requests wait until memory frees up.</li>
-     *   <li><b>Largest buffer:</b> 4 parts. A request that needs more fails,
-     *       with the reason logged (see the class doc).</li>
+     *   <li><b>Very large uploads:</b> each upload part must fit in 4 parts'
+     *       worth of memory. Only uploads big enough that S3's 10,000-part
+     *       limit forces a larger part size are affected (over about 312 GiB
+     *       with the default 8 MiB part size); they are rejected when the
+     *       request is made, with the reason. Downloads are not affected.</li>
      *   <li><b>No allocation pauses:</b> memory is never allocated or freed
      *       after the client is created.</li>
      * </ul>
@@ -183,26 +200,26 @@ public final class S3DirectBufferPoolOptions {
      * pool yourself while still letting it grow and shrink with demand.
      *
      * <ul>
-     *   <li><b>Floor:</b> {@code minBytes}, rounded up to whole parts and then
-     *       to whole 16-part blocks (never above the ceiling), is allocated
-     *       when the client is created and kept when the pool trims. It may be
-     *       freed to make room for a buffer larger than 4 parts.</li>
+     *   <li><b>Floor:</b> {@code minBytes}, rounded up to a multiple of 16
+     *       parts (never above the ceiling), is allocated when the client is
+     *       created and kept while idle.</li>
      *   <li><b>Ceiling:</b> {@code maxBytes}, rounded down to whole parts; the
      *       pool never uses more than that.</li>
-     *   <li><b>In between:</b> the pool grows on demand one block at a time,
-     *       and frees unused blocks above the floor once the client goes
+     *   <li><b>In between:</b> the pool grows on demand 16 parts at a time,
+     *       and gives memory above the floor back once the client goes
      *       idle.</li>
      * </ul>
      *
      * <p><b>Note: growth cost.</b> Each time the pool grows it allocates and
-     * zero-fills one 16-part block (128 MiB with 8 MiB parts), which takes
+     * zero-fills 16 parts of memory (128 MiB with 8 MiB parts), which takes
      * several milliseconds and briefly delays other requests on the client.
      * A sudden burst can grow several blocks in quick succession, and the
      * same happens again after the pool has shrunk while idle. If your
      * workload can't tolerate these pauses, use {@link #fixed(long)}.</p>
      *
-     * @param minBytes memory allocated at client construction and kept
-     *                 through trim ({@code >= 0}; 0 means no warm floor)
+     * @param minBytes memory allocated when the client is created and kept
+     *                 while idle ({@code >= 0}; 0 allocates nothing up
+     *                 front)
      * @param maxBytes most memory the pool will use ({@code >= minBytes};
      *                 must be at least one part, checked when the client is
      *                 created)

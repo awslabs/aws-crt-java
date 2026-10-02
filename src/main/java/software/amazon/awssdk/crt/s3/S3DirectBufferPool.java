@@ -46,6 +46,31 @@ import software.amazon.awssdk.crt.Log;
  * Blocks and dedicated buffers share one byte budget,
  * {@code maxSlots * partSize}, so the ceiling is hard.
  *
+ * <h2>Behaviour details (customer docs summarize these)</h2>
+ * <ul>
+ *   <li>Trim frees fully unused blocks above the floor; aws-c-s3 schedules
+ *       it 5 seconds after the client goes idle and skips it if any request
+ *       is in flight at either point.</li>
+ *   <li>Growth backs a whole block with {@code allocateDirect} (which
+ *       zero-fills) on the reserving thread, usually an aws-c-s3 event-loop
+ *       thread, while holding {@code lock} and the native pending_lock, so
+ *       other reserves and releases wait for it.</li>
+ *   <li>Dedicated buffers are allocated (and zero-filled) per request.
+ *       The default native pool instead keeps same-size "special" blocks
+ *       shared across requests ({@code add_special_size}, left NULL here).
+ *       With aws-c-s3's default sizing, automatic download ranges fit in
+ *       {@value #MAX_GROUP_SLOTS} slots; a large explicit memory limit with
+ *       few connections can produce larger ranges.</li>
+ *   <li>Making room for a dedicated buffer frees fully unused blocks,
+ *       floor included; freed floor blocks are backed again on demand.</li>
+ *   <li>The native wait queue is strict FIFO for anything that consumes
+ *       capacity, so a large waiting request holds back smaller ones queued
+ *       behind it (a request may still reuse its own idle dedicated
+ *       buffer).</li>
+ *   <li>A pool that cannot grow pins download ranges to the part size
+ *       ({@link S3Client}), so downloads never need more than one slot.</li>
+ * </ul>
+ *
  * <h2>Concurrency</h2>
  * Every method synchronizes on {@code lock}. Native callers (reserve,
  * ticket release, trim, request finish) additionally hold the native pool

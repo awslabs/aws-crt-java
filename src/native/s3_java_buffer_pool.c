@@ -45,8 +45,8 @@
  *    aws-c-s3 client's event-loop thread. It MUST NOT block. When
  *    the Java pool reports exhaustion (an acquire returns -1), we
  *    push an unresolved future onto pending_reserves and return
- *    immediately. The future is resolved later from s_java_ticket_destroy
- *    when a lease is released, mirroring the default pool's
+ *    immediately. The future is resolved later by the drain (on a lease
+ *    release or the next reserve), mirroring the default pool's
  *    pending_reserves pattern. Reserve, release, and trim all run under
  *    pending_lock (see java_pool_state.pending_reserves).
  *
@@ -108,10 +108,11 @@ struct java_pool_state {
     /*
      * Pending reserve futures, FIFO. Each entry holds an acquired ref on a
      * not-yet-resolved aws_future_s3_buffer_ticket and the original
-     * reserve_meta. Drained when a lease is released. Entries whose future
-     * aws-c-s3 already completed (a cancelled or paused meta request sets
-     * an error on its pending futures) are dropped by the drain, as in the
-     * default pool.
+     * reserve_meta. Drained when a lease is released and at the start of
+     * every reserve. Entries whose future aws-c-s3 already completed (a
+     * cancelled or paused meta request sets an error on its pending
+     * futures) are dropped by the drain wherever they sit, so they never
+     * hold back live reservations.
      *
      * GUARDED BY pending_lock. pending_lock is also held around every
      * reserve attempt, release, trim, and request finish (including their
@@ -272,30 +273,44 @@ static void s_java_ticket_destroy(void *user_data) {
 }
 
 /*
- * Retries pending reservations after capacity may have freed. Caller holds
- * pending_lock and a JNIEnv; served, failed, or already-completed entries
- * move to out_resolved. Strict FIFO from the head, stopping at the first
- * that still cannot be served (see java_pool_state.pending_reserves for
- * why).
+ * Retries pending reservations. Called on every ticket release (capacity
+ * may have freed) and at the start of every reserve (a waiting entry may
+ * have been cancelled). Caller holds pending_lock and a JNIEnv; served,
+ * failed, or already-completed entries move to out_resolved.
+ *
+ * 1. Drops every entry whose future aws-c-s3 already completed (a cancelled
+ *    or paused meta request sets an error on its pending futures), wherever
+ *    it sits in the queue, so it never holds back live reservations.
+ * 2. Serves live entries in strict FIFO order from the head, stopping at the
+ *    first that still cannot be served (see java_pool_state.pending_reserves
+ *    for why).
  */
 static void s_drain_pending_locked(struct java_pool_state *ps, JNIEnv *env, struct aws_linked_list *out_resolved) {
+    struct aws_linked_list_node *node = aws_linked_list_begin(&ps->pending_reserves);
+    while (node != aws_linked_list_end(&ps->pending_reserves)) {
+        struct aws_linked_list_node *next = aws_linked_list_next(node);
+        struct java_pending_reserve *pending = AWS_CONTAINER_OF(node, struct java_pending_reserve, node);
+        if (aws_future_s3_buffer_ticket_is_done(pending->future)) {
+            /* s_resolve_pending_list's set on a done future is a no-op. */
+            pending->error_code = AWS_ERROR_S3_CANCELED;
+            aws_linked_list_remove(node);
+            aws_linked_list_push_back(out_resolved, node);
+        }
+        node = next;
+    }
+
     while (!aws_linked_list_empty(&ps->pending_reserves)) {
         struct java_pending_reserve *head =
             AWS_CONTAINER_OF(aws_linked_list_front(&ps->pending_reserves), struct java_pending_reserve, node);
-        if (aws_future_s3_buffer_ticket_is_done(head->future)) {
-            /* aws-c-s3 cancelled it; s_resolve_pending_list's set is a no-op. */
-            head->error_code = AWS_ERROR_S3_CANCELED;
+        struct aws_s3_buffer_ticket *ticket = NULL;
+        int result = s_try_acquire_locked(ps, env, head->meta.size, &ticket);
+        if (result == -1) {
+            break; /* still exhausted: wait for the next release */
+        }
+        if (result == AWS_OP_SUCCESS) {
+            head->ticket = ticket;
         } else {
-            struct aws_s3_buffer_ticket *ticket = NULL;
-            int result = s_try_acquire_locked(ps, env, head->meta.size, &ticket);
-            if (result == -1) {
-                break; /* still exhausted: wait for the next release */
-            }
-            if (result == AWS_OP_SUCCESS) {
-                head->ticket = ticket;
-            } else {
-                head->error_code = result;
-            }
+            head->error_code = result;
         }
         aws_linked_list_pop_front(&ps->pending_reserves);
         aws_linked_list_push_back(out_resolved, &head->node);
@@ -414,9 +429,14 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
 
     struct aws_s3_buffer_ticket *ticket = NULL;
     bool pended = false;
+    struct aws_linked_list resolved;
+    aws_linked_list_init(&resolved);
 
     aws_mutex_lock(&ps->pending_lock);
-    /* Strict FIFO: never jump reservations that are already waiting. */
+    /* Drop cancelled entries and serve any waiting ones that now fit, so a
+     * reservation that aws-c-s3 already cancelled never holds back this one.
+     * Then strict FIFO: never jump reservations that are still waiting. */
+    s_drain_pending_locked(ps, env, &resolved);
     int result = aws_linked_list_empty(&ps->pending_reserves) ? s_try_acquire_locked(ps, env, meta.size, &ticket) : -1;
     if (result == -1 && !meta.can_block) {
         /* Pend; resolved by the drain. The event loop returns immediately. */
@@ -432,6 +452,8 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     aws_mutex_unlock(&ps->pending_lock);
     aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     /******** JNI ENV RELEASE ********/
+
+    s_resolve_pending_list(ps, &resolved);
 
     if (pended) {
         return future;

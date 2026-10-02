@@ -114,9 +114,9 @@ import java.nio.ByteBuffer;
  *       than 5 GiB; an upload that needs larger parts is rejected when the
  *       request is made.</li>
  *   <li>{@link S3ClientOptions#withPartSize partSize} must be smaller than
- *       128 MiB, or creating the client fails. Pools whose ceiling is under
- *       16 parts allow somewhat larger parts; the error message gives the
- *       exact limit.</li>
+ *       128 MiB (128 MiB itself is rejected), or creating the client
+ *       fails. Pools whose ceiling is under 16 parts allow somewhat larger
+ *       parts; the error message gives the exact limit.</li>
  * </ul>
  * {@link #fixed(long)} pools have a further limit on very large uploads;
  * see that method.
@@ -151,7 +151,8 @@ public final class S3DirectBufferPoolOptions {
      * used, and the rest are ignored.</p>
      * <ol>
      *   <li>{@link S3ClientOptions#withMemoryLimitInBytes}</li>
-     *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} environment variable</li>
+     *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} environment variable
+     *       (in MiB)</li>
      *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable</li>
      *   <li>a default based on
      *       {@link S3ClientOptions#withThroughputTargetGbps} (if unset,

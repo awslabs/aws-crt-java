@@ -230,15 +230,16 @@ final class S3DirectBufferPool {
                 break;
             }
             case ELASTIC: {
-                // Ceiling rounds down to whole parts, like FIXED; floor rounds
-                // up to whole parts, capped at the ceiling (the constructor
-                // then keeps only the whole blocks it covers). Sign and
-                // ordering are validated by the options factory.
+                // Ceiling and floor both round down to whole parts, so the
+                // floor never exceeds minBytes (the constructor then keeps
+                // only the whole blocks it covers, or the whole pool when the
+                // floor reaches the ceiling). elastic() already rejected
+                // minBytes < 0, maxBytes <= 0 and minBytes > maxBytes.
                 long maxBytes = poolOptions.getMaxBytes();
                 requireAtLeastOnePart("maxBytes", maxBytes, partSize);
                 checkMemoryLimitMatches(clientOptions, maxBytes / partSize * partSize, partSize);
                 maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
-                initialSlots = (int) Math.min(maxSlots, (poolOptions.getMinBytes() + partSize - 1) / partSize);
+                initialSlots = (int) Math.min(maxSlots, poolOptions.getMinBytes() / partSize);
                 break;
             }
             case AUTO:

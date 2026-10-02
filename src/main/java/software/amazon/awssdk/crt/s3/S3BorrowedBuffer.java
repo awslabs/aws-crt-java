@@ -43,7 +43,10 @@ import software.amazon.awssdk.crt.Log;
  * pool runs out, every request on the client waits. Holding a buffer open
  * is not flow control; to pause a download, use read backpressure (see
  * the {@code onResponseBody} overload). Once a buffer is closed, the
- * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read.</p>
+ * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read. Keep a
+ * reference to the {@code S3BorrowedBuffer} itself for as long as you use
+ * that view: a buffer that is no longer referenced can be recovered by
+ * garbage collection, which frees the memory under the view.</p>
  *
  * <p>{@link #close()} can be called any number of times.
  * {@link #toByteArray()} copies the data to a heap {@code byte[]} and

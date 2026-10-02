@@ -204,9 +204,9 @@ public class S3Client extends CrtResource {
     }
 
     private void onShutdownComplete() {
-        // No meta request can acquire a slot after shutdown. Frees every
-        // unused slot now; slots held by unclosed S3BorrowedBuffers are
-        // freed as each buffer closes.
+        // No meta request can reserve pool memory after shutdown. Frees all
+        // unused pool memory now; memory held by unclosed S3BorrowedBuffers
+        // is freed as each one closes.
         if (directBufferPool != null) {
             directBufferPool.close();
         }
@@ -328,13 +328,14 @@ public class S3Client extends CrtResource {
      * the native client would change its part size behind the customer's
      * back or beyond what the pool can hold. Without a pool, it silently
      * raises the part size (to at least 5 MiB, and to stay within 10,000
-     * parts); with one, we refuse instead when:
+     * parts); with one, we refuse instead when the required part size is
+     * larger than the current one and:
      * <ul>
-     *   <li>the customer set {@code partSize} explicitly, or the pool cannot
-     *       grow (so it cannot serve larger buffers); or</li>
-     *   <li>the required part size exceeds what the pool allows (half its
-     *       memory limit, capped at 5 GiB, matching the native client's own
-     *       limit).</li>
+     *   <li>the customer set {@code partSize} explicitly; or</li>
+     *   <li>the pool is fixed and the part would not fit in
+     *       {@link S3DirectBufferPool#maxGroupBytes()} (4 parts); or</li>
+     *   <li>the pool can grow and the part exceeds half its ceiling, or
+     *       5 GiB (the native client's own limit).</li>
      * </ul>
      * Skipped when the content length is unknown or a resume token is used
      * (the token's part size is honored).

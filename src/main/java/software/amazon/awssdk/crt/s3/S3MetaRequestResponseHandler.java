@@ -152,8 +152,7 @@ public interface S3MetaRequestResponseHandler {
         // when the handler overrides this method), but kept safe for direct
         // invocation: copy to heap so the ByteBuffer overload's
         // safe-to-retain contract holds unconditionally.
-        try (S3BorrowedBuffer autoClose = buffer) {
-            return onResponseBody(ByteBuffer.wrap(buffer.toByteArray()), objectRangeStart, objectRangeEnd);
-        }
+        // toByteArray() copies and closes the buffer.
+        return onResponseBody(ByteBuffer.wrap(buffer.toByteArray()), objectRangeStart, objectRangeEnd);
     }
 }

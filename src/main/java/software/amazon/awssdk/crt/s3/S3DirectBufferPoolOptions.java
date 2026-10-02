@@ -18,7 +18,8 @@ import java.nio.ByteBuffer;
  * JVM cannot see or limit. With the pool, the memory comes from
  * {@link ByteBuffer#allocateDirect direct ByteBuffers} instead: it counts
  * against {@code -XX:MaxDirectMemorySize}, never grows past a limit you
- * control, and is given back when the client is idle.</p>
+ * control, and (except with {@link #fixed(long)}) is given back when the
+ * client is idle.</p>
  *
  * <h2>Opt-in</h2>
  * The pool is off unless you set these options. Without them the client
@@ -113,7 +114,9 @@ import java.nio.ByteBuffer;
  *       than 5 GiB; an upload that needs larger parts is rejected when the
  *       request is made.</li>
  *   <li>{@link S3ClientOptions#withPartSize partSize} must be smaller than
- *       128 MiB, or creating the client fails.</li>
+ *       128 MiB, or creating the client fails. Pools whose ceiling is under
+ *       16 parts allow somewhat larger parts; the error message gives the
+ *       exact limit.</li>
  * </ul>
  * {@link #fixed(long)} pools have a further limit on very large uploads;
  * see that method.
@@ -188,7 +191,8 @@ public final class S3DirectBufferPoolOptions {
      * </ul>
      *
      * @param memoryLimitBytes total off-heap budget for the pool; must be
-     *                         at least one part
+     *                         at least one part, checked when the client
+     *                         is created
      * @return options for a fixed pool
      * @throws IllegalArgumentException if {@code memoryLimitBytes <= 0}
      */
@@ -219,9 +223,9 @@ public final class S3DirectBufferPoolOptions {
      * <p><b>Note: growth cost.</b> Each time the pool grows it allocates and
      * zero-fills 16 parts of memory (128 MiB with 8 MiB parts), which takes
      * several milliseconds and briefly delays other requests on the client.
-     * A sudden burst can grow several blocks in quick succession, and the
-     * same happens again after the pool has shrunk while idle. If your
-     * workload can't tolerate these pauses, use {@link #fixed(long)}.</p>
+     * A sudden burst can grow the pool several times in quick succession,
+     * and the same happens again after the pool has shrunk while idle. If
+     * your workload can't tolerate these pauses, use {@link #fixed(long)}.</p>
      *
      * @param minBytes memory allocated when the client is created and kept
      *                 while idle ({@code >= 0}; 0 allocates nothing up

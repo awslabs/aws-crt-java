@@ -91,6 +91,9 @@ final class S3DirectBufferPool {
     static final long EXHAUSTED = -1;
     static final long IMPOSSIBLE = -2;
 
+    /** Share of {@code MaxDirectMemorySize} the pool's ceiling may use; the rest is headroom for other users. */
+    private static final double DIRECT_MEMORY_FRACTION = 0.8;
+
     /** Handle tag for dedicated buffers; slot-run handles have it clear. */
     private static final long DEDICATED_TAG = 1L << 62;
 
@@ -101,6 +104,8 @@ final class S3DirectBufferPool {
     private final int floorBlocks;
     /** {@code fixed()} pool: never allocates or frees after construction, so serves no dedicated buffers. */
     private final boolean fixed;
+    /** auto() pool whose derived ceiling was reduced to fit the JVM direct memory limit. */
+    private final boolean ceilingClamped;
 
     /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
     private final long ceilingBytes;
@@ -146,7 +151,8 @@ final class S3DirectBufferPool {
      *
      * @throws IllegalArgumentException for invalid sizes
      */
-    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots, boolean fixed) {
+    private S3DirectBufferPool(int partSize, int initialSlots, int maxSlots, boolean fixed,
+                               boolean ceilingClamped) {
         if (partSize <= 0)       throw new IllegalArgumentException("partSize must be > 0");
         if (initialSlots < 0)    throw new IllegalArgumentException("initialSlots must be >= 0");
         if (maxSlots < 1)        throw new IllegalArgumentException("maxSlots must be >= 1");
@@ -169,6 +175,7 @@ final class S3DirectBufferPool {
         this.numBlocks = (maxSlots + BLOCK_SLOTS - 1) / BLOCK_SLOTS;
         this.floorBlocks = initialSlots == maxSlots ? numBlocks : initialSlots / BLOCK_SLOTS;
         this.fixed = fixed;
+        this.ceilingClamped = ceilingClamped;
         this.ceilingBytes = (long) maxSlots * partSize;
         this.blocks = new ByteBuffer[numBlocks];
         this.blockAddresses = new long[numBlocks];
@@ -218,6 +225,7 @@ final class S3DirectBufferPool {
         int partSize = resolvePartSize(clientOptions);
         int initialSlots;
         int maxSlots;
+        boolean ceilingClamped = false;
         switch (poolOptions.getMode()) {
             case FIXED: {
                 // Floor == ceiling == memoryLimitBytes rounded down to whole
@@ -255,7 +263,26 @@ final class S3DirectBufferPool {
                     memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", 1024L * 1024L * 1024L);
                 }
                 if (memoryLimitBytes <= 0) {
+                    // Derived, not set by the customer: shrink it to fit the
+                    // JVM's direct memory limit instead of failing. Explicit
+                    // sizes are never changed; they fail fast below.
                     memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(clientOptions.getThroughputTargetGbps());
+                    long maxDirectMemory = getMaxDirectMemory();
+                    long available = (long) (maxDirectMemory * DIRECT_MEMORY_FRACTION) / partSize * partSize;
+                    if (maxDirectMemory > 0 && memoryLimitBytes > available && available >= partSize) {
+                        // WARN: the pool is smaller than the client would normally
+                        // use for this throughput, which can limit transfer speed.
+                        long recommendedMiB = (long) Math.ceil(memoryLimitBytes / DIRECT_MEMORY_FRACTION / (1024 * 1024));
+                        Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                            "S3DirectBufferPool: the default ceiling for this throughput target is " + memoryLimitBytes
+                          + " bytes, but only " + available + " bytes fit within 80% of MaxDirectMemorySize ("
+                          + maxDirectMemory + " bytes), so the pool uses " + available + " bytes. This can limit "
+                          + "transfer throughput. To use the full default, set -XX:MaxDirectMemorySize="
+                          + recommendedMiB + "m or higher; or set S3ClientOptions.withMemoryLimitInBytes to choose "
+                          + "the ceiling yourself.");
+                        memoryLimitBytes = available;
+                        ceilingClamped = true;
+                    }
                 }
                 maxSlots = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
                 if (maxSlots < 1) {
@@ -271,7 +298,8 @@ final class S3DirectBufferPool {
         }
         validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots,
-                                      poolOptions.getMode() == S3DirectBufferPoolOptions.Mode.FIXED);
+                                      poolOptions.getMode() == S3DirectBufferPoolOptions.Mode.FIXED,
+                                      ceilingClamped);
     }
 
     /**
@@ -340,6 +368,12 @@ final class S3DirectBufferPool {
      *         after construction
      */
     boolean servesOversize() { return !fixed; }
+    /**
+     * @return whether an auto() pool reduced its derived ceiling to fit the
+     *         JVM direct memory limit; S3Client then passes the ceiling to
+     *         the native client so both use the same limit
+     */
+    boolean ceilingClamped() { return ceilingClamped; }
     /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
     long committedBytes() {
         synchronized (lock) { return committedBytes; }
@@ -587,7 +621,7 @@ final class S3DirectBufferPool {
         }
 
         // Reserve 20% of MaxDirectMemorySize for other direct buffer users.
-        long availableForPool = (long) (maxDirectMemory * 0.8);
+        long availableForPool = (long) (maxDirectMemory * DIRECT_MEMORY_FRACTION);
 
         if (poolCapacityBytes > availableForPool) {
             long poolMiB = poolCapacityBytes / (1024 * 1024);

@@ -132,7 +132,8 @@ public class S3Client extends CrtResource {
         //   pool's real capacity. auto() pools leave it to the native client,
         //   which resolves the env vars and tier default exactly as the pool
         //   did (and fails client creation on a malformed env var, as it does
-        //   without a pool).
+        //   without a pool), unless the pool shrank its default to fit direct
+        //   memory; then the native client gets the smaller ceiling too.
         // - part size: a pool that cannot grow cannot allocate dedicated
         //   buffers for ranges beyond a slot run, so pin the part size
         //   (disabling the native client's automatic download range sizing,
@@ -144,7 +145,8 @@ public class S3Client extends CrtResource {
                 nativePartSize = directBufferPool.partSize();
             }
             if (nativeMemoryLimit <= 0
-                    && options.getDirectBufferPoolOptions().getMode() != S3DirectBufferPoolOptions.Mode.AUTO) {
+                    && (options.getDirectBufferPoolOptions().getMode() != S3DirectBufferPoolOptions.Mode.AUTO
+                        || directBufferPool.ceilingClamped())) {
                 nativeMemoryLimit = directBufferPool.ceilingBytes();
             }
         }

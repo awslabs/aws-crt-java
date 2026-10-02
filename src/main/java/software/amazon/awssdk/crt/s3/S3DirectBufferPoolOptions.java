@@ -74,9 +74,12 @@ import java.nio.ByteBuffer;
  *
  * <p><b>JVM direct memory limit:</b> the pool's memory counts against
  * {@code -XX:MaxDirectMemorySize}, which by default equals the maximum
- * heap size ({@code -Xmx}). The ceiling must fit within 80% of that limit,
- * or creating the client throws; raise {@code -XX:MaxDirectMemorySize} or
- * choose a smaller ceiling.</p>
+ * heap size ({@code -Xmx}). The ceiling must fit within 80% of that limit.
+ * If you chose the ceiling (with {@link #fixed(long)},
+ * {@link #elastic(long, long)}, {@code withMemoryLimitInBytes} or an
+ * environment variable) and it doesn't fit, creating the client throws;
+ * raise {@code -XX:MaxDirectMemorySize} or choose a smaller ceiling. A
+ * default ceiling picked by {@link #auto()} is reduced to fit instead.</p>
  *
  * <h2>Delivery</h2>
  * Handlers that override
@@ -159,7 +162,10 @@ public final class S3DirectBufferPoolOptions {
      *   <li>a default based on
      *       {@link S3ClientOptions#withThroughputTargetGbps} (if unset,
      *       detected from the EC2 instance type, so the ceiling can differ
-     *       between instances)</li>
+     *       between instances). If this default doesn't fit within 80% of
+     *       the JVM direct memory limit, it is reduced to fit and a warning
+     *       is logged, since a smaller pool can limit throughput; raise
+     *       {@code -XX:MaxDirectMemorySize} to use the full default.</li>
      * </ol>
      *
      * <p>The floor is 16 parts (128 MiB with the default part size), or the

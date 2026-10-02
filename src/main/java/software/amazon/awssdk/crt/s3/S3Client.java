@@ -118,8 +118,8 @@ public class S3Client extends CrtResource {
         directBufferPool = poolOptions != null ? S3DirectBufferPool.fromOptions(poolOptions, options) : null;
         if (directBufferPool != null) {
             Log.log(Log.LogLevel.Info, Log.LogSubject.JavaCrtS3,
-                "S3DirectBufferPool created: capacity = "
-              + directBufferPool.maxSlots() + " slots x " + directBufferPool.partSize() + " bytes");
+                "S3DirectBufferPool created: ceiling = " + directBufferPool.ceilingBytes()
+              + " bytes, part size = " + directBufferPool.partSize() + " bytes");
         }
 
         partSizeExplicit = options.getPartSize() > 0;

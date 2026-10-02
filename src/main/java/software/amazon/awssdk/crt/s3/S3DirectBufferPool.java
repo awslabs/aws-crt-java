@@ -25,8 +25,17 @@ import software.amazon.awssdk.crt.Log;
  * Memory is allocated in blocks of up to {@value #BLOCK_SLOTS} contiguous
  * slots, each block one {@link ByteBuffer#allocateDirect direct ByteBuffer}.
  * A slot holds one part, so slot size is the client's resolved part size
- * (the native factory re-checks equality at client creation). Reservations
- * are served three ways:
+ * (the native factory re-checks equality at client creation).
+ *
+ * <p>The ceiling ({@code maxSlots * partSize}) is the byte budget shared by
+ * blocks and dedicated buffers, so it is hard. The floor is the leading
+ * blocks wholly covered by the requested floor slots, so it never exceeds
+ * what was asked for; it is backed at construction and kept by
+ * {@link #trim}, which frees unused blocks above it. A fixed pool's floor is
+ * the whole pool, and it never allocates after construction.</p>
+ *
+ * <p>Each reservation is a lease, identified by a handle, served three
+ * ways:</p>
  * <ul>
  *   <li>Up to one part: a single slot.</li>
  *   <li>Up to {@value #MAX_GROUP_SLOTS} parts (for example aws-c-s3's
@@ -35,36 +44,31 @@ import software.amazon.awssdk.crt.Log;
  *       new memory is allocated when a backed block has a free run.</li>
  *   <li>Larger: a dedicated direct buffer owned by the meta request that
  *       needs it (uploads raised past S3's 10,000-part limit, resumed
- *       uploads with a larger part size, very large download ranges). It is
- *       retained and reused only by that request while the request is
- *       active, never trimmed from under it, and freed when the request
- *       finishes ({@link #releaseRequest}). Each is allocated (and
- *       zero-filled) per request; the default native pool instead shares
- *       same-size "special" blocks across requests ({@code add_special_size},
- *       left NULL here). Making room for one frees fully unused blocks,
- *       floor included; freed floor blocks are backed again on demand.</li>
+ *       uploads with a larger part size, download ranges above
+ *       {@value #MAX_GROUP_SLOTS} parts, which aws-c-s3's default sizing
+ *       only produces with a large explicit memory limit and few
+ *       connections). It is retained and reused only by that request while
+ *       the request is active, never trimmed from under it, and freed when
+ *       the request finishes ({@link #releaseRequest}). Each is allocated
+ *       (and zero-filled) per request; the default native pool instead
+ *       shares same-size "special" blocks across requests
+ *       ({@code add_special_size}, left NULL here). Making room for one frees
+ *       fully unused blocks, floor included; freed floor blocks are backed
+ *       again on demand. Fixed pools serve none, and {@link S3Client} pins
+ *       their download ranges to the part size so downloads never need more
+ *       than one slot.</li>
  * </ul>
- * Blocks and dedicated buffers share one byte budget,
- * {@code maxSlots * partSize}, so the ceiling is hard. A fixed pool never
- * allocates after construction: it serves no dedicated buffers, and
- * {@link S3Client} pins its download ranges to the part size so downloads
- * never need more than one slot. The floor is the leading blocks wholly
- * covered by the requested floor slots, so it never exceeds what was
- * asked for. With aws-c-s3's
- * default sizing, automatic download ranges otherwise fit in
- * {@value #MAX_GROUP_SLOTS} slots; a large explicit memory limit with few
- * connections can produce larger ones.
  *
  * <h2>Concurrency</h2>
  * Every method that reads or changes block or dedicated-buffer state
  * synchronizes on {@code lock}; the immutable accessors,
  * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
- * checks do not need it. Native callers (reserve,
- * ticket release, trim, request finish) additionally hold the native pool
- * state's {@code pending_lock} around their JNI calls, so acquires and
- * releases are serialized and pending reservations cannot be stranded.
- * Lock order: native pending_lock, then {@code lock}. Nothing here calls
- * into native code that takes pending_lock.
+ * checks do not need it. Native callers (reserve, ticket release, trim,
+ * request finish) additionally hold the native pool state's
+ * {@code pending_lock} around their JNI calls, so acquires and releases are
+ * serialized and pending reservations cannot be stranded. Lock order:
+ * native pending_lock, then {@code lock}. Nothing here calls into native
+ * code that takes pending_lock.
  *
  * <p>Growth backs a whole block with {@code allocateDirect} (which
  * zero-fills) on the reserving thread, usually an aws-c-s3 event-loop
@@ -232,19 +236,65 @@ final class S3DirectBufferPool {
      */
     static S3DirectBufferPool fromOptions(S3DirectBufferPoolOptions poolOptions, S3ClientOptions clientOptions) {
         int partSize = resolvePartSize(clientOptions);
+        int initialSlots;
+        int maxSlots;
+        long nativeMemoryLimitBytes;
         switch (poolOptions.getMode()) {
-            case FIXED:
-                requireAtLeastOnePart("memoryLimitBytes", poolOptions.getMemoryLimitBytes(), partSize);
-                checkMemoryLimitMatches(clientOptions, poolOptions.getMemoryLimitBytes() / partSize * partSize, partSize);
-                return createFixed(poolOptions.getMemoryLimitBytes(), partSize);
-            case ELASTIC:
-                requireAtLeastOnePart("maxBytes", poolOptions.getMaxBytes(), partSize);
-                checkMemoryLimitMatches(clientOptions, poolOptions.getMaxBytes() / partSize * partSize, partSize);
-                return createElastic(poolOptions.getMinBytes(), poolOptions.getMaxBytes(), partSize);
+            case FIXED: {
+                // Floor == ceiling == memoryLimitBytes rounded down to whole
+                // parts: fully eager, never grows or trims.
+                long bytes = poolOptions.getMemoryLimitBytes();
+                requireAtLeastOnePart("memoryLimitBytes", bytes, partSize);
+                checkMemoryLimitMatches(clientOptions, bytes / partSize * partSize, partSize);
+                maxSlots = (int) Math.min(Integer.MAX_VALUE, bytes / partSize);
+                initialSlots = maxSlots;
+                nativeMemoryLimitBytes = (long) maxSlots * partSize;
+                break;
+            }
+            case ELASTIC: {
+                // Ceiling rounds down to whole parts, like FIXED; floor rounds
+                // up to whole parts, capped at the ceiling (the constructor
+                // then keeps only the whole blocks it covers). Sign and
+                // ordering are validated by the options factory.
+                long maxBytes = poolOptions.getMaxBytes();
+                requireAtLeastOnePart("maxBytes", maxBytes, partSize);
+                checkMemoryLimitMatches(clientOptions, maxBytes / partSize * partSize, partSize);
+                maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
+                initialSlots = (int) Math.min(maxSlots, (poolOptions.getMinBytes() + partSize - 1) / partSize);
+                nativeMemoryLimitBytes = (long) maxSlots * partSize;
+                break;
+            }
             case AUTO:
-            default:
-                return createAuto(clientOptions, partSize);
+            default: {
+                // Sized like aws-c-s3's default buffer pool. Floor: one block.
+                // Ceiling: the client's memory limit, resolved in
+                // aws_s3_client_new's order (see S3DirectBufferPoolOptions#auto()).
+                long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
+                if (memoryLimitBytes <= 0) {
+                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
+                }
+                if (memoryLimitBytes <= 0) {
+                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", 1024L * 1024L * 1024L);
+                }
+                if (memoryLimitBytes <= 0) {
+                    memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(clientOptions.getThroughputTargetGbps());
+                }
+                maxSlots = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
+                if (maxSlots < 1) {
+                    // Without this, the constructor's generic "maxSlots must be >= 1"
+                    // hides the real cause (limit smaller than one part).
+                    throw new IllegalArgumentException(
+                        "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
+                      + partSize + " bytes). Raise the memory limit or reduce partSize");
+                }
+                initialSlots = Math.min(BLOCK_SLOTS, maxSlots);
+                nativeMemoryLimitBytes = memoryLimitBytes;
+                break;
+            }
         }
+        validateDirectMemoryCapacity((long) maxSlots * partSize);
+        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, nativeMemoryLimitBytes,
+                                      poolOptions.getMode() == S3DirectBufferPoolOptions.Mode.FIXED);
     }
 
     /**
@@ -298,61 +348,12 @@ final class S3DirectBufferPool {
         return (int) partSize;
     }
 
-    /**
-     * Sized like aws-c-s3's default buffer pool. Floor: one block. Ceiling:
-     * the client's memory limit, resolved in {@code aws_s3_client_new}'s
-     * order (see {@link S3DirectBufferPoolOptions#auto()} for the list).
-     */
-    private static S3DirectBufferPool createAuto(S3ClientOptions clientOptions, int partSize) {
-        long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
-        if (memoryLimitBytes <= 0) {
-            memoryLimitBytes = resolveEnvOverrideBytes();
-        }
-        if (memoryLimitBytes <= 0) {
-            memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(clientOptions.getThroughputTargetGbps());
-        }
-        int maxSlots = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
-        if (maxSlots < 1) {
-            // Without this, the constructor's generic "maxSlots must be >= 1"
-            // hides the real cause (limit smaller than one part).
-            throw new IllegalArgumentException(
-                "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
-              + partSize + " bytes). Raise the memory limit or reduce partSize");
-        }
-        int initialSlots = Math.min(BLOCK_SLOTS, maxSlots);  // floor: one block
-        validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, memoryLimitBytes, false);
-    }
-
-    /** Floor == ceiling == {@code memoryLimitBytes / partSize}: fully eager, never grows or trims. */
-    private static S3DirectBufferPool createFixed(long memoryLimitBytes, int partSize) {
-        int slotCount = (int) Math.min(Integer.MAX_VALUE, memoryLimitBytes / partSize);
-        validateDirectMemoryCapacity((long) slotCount * partSize);
-        return new S3DirectBufferPool(partSize, slotCount, slotCount, (long) slotCount * partSize, true);
-    }
-
-    /**
-     * Caller-chosen floor and ceiling in bytes (sign and ordering validated by
-     * the options factory; maxBytes >= partSize by {@link #fromOptions}).
-     * Ceiling rounds down to whole parts, like {@link #createFixed}; floor
-     * rounds up to whole parts, capped at the ceiling (the constructor then
-     * keeps only the whole blocks it covers).
-     */
-    private static S3DirectBufferPool createElastic(long minBytes, long maxBytes, int partSize) {
-        int maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
-        int initialSlots = (int) Math.min(maxSlots, (minBytes + partSize - 1) / partSize);
-        validateDirectMemoryCapacity((long) maxSlots * partSize);
-        return new S3DirectBufferPool(partSize, initialSlots, maxSlots, (long) maxSlots * partSize, false);
-    }
-
     /* ==================================================================== */
     /* Accessors + lifecycle                                                */
     /* ==================================================================== */
 
     /** @return the per-slot byte size (the client's resolved part size) */
     int partSize()       { return partSize; }
-    /** @return the pool ceiling in slots */
-    int maxSlots()       { return maxSlots; }
     /** @return the byte budget shared by blocks and dedicated buffers */
     long ceilingBytes()  { return ceilingBytes; }
     /** @return the memory limit S3Client passes to the native client when none is set explicitly */
@@ -544,10 +545,13 @@ final class S3DirectBufferPool {
 
     /** First fit: a free run of {@code count} slots in a backed block, else back a new block. */
     private long acquireRunLocked(int count) {
+        int want = (1 << count) - 1;
         for (int b = 0; b < numBlocks; b++) {
-            if (blocks[b] != null) {
-                int start = findRun(b, count);
-                if (start >= 0) {
+            if (blocks[b] == null) {
+                continue;
+            }
+            for (int start = 0; start + count <= blockSlots(b); start++) {
+                if ((usedMask[b] & (want << start)) == 0) {
                     return leaseRun(b, start, count);
                 }
             }
@@ -636,17 +640,6 @@ final class S3DirectBufferPool {
 
     private int blockSlots(int b) {
         return Math.min(BLOCK_SLOTS, maxSlots - b * BLOCK_SLOTS);
-    }
-
-    private int findRun(int b, int count) {
-        int slots = blockSlots(b);
-        int want = (1 << count) - 1;
-        for (int start = 0; start + count <= slots; start++) {
-            if ((usedMask[b] & (want << start)) == 0) {
-                return start;
-            }
-        }
-        return -1;
     }
 
     private long leaseRun(int b, int start, int count) {
@@ -786,18 +779,6 @@ final class S3DirectBufferPool {
         }
 
         return -1;
-    }
-
-    /**
-     * Resolves {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} (first) then
-     * {@code _IN_GIB} to bytes, matching aws-c-s3's order. Returns
-     * 0 when unset or unusable.
-     */
-    private static long resolveEnvOverrideBytes() {
-        long mbBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
-        if (mbBytes > 0) return mbBytes;
-
-        return parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", 1024L * 1024L * 1024L);
     }
 
     /**

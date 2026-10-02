@@ -27,6 +27,12 @@ import software.amazon.awssdk.crt.Log;
  * The chunk starts at that callback's {@code objectRangeStart}; its length
  * is {@code asByteBuffer().remaining()}.
  *
+ * <p>Exception: for a GetObject that sets a part number, the native client
+ * reads the body into its own temporary memory rather than the pool. Its
+ * data is then copied once into a separate buffer that this object owns;
+ * that buffer works the same way but is not pool memory, so it does not
+ * count toward the pool's ceiling or the JVM direct memory limit.</p>
+ *
  * <pre>{@code
  * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
  *     try (S3BorrowedBuffer b = buffer) {
@@ -98,12 +104,13 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * Created only by native code ({@code s_on_s3_meta_request_body_callback_borrowed} in
      * {@code src/native/s3_client.c}). Not part of the public API.
      *
-     * @param ticketPtr raw native buffer-ticket address; carries
-     *                  one extra ticket ref owned by this object, dropped by
+     * @param ticketPtr raw native buffer-ticket address (a pool ticket, or
+     *                  an owned copy of a body that had none); carries one
+     *                  ticket ref owned by this object, dropped by
      *                  nativeReleaseTicket
      * @param directView direct byte buffer view sliced to the response body length,
-     *                  over the ticket's leased pool memory (a slot run or a
-     *                  dedicated buffer)
+     *                  over the ticket's memory (leased pool memory, or the
+     *                  owned copy)
      */
     S3BorrowedBuffer(long ticketPtr, ByteBuffer directView) {
         this.directView = directView;

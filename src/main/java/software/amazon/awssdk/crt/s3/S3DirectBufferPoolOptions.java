@@ -84,7 +84,9 @@ import java.nio.ByteBuffer;
  * receive each chunk straight from pool memory, with no copy into a heap
  * {@code byte[]}. The client calls exactly one {@code onResponseBody}
  * overload per request, and calls the borrowed-buffer one only when the
- * pool is enabled.
+ * pool is enabled. A GetObject that sets a part number is the exception:
+ * its body is copied once into separate memory outside the pool (see
+ * {@link S3BorrowedBuffer}).
  *
  * <h2>Uploads</h2>
  * Multipart uploads hold each part in this pool until the part completes,

@@ -731,13 +731,65 @@ cleanup:
 }
 
 /*
+ * Owned copy of a response body that aws-c-s3 delivered without a pool
+ * ticket. Default meta requests (for example a GetObject with a partNumber
+ * query) read their body into a buffer the request owns and frees as soon
+ * as the body callback returns, so the borrowed view needs memory with its
+ * own lifetime. This "ticket" is never handed to aws-c-s3; it only gives
+ * S3BorrowedBuffer the same ref-counted handle as a pool ticket, and its
+ * memory is freed when the last ref drops. It is NOT pool memory: it does
+ * not count toward the pool's ceiling or the JVM direct memory limit.
+ */
+struct s3_owned_body_copy {
+    struct aws_s3_buffer_ticket ticket;
+    struct aws_allocator *allocator;
+    size_t len;
+    uint8_t *data; /* trails this struct in the same allocation */
+};
+
+static struct aws_byte_buf s_owned_body_copy_claim(struct aws_s3_buffer_ticket *ticket) {
+    struct s3_owned_body_copy *copy = ticket->impl;
+    return aws_byte_buf_from_array(copy->data, copy->len);
+}
+
+static struct aws_s3_buffer_ticket_vtable s_owned_body_copy_vtable = {
+    .claim = s_owned_body_copy_claim,
+    /* acquire/release left NULL: default ref_count behavior. */
+};
+
+static void s_owned_body_copy_destroy(void *user_data) {
+    struct s3_owned_body_copy *copy = user_data;
+    aws_mem_release(copy->allocator, copy);
+}
+
+/* Returns a ticket holding one ref (the one S3BorrowedBuffer will own). */
+static struct aws_s3_buffer_ticket *s_owned_body_copy_new(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor *body) {
+    /* aws_mem_acquire aborts on OOM, so no NULL check. */
+    struct s3_owned_body_copy *copy = aws_mem_acquire(allocator, sizeof(struct s3_owned_body_copy) + body->len);
+    copy->allocator = allocator;
+    copy->len = body->len;
+    copy->data = (uint8_t *)(copy + 1);
+    if (body->len > 0) {
+        memcpy(copy->data, body->ptr, body->len);
+    }
+    copy->ticket.vtable = &s_owned_body_copy_vtable;
+    copy->ticket.impl = copy;
+    aws_ref_count_init(&copy->ticket.ref_count, copy, s_owned_body_copy_destroy);
+    return &copy->ticket;
+}
+
+/*
  * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
  * direct buffer pool is attached AND the handler overrides
  * onResponseBody(S3BorrowedBuffer, long, long).
  *
- * Acquires an EXTRA ticket ref transferred to the Java S3BorrowedBuffer,
- * released via close()/GC-cleaner (nativeReleaseTicket below). Construction
- * failure before hand-off releases the ref here.
+ * Hands the Java S3BorrowedBuffer one ticket ref, released via
+ * close()/GC-cleaner (nativeReleaseTicket below). With a pool ticket that is
+ * an EXTRA ref on it (zero-copy); without one, it is the only ref on an
+ * owned copy of the body (see s3_owned_body_copy). Construction failure
+ * before hand-off releases the ref here.
  */
 static int s_on_s3_meta_request_body_callback_borrowed(
     struct aws_s3_meta_request *meta_request,
@@ -755,16 +807,25 @@ static int s_on_s3_meta_request_body_callback_borrowed(
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
 
-    /* STEP 1: Acquire an extra ref BEFORE any Java construction. If
-     * construction fails, we release before returning so the ticket does
-     * not leak. Once the S3BorrowedBuffer object owns the ref, the release
-     * is deferred to close()/GC. */
-    aws_s3_buffer_ticket_acquire(info.ticket);
+    /* STEP 1: Take the ref the S3BorrowedBuffer will own, BEFORE any Java
+     * construction. If construction fails, we release it before returning
+     * so nothing leaks. Once the S3BorrowedBuffer object owns the ref, the
+     * release is deferred to close()/GC.
+     * - Pool ticket: an extra ref; the view is over the leased pool memory.
+     * - No ticket (body not from the pool, freed when this callback returns):
+     *   copy it into memory we own, and view the copy. */
+    struct aws_s3_buffer_ticket *ticket = info.ticket;
+    void *view_ptr = (void *)body->ptr;
+    if (ticket != NULL) {
+        aws_s3_buffer_ticket_acquire(ticket);
+    } else {
+        ticket = s_owned_body_copy_new(aws_jni_get_allocator(), body);
+        view_ptr = ((struct s3_owned_body_copy *)ticket->impl)->data;
+    }
 
-    /* STEP 2: Construct the DirectByteBuffer view over the ticket's leased
-     * pool memory, sliced to the response body length (not the full lease
-     * capacity). */
-    jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, (void *)body->ptr, (jlong)body->len);
+    /* STEP 2: Construct the DirectByteBuffer view, sliced to the response
+     * body length (not the full lease capacity). */
+    jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, view_ptr, (jlong)body->len);
     if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_WARN(
             AWS_LS_S3_META_REQUEST,
@@ -773,7 +834,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
             (void *)meta_request,
             body->len,
             (unsigned long long)info.range_start);
-        aws_s3_buffer_ticket_release(info.ticket);
+        aws_s3_buffer_ticket_release(ticket);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);
     }
@@ -787,14 +848,14 @@ static int s_on_s3_meta_request_body_callback_borrowed(
         env,
         s3_borrowed_buffer_properties.class_ref,
         s3_borrowed_buffer_properties.ctor,
-        (jlong)(intptr_t)info.ticket,
+        (jlong)(intptr_t)ticket,
         sliced_dbb);
     if (borrowed == NULL || aws_jni_check_and_clear_exception(env)) {
         AWS_LOGF_WARN(
             AWS_LS_S3_META_REQUEST,
             "id=%p: S3BorrowedBuffer: NewObject failed; releasing ticket and failing meta-request",
             (void *)meta_request);
-        aws_s3_buffer_ticket_release(info.ticket);
+        aws_s3_buffer_ticket_release(ticket);
         (*env)->DeleteLocalRef(env, sliced_dbb);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
         return aws_raise_error(AWS_ERROR_INVALID_STATE);

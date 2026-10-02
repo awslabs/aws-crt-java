@@ -112,6 +112,8 @@ import java.nio.ByteBuffer;
  *   <li>An upload part can be at most half the ceiling, and never more
  *       than 5 GiB; an upload that needs larger parts is rejected when the
  *       request is made.</li>
+ *   <li>{@link S3ClientOptions#withPartSize partSize} must be smaller than
+ *       128 MiB, or creating the client fails.</li>
  * </ul>
  * {@link #fixed(long)} pools have a further limit on very large uploads;
  * see that method.

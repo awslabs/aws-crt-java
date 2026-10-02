@@ -38,38 +38,20 @@ import software.amazon.awssdk.crt.Log;
  *       uploads with a larger part size, very large download ranges). It is
  *       retained and reused only by that request while the request is
  *       active, never trimmed from under it, and freed when the request
- *       finishes ({@link #releaseRequest}). Making room for it frees
- *       fully unused blocks, floor included. A pool that cannot grow
- *       (floor == ceiling) never allocates after construction, so it
- *       serves no dedicated buffers.</li>
+ *       finishes ({@link #releaseRequest}). Each is allocated (and
+ *       zero-filled) per request; the default native pool instead shares
+ *       same-size "special" blocks across requests ({@code add_special_size},
+ *       left NULL here). Making room for one frees fully unused blocks,
+ *       floor included; freed floor blocks are backed again on demand.</li>
  * </ul>
  * Blocks and dedicated buffers share one byte budget,
- * {@code maxSlots * partSize}, so the ceiling is hard.
- *
- * <h2>Behaviour details (customer docs summarize these)</h2>
- * <ul>
- *   <li>Trim frees fully unused blocks above the floor; aws-c-s3 schedules
- *       it 5 seconds after the client goes idle and skips it if any request
- *       is in flight at either point.</li>
- *   <li>Growth backs a whole block with {@code allocateDirect} (which
- *       zero-fills) on the reserving thread, usually an aws-c-s3 event-loop
- *       thread, while holding {@code lock} and the native pending_lock, so
- *       other reserves and releases wait for it.</li>
- *   <li>Dedicated buffers are allocated (and zero-filled) per request.
- *       The default native pool instead keeps same-size "special" blocks
- *       shared across requests ({@code add_special_size}, left NULL here).
- *       With aws-c-s3's default sizing, automatic download ranges fit in
- *       {@value #MAX_GROUP_SLOTS} slots; a large explicit memory limit with
- *       few connections can produce larger ranges.</li>
- *   <li>Making room for a dedicated buffer frees fully unused blocks,
- *       floor included; freed floor blocks are backed again on demand.</li>
- *   <li>The native wait queue is strict FIFO for anything that consumes
- *       capacity, so a large waiting request holds back smaller ones queued
- *       behind it (a request may still reuse its own idle dedicated
- *       buffer).</li>
- *   <li>A pool that cannot grow pins download ranges to the part size
- *       ({@link S3Client}), so downloads never need more than one slot.</li>
- * </ul>
+ * {@code maxSlots * partSize}, so the ceiling is hard. A pool that cannot
+ * grow (floor == ceiling) never allocates after construction: it serves no
+ * dedicated buffers, and {@link S3Client} pins its download ranges to the
+ * part size so downloads never need more than one slot. With aws-c-s3's
+ * default sizing, automatic download ranges otherwise fit in
+ * {@value #MAX_GROUP_SLOTS} slots; a large explicit memory limit with few
+ * connections can produce larger ones.
  *
  * <h2>Concurrency</h2>
  * Every method synchronizes on {@code lock}. Native callers (reserve,
@@ -78,6 +60,14 @@ import software.amazon.awssdk.crt.Log;
  * releases are serialized and pending reservations cannot be stranded.
  * Lock order: native pending_lock, then {@code lock}. Nothing here calls
  * into native code that takes pending_lock.
+ *
+ * <p>Growth backs a whole block with {@code allocateDirect} (which
+ * zero-fills) on the reserving thread, usually an aws-c-s3 event-loop
+ * thread, while holding both locks, so other reserves and releases wait
+ * for it. The native wait queue is strict FIFO for anything that consumes
+ * capacity, so a large waiting request holds back smaller ones behind it
+ * (a request may still reuse its own idle dedicated buffer; see
+ * {@link #tryReuseOwnIdle}).</p>
  *
  * <p>Lifetime: leases held by unclosed {@link S3BorrowedBuffer}s outlive
  * both the client and {@link #close()}; their memory is freed when the last
@@ -101,7 +91,7 @@ final class S3DirectBufferPool {
     private final int partSize;
     private final int maxSlots;
     private final int numBlocks;
-    /** Blocks allocated at construction and never trimmed (the warm floor). */
+    /** Blocks allocated at construction and never trimmed (the floor). */
     private final int floorBlocks;
 
     /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
@@ -170,10 +160,14 @@ final class S3DirectBufferPool {
             throw new IllegalArgumentException(
                 "initialSlots (" + initialSlots + ") must be <= maxSlots (" + maxSlots + ")");
         }
-        if ((long) Math.min(BLOCK_SLOTS, maxSlots) * partSize > Integer.MAX_VALUE) {
+        // One block is one direct ByteBuffer, so BLOCK_SLOTS parts (or the
+        // whole pool, if smaller) must fit in Integer.MAX_VALUE bytes.
+        int slotsPerBlock = Math.min(BLOCK_SLOTS, maxSlots);
+        if ((long) slotsPerBlock * partSize > Integer.MAX_VALUE) {
+            int maxPartSize = Integer.MAX_VALUE / slotsPerBlock;
             throw new IllegalArgumentException(
-                "partSize (" + partSize + ") is too large: one " + BLOCK_SLOTS
-              + "-slot block must fit in a single direct buffer");
+                "partSize (" + partSize + ") is too large for the direct buffer pool: with this pool size, "
+              + "partSize can be at most " + maxPartSize + " bytes");
         }
 
         this.partSize = partSize;
@@ -241,9 +235,10 @@ final class S3DirectBufferPool {
      * For fixed/elastic pools the pool ceiling IS the client's memory; an
      * explicit, different memoryLimitInBytes would give aws-c-s3 a
      * different limit than the pool enforces. Refuse rather than override.
-     * The ceiling is a whole number of parts, so a fixed() size that is not
-     * a multiple of partSize rounds down; the message says so, because the
-     * caller may have passed the same number to both options.
+     * The ceiling is a whole number of parts, so a fixed() or elastic()
+     * size that is not a multiple of partSize rounds down; the message says
+     * so, because the caller may have passed the same number to both
+     * options.
      */
     private static void checkMemoryLimitMatches(S3ClientOptions clientOptions, long ceilingBytes, int partSize) {
         long explicit = clientOptions.getMemoryLimitInBytes();
@@ -258,10 +253,10 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * The client's part size, or aws-c-s3's 8 MiB default when unset
-     * (must match g_default_part_size_fallback in aws-c-s3's s3_util.c).
-     * Must match the native client's resolution; the native factory
-     * fails client creation if it does not.
+     * The client's part size, or aws-c-s3's 8 MiB default when unset. Must
+     * match the native client's resolution ({@code g_default_part_size_fallback}
+     * in aws-c-s3's s3_util.c); the native factory fails client creation if
+     * it does not.
      */
     private static int resolvePartSize(S3ClientOptions clientOptions) {
         long partSize = clientOptions.getPartSize();
@@ -270,18 +265,15 @@ final class S3DirectBufferPool {
         }
         if (partSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException(
-                "partSize (" + partSize + ") exceeds the direct buffer pool's maximum slot size");
+                "partSize (" + partSize + ") is too large for the direct buffer pool");
         }
         return (int) partSize;
     }
 
     /**
-     * Sized like aws-c-s3's default buffer pool: ceiling = the client's
-     * memory limit, resolved in {@code aws_s3_client_new}'s order
-     * (explicit {@code memoryLimitInBytes}, then the
-     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} / {@code _IN_GIB} env var,
-     * then {@code aws_s3_default_memory_limit_for_throughput}); floor =
-     * one block.
+     * Sized like aws-c-s3's default buffer pool. Floor: one block. Ceiling:
+     * the client's memory limit, resolved in {@code aws_s3_client_new}'s
+     * order (see {@link S3DirectBufferPoolOptions#auto()} for the list).
      */
     private static S3DirectBufferPool createAuto(S3ClientOptions clientOptions, int partSize) {
         long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
@@ -299,7 +291,7 @@ final class S3DirectBufferPool {
                 "resolved memory limit (" + memoryLimitBytes + " bytes) is smaller than one part ("
               + partSize + " bytes). Raise the memory limit or reduce partSize");
         }
-        int initialSlots = Math.min(BLOCK_SLOTS, maxSlots);  // warm floor: one block
+        int initialSlots = Math.min(BLOCK_SLOTS, maxSlots);  // floor: one block
         validateDirectMemoryCapacity((long) maxSlots * partSize);
         return new S3DirectBufferPool(partSize, initialSlots, maxSlots, memoryLimitBytes);
     }
@@ -508,7 +500,7 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Frees every fully unused block above the warm floor. Scheduled by
+     * Frees every fully unused block above the floor. Scheduled by
      * aws-c-s3 with the same idleness gating as the native pool (5-second
      * delay, skipped if {@code num_requests_in_flight > 0} at either schedule
      * or execution time; see {@code s_s3_client_schedule_buffer_pool_trim_synced}).
@@ -557,8 +549,9 @@ final class S3DirectBufferPool {
         if (!servesOversize()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: a " + size + "-byte buffer was requested, larger than the " + maxGroupBytes()
-              + " bytes this pool serves from its blocks, and the pool's floor equals its ceiling so it never "
-              + "allocates past construction. Use S3DirectBufferPoolOptions.auto() or elastic(), or a larger partSize.");
+              + " bytes this pool serves from its blocks, and this pool can't grow (fixed(), or elastic() with "
+              + "minBytes equal to maxBytes). Use S3DirectBufferPoolOptions.auto() or elastic() with room to grow, "
+              + "or a larger partSize.");
             return IMPOSSIBLE;
         }
         if (size > ceilingBytes || size > Integer.MAX_VALUE) {
@@ -682,7 +675,7 @@ final class S3DirectBufferPool {
      * users (NIO channels, networking libraries, SDK internals).
      *
      * @param poolCapacityBytes the pool's maximum byte capacity
-     *                          ({@code maxSlots × partSize})
+     *                          ({@code maxSlots x partSize})
      * @throws IllegalStateException if the ceiling exceeds 80% of
      *                               {@code MaxDirectMemorySize}
      */
@@ -710,15 +703,14 @@ final class S3DirectBufferPool {
               + "but MaxDirectMemorySize is " + maxMiB + " MiB "
               + "(80% usable = " + (availableForPool / (1024 * 1024)) + " MiB). "
               + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
-              + "or use S3DirectBufferPoolOptions.fixed(memoryLimitBytes) / "
-              + "S3DirectBufferPoolOptions.elastic(minBytes, maxBytes) "
-              + "to size the pool within available direct memory.");
+              + "or lower the pool's ceiling: S3ClientOptions.withMemoryLimitInBytes with auto(), "
+              + "or a smaller size passed to fixed() or elastic().");
         }
     }
 
     /** Returns the JVM's {@code MaxDirectMemorySize} via reflective probes, or -1 if it cannot be determined. */
     private static long getMaxDirectMemory() {
-        // Try sun.misc.VM.maxDirectMemory(), available on HotSpot/OpenJDK 8-21+.
+        // Java 8: sun.misc.VM.maxDirectMemory(). Removed in Java 9.
         try {
             Class<?> vmClass = Class.forName("sun.misc.VM");
             java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
@@ -727,7 +719,8 @@ final class S3DirectBufferPool {
             // Fall through to alternative.
         }
 
-        // Try jdk.internal.misc.VM on newer JDKs (Java 9+).
+        // Java 9+: jdk.internal.misc.VM. Only reachable if the application
+        // passes --add-exports java.base/jdk.internal.misc=ALL-UNNAMED.
         try {
             Class<?> vmClass = Class.forName("jdk.internal.misc.VM");
             java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
@@ -736,9 +729,11 @@ final class S3DirectBufferPool {
             // Cannot determine.
         }
 
-        // Fallback: check the runtime args for an explicit
-        // -XX:MaxDirectMemorySize. Accessed reflectively because
-        // java.lang.management does not exist on Android.
+        // Fallback (the usual path on Java 9+): check the runtime args for an
+        // explicit -XX:MaxDirectMemorySize. Without one, HotSpot's default
+        // limit is Runtime.maxMemory() (the -Xmx value). Accessed
+        // reflectively because java.lang.management does not exist on
+        // Android, where direct memory has no JVM limit and -1 is returned.
         try {
             Class<?> mgmtFactory = Class.forName("java.lang.management.ManagementFactory");
             Object runtimeMxBean = mgmtFactory.getMethod("getRuntimeMXBean").invoke(null);
@@ -764,6 +759,7 @@ final class S3DirectBufferPool {
                     return Long.parseLong(val) * multiplier;
                 }
             }
+            return Runtime.getRuntime().maxMemory();
         } catch (Exception ignored) {
             // Cannot determine.
         }
@@ -804,9 +800,4 @@ final class S3DirectBufferPool {
 
     // Implemented in src/native/s3_java_buffer_pool.c via JNI.
     private static native long nativeGetDirectBufferAddress(ByteBuffer dbb);
-
-    /* javadoc on the package-private members is intentionally rich:
-     * the JNI side cannot call private methods, so these signatures
-     * are effectively a contract. Any change here must be coordinated
-     * with java_class_ids.c. */
 }

@@ -796,20 +796,14 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3DirectBufferPool");
     AWS_FATAL_ASSERT(cls);
 
-    s3_direct_buffer_pool_properties.tryAcquire = (*env)->GetMethodID(env, cls, "tryAcquire", "(JJ)J");
+    s3_direct_buffer_pool_properties.tryAcquire = (*env)->GetMethodID(env, cls, "tryAcquire", "(J)J");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.tryAcquire);
-
-    s3_direct_buffer_pool_properties.tryReuseOwnIdle = (*env)->GetMethodID(env, cls, "tryReuseOwnIdle", "(JJ)J");
-    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.tryReuseOwnIdle);
 
     s3_direct_buffer_pool_properties.leaseAddress = (*env)->GetMethodID(env, cls, "leaseAddress", "(J)J");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.leaseAddress);
 
     s3_direct_buffer_pool_properties.release = (*env)->GetMethodID(env, cls, "release", "(J)V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.release);
-
-    s3_direct_buffer_pool_properties.releaseRequest = (*env)->GetMethodID(env, cls, "releaseRequest", "(J)V");
-    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.releaseRequest);
 
     /* Pool trim: called from s_java_pool_trim after aws-c-s3's
      * client-scheduler idleness gate. */
@@ -818,9 +812,6 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
 
     s3_direct_buffer_pool_properties.partSize = (*env)->GetMethodID(env, cls, "partSize", "()I");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.partSize);
-
-    s3_direct_buffer_pool_properties.setNativePoolState = (*env)->GetMethodID(env, cls, "setNativePoolState", "(J)V");
-    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.setNativePoolState);
 }
 
 struct java_completable_future_properties completable_future_properties;

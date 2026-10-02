@@ -77,9 +77,6 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     /** 0 = open, 1 = closed. Compared-and-set by {@link #close()} and {@link #toByteArray()}. */
     private volatile int closed = 0;
 
-    /** Raw pointer to the underlying aws_s3_buffer_ticket. Valid until nativeReleaseTicket is called. */
-    private final long ticketPtr;
-
     /**
      * Direct view over the leased pool memory, sliced to the response body chunk
      * length. The one shared instance returned by {@link #asByteBuffer()}.
@@ -106,7 +103,6 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      *                  dedicated buffer)
      */
     S3BorrowedBuffer(long ticketPtr, ByteBuffer directView) {
-        this.ticketPtr = ticketPtr;
         this.directView = directView;
 
         // Sampled allocation trace (every buffer at PARANOID). Stored on the

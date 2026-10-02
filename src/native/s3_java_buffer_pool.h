@@ -38,14 +38,6 @@ struct aws_s3_java_buffer_pool_factory_data {
  * creation; there is no fallback to the default pool, so an explicit
  * opt-in never silently degrades.
  */
-/*
- * Called from a meta request's finish callback (while the meta request is
- * alive, so its address is a unique owner key): frees the request's
- * retained dedicated buffers, fails its still-pending reservations, and
- * lets other pending reservations through.
- */
-void aws_s3_java_buffer_pool_release_request(struct aws_s3_buffer_pool *pool, void *owner);
-
 struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     struct aws_allocator *allocator,
     struct aws_s3_buffer_pool_config config,

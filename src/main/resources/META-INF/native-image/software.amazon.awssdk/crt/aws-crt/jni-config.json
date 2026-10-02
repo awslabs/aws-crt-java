@@ -2201,14 +2201,6 @@
       {
         "name": "tryAcquire",
         "parameterTypes": [
-          "long",
-          "long"
-        ]
-      },
-      {
-        "name": "tryReuseOwnIdle",
-        "parameterTypes": [
-          "long",
           "long"
         ]
       },
@@ -2225,24 +2217,12 @@
         ]
       },
       {
-        "name": "releaseRequest",
-        "parameterTypes": [
-          "long"
-        ]
-      },
-      {
         "name": "trim",
         "parameterTypes": []
       },
       {
         "name": "partSize",
         "parameterTypes": []
-      },
-      {
-        "name": "setNativePoolState",
-        "parameterTypes": [
-          "long"
-        ]
       }
     ]
   },

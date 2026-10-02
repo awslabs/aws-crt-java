@@ -127,8 +127,11 @@ public class S3Client extends CrtResource {
 
         // With a pool, hand native the part size and memory limit the pool
         // was sized from, never overriding values the customer set:
-        // - memory limit: lets aws-c-s3's max-part-size check and download
-        //   range sizing see the pool's real capacity.
+        // - memory limit (fixed/elastic only): the ceiling, so aws-c-s3's
+        //   max-part-size check and download range sizing see the pool's
+        //   real capacity. auto() pools leave it to aws-c-s3, which resolves
+        //   the env vars and tier default exactly as the pool did (and fails
+        //   client creation on a malformed env var, as it does without a pool).
         // - part size: a pool that cannot grow cannot allocate dedicated
         //   buffers for ranges beyond a slot run, so pin the part size
         //   (disabling aws-c-s3's automatic download range sizing, which
@@ -139,8 +142,9 @@ public class S3Client extends CrtResource {
             if (!partSizeExplicit && !directBufferPool.servesOversize()) {
                 nativePartSize = directBufferPool.partSize();
             }
-            if (nativeMemoryLimit <= 0) {
-                nativeMemoryLimit = directBufferPool.nativeMemoryLimitBytes();
+            if (nativeMemoryLimit <= 0
+                    && options.getDirectBufferPoolOptions().getMode() != S3DirectBufferPoolOptions.Mode.AUTO) {
+                nativeMemoryLimit = directBufferPool.ceilingBytes();
             }
         }
 
@@ -300,7 +304,7 @@ public class S3Client extends CrtResource {
                 shouldStream,
                 diskThroughputGbps,
                 directIo,
-                directBufferPool != null ? directBufferPool.nativePoolState() : 0L);
+                directBufferPool != null);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -483,7 +487,7 @@ public class S3Client extends CrtResource {
             boolean shouldStream,
             double diskThroughputGbps,
             boolean directIo,
-            long directBufferPoolState);
+            boolean hasDirectBufferPool);
 
     /**
      * Returns aws-c-s3's default memory pool size (bytes) for the given

@@ -184,7 +184,7 @@ final class S3DirectBufferPool {
         } catch (OutOfMemoryError e) {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: OutOfMemoryError during eager allocation of " + floorBlocks
-              + " block(s) (" + BLOCK_SLOTS + " x " + partSize + " bytes each). "
+              + " block(s) (up to " + BLOCK_SLOTS + " x " + partSize + " bytes each). "
               + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
             for (int b = 0; b < numBlocks; b++) {
                 if (blocks[b] != null) {
@@ -347,9 +347,9 @@ final class S3DirectBufferPool {
 
     /**
      * Marks the pool closed and immediately frees every unused block.
-     * Called by {@link S3Client} when its shutdown
-     * completes (and on client-construction failure). Memory still leased by
-     * unclosed {@link S3BorrowedBuffer}s is freed when released. Idempotent.
+     * Called by {@link S3Client} when its shutdown completes (and on
+     * client-construction failure). Memory still leased by unclosed
+     * {@link S3BorrowedBuffer}s is freed when released. Idempotent.
      */
     void close() {
         synchronized (lock) {
@@ -375,8 +375,8 @@ final class S3DirectBufferPool {
 
     /**
      * Non-blocking acquire of {@code size} bytes. MUST NOT block (runs on
-     * aws-c-s3 event-loop threads);
-     * on {@link #EXHAUSTED} native pends its future.
+     * aws-c-s3 event-loop threads); on {@link #EXHAUSTED} native pends its
+     * future.
      *
      * @return a lease handle; {@link #EXHAUSTED} when capacity is currently
      *         taken; or {@link #IMPOSSIBLE} when this pool can never serve
@@ -384,10 +384,11 @@ final class S3DirectBufferPool {
      * @throws IllegalStateException if the pool is closed
      */
     long tryAcquire(long size) {
-        if (closed) throw new IllegalStateException("pool is closed");
         if (size <= 0) size = 1;
         long slotsNeeded = (size + partSize - 1) / partSize;
         synchronized (lock) {
+            // Under the lock, so no acquire can back memory after close().
+            if (closed) throw new IllegalStateException("pool is closed");
             if (slotsNeeded <= MAX_GROUP_SLOTS && slotsNeeded <= Math.min(BLOCK_SLOTS, maxSlots)) {
                 return acquireRunLocked((int) slotsNeeded);
             }
@@ -412,8 +413,8 @@ final class S3DirectBufferPool {
     /**
      * Returns a lease. Slot runs go back to their block (a fully free block
      * on a closed pool is freed); a dedicated buffer is freed. After this
-     * returns the memory MAY be re-issued and
-     * overwritten; any outstanding view of it is UNSAFE to read.
+     * returns the memory MAY be re-issued and overwritten; any outstanding
+     * view of it is UNSAFE to read.
      */
     void release(long handle) {
         synchronized (lock) {
@@ -642,7 +643,10 @@ final class S3DirectBufferPool {
                 if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
                     String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
                     long multiplier = 1;
-                    if (val.endsWith("g")) {
+                    if (val.endsWith("t")) {
+                        multiplier = 1024L * 1024L * 1024L * 1024L;
+                        val = val.substring(0, val.length() - 1);
+                    } else if (val.endsWith("g")) {
                         multiplier = 1024L * 1024L * 1024L;
                         val = val.substring(0, val.length() - 1);
                     } else if (val.endsWith("m")) {
@@ -652,7 +656,9 @@ final class S3DirectBufferPool {
                         multiplier = 1024L;
                         val = val.substring(0, val.length() - 1);
                     }
-                    return Long.parseLong(val) * multiplier;
+                    long bytes = Long.parseLong(val) * multiplier;
+                    // 0 means "use the default", which is Runtime.maxMemory().
+                    return bytes > 0 ? bytes : Runtime.getRuntime().maxMemory();
                 }
             }
             return Runtime.getRuntime().maxMemory();

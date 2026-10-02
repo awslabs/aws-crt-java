@@ -151,7 +151,9 @@ public final class S3DirectBufferPoolOptions {
      *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} environment variable</li>
      *   <li>the {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable</li>
      *   <li>a default based on
-     *       {@link S3ClientOptions#withThroughputTargetGbps}</li>
+     *       {@link S3ClientOptions#withThroughputTargetGbps} (if unset,
+     *       detected from the EC2 instance type, so the ceiling can differ
+     *       between instances)</li>
      * </ol>
      *
      * <p>The floor is 16 parts (128 MiB with the default part size), or the

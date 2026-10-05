@@ -38,8 +38,11 @@ import software.amazon.awssdk.crt.Log;
  * client shutdown. Every buffer MUST be closed, on every path including
  * exceptions: until it is closed its memory can't be reused, and once the
  * pool runs out, every request on the client waits. Holding a buffer open
- * is not flow control; to pause a download, use read backpressure (see
- * the {@code onResponseBody} overload). Once a buffer is closed, the
+ * is not flow control; to pause a download, enable
+ * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
+ * return 0 (or a small increment) from {@code onResponseBody}, and call
+ * {@link S3MetaRequest#incrementReadWindow} when ready for more. Once a
+ * buffer is closed, the
  * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read. Keep a
  * reference to the {@code S3BorrowedBuffer} itself for as long as you use
  * that view: a buffer that is no longer referenced can be recovered by

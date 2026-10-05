@@ -38,8 +38,8 @@
  *    pool-managed buffers. If we set a non-NULL allocator, the
  *    append path could call aws_byte_buf_append_dynamic, which
  *    would aws_mem_acquire a fresh buffer and silently abandon
- *    the slot, orphaning the slot lease and corrupting future
- *    leases when the slot index is reused.
+ *    the lease's memory, orphaning the lease and corrupting future
+ *    leases when that memory is reused.
  *
  * 4. NON-BLOCKING RESERVE PATH. s_java_pool_reserve is called on the
  *    aws-c-s3 client's event-loop thread. It MUST NOT block. When

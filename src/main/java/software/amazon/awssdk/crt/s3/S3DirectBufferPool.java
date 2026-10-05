@@ -59,23 +59,24 @@ import software.amazon.awssdk.crt.Log;
  * All mutable block and dedicated-buffer state lives in the {@link Synced}
  * holder ({@code synced}), and every read or write of it happens inside
  * {@code synchronized (synced)}; helpers that require that are suffixed
- * {@code Locked}. The immutable configuration fields, {@link #setNativePoolState},
- * and the volatile {@code closed} fast-path checks do not need it. Native callers (reserve, ticket release, trim,
+ * {@code Locked}. The immutable configuration fields,
+ * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
+ * checks do not need it. Native callers (reserve, ticket release, trim,
  * request finish) additionally hold the native pool state's
  * {@code pending_lock} around their JNI calls, so acquires and releases are
  * serialized and pending reservations cannot be stranded. Lock order:
  * native pending_lock, then {@code synced}. Nothing here calls into native
- * code that takes pending_lock. Dedicated buffers are freed on release, so
- * idle memory never holds budget; only leases in use do, and with in-order
- * part reservation those always complete, keeping the strict FIFO queue
- * deadlock-free.
+ * code that takes pending_lock.
+ *
+ * <p>The native wait queue is strict FIFO for anything that consumes
+ * capacity, so a large waiting request holds back smaller ones behind it.
+ * That is deadlock-free because only leases in use hold budget, and with
+ * in-order part reservation those always complete.</p>
  *
  * <p>Growth backs a whole block with {@code allocateDirect} (which
  * zero-fills) on the reserving thread, usually a native event-loop
  * thread, while holding both locks, so other reserves and releases wait
- * for it. The native wait queue is strict FIFO for anything that consumes
- * capacity, so a large waiting request holds back smaller ones behind
- * it.</p>
+ * for it.</p>
  *
  * <p>Lifetime: leases held by unclosed {@link S3BorrowedBuffer}s outlive
  * both the client and {@link #close()}; their memory is freed when the last
@@ -86,14 +87,20 @@ final class S3DirectBufferPool {
     /** Slots per block (the default native buffer pool uses 16 chunks per block). */
     static final int BLOCK_SLOTS = 16;
 
-    /** Largest contiguous run served from a block; larger requests get a dedicated buffer (native: 4 chunks). */
+    /**
+     * Largest contiguous run served from a block; larger requests get a
+     * dedicated buffer (native: 4 chunks).
+     */
     static final int MAX_GROUP_SLOTS = 4;
 
     /* tryAcquire results besides a lease handle (handles are >= 0). */
     static final long EXHAUSTED = -1;
     static final long IMPOSSIBLE = -2;
 
-    /** Share of {@code MaxDirectMemorySize} the pool's ceiling may use; the rest is headroom for other users. */
+    /**
+     * Share of {@code MaxDirectMemorySize} the pool's ceiling may use; the
+     * rest is headroom for other users.
+     */
     private static final double DIRECT_MEMORY_FRACTION = 0.8;
 
     /** Handle tag for dedicated buffers; slot-run handles have it clear. */
@@ -111,6 +118,9 @@ final class S3DirectBufferPool {
 
     /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
     private final long ceilingBytes;
+
+    /** Largest slot run served from a block: {@value #MAX_GROUP_SLOTS}, or fewer in a smaller pool. */
+    private final int maxGroupSlots;
 
     /**
      * Native pool state pointer, published by s3ClientNew once the native
@@ -202,6 +212,7 @@ final class S3DirectBufferPool {
         this.fixed = fixed;
         this.ceilingClamped = ceilingClamped;
         this.ceilingBytes = (long) maxSlots * partSize;
+        this.maxGroupSlots = Math.min(MAX_GROUP_SLOTS, maxSlots);
         this.synced = new Synced(numBlocks);
 
         // Eager floor. On partial OOM: free the blocks already allocated
@@ -223,14 +234,7 @@ final class S3DirectBufferPool {
                 "S3DirectBufferPool: OutOfMemoryError during eager allocation of " + floorBlocks
               + " block(s) (up to " + BLOCK_SLOTS + " x " + partSize + " bytes each). "
               + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
-            for (int b = 0; b < numBlocks; b++) {
-                if (synced.blocks[b] != null) {
-                    DirectBufferCleaner.free(synced.blocks[b]);
-                }
-                synced.blocks[b] = null;
-                synced.blockAddresses[b] = 0L;
-            }
-            synced.committedBytes = 0;
+            freeUnusedBlocksLocked(0);  // nothing is leased yet, so this frees every backed block
             throw e;
         }
     }
@@ -391,7 +395,7 @@ final class S3DirectBufferPool {
     /** @return the byte budget shared by blocks and dedicated buffers */
     long ceilingBytes()  { return ceilingBytes; }
     /** @return the largest reservation served from blocks, without a dedicated buffer */
-    long maxGroupBytes() { return (long) Math.min(MAX_GROUP_SLOTS, Math.min(BLOCK_SLOTS, maxSlots)) * partSize; }
+    long maxGroupBytes() { return (long) maxGroupSlots * partSize; }
     /**
      * @return whether dedicated (larger than {@link #maxGroupBytes()}) buffers
      *         can be served; false only for fixed pools, which never allocate
@@ -422,11 +426,7 @@ final class S3DirectBufferPool {
     void close() {
         synchronized (synced) {
             closed = true;
-            for (int b = 0; b < numBlocks; b++) {
-                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
-                    unbackBlockLocked(b);
-                }
-            }
+            freeUnusedBlocksLocked(0);
         }
     }
 
@@ -457,7 +457,7 @@ final class S3DirectBufferPool {
         synchronized (synced) {
             // Under the monitor, so no acquire can back memory after close().
             if (closed) throw new IllegalStateException("pool is closed");
-            if (slotsNeeded <= MAX_GROUP_SLOTS && slotsNeeded <= Math.min(BLOCK_SLOTS, maxSlots)) {
+            if (slotsNeeded <= maxGroupSlots) {
                 return acquireRunLocked((int) slotsNeeded);
             }
             return acquireDedicatedLocked(size);
@@ -473,7 +473,8 @@ final class S3DirectBufferPool {
                 return d.address;
             }
             int b = runBlock(handle);
-            if (synced.blockAddresses[b] == 0L) throw new IllegalStateException("leaseAddress: block not backed");
+            int mask = runMask(handle);
+            if ((synced.usedMask[b] & mask) != mask) throw new IllegalStateException("leaseAddress: slot run not leased");
             return synced.blockAddresses[b] + (long) runStart(handle) * partSize;
         }
     }
@@ -513,11 +514,7 @@ final class S3DirectBufferPool {
     void trim() {
         synchronized (synced) {
             if (closed) return;
-            for (int b = floorBlocks; b < numBlocks; b++) {
-                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
-                    unbackBlockLocked(b);
-                }
-            }
+            freeUnusedBlocksLocked(floorBlocks);
         }
     }
 
@@ -555,7 +552,7 @@ final class S3DirectBufferPool {
         if (!servesOversize()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: a " + size + "-byte buffer was requested, larger than the " + maxGroupBytes()
-              + " bytes this pool serves from its synced.blocks, and a fixed() pool never allocates a separate buffer. "
+              + " bytes this pool serves from its blocks, and a fixed() pool never allocates a separate buffer. "
               + "Use S3DirectBufferPoolOptions.auto() or elastic(), or a larger partSize.");
             return IMPOSSIBLE;
         }
@@ -610,6 +607,15 @@ final class S3DirectBufferPool {
         synced.blocks[b] = dbb;
         synced.blockAddresses[b] = nativeGetDirectBufferAddress(dbb);
         synced.committedBytes += dbb.capacity();
+    }
+
+    /** Frees every backed block from {@code fromBlock} up that has no slot leased. */
+    private void freeUnusedBlocksLocked(int fromBlock) {
+        for (int b = fromBlock; b < numBlocks; b++) {
+            if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                unbackBlockLocked(b);
+            }
+        }
     }
 
     /** Frees a fully unused block. Null before free so no stale address is ever handed out. */
@@ -728,7 +734,10 @@ final class S3DirectBufferPool {
 
     /** Lazy holder: probes on first use, then caches for the JVM's lifetime. */
     private static final class DirectMemoryLimit {
-        /** Why the HotSpotDiagnosticMXBean probe failed on a HotSpot-based JVM, or null. Set during probe(). */
+        /**
+         * Why the HotSpotDiagnosticMXBean probe failed on a HotSpot-based
+         * JVM, or null. Set during probe().
+         */
         private static String hotSpotFailure;
         /** Which probe answered, for the DEBUG log. Set by probe(). */
         private static String source;
@@ -768,7 +777,10 @@ final class S3DirectBufferPool {
             return bytes;
         }
 
-        /** HotSpot-based JVMs (Oracle, OpenJDK builds such as Corretto and Temurin) are expected to have the bean. */
+        /**
+         * HotSpot-based JVMs (Oracle, and OpenJDK builds such as Corretto and
+         * Temurin) are expected to have the bean.
+         */
         private static boolean isHotSpotBased() {
             try {
                 String vm = String.valueOf(System.getProperty("java.vm.name"));

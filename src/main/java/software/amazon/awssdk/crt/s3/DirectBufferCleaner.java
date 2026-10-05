@@ -12,8 +12,9 @@ import software.amazon.awssdk.crt.Log;
 /**
  * Package-private utility that forces synchronous release of a
  * {@link ByteBuffer#allocateDirect direct ByteBuffer}'s off-heap
- * memory when the pool frees a block or dedicated buffer (trim,
- * making room, pool close, request finish, or a release after close).
+ * memory when the pool frees a block or dedicated buffer (trim, making
+ * room, pool close, the release of a dedicated buffer, or the release of a
+ * block's last lease after close).
  *
  * A DirectByteBuffer's off-heap memory is only released when GC
  * runs its cleaner. This class forces the release synchronously.
@@ -95,8 +96,8 @@ final class DirectBufferCleaner {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: neither sun.misc.Unsafe.invokeCleaner nor "
               + "sun.nio.ch.DirectBuffer.cleaner() is available on this JVM. "
-              + "Freeing a pool block or dedicated buffer (trim, making room, pool close, request "
-              + "finish, or a release after close) will null references and rely on GC + Cleaner "
+              + "Freeing a pool block or dedicated buffer (trim, making room, pool close, or a "
+              + "release) will null references and rely on GC + Cleaner "
               + "for actual native-memory release. RSS drop "
               + "and MaxDirectMemorySize accounting will lag each retirement by one or more GC cycles.");
         }

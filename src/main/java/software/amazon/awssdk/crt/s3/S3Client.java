@@ -135,7 +135,7 @@ public class S3Client extends CrtResource {
         //   without a pool), unless the pool shrank its default to fit direct
         //   memory; then the native client gets the smaller ceiling too.
         // - part size: a pool that cannot grow cannot allocate dedicated
-        //   buffers for ranges beyond a slot run, so pin the part size
+        //   buffers for ranges beyond the pool's maxGroupBytes(), so pin the part size
         //   (disabling the native client's automatic download range sizing,
         //   which only runs when no part size is set).
         long nativePartSize = options.getPartSize();

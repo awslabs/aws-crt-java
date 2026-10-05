@@ -392,10 +392,12 @@ public class S3Client extends CrtResource {
     /** Content length of an upload from its file or Content-Length header, or -1 if unknown. */
     private static long uploadContentLength(S3MetaRequestOptions options) {
         if (options.getRequestFilePath() != null) {
+            // java.io.File, not java.nio.file.Files (Android API 26+; min is 24).
             try {
-                return java.nio.file.Files.size(options.getRequestFilePath());
-            } catch (java.io.IOException | SecurityException e) {
-                return -1;  // native reports the file error
+                java.io.File file = new java.io.File(options.getRequestFilePath().toString());
+                return file.isFile() ? file.length() : -1;  // native reports the file error
+            } catch (SecurityException e) {
+                return -1;
             }
         }
         for (software.amazon.awssdk.crt.http.HttpHeader header : options.getHttpRequest().getHeaders()) {

@@ -169,11 +169,17 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      * <p>The returned buffer is a DIRECT buffer over pool memory, not a
      * heap buffer: it has no backing array ({@link ByteBuffer#hasArray()}
      * is {@code false}, and {@link ByteBuffer#array()} throws
-     * {@link UnsupportedOperationException}), and it is only valid until
-     * {@link #close()}. Read it through the {@code ByteBuffer} API
-     * ({@code get}, bulk {@code get(byte[])}, channel writes). If you need
-     * a {@code byte[]}, or bytes that outlive this buffer, use
-     * {@link #toByteArray()} instead.</p>
+     * {@link UnsupportedOperationException}). Read it through the
+     * {@code ByteBuffer} API ({@code get}, bulk {@code get(byte[])},
+     * channel writes). If you need a {@code byte[]}, or bytes that outlive
+     * this buffer, use {@link #toByteArray()} instead.</p>
+     *
+     * <p>The memory under this view, and under any duplicate or slice of
+     * it, is valid only while this {@code S3BorrowedBuffer} is open and
+     * still referenced. Once it is closed (or recovered by garbage
+     * collection), the memory may be reused for other data: reading the
+     * view then returns unrelated bytes rather than failing, and writing
+     * to it corrupts another download or upload.</p>
      *
      * @return a direct {@link ByteBuffer} sliced to the response body length
      * @throws IllegalStateException if this borrowed buffer has been closed

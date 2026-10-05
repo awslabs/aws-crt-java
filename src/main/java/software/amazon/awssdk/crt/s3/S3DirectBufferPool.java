@@ -56,14 +56,15 @@ import software.amazon.awssdk.crt.Log;
  * </ul>
  *
  * <h2>Concurrency</h2>
- * Every method that reads or changes block or dedicated-buffer state
- * synchronizes on {@code lock}; the immutable accessors,
- * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
- * checks do not need it. Native callers (reserve, ticket release, trim,
+ * All mutable block and dedicated-buffer state lives in the {@link Synced}
+ * holder ({@code synced}), and every read or write of it happens inside
+ * {@code synchronized (synced)}; helpers that require that are suffixed
+ * {@code Locked}. The immutable configuration fields, {@link #setNativePoolState},
+ * and the volatile {@code closed} fast-path checks do not need it. Native callers (reserve, ticket release, trim,
  * request finish) additionally hold the native pool state's
  * {@code pending_lock} around their JNI calls, so acquires and releases are
  * serialized and pending reservations cannot be stranded. Lock order:
- * native pending_lock, then {@code lock}. Nothing here calls into native
+ * native pending_lock, then {@code synced}. Nothing here calls into native
  * code that takes pending_lock. Dedicated buffers are freed on release, so
  * idle memory never holds budget; only leases in use do, and with in-order
  * part reservation those always complete, keeping the strict FIFO queue
@@ -118,22 +119,6 @@ final class S3DirectBufferPool {
      */
     private volatile long nativePoolState;
 
-    private final Object lock = new Object();
-
-    /**
-     * Backing buffer per block; null until first needed (or after trim).
-     * WARNING: must outlive every native read of a lease into it; anchored
-     * by the native pool state's JNI global ref on this object.
-     */
-    private final ByteBuffer[] blocks;
-    /** Cached native base address per block; 0 when unbacked. */
-    private final long[] blockAddresses;
-    /** Per-block occupancy bitmask (bit i = slot i leased). */
-    private final int[] usedMask;
-
-    /** Backed block bytes plus every dedicated buffer; never exceeds ceilingBytes. */
-    private long committedBytes;
-
     /** One dedicated buffer. */
     private static final class Dedicated {
         final ByteBuffer buffer;
@@ -145,11 +130,44 @@ final class S3DirectBufferPool {
         }
     }
 
-    /** Leased dedicated buffers by handle; freed on release. */
-    private final Map<Long, Dedicated> leasedDedicated = new HashMap<>();
-    private long nextDedicatedId;
+    /**
+     * Every mutable field of the pool's block and dedicated-buffer state,
+     * mirroring the native {@code synced_data} convention. The holder is
+     * also the lock: read or write its fields only inside
+     * {@code synchronized (synced)}, directly or from a {@code *Locked}
+     * helper.
+     */
+    private static final class Synced {
+        /**
+         * Backing buffer per block; null until first needed (or after trim).
+         * WARNING: must outlive every native read of a lease into it; anchored
+         * by the native pool state's JNI global ref on the pool.
+         */
+        final ByteBuffer[] blocks;
+        /** Cached native base address per block; 0 when unbacked. */
+        final long[] blockAddresses;
+        /** Per-block occupancy bitmask (bit i = slot i leased). */
+        final int[] usedMask;
+        /** Backed block bytes plus every dedicated buffer; never exceeds ceilingBytes. */
+        long committedBytes;
+        /** Leased dedicated buffers by handle; freed on release. */
+        final Map<Long, Dedicated> leasedDedicated = new HashMap<>();
+        long nextDedicatedId;
 
-    /** Set by {@link #close()}: acquires throw; released memory is freed instead of kept. */
+        Synced(int numBlocks) {
+            blocks = new ByteBuffer[numBlocks];
+            blockAddresses = new long[numBlocks];
+            usedMask = new int[numBlocks];
+        }
+    }
+
+    private final Synced synced;
+
+    /**
+     * Set by {@link #close()} while holding {@code synced}: acquires throw;
+     * released memory is freed instead of kept. Volatile so the fast-path
+     * reads outside the lock see it.
+     */
     private volatile boolean closed;
 
     /**
@@ -185,16 +203,21 @@ final class S3DirectBufferPool {
         this.fixed = fixed;
         this.ceilingClamped = ceilingClamped;
         this.ceilingBytes = (long) maxSlots * partSize;
-        this.blocks = new ByteBuffer[numBlocks];
-        this.blockAddresses = new long[numBlocks];
-        this.usedMask = new int[numBlocks];
+        this.synced = new Synced(numBlocks);
 
         // Eager floor. On partial OOM: free the blocks already allocated
         // right away (direct memory is scarce at exactly this point, so do
-        // not leave them for GC), log, and rethrow.
+        // not leave them for GC), log, and rethrow. The pool is not yet
+        // shared; the monitor is taken only to keep the Synced rule uniform.
+        synchronized (synced) {
+            allocateFloorLocked();
+        }
+    }
+
+    private void allocateFloorLocked() {
         try {
             for (int b = 0; b < floorBlocks; b++) {
-                backBlock(b);
+                backBlockLocked(b);
             }
         } catch (OutOfMemoryError e) {
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
@@ -202,13 +225,13 @@ final class S3DirectBufferPool {
               + " block(s) (up to " + BLOCK_SLOTS + " x " + partSize + " bytes each). "
               + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
             for (int b = 0; b < numBlocks; b++) {
-                if (blocks[b] != null) {
-                    DirectBufferCleaner.free(blocks[b]);
+                if (synced.blocks[b] != null) {
+                    DirectBufferCleaner.free(synced.blocks[b]);
                 }
-                blocks[b] = null;
-                blockAddresses[b] = 0L;
+                synced.blocks[b] = null;
+                synced.blockAddresses[b] = 0L;
             }
-            committedBytes = 0;
+            synced.committedBytes = 0;
             throw e;
         }
     }
@@ -388,7 +411,7 @@ final class S3DirectBufferPool {
     void setNativePoolState(long state) { nativePoolState = state; }
     /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
     long committedBytes() {
-        synchronized (lock) { return committedBytes; }
+        synchronized (synced) { return synced.committedBytes; }
     }
 
     /**
@@ -398,11 +421,11 @@ final class S3DirectBufferPool {
      * {@link S3BorrowedBuffer}s is freed when released. Idempotent.
      */
     void close() {
-        synchronized (lock) {
+        synchronized (synced) {
             closed = true;
             for (int b = 0; b < numBlocks; b++) {
-                if (blocks[b] != null && usedMask[b] == 0) {
-                    unbackBlock(b);
+                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                    unbackBlockLocked(b);
                 }
             }
         }
@@ -432,8 +455,8 @@ final class S3DirectBufferPool {
     long tryAcquire(long size) {
         if (size <= 0) size = 1;
         long slotsNeeded = (size + partSize - 1) / partSize;
-        synchronized (lock) {
-            // Under the lock, so no acquire can back memory after close().
+        synchronized (synced) {
+            // Under the monitor, so no acquire can back memory after close().
             if (closed) throw new IllegalStateException("pool is closed");
             if (slotsNeeded <= MAX_GROUP_SLOTS && slotsNeeded <= Math.min(BLOCK_SLOTS, maxSlots)) {
                 return acquireRunLocked((int) slotsNeeded);
@@ -444,15 +467,15 @@ final class S3DirectBufferPool {
 
     /** @return the native address of a lease */
     long leaseAddress(long handle) {
-        synchronized (lock) {
+        synchronized (synced) {
             if ((handle & DEDICATED_TAG) != 0) {
-                Dedicated d = leasedDedicated.get(handle);
+                Dedicated d = synced.leasedDedicated.get(handle);
                 if (d == null) throw new IllegalStateException("leaseAddress: dedicated lease not held");
                 return d.address;
             }
             int b = runBlock(handle);
-            if (blockAddresses[b] == 0L) throw new IllegalStateException("leaseAddress: block not backed");
-            return blockAddresses[b] + (long) runStart(handle) * partSize;
+            if (synced.blockAddresses[b] == 0L) throw new IllegalStateException("leaseAddress: block not backed");
+            return synced.blockAddresses[b] + (long) runStart(handle) * partSize;
         }
     }
 
@@ -463,19 +486,19 @@ final class S3DirectBufferPool {
      * view of it is UNSAFE to read.
      */
     void release(long handle) {
-        synchronized (lock) {
+        synchronized (synced) {
             if ((handle & DEDICATED_TAG) != 0) {
-                Dedicated d = leasedDedicated.remove(handle);
+                Dedicated d = synced.leasedDedicated.remove(handle);
                 if (d == null) throw new IllegalStateException("release: dedicated lease not held");
-                freeDedicated(d);
+                freeDedicatedLocked(d);
                 return;
             }
             int b = runBlock(handle);
             int mask = runMask(handle);
-            if ((usedMask[b] & mask) != mask) throw new IllegalStateException("release: slot run not leased");
-            usedMask[b] &= ~mask;
-            if (closed && usedMask[b] == 0 && blocks[b] != null) {
-                unbackBlock(b);
+            if ((synced.usedMask[b] & mask) != mask) throw new IllegalStateException("release: slot run not leased");
+            synced.usedMask[b] &= ~mask;
+            if (closed && synced.usedMask[b] == 0 && synced.blocks[b] != null) {
+                unbackBlockLocked(b);
             }
         }
     }
@@ -489,41 +512,41 @@ final class S3DirectBufferPool {
      * never sees them.
      */
     void trim() {
-        synchronized (lock) {
+        synchronized (synced) {
             if (closed) return;
             for (int b = floorBlocks; b < numBlocks; b++) {
-                if (blocks[b] != null && usedMask[b] == 0) {
-                    unbackBlock(b);
+                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                    unbackBlockLocked(b);
                 }
             }
         }
     }
 
     /* ==================================================================== */
-    /* Allocation internals (caller holds lock)                             */
+    /* Allocation internals (caller holds the synced monitor)               */
     /* ==================================================================== */
 
     /** First fit: a free run of {@code count} slots in a backed block, else back a new block. */
     private long acquireRunLocked(int count) {
         int want = (1 << count) - 1;
         for (int b = 0; b < numBlocks; b++) {
-            if (blocks[b] == null) {
+            if (synced.blocks[b] == null) {
                 continue;
             }
             for (int start = 0; start + count <= blockSlots(b); start++) {
-                if ((usedMask[b] & (want << start)) == 0) {
-                    return leaseRun(b, start, count);
+                if ((synced.usedMask[b] & (want << start)) == 0) {
+                    return leaseRunLocked(b, start, count);
                 }
             }
         }
         for (int b = 0; b < numBlocks; b++) {
-            if (blocks[b] == null && blockSlots(b) >= count) {
+            if (synced.blocks[b] == null && blockSlots(b) >= count) {
                 long bytes = (long) blockSlots(b) * partSize;
-                if (committedBytes + bytes > ceilingBytes) {
+                if (synced.committedBytes + bytes > ceilingBytes) {
                     continue;   // dedicated buffers hold the budget; a smaller (last) block may still fit
                 }
-                backBlock(b);
-                return leaseRun(b, 0, count);
+                backBlockLocked(b);
+                return leaseRunLocked(b, 0, count);
             }
         }
         return EXHAUSTED;
@@ -533,7 +556,7 @@ final class S3DirectBufferPool {
         if (!servesOversize()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: a " + size + "-byte buffer was requested, larger than the " + maxGroupBytes()
-              + " bytes this pool serves from its blocks, and a fixed() pool never allocates a separate buffer. "
+              + " bytes this pool serves from its synced.blocks, and a fixed() pool never allocates a separate buffer. "
               + "Use S3DirectBufferPoolOptions.auto() or elastic(), or a larger partSize.");
             return IMPOSSIBLE;
         }
@@ -544,12 +567,12 @@ final class S3DirectBufferPool {
             return IMPOSSIBLE;
         }
         // Make room by freeing fully unused blocks (highest first, floor included).
-        for (int b = numBlocks - 1; b >= 0 && committedBytes + size > ceilingBytes; b--) {
-            if (blocks[b] != null && usedMask[b] == 0) {
-                unbackBlock(b);
+        for (int b = numBlocks - 1; b >= 0 && synced.committedBytes + size > ceilingBytes; b--) {
+            if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                unbackBlockLocked(b);
             }
         }
-        if (committedBytes + size > ceilingBytes) {
+        if (synced.committedBytes + size > ceilingBytes) {
             return EXHAUSTED;
         }
         ByteBuffer dbb;
@@ -561,9 +584,9 @@ final class S3DirectBufferPool {
               + "Consider raising -XX:MaxDirectMemorySize.");
             throw e;
         }
-        committedBytes += dbb.capacity();
-        long handle = DEDICATED_TAG | nextDedicatedId++;
-        leasedDedicated.put(handle, new Dedicated(dbb, nativeGetDirectBufferAddress(dbb)));
+        synced.committedBytes += dbb.capacity();
+        long handle = DEDICATED_TAG | synced.nextDedicatedId++;
+        synced.leasedDedicated.put(handle, new Dedicated(dbb, nativeGetDirectBufferAddress(dbb)));
         return handle;
     }
 
@@ -571,8 +594,8 @@ final class S3DirectBufferPool {
         return Math.min(BLOCK_SLOTS, maxSlots - b * BLOCK_SLOTS);
     }
 
-    private long leaseRun(int b, int start, int count) {
-        usedMask[b] |= ((1 << count) - 1) << start;
+    private long leaseRunLocked(int b, int start, int count) {
+        synced.usedMask[b] |= ((1 << count) - 1) << start;
         return ((long) b << 16) | ((long) start << 8) | count;
     }
 
@@ -583,24 +606,24 @@ final class S3DirectBufferPool {
         return ((1 << count) - 1) << runStart(handle);
     }
 
-    private void backBlock(int b) {
+    private void backBlockLocked(int b) {
         ByteBuffer dbb = ByteBuffer.allocateDirect(blockSlots(b) * partSize);
-        blocks[b] = dbb;
-        blockAddresses[b] = nativeGetDirectBufferAddress(dbb);
-        committedBytes += dbb.capacity();
+        synced.blocks[b] = dbb;
+        synced.blockAddresses[b] = nativeGetDirectBufferAddress(dbb);
+        synced.committedBytes += dbb.capacity();
     }
 
     /** Frees a fully unused block. Null before free so no stale address is ever handed out. */
-    private void unbackBlock(int b) {
-        ByteBuffer dbb = blocks[b];
-        blocks[b] = null;
-        blockAddresses[b] = 0L;
-        committedBytes -= dbb.capacity();
+    private void unbackBlockLocked(int b) {
+        ByteBuffer dbb = synced.blocks[b];
+        synced.blocks[b] = null;
+        synced.blockAddresses[b] = 0L;
+        synced.committedBytes -= dbb.capacity();
         DirectBufferCleaner.free(dbb);
     }
 
-    private void freeDedicated(Dedicated d) {
-        committedBytes -= d.buffer.capacity();
+    private void freeDedicatedLocked(Dedicated d) {
+        synced.committedBytes -= d.buffer.capacity();
         DirectBufferCleaner.free(d.buffer);
     }
 

@@ -131,9 +131,8 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Every mutable field of the pool's block and dedicated-buffer state,
-     * mirroring the native {@code synced_data} convention. The holder is
-     * also the lock: read or write its fields only inside
+     * Every mutable field of the pool's block and dedicated-buffer state.
+     * The holder is also the lock: read or write its fields only inside
      * {@code synchronized (synced)}, directly or from a {@code *Locked}
      * helper.
      */
@@ -646,6 +645,11 @@ final class S3DirectBufferPool {
      */
     private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
         long maxDirectMemory = getMaxDirectMemory();
+        // Logged here, not in DirectMemoryLimit's initializer: a failure during
+        // class initialization would break that class for the life of the JVM.
+        Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtS3,
+            "S3DirectBufferPool: MaxDirectMemorySize = " + maxDirectMemory + " bytes (from "
+          + DirectMemoryLimit.SOURCE + ")");
         if (maxDirectMemory == 0) {
             // An explicit -XX:MaxDirectMemorySize=0 means no direct memory at
             // all (leaving the flag off is the JVM default), so every
@@ -657,11 +661,22 @@ final class S3DirectBufferPool {
               + "or set -XX:MaxDirectMemorySize=" + recommendedMiB + "m or higher.");
         }
         if (maxDirectMemory < 0) {
+            long poolMiB = poolCapacityBytes / (1024 * 1024);
+            if (isAndroid()) {
+                // Android has no MaxDirectMemorySize: direct buffers come from
+                // native memory, bounded only by the device and the app's
+                // memory limits, so there is nothing to check against.
+                Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                    "S3DirectBufferPool: Android has no JVM direct memory limit, so the pool's " + poolMiB
+                  + " MiB ceiling is not checked; it comes from native memory. Size the pool for the device "
+                  + "(S3DirectBufferPoolOptions.fixed or elastic, or S3ClientOptions.withMemoryLimitInBytes).");
+                return;
+            }
             // Unable to determine the limit (non-HotSpot JVM or reflective
             // access denied). Log a warning but don't block construction.
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: unable to determine MaxDirectMemorySize. "
-              + "Pool requires " + (poolCapacityBytes / (1024 * 1024)) + " MiB of direct memory. "
+              + "Pool requires " + poolMiB + " MiB of direct memory. "
               + "Ensure -XX:MaxDirectMemorySize is set appropriately.");
             return;
         }
@@ -683,6 +698,15 @@ final class S3DirectBufferPool {
         }
     }
 
+    /** Android's runtimes (Dalvik and ART) both report {@code java.vm.name} as "Dalvik". */
+    private static boolean isAndroid() {
+        try {
+            return "Dalvik".equals(System.getProperty("java.vm.name"));
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
+
     /**
      * Smallest {@code -XX:MaxDirectMemorySize}, in whole MiB, whose 80% share
      * fits {@code poolBytes}. Rounds up, so following it always passes
@@ -693,72 +717,157 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Returns the JVM's {@code MaxDirectMemorySize} via reflective probes, or
-     * -1 if it cannot be determined. 0 means an explicit
-     * {@code -XX:MaxDirectMemorySize=0} (no direct memory), not "unset".
+     * Returns the JVM's {@code MaxDirectMemorySize}, or -1 if it cannot be
+     * determined. 0 means an explicit {@code -XX:MaxDirectMemorySize=0} (no
+     * direct memory), not "unset". The limit is fixed for the life of the
+     * JVM, so it is probed once and cached.
      */
     private static long getMaxDirectMemory() {
-        // Java 8: sun.misc.VM.maxDirectMemory(). Removed in Java 9.
-        try {
-            Class<?> vmClass = Class.forName("sun.misc.VM");
-            java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
-            return (Long) method.invoke(null);
-        } catch (Exception ignored) {
-            // Fall through to alternative.
-        }
+        return DirectMemoryLimit.BYTES;
+    }
 
-        // Java 9+: jdk.internal.misc.VM. Only reachable if the application
-        // passes --add-exports java.base/jdk.internal.misc=ALL-UNNAMED.
-        try {
-            Class<?> vmClass = Class.forName("jdk.internal.misc.VM");
-            java.lang.reflect.Method method = vmClass.getDeclaredMethod("maxDirectMemory");
-            return (Long) method.invoke(null);
-        } catch (Exception ignored) {
-            // Cannot determine.
-        }
+    /** Lazy holder: probes on first use, then caches for the JVM's lifetime. */
+    private static final class DirectMemoryLimit {
+        /** Why the HotSpotDiagnosticMXBean probe failed on a HotSpot-based JVM, or null. Set during probe(). */
+        private static String hotSpotFailure;
+        /** Which probe answered, for the DEBUG log. Set by probe(). */
+        private static String source;
 
-        // Fallback (the usual path on Java 9+): check the runtime args for an
-        // explicit -XX:MaxDirectMemorySize. Without one, HotSpot's default
-        // limit is Runtime.maxMemory() (the -Xmx value). Accessed
-        // reflectively because java.lang.management does not exist on
-        // Android, where direct memory has no JVM limit and -1 is returned.
-        try {
-            Class<?> mgmtFactory = Class.forName("java.lang.management.ManagementFactory");
-            Object runtimeMxBean = mgmtFactory.getMethod("getRuntimeMXBean").invoke(null);
-            @SuppressWarnings("unchecked")
-            java.util.List<String> inputArgs = (java.util.List<String>) Class
-                .forName("java.lang.management.RuntimeMXBean")
-                .getMethod("getInputArguments")
-                .invoke(runtimeMxBean);
-            // The JVM uses the last occurrence if the flag is given more than once.
-            for (int i = inputArgs.size() - 1; i >= 0; i--) {
-                String arg = inputArgs.get(i);
-                if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
-                    String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
-                    long multiplier = 1;
-                    if (val.endsWith("t")) {
-                        multiplier = 1024L * 1024L * 1024L * 1024L;
-                        val = val.substring(0, val.length() - 1);
-                    } else if (val.endsWith("g")) {
-                        multiplier = 1024L * 1024L * 1024L;
-                        val = val.substring(0, val.length() - 1);
-                    } else if (val.endsWith("m")) {
-                        multiplier = 1024L * 1024L;
-                        val = val.substring(0, val.length() - 1);
-                    } else if (val.endsWith("k")) {
-                        multiplier = 1024L;
-                        val = val.substring(0, val.length() - 1);
-                    }
-                    // An explicit 0 means no direct memory, as the JVM reads it.
-                    return Long.parseLong(val) * multiplier;
+        static final long BYTES = probe();
+        static final String SOURCE = source;
+
+        /**
+         * Tries each source in order, most exact first, and returns the first
+         * answer. Every probe is reflective, and any failure (class missing,
+         * module not exported, security manager, unknown option) falls through
+         * to the next one.
+         */
+        private static long probe() {
+            if (isAndroid()) {
+                source = "Android, which has no JVM limit";
+                return -1;  // none of the probes exist there
+            }
+            // Java 8: sun.misc.VM. Java 9+, only with --add-exports:
+            // jdk.internal.misc.VM. Both are exact, as enforced by allocateDirect.
+            for (String vmClass : new String[] {"sun.misc.VM", "jdk.internal.misc.VM"}) {
+                long bytes = fromVmClass(vmClass);
+                if (bytes >= 0) {
+                    source = vmClass;
+                    return bytes;
                 }
             }
-            return Runtime.getRuntime().maxMemory();
-        } catch (Exception ignored) {
-            // Cannot determine.
+            long bytes = fromHotSpotDiagnostic();  // HotSpot Java 9+: the usual path
+            if (bytes >= 0) {
+                source = "HotSpotDiagnosticMXBean";
+                return bytes;
+            }
+            bytes = fromInputArguments();  // other JVMs
+            source = (bytes >= 0 ? "JVM input arguments" : "no probe succeeded")
+                + (hotSpotFailure == null ? "" : "; HotSpotDiagnosticMXBean failed with " + hotSpotFailure
+                    + ", so a value set in an options file (-XX:Flags) is missed");
+            return bytes;
         }
 
-        return -1;
+        /** HotSpot-based JVMs (Oracle, OpenJDK builds such as Corretto and Temurin) are expected to have the bean. */
+        private static boolean isHotSpotBased() {
+            try {
+                String vm = String.valueOf(System.getProperty("java.vm.name"));
+                return vm.contains("HotSpot") || vm.contains("OpenJDK");
+            } catch (SecurityException e) {
+                return false;
+            }
+        }
+
+        /** {@code maxDirectMemory()} on a JDK-internal VM class, or -1. */
+        private static long fromVmClass(String className) {
+            try {
+                Object value = Class.forName(className).getDeclaredMethod("maxDirectMemory").invoke(null);
+                return (Long) value;
+            } catch (Exception | LinkageError e) {
+                return -1;
+            }
+        }
+
+        /**
+         * The flag as HotSpot resolved it, from every source (command line,
+         * JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, an options file), or -1. An
+         * unset flag has origin DEFAULT and value 0; HotSpot then uses
+         * {@code Runtime.maxMemory()}. Reflective because
+         * {@code com.sun.management} is HotSpot-specific and
+         * {@code java.lang.management} does not exist on Android.
+         */
+        private static long fromHotSpotDiagnostic() {
+            try {
+                Class<?> beanInterface = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+                Object bean = Class.forName("java.lang.management.ManagementFactory")
+                    .getMethod("getPlatformMXBean", Class.class)
+                    .invoke(null, beanInterface);
+                if (bean == null) {
+                    if (isHotSpotBased()) {
+                        hotSpotFailure = "no platform HotSpotDiagnosticMXBean";
+                    }
+                    return -1;
+                }
+                Object option = beanInterface.getMethod("getVMOption", String.class)
+                    .invoke(bean, "MaxDirectMemorySize");
+                Class<?> optionClass = Class.forName("com.sun.management.VMOption");
+                String origin = String.valueOf(optionClass.getMethod("getOrigin").invoke(option));
+                if ("DEFAULT".equals(origin)) {
+                    return Runtime.getRuntime().maxMemory();
+                }
+                // An explicit 0 means no direct memory, as the JVM reads it.
+                return Long.parseLong(String.valueOf(optionClass.getMethod("getValue").invoke(option)));
+            } catch (Exception | LinkageError e) {
+                if (isHotSpotBased()) {
+                    hotSpotFailure = e.getClass().getName();
+                }
+                return -1;
+            }
+        }
+
+        /**
+         * Parses an explicit {@code -XX:MaxDirectMemorySize} from the JVM's
+         * input arguments, else {@code Runtime.maxMemory()} (HotSpot's
+         * default), or -1. Misses a value set in an options file, which is
+         * why it runs last.
+         */
+        private static long fromInputArguments() {
+            try {
+                Object runtimeMxBean = Class.forName("java.lang.management.ManagementFactory")
+                    .getMethod("getRuntimeMXBean").invoke(null);
+                @SuppressWarnings("unchecked")
+                java.util.List<String> inputArgs = (java.util.List<String>) Class
+                    .forName("java.lang.management.RuntimeMXBean")
+                    .getMethod("getInputArguments")
+                    .invoke(runtimeMxBean);
+                // The JVM uses the last occurrence if the flag is given more than once.
+                for (int i = inputArgs.size() - 1; i >= 0; i--) {
+                    String arg = inputArgs.get(i);
+                    if (arg.startsWith("-XX:MaxDirectMemorySize=")) {
+                        String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
+                        long multiplier = 1;
+                        if (val.endsWith("t")) {
+                            multiplier = 1024L * 1024L * 1024L * 1024L;
+                            val = val.substring(0, val.length() - 1);
+                        } else if (val.endsWith("g")) {
+                            multiplier = 1024L * 1024L * 1024L;
+                            val = val.substring(0, val.length() - 1);
+                        } else if (val.endsWith("m")) {
+                            multiplier = 1024L * 1024L;
+                            val = val.substring(0, val.length() - 1);
+                        } else if (val.endsWith("k")) {
+                            multiplier = 1024L;
+                            val = val.substring(0, val.length() - 1);
+                        }
+                        // An explicit 0 means no direct memory, as the JVM reads it.
+                        return Long.parseLong(val) * multiplier;
+                    }
+                }
+                return Runtime.getRuntime().maxMemory();
+            } catch (Exception | LinkageError e) {
+                return -1;
+            }
+        }
     }
 
     /**

@@ -112,8 +112,8 @@ public class S3Client extends CrtResource {
         // A pool switches the memory source from the native
         // default_buffer_pool to a JVM-owned pool. The client creates and
         // owns it: closed in onShutdownComplete, or in the catch below if
-        // native client creation fails. Created immediately before the
-        // try so no other failure can orphan it.
+        // native client creation fails. Nothing between here and the try
+        // can throw, so the pool cannot be orphaned.
         S3DirectBufferPoolOptions poolOptions = options.getDirectBufferPoolOptions();
         directBufferPool = poolOptions != null ? S3DirectBufferPool.fromOptions(poolOptions, options) : null;
         if (directBufferPool != null) {

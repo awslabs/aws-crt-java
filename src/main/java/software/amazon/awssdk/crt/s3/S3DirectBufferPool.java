@@ -280,7 +280,7 @@ final class S3DirectBufferPool {
                     if (maxDirectMemory > 0 && memoryLimitBytes > available && available >= partSize) {
                         // WARN: the pool is smaller than the client would normally
                         // use for this throughput, which can limit transfer speed.
-                        long recommendedMiB = (long) Math.ceil(memoryLimitBytes / DIRECT_MEMORY_FRACTION / (1024 * 1024));
+                        long recommendedMiB = recommendedMaxDirectMemoryMiB(memoryLimitBytes);
                         Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                             "S3DirectBufferPool: the default ceiling for this throughput target is " + memoryLimitBytes
                           + " bytes, but only " + available + " bytes fit within 80% of MaxDirectMemorySize ("
@@ -627,7 +627,7 @@ final class S3DirectBufferPool {
             // An explicit -XX:MaxDirectMemorySize=0 means no direct memory at
             // all (leaving the flag off is the JVM default), so every
             // allocation would fail with OutOfMemoryError.
-            long recommendedMiB = (long) (poolCapacityBytes * 1.25 / (1024 * 1024));
+            long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
                 "S3DirectBufferPool requires " + (poolCapacityBytes / (1024 * 1024)) + " MiB of direct memory, "
               + "but -XX:MaxDirectMemorySize=0 allows none. Remove the flag to use the JVM default, "
@@ -649,7 +649,7 @@ final class S3DirectBufferPool {
         if (poolCapacityBytes > availableForPool) {
             long poolMiB = poolCapacityBytes / (1024 * 1024);
             long maxMiB = maxDirectMemory / (1024 * 1024);
-            long recommendedMiB = (long) (poolCapacityBytes * 1.25 / (1024 * 1024));
+            long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
                 "S3DirectBufferPool requires " + poolMiB + " MiB of direct memory, "
               + "but MaxDirectMemorySize is " + maxMiB + " MiB "
@@ -658,6 +658,15 @@ final class S3DirectBufferPool {
               + "or lower the pool's ceiling: S3ClientOptions.withMemoryLimitInBytes with auto(), "
               + "or a smaller size passed to fixed() or elastic().");
         }
+    }
+
+    /**
+     * Smallest {@code -XX:MaxDirectMemorySize}, in whole MiB, whose 80% share
+     * fits {@code poolBytes}. Rounds up, so following it always passes
+     * {@link #validateDirectMemoryCapacity}.
+     */
+    private static long recommendedMaxDirectMemoryMiB(long poolBytes) {
+        return (long) Math.ceil(poolBytes / DIRECT_MEMORY_FRACTION / (1024 * 1024));
     }
 
     /**

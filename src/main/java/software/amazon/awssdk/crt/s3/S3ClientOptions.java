@@ -159,6 +159,9 @@ public class S3ClientOptions {
      * Notes: For PUT_OBJECT requests, the client will automatically adjust the part size to meet service limits:
      *   - Maximum number of parts per upload is 10,000
      *   - Minimum upload part size is 5 MiB
+     * With a direct buffer pool ({@link #withDirectBufferPoolOptions}), a part size set here is never
+     * raised: an upload that needs larger parts is rejected when the request is made. See
+     * {@link S3DirectBufferPoolOptions}.
      *
      * @param partSize size in bytes of parts for downloads and uploads
      * @return this
@@ -419,8 +422,9 @@ public class S3ClientOptions {
      * buffers (download response bodies and multipart upload parts), in
      * place of the default native buffer pool. The client creates the pool
      * from these options at construction, sized to its own part size; the
-     * client closes it when its shutdown completes. Pool memory held by
-     * unclosed borrowed buffers is freed as each buffer closes.
+     * client closes it when its shutdown completes. For how long borrowed
+     * buffers keep their memory, see the Lifetime section of
+     * {@link S3DirectBufferPoolOptions}.
      *
      * <p>Enabling the pool does NOT change the delivery contract of
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.

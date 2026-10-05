@@ -106,8 +106,7 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      *
      * @param ticketPtr raw native buffer-ticket address (a pool ticket, or
      *                  an owned copy of a body that had none); carries one
-     *                  ticket ref owned by this object, dropped by
-     *                  nativeReleaseTicket
+     *                  ticket ref owned by this object
      * @param directView direct byte buffer view sliced to the response body length,
      *                  over the ticket's memory (leased pool memory, or the
      *                  owned copy)
@@ -329,9 +328,8 @@ public final class S3BorrowedBuffer implements AutoCloseable {
     }
 
     /**
-     * Releases one reference on the native buffer ticket at the given pointer.
-     * When the last reference drops, the memory returns to the pool (or is
-     * freed, if the pool is closed). A zero pointer is a no-op.
+     * Releases this object's reference on the native buffer ticket; see the
+     * native implementation in s3_client.c for what the last release frees.
      */
     private static native void nativeReleaseTicket(long ticketPtr);
 

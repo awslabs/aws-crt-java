@@ -762,6 +762,9 @@ struct s3_owned_body_copy {
     uint8_t *data; /* trails this struct in the same allocation */
 };
 
+/* Vtable completeness only: this ticket is never handed to aws-c-s3, so
+ * nothing claims it. Unlike a pool ticket's claim (empty buffer for
+ * aws-c-s3 to fill), it would return the already-filled copy. */
 static struct aws_byte_buf s_owned_body_copy_claim(struct aws_s3_buffer_ticket *ticket) {
     struct s3_owned_body_copy *copy = ticket->impl;
     return aws_byte_buf_from_array(copy->data, copy->len);
@@ -2189,9 +2192,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemor
  *   2. The phantom-reference cleaner fires because the S3BorrowedBuffer
  *      became unreachable without close() (GC fallback / leak recovery)
  *
- * When this call drops the ticket's ref count to zero, s_java_ticket_destroy
- * fires and the leased memory returns to the pool (or is freed, if the pool
- * is closed). Borrowed buffers only exist with the Java direct buffer pool.
+ * When this call drops the ticket's ref count to zero, the ticket is
+ * destroyed: a pool ticket (s_java_ticket_destroy) returns its lease to the
+ * pool, or frees it if the pool is closed; an owned body copy
+ * (s_owned_body_copy_destroy, for bodies delivered without a ticket such as
+ * a partNumber GetObject) frees the copy. Borrowed buffers only exist with
+ * the Java direct buffer pool.
  *
  * ticketPtr == 0 is a defensive no-op (should not happen from well-formed
  * Java, but the Java side treats close() as idempotent so we tolerate it).

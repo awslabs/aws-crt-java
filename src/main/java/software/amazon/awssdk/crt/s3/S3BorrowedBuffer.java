@@ -33,15 +33,6 @@ import software.amazon.awssdk.crt.Log;
  * that buffer works the same way but is not pool memory, so it does not
  * count toward the pool's ceiling or the JVM direct memory limit.</p>
  *
- * <pre>{@code
- * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
- *     try (S3BorrowedBuffer b = buffer) {
- *         digest.update(b.asByteBuffer());
- *     }
- *     return (int) (objectRangeEnd - objectRangeStart);
- * }
- * }</pre>
- *
  * <p>The buffer holds its memory until {@link #close()}, so you can keep it
  * after the callback returns, pass it to another thread, or hold it past
  * client shutdown. Every buffer MUST be closed, on every path including
@@ -72,6 +63,47 @@ import software.amazon.awssdk.crt.Log;
  *       for tracking down a leak, but costs more.</li>
  *   <li>{@code disabled}: no warnings.</li>
  * </ul>
+ *
+ * <h2>Examples</h2>
+ * <p><b>Reading the data during the callback.</b> The buffer is closed
+ * before the callback returns, so nothing from it (the buffer or its
+ * {@link ByteBuffer} view) may be kept and used afterwards.</p>
+ * <pre>{@code
+ * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+ *     try (S3BorrowedBuffer b = buffer) {  // closes the buffer when the block exits, even on an exception
+ *         ByteBuffer data = b.asByteBuffer();
+ *         // Read the chunk from data here, for example by writing it to a
+ *         // channel or updating a checksum.
+ *     }
+ *     // Grows the read window by this chunk's length, so the download keeps
+ *     // going when read backpressure is enabled (ignored otherwise).
+ *     return (int) (objectRangeEnd - objectRangeStart);
+ * }
+ * }</pre>
+ *
+ * <p><b>Keeping the buffer after the callback.</b> Hand it to whatever
+ * reads it later, and have that code close it. If the hand-off fails, the
+ * callback still owns the buffer and must close it.</p>
+ * <pre>{@code
+ * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+ *     try {
+ *         // The task now owns the buffer and closes it when done.
+ *         executor.execute(() -> {
+ *             try (S3BorrowedBuffer b = buffer) {  // closes the buffer when the block exits, even on an exception
+ *                 ByteBuffer data = b.asByteBuffer();
+ *                 // Read the chunk from data here.
+ *             }
+ *         });
+ *     } catch (RuntimeException e) {
+ *         buffer.close();  // not handed off, so close it here
+ *         throw e;
+ *     }
+ *     // Grows the read window now, before the task has read the data. With
+ *     // read backpressure, return 0 instead and call
+ *     // S3MetaRequest.incrementReadWindow from the task once it is done.
+ *     return (int) (objectRangeEnd - objectRangeStart);
+ * }
+ * }</pre>
  */
 public final class S3BorrowedBuffer implements AutoCloseable {
 

@@ -46,9 +46,9 @@
  *    the Java pool reports exhaustion (an acquire returns -1), we
  *    push an unresolved future onto pending_reserves and return
  *    immediately. The future is resolved later by the drain (on a lease
- *    release or the next reserve), mirroring the default pool's
- *    pending_reserves pattern. Reserve, release, and trim all run under
- *    pending_lock (see java_pool_state.pending_reserves).
+ *    release, the next reserve, or a meta request finishing), mirroring the
+ *    default pool's pending_reserves pattern. Reserve, release, trim, and
+ *    drain all run under pending_lock (see java_pool_state.pending_reserves).
  *
  * WARNING: Body callbacks invoked downstream of claim() see a
  *          cursor pointing into Java DirectByteBuffer memory. The
@@ -108,10 +108,11 @@ struct java_pool_state {
     /*
      * Pending reserve futures, FIFO. Each entry holds an acquired ref on a
      * not-yet-resolved aws_future_s3_buffer_ticket and the original
-     * reserve_meta. Drained when a lease is released and at the start of
-     * every reserve. Entries whose future aws-c-s3 already completed (a
-     * cancelled or paused meta request sets an error on its pending
-     * futures) are dropped by the drain wherever they sit, so they never
+     * reserve_meta. Drained when a lease is released, at the start of
+     * every reserve, and when any meta request finishes
+     * (aws_s3_java_buffer_pool_drain). Entries whose future aws-c-s3
+     * already completed (a cancelled or paused meta request sets an error
+     * on its pending futures) are dropped by the drain wherever they sit, so they never
      * hold back live reservations.
      *
      * GUARDED BY pending_lock. pending_lock is also held around every
@@ -274,9 +275,10 @@ static void s_java_ticket_destroy(void *user_data) {
 
 /*
  * Retries pending reservations. Called on every ticket release (capacity
- * may have freed) and at the start of every reserve (a waiting entry may
- * have been cancelled). Caller holds pending_lock and a JNIEnv; served,
- * failed, or already-completed entries move to out_resolved.
+ * may have freed), at the start of every reserve, and when a meta request
+ * finishes (a waiting entry may have been cancelled). Caller holds
+ * pending_lock and a JNIEnv; served, failed, or already-completed entries
+ * move to out_resolved.
  *
  * 1. Drops every entry whose future aws-c-s3 already completed (a cancelled
  *    or paused meta request sets an error on its pending futures), wherever
@@ -315,6 +317,29 @@ static void s_drain_pending_locked(struct java_pool_state *ps, JNIEnv *env, stru
         aws_linked_list_pop_front(&ps->pending_reserves);
         aws_linked_list_push_back(out_resolved, &head->node);
     }
+}
+
+void aws_s3_java_buffer_pool_drain(struct aws_s3_buffer_pool *pool) {
+    AWS_FATAL_ASSERT(pool != NULL && pool->vtable == &s_java_pool_vtable);
+    struct java_pool_state *ps = pool->impl;
+
+    struct aws_linked_list resolved;
+    aws_linked_list_init(&resolved);
+
+    /******** JNI ENV ACQUIRE ********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        /* JVM shutting down; nothing to serve. */
+        return;
+    }
+    aws_mutex_lock(&ps->pending_lock);
+    s_drain_pending_locked(ps, env, &resolved);
+    aws_mutex_unlock(&ps->pending_lock);
+    aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
+    /******** JNI ENV RELEASE ********/
+
+    s_resolve_pending_list(ps, &resolved);
 }
 
 /* Applies drained outcomes. MUST be called without pending_lock held. */
@@ -683,6 +708,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     ps->pool.vtable = &s_java_pool_vtable;
     ps->pool.impl = ps;
     aws_ref_count_init(&ps->pool.ref_count, ps, s_java_pool_destroy);
+    factory_data->out_pool = &ps->pool;
 
     AWS_LOGF_INFO(
         AWS_LS_S3_CLIENT, "S3DirectBufferPool factory: pool=%p part_size=%zu", (void *)&ps->pool, ps->part_size);

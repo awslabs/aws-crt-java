@@ -17,6 +17,10 @@
 struct aws_s3_java_buffer_pool_factory_data {
     JavaVM *jvm;
     jobject java_pool_global;
+    /* Out: the created pool, set by the factory on success. Not a ref; the
+     * client owns it. s3ClientNew publishes it to the Java pool so meta
+     * requests can call aws_s3_java_buffer_pool_drain. */
+    struct aws_s3_buffer_pool *out_pool;
 };
 
 /*
@@ -42,5 +46,17 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
     struct aws_allocator *allocator,
     struct aws_s3_buffer_pool_config config,
     void *user_data);
+
+/*
+ * Drops pending reservations that aws-c-s3 has already cancelled or paused,
+ * and serves waiting ones that now fit. Called from each meta request's
+ * finish callback: aws-c-s3 completes a cancelled request's pending futures
+ * without calling into the pool, so without this a reservation queued
+ * behind a cancelled one could wait until an unrelated reserve or release.
+ * `pool` MUST be a pool made by aws_s3_java_buffer_pool_factory, and the
+ * caller MUST hold a ref on it. Takes the pool's pending_lock; MUST NOT be
+ * called while holding it.
+ */
+void aws_s3_java_buffer_pool_drain(struct aws_s3_buffer_pool *pool);
 
 #endif /* AWS_CRT_JAVA_S3_JAVA_BUFFER_POOL_H */

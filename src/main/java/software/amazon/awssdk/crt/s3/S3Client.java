@@ -307,7 +307,7 @@ public class S3Client extends CrtResource {
                 shouldStream,
                 diskThroughputGbps,
                 directIo,
-                directBufferPool != null);
+                directBufferPool != null ? directBufferPool.nativePoolState() : 0L);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -492,7 +492,7 @@ public class S3Client extends CrtResource {
             boolean shouldStream,
             double diskThroughputGbps,
             boolean directIo,
-            boolean hasDirectBufferPool);
+            long directBufferPoolState);
 
     /**
      * Returns the default native buffer pool's memory limit (bytes) for the

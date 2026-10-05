@@ -2223,6 +2223,12 @@
       {
         "name": "partSize",
         "parameterTypes": []
+      },
+      {
+        "name": "setNativePoolState",
+        "parameterTypes": [
+          "long"
+        ]
       }
     ]
   },

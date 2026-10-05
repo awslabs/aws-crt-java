@@ -79,7 +79,9 @@ import java.nio.ByteBuffer;
  * {@link #elastic(long, long)}, {@code withMemoryLimitInBytes} or an
  * environment variable) and it doesn't fit, creating the client throws;
  * raise {@code -XX:MaxDirectMemorySize} or choose a smaller ceiling. A
- * default ceiling picked by {@link #auto()} is reduced to fit instead.</p>
+ * default ceiling picked by {@link #auto()} is reduced to fit instead.
+ * An explicit {@code -XX:MaxDirectMemorySize=0} allows no direct memory,
+ * so creating the client always throws.</p>
  *
  * <h2>Delivery</h2>
  * Handlers that override

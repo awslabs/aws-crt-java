@@ -812,6 +812,9 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
 
     s3_direct_buffer_pool_properties.partSize = (*env)->GetMethodID(env, cls, "partSize", "()I");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.partSize);
+
+    s3_direct_buffer_pool_properties.setNativePoolState = (*env)->GetMethodID(env, cls, "setNativePoolState", "(J)V");
+    AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.setNativePoolState);
 }
 
 struct java_completable_future_properties completable_future_properties;

@@ -57,9 +57,10 @@ import software.amazon.awssdk.crt.Log;
  *
  * <h2>Concurrency</h2>
  * Every method that reads or changes block or dedicated-buffer state
- * synchronizes on {@code lock}; the immutable accessors and the volatile
- * {@code closed} fast-path checks do not need it. Native callers (reserve,
- * ticket release, trim) additionally hold the native pool state's
+ * synchronizes on {@code lock}; the immutable accessors,
+ * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
+ * checks do not need it. Native callers (reserve, ticket release, trim,
+ * request finish) additionally hold the native pool state's
  * {@code pending_lock} around their JNI calls, so acquires and releases are
  * serialized and pending reservations cannot be stranded. Lock order:
  * native pending_lock, then {@code lock}. Nothing here calls into native
@@ -109,6 +110,13 @@ final class S3DirectBufferPool {
 
     /** Byte budget shared by blocks and dedicated buffers: {@code maxSlots * partSize}. */
     private final long ceilingBytes;
+
+    /**
+     * Native pool state pointer, published by s3ClientNew once the native
+     * client exists; 0 before then. S3Client passes it on each meta request
+     * so the request's finish callback can drain the pool's wait queue.
+     */
+    private volatile long nativePoolState;
 
     private final Object lock = new Object();
 
@@ -374,6 +382,10 @@ final class S3DirectBufferPool {
      *         the native client so both use the same limit
      */
     boolean ceilingClamped() { return ceilingClamped; }
+    /** @return the native pool state pointer, 0 until the native client is created */
+    long nativePoolState() { return nativePoolState; }
+    /** Called once by s3ClientNew after the native client (and its pool) is created. */
+    void setNativePoolState(long state) { nativePoolState = state; }
     /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
     long committedBytes() {
         synchronized (lock) { return committedBytes; }
@@ -606,11 +618,22 @@ final class S3DirectBufferPool {
      * @param poolCapacityBytes the pool's maximum byte capacity
      *                          ({@code maxSlots x partSize})
      * @throws IllegalStateException if the ceiling exceeds 80% of
-     *                               {@code MaxDirectMemorySize}
+     *                               {@code MaxDirectMemorySize}, including
+     *                               an explicit {@code MaxDirectMemorySize=0}
      */
     private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
         long maxDirectMemory = getMaxDirectMemory();
-        if (maxDirectMemory <= 0) {
+        if (maxDirectMemory == 0) {
+            // An explicit -XX:MaxDirectMemorySize=0 means no direct memory at
+            // all (leaving the flag off is the JVM default), so every
+            // allocation would fail with OutOfMemoryError.
+            long recommendedMiB = (long) (poolCapacityBytes * 1.25 / (1024 * 1024));
+            throw new IllegalStateException(
+                "S3DirectBufferPool requires " + (poolCapacityBytes / (1024 * 1024)) + " MiB of direct memory, "
+              + "but -XX:MaxDirectMemorySize=0 allows none. Remove the flag to use the JVM default, "
+              + "or set -XX:MaxDirectMemorySize=" + recommendedMiB + "m or higher.");
+        }
+        if (maxDirectMemory < 0) {
             // Unable to determine the limit (non-HotSpot JVM or reflective
             // access denied). Log a warning but don't block construction.
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
@@ -637,7 +660,11 @@ final class S3DirectBufferPool {
         }
     }
 
-    /** Returns the JVM's {@code MaxDirectMemorySize} via reflective probes, or -1 if it cannot be determined. */
+    /**
+     * Returns the JVM's {@code MaxDirectMemorySize} via reflective probes, or
+     * -1 if it cannot be determined. 0 means an explicit
+     * {@code -XX:MaxDirectMemorySize=0} (no direct memory), not "unset".
+     */
     private static long getMaxDirectMemory() {
         // Java 8: sun.misc.VM.maxDirectMemory(). Removed in Java 9.
         try {
@@ -690,9 +717,8 @@ final class S3DirectBufferPool {
                         multiplier = 1024L;
                         val = val.substring(0, val.length() - 1);
                     }
-                    long bytes = Long.parseLong(val) * multiplier;
-                    // 0 means "use the default", which is Runtime.maxMemory().
-                    return bytes > 0 ? bytes : Runtime.getRuntime().maxMemory();
+                    // An explicit 0 means no direct memory, as the JVM reads it.
+                    return Long.parseLong(val) * multiplier;
                 }
             }
             return Runtime.getRuntime().maxMemory();

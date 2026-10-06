@@ -84,6 +84,14 @@ import software.amazon.awssdk.crt.Log;
  */
 final class S3DirectBufferPool {
 
+    /**
+     * Part size used when {@link S3ClientOptions#withPartSize} is unset. Must
+     * equal the native client's default ({@code g_default_part_size_fallback},
+     * 8 MiB, in aws-c-s3); the native factory fails client creation if the
+     * two ever differ.
+     */
+    static final int DEFAULT_PART_SIZE = (int) (8 * SizeUnits.MIB);
+
     /** Slots per block (the default native buffer pool uses 16 chunks per block). */
     static final int BLOCK_SLOTS = 16;
 
@@ -300,10 +308,10 @@ final class S3DirectBufferPool {
                 // client's order (see S3DirectBufferPoolOptions#auto()).
                 long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
                 if (memoryLimitBytes <= 0) {
-                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", 1024L * 1024L);
+                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", SizeUnits.MIB);
                 }
                 if (memoryLimitBytes <= 0) {
-                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", 1024L * 1024L * 1024L);
+                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", SizeUnits.GIB);
                 }
                 if (memoryLimitBytes <= 0) {
                     // Derived, not set by the customer: shrink it to fit the
@@ -390,9 +398,9 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * The client's part size, or the native client's 8 MiB default when
-     * unset (0). Must match the native client's resolution; the native
-     * factory fails client creation if it does not. A negative value would
+     * The client's part size, or {@link #DEFAULT_PART_SIZE} when unset (0).
+     * Must match the native client's resolution; the native factory fails
+     * client creation if it does not. A negative value would
      * read as unset here but reach the native client as a huge unsigned part
      * size, so it is rejected with the actual cause instead.
      */
@@ -404,7 +412,7 @@ final class S3DirectBufferPool {
               + "when a direct buffer pool is enabled");
         }
         if (partSize == 0) {
-            return 8 * 1024 * 1024;
+            return DEFAULT_PART_SIZE;
         }
         if (partSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException(
@@ -719,12 +727,12 @@ final class S3DirectBufferPool {
 
         if (poolCapacityBytes > availableForPool) {
             long poolMiB = mibRoundedUp(poolCapacityBytes);
-            long maxMiB = maxDirectMemory / (1024 * 1024);
+            long maxMiB = maxDirectMemory / SizeUnits.MIB;
             long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
                 "S3DirectBufferPool requires " + poolMiB + " MiB of direct memory, "
               + "but MaxDirectMemorySize is " + maxMiB + " MiB "
-              + "(80% usable = " + (availableForPool / (1024 * 1024)) + " MiB). "
+              + "(80% usable = " + (availableForPool / SizeUnits.MIB) + " MiB). "
               + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
               + "or lower the pool's ceiling: S3ClientOptions.withMemoryLimitInBytes with auto(), "
               + "or a smaller size passed to fixed() or elastic().");
@@ -746,7 +754,7 @@ final class S3DirectBufferPool {
      * requirement equal to or below the limit.
      */
     private static long mibRoundedUp(long bytes) {
-        return (bytes + 1024 * 1024 - 1) / (1024 * 1024);
+        return (bytes + SizeUnits.MIB - 1) / SizeUnits.MIB;
     }
 
     /**
@@ -755,7 +763,7 @@ final class S3DirectBufferPool {
      * {@link #validateDirectMemoryCapacity}.
      */
     private static long recommendedMaxDirectMemoryMiB(long poolBytes) {
-        return (long) Math.ceil(poolBytes / DIRECT_MEMORY_FRACTION / (1024 * 1024));
+        return (long) Math.ceil(poolBytes / DIRECT_MEMORY_FRACTION / SizeUnits.MIB);
     }
 
     /**
@@ -895,16 +903,16 @@ final class S3DirectBufferPool {
                         String val = arg.substring("-XX:MaxDirectMemorySize=".length()).trim().toLowerCase();
                         long multiplier = 1;
                         if (val.endsWith("t")) {
-                            multiplier = 1024L * 1024L * 1024L * 1024L;
+                            multiplier = 1024L * SizeUnits.GIB;
                             val = val.substring(0, val.length() - 1);
                         } else if (val.endsWith("g")) {
-                            multiplier = 1024L * 1024L * 1024L;
+                            multiplier = SizeUnits.GIB;
                             val = val.substring(0, val.length() - 1);
                         } else if (val.endsWith("m")) {
-                            multiplier = 1024L * 1024L;
+                            multiplier = SizeUnits.MIB;
                             val = val.substring(0, val.length() - 1);
                         } else if (val.endsWith("k")) {
-                            multiplier = 1024L;
+                            multiplier = SizeUnits.KIB;
                             val = val.substring(0, val.length() - 1);
                         }
                         // An explicit 0 means no direct memory, as the JVM reads it.

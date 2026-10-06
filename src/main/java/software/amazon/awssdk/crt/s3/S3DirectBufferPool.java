@@ -248,14 +248,24 @@ final class S3DirectBufferPool {
      *                      throughput target, and memory limit
      * @return a pool whose slot size equals the client's resolved part size
      * @throws IllegalArgumentException if the sizing yields less than one
-     *                                  part, an explicit memoryLimitInBytes
-     *                                  is below a fixed or elastic ceiling,
-     *                                  or partSize is too large for the pool
+     *                                  part, memoryLimitInBytes is negative
+     *                                  or below a fixed or elastic ceiling,
+     *                                  or partSize is negative or too large
+     *                                  for the pool
      * @throws IllegalStateException    if the ceiling does not fit in 80% of
      *                                  {@code -XX:MaxDirectMemorySize}
      */
     static S3DirectBufferPool fromOptions(S3DirectBufferPoolOptions poolOptions, S3ClientOptions clientOptions) {
         int partSize = resolvePartSize(clientOptions);
+        // From here on memoryLimitInBytes is 0 (unset) or positive. A negative
+        // value would read as unset here but reach the native client as a
+        // huge unsigned limit, so the two would size transfers differently.
+        long explicitLimit = clientOptions.getMemoryLimitInBytes();
+        if (explicitLimit < 0) {
+            throw new IllegalArgumentException(
+                "S3ClientOptions.memoryLimitInBytes (" + explicitLimit + ") must be > 0, or 0 to leave it unset, "
+              + "when a direct buffer pool is enabled");
+        }
         int initialSlots;
         int maxSlots;
         boolean ceilingClamped = false;
@@ -381,12 +391,19 @@ final class S3DirectBufferPool {
 
     /**
      * The client's part size, or the native client's 8 MiB default when
-     * unset. Must match the native client's resolution; the native factory
-     * fails client creation if it does not.
+     * unset (0). Must match the native client's resolution; the native
+     * factory fails client creation if it does not. A negative value would
+     * read as unset here but reach the native client as a huge unsigned part
+     * size, so it is rejected with the actual cause instead.
      */
     private static int resolvePartSize(S3ClientOptions clientOptions) {
         long partSize = clientOptions.getPartSize();
-        if (partSize <= 0) {
+        if (partSize < 0) {
+            throw new IllegalArgumentException(
+                "S3ClientOptions.partSize (" + partSize + ") must be > 0, or 0 to leave it unset, "
+              + "when a direct buffer pool is enabled");
+        }
+        if (partSize == 0) {
             return 8 * 1024 * 1024;
         }
         if (partSize > Integer.MAX_VALUE) {

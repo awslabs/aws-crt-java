@@ -427,26 +427,33 @@ final class S3DirectBufferPool {
 
     /** @return the per-slot byte size (the client's resolved part size) */
     int partSize()       { return partSize; }
+
     /** @return the byte budget shared by blocks and dedicated buffers */
     long ceilingBytes()  { return ceilingBytes; }
+
     /** @return the largest reservation served from blocks, without a dedicated buffer */
     long maxGroupBytes() { return (long) maxGroupSlots * partSize; }
+
     /**
      * @return whether dedicated (larger than {@link #maxGroupBytes()}) buffers
      *         can be served; false only for fixed pools, which never allocate
      *         after construction
      */
     boolean servesOversize() { return !fixed; }
+
     /**
      * @return whether an auto() pool reduced its derived ceiling to fit the
      *         JVM direct memory limit; S3Client then passes the ceiling to
      *         the native client so both use the same limit
      */
     boolean ceilingClamped() { return ceilingClamped; }
+
     /** @return the native pool state pointer, 0 until the native client is created */
     long nativePoolState() { return nativePoolState; }
+
     /** Called once by s3ClientNew after the native client (and its pool) is created. */
     void setNativePoolState(long state) { nativePoolState = state; }
+
     /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
     long committedBytes() {
         synchronized (synced) { return synced.committedBytes; }
@@ -597,14 +604,26 @@ final class S3DirectBufferPool {
               + ceilingBytes + " bytes. Raise the pool's memory limit or use a smaller part size.");
             return IMPOSSIBLE;
         }
-        // Make room by freeing fully unused blocks (highest first, floor included).
-        for (int b = numBlocks - 1; b >= 0 && synced.committedBytes + size > ceilingBytes; b--) {
-            if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
-                unbackBlockLocked(b);
+        long needed = synced.committedBytes + size - ceilingBytes;  // bytes to reclaim; <= 0 means it fits now
+        if (needed > 0) {
+            // Free blocks only if that makes the buffer fit: freeing them and
+            // still returning EXHAUSTED would only force blocks to be backed
+            // (and zero-filled) again later.
+            long reclaimable = 0;
+            for (int b = 0; b < numBlocks; b++) {
+                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                    reclaimable += synced.blocks[b].capacity();
+                }
             }
-        }
-        if (synced.committedBytes + size > ceilingBytes) {
-            return EXHAUSTED;
+            if (reclaimable < needed) {
+                return EXHAUSTED;
+            }
+            // Make room by freeing fully unused blocks (highest first, floor included).
+            for (int b = numBlocks - 1; b >= 0 && synced.committedBytes + size > ceilingBytes; b--) {
+                if (synced.blocks[b] != null && synced.usedMask[b] == 0) {
+                    unbackBlockLocked(b);
+                }
+            }
         }
         ByteBuffer dbb;
         try {

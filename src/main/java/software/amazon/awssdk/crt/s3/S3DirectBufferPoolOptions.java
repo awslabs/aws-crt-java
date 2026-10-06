@@ -66,10 +66,11 @@ import java.nio.ByteBuffer;
  *   <li>{@link #auto()}: it sets the ceiling. Use it to cap how much memory
  *       the pool can use.</li>
  *   <li>{@link #fixed(long)} and {@link #elastic(long, long)}: the size you
- *       pass to the factory is the ceiling, so you don't need to set it. If
- *       you do, it must equal the pool's ceiling (the factory size rounded
- *       down to whole parts); otherwise creating the client fails, and the
- *       error message gives the value to use.</li>
+ *       pass to the factory is the ceiling, so you don't need to set
+ *       {@link S3ClientOptions#withMemoryLimitInBytes}. If it is set, it is
+ *       an upper bound: the pool's ceiling (the factory size rounded down
+ *       to whole parts) must not exceed it, or creating the client fails
+ *       and the error message gives the values to use.</li>
  * </ul>
  *
  * <p><b>JVM direct memory limit:</b> the pool's memory counts against

@@ -126,27 +126,31 @@ public class S3Client extends CrtResource {
         clientMultipartUploadThreshold = options.getMultiPartUploadThreshold();
 
         // With a pool, hand native the part size and memory limit the pool
-        // was sized from, never overriding values the customer set:
-        // - memory limit (fixed/elastic only): the ceiling, so the native
-        //   client's max-part-size check and download range sizing see the
-        //   pool's real capacity. auto() pools leave it to the native client,
-        //   which resolves the env vars and tier default exactly as the pool
-        //   did (and fails client creation on a malformed env var, as it does
-        //   without a pool), unless the pool shrank its default to fit direct
-        //   memory; then the native client gets the smaller ceiling too.
+        // was sized from:
+        // - memory limit (fixed/elastic): always the ceiling, even when the
+        //   customer set a larger memoryLimitInBytes (fromOptions rejects a
+        //   smaller one). The native client sizes download ranges and checks
+        //   part sizes against its limit, so it must see the pool's real
+        //   capacity; the customer's limit is still respected, since the
+        //   client uses no more than the ceiling. auto() pools leave it to
+        //   the native client, which resolves memoryLimitInBytes, the env
+        //   vars and the tier default exactly as the pool did (and fails
+        //   client creation on a malformed env var, as it does without a
+        //   pool), unless the pool shrank its default to fit direct memory;
+        //   then the native client gets the smaller ceiling too.
         // - part size: a pool that cannot grow cannot allocate dedicated
-        //   buffers for ranges beyond the pool's maxGroupBytes(), so pin the part size
-        //   (disabling the native client's automatic download range sizing,
-        //   which only runs when no part size is set).
+        //   buffers for ranges beyond the pool's maxGroupBytes(), so pin the
+        //   part size unless the customer set one (disabling the native
+        //   client's automatic download range sizing, which only runs when
+        //   no part size is set).
         long nativePartSize = options.getPartSize();
         long nativeMemoryLimit = options.getMemoryLimitInBytes();
         if (directBufferPool != null) {
             if (!partSizeExplicit && !directBufferPool.servesOversize()) {
                 nativePartSize = directBufferPool.partSize();
             }
-            if (nativeMemoryLimit <= 0
-                    && (options.getDirectBufferPoolOptions().getMode() != S3DirectBufferPoolOptions.Mode.AUTO
-                        || directBufferPool.ceilingClamped())) {
+            boolean autoMode = options.getDirectBufferPoolOptions().getMode() == S3DirectBufferPoolOptions.Mode.AUTO;
+            if (!autoMode || (nativeMemoryLimit <= 0 && directBufferPool.ceilingClamped())) {
                 nativeMemoryLimit = directBufferPool.ceilingBytes();
             }
         }

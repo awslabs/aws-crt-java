@@ -249,9 +249,8 @@ final class S3DirectBufferPool {
      * @return a pool whose slot size equals the client's resolved part size
      * @throws IllegalArgumentException if the sizing yields less than one
      *                                  part, an explicit memoryLimitInBytes
-     *                                  does not match a fixed or elastic
-     *                                  ceiling, or partSize is too large for
-     *                                  the pool
+     *                                  is below a fixed or elastic ceiling,
+     *                                  or partSize is too large for the pool
      * @throws IllegalStateException    if the ceiling does not fit in 80% of
      *                                  {@code -XX:MaxDirectMemorySize}
      */
@@ -266,7 +265,7 @@ final class S3DirectBufferPool {
                 // parts: fully eager, never grows or trims.
                 long bytes = poolOptions.getMemoryLimitBytes();
                 requireAtLeastOnePart("memoryLimitBytes", bytes, partSize);
-                checkMemoryLimitMatches(clientOptions, bytes / partSize * partSize, partSize);
+                checkMemoryLimitCoversCeiling(clientOptions, bytes / partSize * partSize, partSize);
                 maxSlots = (int) Math.min(Integer.MAX_VALUE, bytes / partSize);
                 initialSlots = maxSlots;
                 break;
@@ -279,7 +278,7 @@ final class S3DirectBufferPool {
                 // minBytes < 0, maxBytes <= 0 and minBytes > maxBytes.
                 long maxBytes = poolOptions.getMaxBytes();
                 requireAtLeastOnePart("maxBytes", maxBytes, partSize);
-                checkMemoryLimitMatches(clientOptions, maxBytes / partSize * partSize, partSize);
+                checkMemoryLimitCoversCeiling(clientOptions, maxBytes / partSize * partSize, partSize);
                 maxSlots = (int) Math.min(Integer.MAX_VALUE, maxBytes / partSize);
                 initialSlots = (int) Math.min(maxSlots, poolOptions.getMinBytes() / partSize);
                 break;
@@ -337,8 +336,8 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Size check that runs before {@link #checkMemoryLimitMatches}, so a size
-     * below one part reports that cause rather than a mismatch with a
+     * Size check that runs before {@link #checkMemoryLimitCoversCeiling}, so a
+     * size below one part reports that cause rather than a conflict with a
      * 0-byte ceiling.
      */
     private static void requireAtLeastOnePart(String name, long bytes, int partSize) {
@@ -349,23 +348,34 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * For fixed/elastic pools the pool ceiling IS the client's memory; an
-     * explicit, different memoryLimitInBytes would give the native client
-     * a different limit than the pool enforces. Refuse rather than override.
+     * For fixed/elastic pools the pool ceiling is the client's memory. An
+     * explicit memoryLimitInBytes is an upper bound: a ceiling at or below
+     * it is within the limit, and {@link S3Client} then gives the native
+     * client the ceiling, so its range sizing and part-size checks match
+     * the memory that exists. A ceiling above it would use more than the
+     * customer allowed, so refuse rather than shrink an explicit pool size.
      * The ceiling is a whole number of parts, so a fixed() or elastic()
      * size that is not a multiple of partSize rounds down; the message says
      * so, because the caller may have passed the same number to both
      * options.
      */
-    private static void checkMemoryLimitMatches(S3ClientOptions clientOptions, long ceilingBytes, int partSize) {
+    private static void checkMemoryLimitCoversCeiling(S3ClientOptions clientOptions, long ceilingBytes,
+                                                      int partSize) {
         long explicit = clientOptions.getMemoryLimitInBytes();
-        if (explicit > 0 && explicit != ceilingBytes) {
+        if (explicit <= 0) {
+            return;
+        }
+        if (explicit < ceilingBytes) {
             throw new IllegalArgumentException(
-                "S3ClientOptions.memoryLimitInBytes (" + explicit + ") conflicts with the direct buffer pool's "
-              + "ceiling (" + ceilingBytes + " bytes). The ceiling is a whole number of parts (" + partSize
-              + " bytes each), rounded down from the pool size. Leave memoryLimitInBytes unset (the pool ceiling "
-              + "is used), set it to " + ceilingBytes + ", or use S3DirectBufferPoolOptions.auto() to size the "
-              + "pool from it.");
+                "The direct buffer pool's ceiling (" + ceilingBytes + " bytes) exceeds "
+              + "S3ClientOptions.memoryLimitInBytes (" + explicit + "). The ceiling is a whole number of parts ("
+              + partSize + " bytes each), rounded down from the pool size. Raise memoryLimitInBytes to at least "
+              + ceilingBytes + ", leave it unset (the pool ceiling is used), or pass a smaller size to the pool.");
+        }
+        if (explicit > ceilingBytes) {
+            Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtS3,
+                "S3DirectBufferPool: memoryLimitInBytes is " + explicit + " bytes; the client uses the pool's "
+              + "ceiling of " + ceilingBytes + " bytes as its memory limit.");
         }
     }
 
@@ -662,12 +672,12 @@ final class S3DirectBufferPool {
             // allocation would fail with OutOfMemoryError.
             long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
-                "S3DirectBufferPool requires " + (poolCapacityBytes / (1024 * 1024)) + " MiB of direct memory, "
+                "S3DirectBufferPool requires " + mibRoundedUp(poolCapacityBytes) + " MiB of direct memory, "
               + "but -XX:MaxDirectMemorySize=0 allows none. Remove the flag to use the JVM default, "
               + "or set -XX:MaxDirectMemorySize=" + recommendedMiB + "m or higher.");
         }
         if (maxDirectMemory < 0) {
-            long poolMiB = poolCapacityBytes / (1024 * 1024);
+            long poolMiB = mibRoundedUp(poolCapacityBytes);
             if (isAndroid()) {
                 // Android has no MaxDirectMemorySize: direct buffers come from
                 // native memory, bounded only by the device and the app's
@@ -691,7 +701,7 @@ final class S3DirectBufferPool {
         long availableForPool = (long) (maxDirectMemory * DIRECT_MEMORY_FRACTION);
 
         if (poolCapacityBytes > availableForPool) {
-            long poolMiB = poolCapacityBytes / (1024 * 1024);
+            long poolMiB = mibRoundedUp(poolCapacityBytes);
             long maxMiB = maxDirectMemory / (1024 * 1024);
             long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
@@ -711,6 +721,15 @@ final class S3DirectBufferPool {
         } catch (SecurityException e) {
             return false;
         }
+    }
+
+    /**
+     * Whole MiB, rounded up, for messages about memory a pool needs. Limits
+     * are shown rounded down, so a pool that does not fit never prints a
+     * requirement equal to or below the limit.
+     */
+    private static long mibRoundedUp(long bytes) {
+        return (bytes + 1024 * 1024 - 1) / (1024 * 1024);
     }
 
     /**
@@ -872,7 +891,9 @@ final class S3DirectBufferPool {
                             val = val.substring(0, val.length() - 1);
                         }
                         // An explicit 0 means no direct memory, as the JVM reads it.
-                        return Long.parseLong(val) * multiplier;
+                        // multiplyExact: an absurd value overflows to -1 (unknown)
+                        // instead of wrapping to a bogus limit.
+                        return Math.multiplyExact(Long.parseLong(val), multiplier);
                     }
                 }
                 return Runtime.getRuntime().maxMemory();

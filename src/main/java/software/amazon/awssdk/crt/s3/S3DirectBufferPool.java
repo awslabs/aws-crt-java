@@ -318,7 +318,7 @@ final class S3DirectBufferPool {
                     // JVM's direct memory limit instead of failing. Explicit
                     // sizes are never changed; they fail fast below.
                     memoryLimitBytes = S3Client.defaultMemoryLimitForThroughput(clientOptions.getThroughputTargetGbps());
-                    long maxDirectMemory = getMaxDirectMemory();
+                    long maxDirectMemory = DirectMemoryLimit.BYTES;
                     long available = (long) (maxDirectMemory * DIRECT_MEMORY_FRACTION) / partSize * partSize;
                     if (maxDirectMemory > 0 && memoryLimitBytes > available && available >= partSize) {
                         // WARN: the pool is smaller than the client would normally
@@ -644,13 +644,26 @@ final class S3DirectBufferPool {
         return Math.min(BLOCK_SLOTS, maxSlots - b * BLOCK_SLOTS);
     }
 
+    /**
+     * Marks a run of {@code count} slots from {@code start} in block {@code b}
+     * as leased and returns its handle: {@code b} in bits 16 and up,
+     * {@code start} in bits 8-15, {@code count} in bits 0-7.
+     */
     private long leaseRunLocked(int b, int start, int count) {
         synced.usedMask[b] |= ((1 << count) - 1) << start;
         return ((long) b << 16) | ((long) start << 8) | count;
     }
 
+    /** Block index of a slot-run handle. */
     private static int runBlock(long handle) { return (int) (handle >>> 16); }
+
+    /** Index of the run's first slot within its block. */
     private static int runStart(long handle) { return (int) ((handle >>> 8) & 0xFF); }
+    
+    /**
+     * Bits the run occupies in its block's {@code usedMask}: {@code count}
+     * bits starting at the run's first slot.
+     */
     private static int runMask(long handle) {
         int count = (int) (handle & 0xFF);
         return ((1 << count) - 1) << runStart(handle);
@@ -704,7 +717,7 @@ final class S3DirectBufferPool {
      *                               an explicit {@code MaxDirectMemorySize=0}
      */
     private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
-        long maxDirectMemory = getMaxDirectMemory();
+        long maxDirectMemory = DirectMemoryLimit.BYTES;
         // Logged here, not in DirectMemoryLimit's initializer: a failure during
         // class initialization would break that class for the life of the JVM.
         Log.log(Log.LogLevel.Debug, Log.LogSubject.JavaCrtS3,
@@ -786,16 +799,9 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * Returns the JVM's {@code MaxDirectMemorySize}, or -1 if it cannot be
-     * determined. 0 means an explicit {@code -XX:MaxDirectMemorySize=0} (no
-     * direct memory), not "unset". The limit is fixed for the life of the
-     * JVM, so it is probed once and cached.
+     * The JVM's {@code MaxDirectMemorySize}. A lazy holder: the limit is fixed
+     * for the life of the JVM, so it is probed on first use and cached.
      */
-    private static long getMaxDirectMemory() {
-        return DirectMemoryLimit.BYTES;
-    }
-
-    /** Lazy holder: probes on first use, then caches for the JVM's lifetime. */
     private static final class DirectMemoryLimit {
         /**
          * Why the HotSpotDiagnosticMXBean probe failed on a HotSpot-based
@@ -805,7 +811,13 @@ final class S3DirectBufferPool {
         /** Which probe answered, for the DEBUG log. Set by probe(). */
         private static String source;
 
+        /**
+         * The limit in bytes, or -1 if it cannot be determined. 0 means an
+         * explicit {@code -XX:MaxDirectMemorySize=0} (no direct memory), not
+         * "unset".
+         */
         static final long BYTES = probe();
+        /** Which probe answered (plus any HotSpot fallback note), for the DEBUG log. */
         static final String SOURCE = source;
 
         /**

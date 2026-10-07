@@ -228,22 +228,18 @@ final class S3DirectBufferPool {
         // not leave them for GC), log, and rethrow. The pool is not yet
         // shared; the monitor is taken only to keep the Synced rule uniform.
         synchronized (synced) {
-            allocateFloorLocked();
-        }
-    }
-
-    private void allocateFloorLocked() {
-        try {
-            for (int b = 0; b < floorBlocks; b++) {
-                backBlockLocked(b);
+            try {
+                for (int b = 0; b < floorBlocks; b++) {
+                    backBlockLocked(b);
+                }
+            } catch (OutOfMemoryError e) {
+                Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                    "S3DirectBufferPool: OutOfMemoryError during eager allocation of " + floorBlocks
+                  + " block(s) (up to " + BLOCK_SLOTS + " x " + partSize + " bytes each). "
+                  + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
+                freeUnusedBlocksLocked(0);  // nothing is leased yet, so this frees every backed block
+                throw e;
             }
-        } catch (OutOfMemoryError e) {
-            Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
-                "S3DirectBufferPool: OutOfMemoryError during eager allocation of " + floorBlocks
-              + " block(s) (up to " + BLOCK_SLOTS + " x " + partSize + " bytes each). "
-              + "Consider raising -XX:MaxDirectMemorySize or reducing pool size.");
-            freeUnusedBlocksLocked(0);  // nothing is leased yet, so this frees every backed block
-            throw e;
         }
     }
 
@@ -454,11 +450,6 @@ final class S3DirectBufferPool {
     /** Called once by s3ClientNew after the native client (and its pool) is created. */
     void setNativePoolState(long state) { nativePoolState = state; }
 
-    /** @return bytes currently backed (blocks plus dedicated buffers); for diagnostics and tests */
-    long committedBytes() {
-        synchronized (synced) { return synced.committedBytes; }
-    }
-
     /**
      * Marks the pool closed and immediately frees every unused block.
      * Called by {@link S3Client} when its shutdown completes (and on
@@ -532,7 +523,8 @@ final class S3DirectBufferPool {
             if ((handle & DEDICATED_TAG) != 0) {
                 Dedicated d = synced.leasedDedicated.remove(handle);
                 if (d == null) throw new IllegalStateException("release: dedicated lease not held");
-                freeDedicatedLocked(d);
+                synced.committedBytes -= d.buffer.capacity();
+                DirectBufferCleaner.free(d.buffer);
                 return;
             }
             int b = runBlock(handle);
@@ -555,7 +547,6 @@ final class S3DirectBufferPool {
      */
     void trim() {
         synchronized (synced) {
-            if (closed) return;
             freeUnusedBlocksLocked(floorBlocks);
         }
     }
@@ -692,11 +683,6 @@ final class S3DirectBufferPool {
         synced.blockAddresses[b] = 0L;
         synced.committedBytes -= dbb.capacity();
         DirectBufferCleaner.free(dbb);
-    }
-
-    private void freeDedicatedLocked(Dedicated d) {
-        synced.committedBytes -= d.buffer.capacity();
-        DirectBufferCleaner.free(d.buffer);
     }
 
     /* ==================================================================== */

@@ -108,27 +108,11 @@ public interface S3MetaRequestResponseHandler {
      * {@link S3ClientOptions#withDirectBufferPoolOptions direct buffer pool}
      * is enabled on the client.
      *
-     * <p>The {@link S3BorrowedBuffer} keeps the underlying pool memory leased
-     * until {@link S3BorrowedBuffer#close() close()} is called, letting the
-     * customer hold the buffer across async boundaries (e.g. queuing into a
-     * reactive publisher, writing to {@code AsynchronousFileChannel}). The
-     * buffer's contract requires an explicit close. See the
-     * {@link S3BorrowedBuffer} class Javadoc for the lifetime rules.</p>
-     *
-     * <p>Close the buffer on every exit path, including when this method
-     * throws: use try-with-resources or a {@code finally} block when
-     * consuming it synchronously. A buffer that is neither closed nor
-     * handed off before an exception is only recovered by the GC fallback,
-     * after an unbounded delay, and is reported as a leak. A throw from
-     * this method also fails the meta request.</p>
-     *
-     * <p>Holding a buffer open is not flow control: it keeps only its own
-     * pool memory leased, the client keeps downloading further parts into
-     * other pool memory, and once the pool is exhausted every request on
-     * the client waits. To pause this download, enable
-     * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
-     * return 0 (or a small increment) from this method, and call
-     * {@link S3MetaRequest#incrementReadWindow} when ready for more.</p>
+     * <p>The buffer keeps its pool memory until it is closed, so it can be
+     * held past this callback (for example, handed to another thread). Close
+     * it on every path, including when this method throws; see
+     * {@link S3BorrowedBuffer} for lifetime, leak and flow-control rules. A
+     * throw from this method also fails the meta request.</p>
      *
      * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
      * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no

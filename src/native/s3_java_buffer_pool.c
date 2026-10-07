@@ -118,7 +118,7 @@ struct java_pool_state {
      * (which would strand the pended future with capacity free). Lock
      * order: pending_lock, then the Java pool's lock. Futures are always
      * resolved after unlocking: setting a ticket on a future aws-c-s3 has
-     * already cancelled destroys the ticket inside set_result, and that
+     * already cancelled destroys the ticket inside set_result_by_move, and that
      * runs s_java_ticket_destroy, which takes pending_lock.
      *
      * Strict FIFO for anything that consumes capacity: while a reservation

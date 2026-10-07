@@ -148,12 +148,7 @@ final class S3DirectBufferPool {
         }
     }
 
-    /**
-     * Every mutable field of the pool's block and dedicated-buffer state.
-     * The holder is also the lock: read or write its fields only inside
-     * {@code synchronized (synced)}, directly or from a {@code *Locked}
-     * helper.
-     */
+    /** Mutable pool state. The holder is also the lock (see Concurrency in the class doc). */
     private static final class Synced {
         /**
          * Backing buffer per block; null until first needed (or after trim).
@@ -479,9 +474,7 @@ final class S3DirectBufferPool {
      * native event-loop threads); on {@link #EXHAUSTED} native pends its
      * future.
      *
-     * @return a lease handle; {@link #EXHAUSTED} when capacity is currently
-     *         taken; or {@link #IMPOSSIBLE} when this pool can never serve
-     *         the size (reason logged; native fails the reservation)
+     * @return a lease handle, {@link #EXHAUSTED}, or {@link #IMPOSSIBLE}
      * @throws IllegalStateException if the pool is closed
      */
     long tryAcquire(long size) {
@@ -497,7 +490,6 @@ final class S3DirectBufferPool {
         }
     }
 
-    /** @return the native address of a lease */
     long leaseAddress(long handle) {
         synchronized (synced) {
             if ((handle & DEDICATED_TAG) != 0) {
@@ -512,12 +504,7 @@ final class S3DirectBufferPool {
         }
     }
 
-    /**
-     * Returns a lease. Slot runs go back to their block (a fully free block
-     * on a closed pool is freed); a dedicated buffer is freed. After this
-     * returns the memory MAY be re-issued and overwritten; any outstanding
-     * view of it is UNSAFE to read.
-     */
+    /** Returns a lease. Its memory may be reused immediately; any view of it is then unsafe to read. */
     void release(long handle) {
         synchronized (synced) {
             if ((handle & DEDICATED_TAG) != 0) {
@@ -555,7 +542,11 @@ final class S3DirectBufferPool {
     /* Allocation internals (caller holds the synced monitor)               */
     /* ==================================================================== */
 
-    /** First fit: a free run of {@code count} slots in a backed block, else back a new block. */
+    /**
+     * First fit: a free run in a backed block, else back a new block within
+     * the ceiling (freeing an idle short last block if that is what makes one
+     * fit).
+     */
     private long acquireRunLocked(int count) {
         int want = (1 << count) - 1;
         for (int b = 0; b < numBlocks; b++) {
@@ -593,6 +584,7 @@ final class S3DirectBufferPool {
         return EXHAUSTED;
     }
 
+    /** Allocates a dedicated buffer, freeing idle blocks only when that makes it fit. */
     private long acquireDedicatedLocked(long size) {
         if (!servesOversize()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,

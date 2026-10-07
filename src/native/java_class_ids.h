@@ -342,8 +342,8 @@ extern struct java_s3_meta_request_response_handler_native_adapter_properties
 
 /* S3BorrowedBuffer */
 struct java_s3_borrowed_buffer_properties {
-    jclass class_ref;      /* global ref; created via NewGlobalRef in the cache function */
-    jmethodID constructor; /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
+    jclass s3_borrowed_buffer_class; /* global ref */
+    jmethodID constructor;           /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
 };
 extern struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 

@@ -753,36 +753,25 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
         (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
 
-    /* S3BorrowedBuffer overload: lifetime-controlled zero-copy opt-in */
+    /* S3BorrowedBuffer overload (zero-copy delivery) */
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
 }
 
-/* ------------------------------------------------------------------ */
-/* S3BorrowedBuffer class & constructor                               */
-/* ------------------------------------------------------------------ */
 struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
 static void s_cache_s3_borrowed_buffer(JNIEnv *env) {
-    jclass local_cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3BorrowedBuffer");
-    AWS_FATAL_ASSERT(local_cls);
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3BorrowedBuffer");
+    AWS_FATAL_ASSERT(cls);
+    /* Global ref: NewObject constructs instances from event-loop threads. */
+    s3_borrowed_buffer_properties.s3_borrowed_buffer_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.s3_borrowed_buffer_class);
 
-    /* Store a global ref so NewObject can construct instances from any
-     * thread across meta-request lifetimes. Local ref is released after. */
-    s3_borrowed_buffer_properties.class_ref = (jclass)(*env)->NewGlobalRef(env, local_cls);
-    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.class_ref);
-    (*env)->DeleteLocalRef(env, local_cls);
-
-    /* Package-private constructor: S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
-    s3_borrowed_buffer_properties.constructor =
-        (*env)->GetMethodID(env, s3_borrowed_buffer_properties.class_ref, "<init>", "(JLjava/nio/ByteBuffer;)V");
+    s3_borrowed_buffer_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(JLjava/nio/ByteBuffer;)V");
     AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.constructor);
 }
 
-/* ------------------------------------------------------------------ */
-/* S3DirectBufferPool class & methods                                 */
-/* ------------------------------------------------------------------ */
 struct java_s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 
 static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
@@ -798,8 +787,6 @@ static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
     s3_direct_buffer_pool_properties.release = (*env)->GetMethodID(env, cls, "release", "(J)V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.release);
 
-    /* Pool trim: called from s_java_pool_trim after aws-c-s3's
-     * client-scheduler idleness gate. */
     s3_direct_buffer_pool_properties.trim = (*env)->GetMethodID(env, cls, "trim", "()V");
     AWS_FATAL_ASSERT(s3_direct_buffer_pool_properties.trim);
 

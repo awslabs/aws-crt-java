@@ -864,7 +864,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
      * releasing. */
     jobject borrowed = (*env)->NewObject(
         env,
-        s3_borrowed_buffer_properties.class_ref,
+        s3_borrowed_buffer_properties.s3_borrowed_buffer_class,
         s3_borrowed_buffer_properties.constructor,
         (jlong)(intptr_t)ticket,
         sliced_dbb);

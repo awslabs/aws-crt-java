@@ -81,6 +81,9 @@ public class S3ClientOptions {
      */
     private FileIoOptions fileIoOptions;
 
+    /** Optional direct buffer pool sizing; see {@link #withDirectBufferPoolOptions}. */
+    private S3DirectBufferPoolOptions directBufferPoolOptions;
+
     public S3ClientOptions() {
         this.computeContentMd5 = false;
     }
@@ -156,6 +159,9 @@ public class S3ClientOptions {
      * Notes: For PUT_OBJECT requests, the client will automatically adjust the part size to meet service limits:
      *   - Maximum number of parts per upload is 10,000
      *   - Minimum upload part size is 5 MiB
+     * With a direct buffer pool ({@link #withDirectBufferPoolOptions}), a part size set here is never
+     * raised: an upload that needs larger parts is rejected when the request is made. See
+     * {@link S3DirectBufferPoolOptions}.
      *
      * @param partSize size in bytes of parts for downloads and uploads
      * @return this
@@ -219,7 +225,7 @@ public class S3ClientOptions {
     }
 
     /**
-     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled).
+     * The starting size of each S3MetaRequest's flow-control window (if backpressure is enabled), in bytes.
      *
      * @see #withReadBackpressureEnabled
      *
@@ -409,5 +415,39 @@ public class S3ClientOptions {
      */
     public FileIoOptions getFileIoOptions() {
         return fileIoOptions;
+    }
+
+    /**
+     * Enables a Java-owned direct buffer pool for all of the client's part
+     * buffers (download response bodies and multipart upload parts), in
+     * place of the default native buffer pool. The client creates the pool
+     * from these options at construction, sized to its own part size; the
+     * client closes it when its shutdown completes. For how long borrowed
+     * buffers keep their memory, see the Lifetime section of
+     * {@link S3DirectBufferPoolOptions}.
+     *
+     * <p>Enabling the pool does NOT change the delivery contract of
+     * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
+     * It still receives a heap {@code byte[]}-backed buffer that is safe
+     * to retain. Zero-copy delivery is available only by overriding
+     * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.</p>
+     *
+     * @param poolOptions pool sizing (for example {@link S3DirectBufferPoolOptions#auto()}),
+     *                    or {@code null} to use the default native pool
+     * @return this
+     * @see S3DirectBufferPoolOptions
+     */
+    public S3ClientOptions withDirectBufferPoolOptions(S3DirectBufferPoolOptions poolOptions) {
+        this.directBufferPoolOptions = poolOptions;
+        return this;
+    }
+
+    /**
+     * Returns the configured direct buffer pool sizing, or {@code null} if not set.
+     *
+     * @return the direct buffer pool options or null
+     */
+    public S3DirectBufferPoolOptions getDirectBufferPoolOptions() {
+        return directBufferPoolOptions;
     }
 }

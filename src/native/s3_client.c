@@ -8,6 +8,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include "s3_java_buffer_pool.h"
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
 #include <aws/http/proxy.h>
@@ -17,6 +18,7 @@
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
+#include <aws/s3/s3.h>
 #include <aws/s3/s3_client.h>
 #include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
@@ -50,6 +52,10 @@ struct s3_client_make_meta_request_callback_data {
     struct aws_input_stream *input_stream;
     struct aws_signing_config_data signing_config_data;
     jthrowable java_exception;
+    /* Set when the client has a Java direct buffer pool: a pool ref, dropped
+     * in s_s3_meta_request_callback_cleanup. The finish callback drains the
+     * pool's wait queue (see aws_s3_java_buffer_pool_drain). */
+    struct aws_s3_buffer_pool *java_buffer_pool;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -353,7 +359,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jobject jni_buffer_pool /* optional S3DirectBufferPool, may be NULL */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -522,10 +529,61 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
-    struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
+    /* Attach the Java buffer pool factory if S3Client created a pool. */
+    bool buffer_pool_wiring_failed = false;
+    struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
+    if (jni_buffer_pool != NULL) {
+        factory_data.java_pool_global = (*env)->NewGlobalRef(env, jni_buffer_pool);
+        /* Package JVM for the factory. Stack allocation is safe because
+         * aws_s3_client_new invokes the factory synchronously. */
+        if (factory_data.java_pool_global == NULL || (*env)->GetJavaVM(env, &factory_data.jvm) != 0) {
+            /* Explicit opt-in must not silently degrade to the default
+             * pool; fail client creation instead. Clear any pending
+             * Java exception (NewGlobalRef OOM) so we can throw our own
+             * below. A partially-created global ref is released by the
+             * !client cleanup path. */
+            aws_jni_check_and_clear_exception(env);
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_CLIENT,
+                "S3DirectBufferPool: failed to wire the pool (NewGlobalRef/GetJavaVM); "
+                "failing client creation");
+            buffer_pool_wiring_failed = true;
+        } else {
+            client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
+            client_config.buffer_pool_user_data = &factory_data;
+        }
+    }
+
+    struct aws_s3_client *client = NULL;
+    if (buffer_pool_wiring_failed) {
+        aws_jni_throw_runtime_exception(
+            env, "S3Client.s3ClientNew: failed to wire the S3DirectBufferPool; failing client creation");
+    } else {
+        client = aws_s3_client_new(allocator, &client_config);
+        if (!client) {
+            aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
+        } else if (factory_data.out_pool != NULL) {
+            /* Publish the native pool so S3Client passes it on each meta
+             * request. The client's ref keeps it alive while meta requests
+             * can be made; each meta request then takes its own ref. */
+            (*env)->CallVoidMethod(
+                env,
+                jni_buffer_pool,
+                s3_direct_buffer_pool_properties.setNativePoolState,
+                (jlong)(intptr_t)factory_data.out_pool);
+            /* A trivial setter; never expected to throw. */
+            aws_jni_check_and_clear_exception(env);
+        }
+    }
     if (!client) {
-        aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
-        /* Clean up stuff */
+        /* Clean up stuff. If the factory took ownership of the global
+         * ref (in either its success or failure path), it will have
+         * NULLed factory_data.java_pool_global. Only release here if
+         * the factory never ran (e.g. aws_s3_client_new failed
+         * validation before reaching the buffer-pool factory call). */
+        if (factory_data.java_pool_global != NULL) {
+            (*env)->DeleteGlobalRef(env, factory_data.java_pool_global);
+        }
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(allocator, callback_data);
     }
@@ -685,6 +743,180 @@ cleanup:
     return return_value;
 }
 
+/*
+ * Owned copy of a response body that aws-c-s3 delivered without a pool
+ * ticket. Default meta requests (for example a GetObject with a partNumber
+ * query) read their body into a buffer the request owns and frees as soon
+ * as the body callback returns, so the borrowed view needs memory with its
+ * own lifetime. This "ticket" is never handed to aws-c-s3; it only gives
+ * S3BorrowedBuffer the same ref-counted handle as a pool ticket, and its
+ * memory is freed when the last ref drops. It is NOT pool memory: it does
+ * not count toward the pool's ceiling or the JVM direct memory limit.
+ */
+struct s3_owned_body_copy {
+    struct aws_s3_buffer_ticket ticket;
+    struct aws_allocator *allocator;
+    size_t len;
+    uint8_t *data; /* trails this struct in the same allocation */
+};
+
+/* Vtable completeness only: this ticket is never handed to aws-c-s3, so
+ * nothing claims it. Unlike a pool ticket's claim (empty buffer for
+ * aws-c-s3 to fill), it returns the already-filled copy. */
+static struct aws_byte_buf s_owned_body_copy_claim(struct aws_s3_buffer_ticket *ticket) {
+    struct s3_owned_body_copy *copy = ticket->impl;
+    return aws_byte_buf_from_array(copy->data, copy->len);
+}
+
+static struct aws_s3_buffer_ticket_vtable s_owned_body_copy_vtable = {
+    .claim = s_owned_body_copy_claim,
+    /* acquire/release left NULL: default ref_count behavior. */
+};
+
+static void s_owned_body_copy_destroy(void *user_data) {
+    struct s3_owned_body_copy *copy = user_data;
+    aws_mem_release(copy->allocator, copy);
+}
+
+/* Returns a ticket holding one ref (the one S3BorrowedBuffer will own). */
+static struct aws_s3_buffer_ticket *s_owned_body_copy_new(
+    struct aws_allocator *allocator,
+    const struct aws_byte_cursor *body) {
+    /* aws_mem_acquire aborts on OOM, so no NULL check. */
+    struct s3_owned_body_copy *copy = aws_mem_acquire(allocator, sizeof(struct s3_owned_body_copy) + body->len);
+    copy->allocator = allocator;
+    copy->len = body->len;
+    copy->data = (uint8_t *)(copy + 1);
+    if (body->len > 0) {
+        memcpy(copy->data, body->ptr, body->len);
+    }
+    copy->ticket.vtable = &s_owned_body_copy_vtable;
+    copy->ticket.impl = copy;
+    aws_ref_count_init(&copy->ticket.ref_count, copy, s_owned_body_copy_destroy);
+    return &copy->ticket;
+}
+
+/*
+ * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
+ * direct buffer pool is attached AND the handler overrides
+ * onResponseBody(S3BorrowedBuffer, long, long).
+ *
+ * Hands the Java S3BorrowedBuffer one ticket ref, released via
+ * close()/GC-cleaner (nativeReleaseTicket below). With a pool ticket that is
+ * an EXTRA ref on it (zero-copy); without one, it is the only ref on an
+ * owned copy of the body (see s3_owned_body_copy). Construction failure
+ * before hand-off releases the ref here.
+ */
+static int s_on_s3_meta_request_body_callback_borrowed(
+    struct aws_s3_meta_request *meta_request,
+    const struct aws_byte_cursor *body,
+    const struct aws_s3_meta_request_receive_body_extra_info info,
+    void *user_data) {
+
+    struct s3_client_make_meta_request_callback_data *callback_data =
+        (struct s3_client_make_meta_request_callback_data *)user_data;
+
+    /********** JNI ENV ACQUIRE **********/
+    struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
+    JNIEnv *env = jvm_env_context.env;
+    if (env == NULL) {
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
+    /* STEP 1: Take the ref the S3BorrowedBuffer will own, BEFORE any Java
+     * construction. If construction fails, we release it before returning
+     * so nothing leaks. Once the S3BorrowedBuffer object owns the ref, the
+     * release is deferred to close()/GC.
+     * - Pool ticket: an extra ref; the view is over the leased pool memory.
+     * - No ticket (body not from the pool, freed when this callback returns):
+     *   copy it into memory we own, and view the copy. */
+    struct aws_s3_buffer_ticket *ticket = info.ticket;
+    void *view_ptr = (void *)body->ptr;
+    if (ticket != NULL) {
+        aws_s3_buffer_ticket_acquire(ticket);
+    } else {
+        ticket = s_owned_body_copy_new(aws_jni_get_allocator(), body);
+        view_ptr = ((struct s3_owned_body_copy *)ticket->impl)->data;
+    }
+
+    /* STEP 2: Construct the DirectByteBuffer view, sliced to the response
+     * body length (not the full lease capacity). */
+    jobject sliced_dbb = (*env)->NewDirectByteBuffer(env, view_ptr, (jlong)body->len);
+    if (sliced_dbb == NULL || aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_WARN(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: S3BorrowedBuffer: NewDirectByteBuffer failed for chunk "
+            "(len=%zu, range_start=%llu); releasing ticket and failing meta-request",
+            (void *)meta_request,
+            body->len,
+            (unsigned long long)info.range_start);
+        aws_s3_buffer_ticket_release(ticket);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
+    /* STEP 3: Construct the S3BorrowedBuffer Java object. From this point
+     * on the Java object owns the extra ref via its ticketPtr field. If
+     * NewObject fails, we release our extra ref before returning; if it
+     * succeeds, the Java object's close()/GC is responsible for
+     * releasing. */
+    jobject borrowed = (*env)->NewObject(
+        env,
+        s3_borrowed_buffer_properties.s3_borrowed_buffer_class,
+        s3_borrowed_buffer_properties.constructor,
+        (jlong)(intptr_t)ticket,
+        sliced_dbb);
+    if (borrowed == NULL || aws_jni_check_and_clear_exception(env)) {
+        AWS_LOGF_WARN(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: S3BorrowedBuffer: NewObject failed; releasing ticket and failing meta-request",
+            (void *)meta_request);
+        aws_s3_buffer_ticket_release(ticket);
+        (*env)->DeleteLocalRef(env, sliced_dbb);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+        return aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
+    /* STEP 4: Dispatch to Java. The customer's handler MAY close synchronously
+     * inside the callback (which drops that ref immediately) or MAY
+     * stash the buffer for later async processing (the extra ref persists
+     * until the customer calls close(), or until the phantom-reference
+     * cleaner fires as a GC fallback). */
+    uint64_t range_end = info.range_start + body->len;
+    jint window_increment = (*env)->CallIntMethod(
+        env,
+        callback_data->java_s3_meta_request_response_handler_native_adapter,
+        s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed,
+        borrowed,
+        (jlong)info.range_start,
+        (jlong)range_end);
+
+    if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_META_REQUEST,
+            "id=%p: Received exception from S3MetaRequest.onResponseBody (S3BorrowedBuffer path) callback",
+            (void *)meta_request);
+        /* Extra ref is still held by the S3BorrowedBuffer object; the
+         * cleaner will release it when the object becomes phantom-reachable.
+         * We do NOT release here; that would double-release. */
+        (*env)->DeleteLocalRef(env, borrowed);
+        (*env)->DeleteLocalRef(env, sliced_dbb);
+        aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+        return aws_raise_error(AWS_ERROR_HTTP_CALLBACK_FAILURE);
+    }
+
+    if (window_increment > 0) {
+        aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)window_increment);
+    }
+
+    (*env)->DeleteLocalRef(env, borrowed);
+    (*env)->DeleteLocalRef(env, sliced_dbb);
+    aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);
+    /********** JNI ENV RELEASE **********/
+
+    return AWS_OP_SUCCESS;
+}
+
 static int s_marshal_http_headers_to_buf(const struct aws_http_headers *headers, struct aws_byte_buf *out_headers_buf) {
     /* calculate initial header capacity */
     size_t headers_initial_capacity = 0;
@@ -778,10 +1010,17 @@ static void s_on_s3_meta_request_finish_callback(
     const struct aws_s3_meta_request_result *meta_request_result,
     void *user_data) {
 
-    (void)meta_request;
-
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
+
+    /* If this request was cancelled or paused, aws-c-s3 failed its pending
+     * reservations without telling the pool. Drain so a reservation queued
+     * behind one of them is served now instead of waiting for an unrelated
+     * reserve or release. When nothing was cancelled, the drain only prunes
+     * and makes no JNI call. aws-c-s3 holds no meta request lock here. */
+    if (callback_data->java_buffer_pool != NULL) {
+        aws_s3_java_buffer_pool_drain(callback_data->java_buffer_pool);
+    }
 
     /********** JNI ENV ACQUIRE **********/
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
@@ -1241,6 +1480,9 @@ static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data) {
+        if (callback_data->java_buffer_pool != NULL) {
+            aws_s3_buffer_pool_release(callback_data->java_buffer_pool);
+        }
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         (*env)->DeleteGlobalRef(env, callback_data->java_exception);
@@ -1478,7 +1720,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
+    jboolean jni_uses_borrowed_overload /* handler overrides the S3BorrowedBuffer overload */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1603,6 +1847,18 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .direct_io = direct_io,
     };
 
+    /* Body callback selection:
+     *   - Pool attached AND handler opted into the borrowed-buffer overload
+     *     -> body_callback_ex (lifetime-controlled zero-copy)
+     *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
+     *     copy source is Java pool memory instead of the default native pool, but
+     *     the handler-facing contract (heap byte[], safe to retain) is
+     *     identical to the no-pool path.
+     *
+     * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
+     * we set exactly one below. */
+    bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_overload;
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .operation_name = operation_name,
@@ -1612,7 +1868,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        .body_callback = s_on_s3_meta_request_body_callback,
+        .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
+        .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .telemetry_callback = s_on_s3_meta_request_telemetry_callback,
@@ -1628,6 +1885,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         /* If fio options not set, let native code to decide the default instead */
         .fio_opts = fio_options_set ? &fio_opts : NULL,
     };
+
+    /* Set before creation: the finish callback may run on another thread as
+     * soon as the meta request exists. Released in cleanup, including when
+     * creation fails below. */
+    if (jni_buffer_pool_state != 0) {
+        callback_data->java_buffer_pool =
+            aws_s3_buffer_pool_acquire((struct aws_s3_buffer_pool *)(uintptr_t)jni_buffer_pool_state);
+    }
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
     if (!meta_request) {
@@ -1879,6 +2144,49 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     }
 
     aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)increment);
+}
+
+/*
+ * Returns aws-c-s3's default memory limit for this throughput target
+ * (0 = EC2 auto-detect, applied only below 10 Gbps), the same value
+ * aws_s3_client_new would use.
+ */
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemoryLimitForThroughput(
+    JNIEnv *env,
+    jclass cls,
+    jdouble throughput_target_gbps) {
+    (void)env;
+    (void)cls;
+    size_t limit = aws_s3_default_memory_limit_for_throughput((double)throughput_target_gbps);
+    /* The tier table tops out at 24 GiB, so the value always fits in a jlong. */
+    return (jlong)limit;
+}
+
+/*
+ * Releases one ref on the aws_s3_buffer_ticket underlying
+ * an S3BorrowedBuffer. Called from Java in two scenarios:
+ *   1. Customer calls S3BorrowedBuffer.close() explicitly (happy path)
+ *   2. The phantom-reference cleaner fires because the S3BorrowedBuffer
+ *      became unreachable without close() (GC fallback / leak recovery)
+ *
+ * When this call drops the ticket's ref count to zero, the ticket is
+ * destroyed: a pool ticket (s_java_ticket_destroy) returns its lease to the
+ * pool, or frees it if the pool is closed; an owned body copy
+ * (s_owned_body_copy_destroy, for bodies delivered without a pool ticket,
+ * such as a partNumber GetObject) frees the copy. Borrowed buffers only
+ * exist with the Java direct buffer pool.
+ *
+ * ticketPtr == 0 is a defensive no-op (should not happen from well-formed
+ * Java, but the Java side treats close() as idempotent so we tolerate it).
+ */
+JNIEXPORT void JNICALL
+    Java_software_amazon_awssdk_crt_s3_S3BorrowedBuffer_nativeReleaseTicket(JNIEnv *env, jclass cls, jlong ticket_ptr) {
+    (void)env;
+    (void)cls;
+    if (ticket_ptr == 0) {
+        return;
+    }
+    aws_s3_buffer_ticket_release((struct aws_s3_buffer_ticket *)(intptr_t)ticket_ptr);
 }
 
 #if UINTPTR_MAX == 0xffffffff

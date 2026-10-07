@@ -90,7 +90,7 @@ public interface S3MetaRequestResponseHandler {
      * <p>
      * WARNING: for a file download with
      * {@link S3MetaRequestOptions#withResponseFileDeleteOnFailure} set true, the deletion
-     * is respected — the partial file is deleted on error, leaving nothing to resume on,
+     * is respected. The partial file is deleted on error, leaving nothing to resume on,
      * and this callback fires with a null token. Do not set responseFileDeleteOnFailure
      * if you intend to resume from this callback's token.
      *
@@ -99,5 +99,44 @@ public interface S3MetaRequestResponseHandler {
      *        resumable state was captured
      */
     default void onErrorResumeToken(final int errorCode, final ResumeToken resumeToken) {
+    }
+
+    /**
+     * Optional zero-copy overload: invoked instead of
+     * {@link #onResponseBody(ByteBuffer, long, long)} when the handler
+     * overrides this method AND a
+     * {@link S3ClientOptions#withDirectBufferPoolOptions direct buffer pool}
+     * is enabled on the client.
+     *
+     * <p>The buffer keeps its pool memory until it is closed, so it can be
+     * held past this callback (for example, handed to another thread). Close
+     * it on every path, including when this method throws; see
+     * {@link S3BorrowedBuffer} for lifetime, leak and flow-control rules. A
+     * throw from this method also fails the meta request.</p>
+     *
+     * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
+     * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no
+     * behavior change even when a pool is enabled. Zero-copy delivery is
+     * only available by overriding this overload.</p>
+     *
+     * @param buffer  a borrowed direct-buffer view into pool memory; MUST
+     *                always be closed (directly, or via
+     *                {@link S3BorrowedBuffer#toByteArray()}, which copies
+     *                then closes)
+     * @param objectRangeStart the byte index of the object that this refers
+     *                         to (matches the ByteBuffer overload semantics)
+     * @param objectRangeEnd   {@code objectRangeStart + buffer.asByteBuffer().remaining()}
+     * @return the number of bytes to increment the read window by (same as
+     *         the ByteBuffer overload)
+     * @see S3BorrowedBuffer
+     * @see S3ClientOptions#withDirectBufferPoolOptions
+     */
+    default int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+        // Unreachable via normal client dispatch (native only routes here
+        // when the handler overrides this method), but kept safe for direct
+        // invocation: copy to heap so the ByteBuffer overload's
+        // safe-to-retain contract holds unconditionally.
+        // toByteArray() copies and closes the buffer.
+        return onResponseBody(ByteBuffer.wrap(buffer.toByteArray()), objectRangeStart, objectRangeEnd);
     }
 }

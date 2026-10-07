@@ -59,6 +59,7 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
  * finish callback: aws-c-s3 completes a cancelled request's pending futures
  * without calling into the pool, so without this a reservation queued
  * behind a cancelled one could wait until an unrelated reserve or release.
+ * Only takes a JNIEnv and calls into Java if a cancelled entry was dropped.
  * `pool` MUST be a pool made by aws_s3_java_buffer_pool_factory, and the
  * caller MUST hold a ref on it. Takes the pool's pending_lock; MUST NOT be
  * called while holding it.

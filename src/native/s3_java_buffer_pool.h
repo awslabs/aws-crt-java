@@ -1,18 +1,24 @@
-#ifndef AWS_CRT_JAVA_S3_JAVA_BUFFER_POOL_H
-#define AWS_CRT_JAVA_S3_JAVA_BUFFER_POOL_H
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+
+#ifndef AWS_JNI_CRT_S3_JAVA_BUFFER_POOL_H
+#define AWS_JNI_CRT_S3_JAVA_BUFFER_POOL_H
 
 #include <aws/s3/s3_buffer_pool.h>
 #include <jni.h>
 
 /*
  * Passed via aws_s3_client_config_options.buffer_pool_user_data to
- * aws_s3_java_buffer_pool_factory. Caller allocates on the stack;
- * the factory copies fields into pool state before returning, so
- * the struct memory does not need to outlive the factory call.
+ * aws_s3_java_buffer_pool_factory. Caller allocates on the stack; it
+ * must stay alive until the caller has read `out_pool` after
+ * aws_s3_client_new returns.
  *
- * `java_pool_global` ownership transfers to the factory on success.
- * On failure (factory returns NULL), the caller retains ownership
- * and must DeleteGlobalRef.
+ * The factory takes ownership of `java_pool_global` once its argument
+ * checks pass, and clears the field. If the field is still set after
+ * the call, the caller still owns the reference and must
+ * DeleteGlobalRef it.
  */
 struct aws_s3_java_buffer_pool_factory_data {
     JavaVM *jvm;
@@ -59,4 +65,4 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
  */
 void aws_s3_java_buffer_pool_drain(struct aws_s3_buffer_pool *pool);
 
-#endif /* AWS_CRT_JAVA_S3_JAVA_BUFFER_POOL_H */
+#endif /* AWS_JNI_CRT_S3_JAVA_BUFFER_POOL_H */

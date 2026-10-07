@@ -335,29 +335,28 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onProgress;
     jmethodID onTelemetry;
     jmethodID onErrorResumeToken;
-    jmethodID onResponseBodyBorrowed;            /* S3BorrowedBuffer overload */
-    jmethodID getSupportsBorrowedBufferOverload; /* opt-in probe */
+    jmethodID onResponseBodyBorrowed; /* S3BorrowedBuffer overload */
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
 
 /* S3BorrowedBuffer */
 struct java_s3_borrowed_buffer_properties {
-    jclass class_ref; /* global ref; created via NewGlobalRef in the cache function */
-    jmethodID ctor;   /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
+    jclass class_ref;      /* global ref; created via NewGlobalRef in the cache function */
+    jmethodID constructor; /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
 };
 extern struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
 /* S3DirectBufferPool */
-struct s3_direct_buffer_pool_properties {
+struct java_s3_direct_buffer_pool_properties {
     jmethodID tryAcquire;         /* long tryAcquire(long size) */
     jmethodID leaseAddress;       /* long leaseAddress(long handle) */
     jmethodID release;            /* void release(long handle) */
-    jmethodID trim;               /* void trim(): called from s_java_pool_trim */
-    jmethodID partSize;           /* int partSize(): factory slot-size validation */
-    jmethodID setNativePoolState; /* void setNativePoolState(long): s3ClientNew */
+    jmethodID trim;               /* void trim() */
+    jmethodID partSize;           /* int partSize() */
+    jmethodID setNativePoolState; /* void setNativePoolState(long state) */
 };
-extern struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
+extern struct java_s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 
 /* CompletableFuture */
 struct java_completable_future_properties {

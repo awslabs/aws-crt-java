@@ -21,7 +21,6 @@ class S3MetaRequestResponseHandlerNativeAdapter {
      * @param responseHandler      the customer's handler
      * @param clientHasBufferPool  whether the client has a direct buffer pool;
      *                             when false the reflection probe is skipped
-     *                             (native never asks without a pool)
      */
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler,
                                               boolean clientHasBufferPool) {
@@ -44,7 +43,10 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         }
     }
 
-    /** Called from native to select body_callback_ex vs body_callback. */
+    /**
+     * Passed to native with each meta request, to select body_callback_ex
+     * (borrowed-buffer path) or body_callback (byte[] copy).
+     */
     boolean getSupportsBorrowedBufferOverload() {
         return supportsBorrowedBufferOverload;
     }

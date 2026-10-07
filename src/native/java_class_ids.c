@@ -757,13 +757,6 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed =
         (*env)->GetMethodID(env, cls, "onResponseBody", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
-
-    /* Opt-in probe: consulted once per meta-request creation to
-     * decide whether to register body_callback_ex (borrowed-buffer path) or
-     * body_callback (the byte[]-copy path). */
-    s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload =
-        (*env)->GetMethodID(env, cls, "getSupportsBorrowedBufferOverload", "()Z");
-    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload);
 }
 
 /* ------------------------------------------------------------------ */
@@ -782,15 +775,15 @@ static void s_cache_s3_borrowed_buffer(JNIEnv *env) {
     (*env)->DeleteLocalRef(env, local_cls);
 
     /* Package-private constructor: S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
-    s3_borrowed_buffer_properties.ctor =
+    s3_borrowed_buffer_properties.constructor =
         (*env)->GetMethodID(env, s3_borrowed_buffer_properties.class_ref, "<init>", "(JLjava/nio/ByteBuffer;)V");
-    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.ctor);
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.constructor);
 }
 
 /* ------------------------------------------------------------------ */
 /* S3DirectBufferPool class & methods                                 */
 /* ------------------------------------------------------------------ */
-struct s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
+struct java_s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
 
 static void s_cache_s3_direct_buffer_pool(JNIEnv *env) {
     jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3DirectBufferPool");

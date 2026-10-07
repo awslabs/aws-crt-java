@@ -865,7 +865,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
     jobject borrowed = (*env)->NewObject(
         env,
         s3_borrowed_buffer_properties.class_ref,
-        s3_borrowed_buffer_properties.ctor,
+        s3_borrowed_buffer_properties.constructor,
         (jlong)(intptr_t)ticket,
         sliced_dbb);
     if (borrowed == NULL || aws_jni_check_and_clear_exception(env)) {
@@ -1722,7 +1722,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean should_stream,
     jdouble disk_throughput_gbps,
     jboolean direct_io,
-    jlong jni_buffer_pool_state /* native Java-pool state when the client has a direct buffer pool, else 0 */) {
+    jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
+    jboolean jni_uses_borrowed_overload /* handler overrides the S3BorrowedBuffer overload */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1858,19 +1859,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
      *
      * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
      * we set exactly one below. */
-    jboolean supports_borrowed = JNI_FALSE;
-    if (jni_buffer_pool_state != 0) {
-        supports_borrowed = (*env)->CallBooleanMethod(
-            env,
-            callback_data->java_s3_meta_request_response_handler_native_adapter,
-            s3_meta_request_response_handler_native_adapter_properties.getSupportsBorrowedBufferOverload);
-        if (aws_jni_check_and_clear_exception(env)) {
-            AWS_LOGF_WARN(
-                AWS_LS_S3_META_REQUEST,
-                "getSupportsBorrowedBufferOverload() threw; falling back to the byte[] delivery path");
-            supports_borrowed = JNI_FALSE;
-        }
-    }
+    bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_overload;
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,

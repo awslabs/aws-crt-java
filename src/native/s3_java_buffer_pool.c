@@ -50,9 +50,9 @@
  *    aws-c-s3 client's event-loop thread. It MUST NOT block. When
  *    the Java pool reports exhaustion, we push an unresolved future
  *    onto pending_reserves and return immediately. The future is
- *    resolved later by the drain: on a lease release, at the next
- *    reserve, or when a meta request finishes and a cancelled entry is
- *    pruned (aws_s3_java_buffer_pool_drain). This mirrors the default
+ *    resolved later by the drain: on a lease release, or when the next
+ *    reserve or a finishing meta request prunes a cancelled entry
+ *    (aws_s3_java_buffer_pool_drain). This mirrors the default
  *    pool's pending_reserves pattern.
  *
  * WARNING: Body callbacks invoked downstream of claim() see a
@@ -117,7 +117,9 @@ struct java_pool_state {
      * an attempt-then-pend can never interleave with a release-then-drain
      * (which would strand the pended future with capacity free). Lock
      * order: pending_lock, then the Java pool's lock. Futures are always
-     * resolved after unlocking: their callbacks run synchronously.
+     * resolved after unlocking: setting a ticket on a future aws-c-s3 has
+     * already cancelled destroys the ticket inside set_result, and that
+     * runs s_java_ticket_destroy, which takes pending_lock.
      *
      * Strict FIFO for anything that consumes capacity: while a reservation
      * is pending, later ones queue behind it. This is what keeps in-order
@@ -240,9 +242,22 @@ static bool s_prune_done_locked(struct java_pool_state *ps, struct aws_linked_li
  * the head, stopping at the first that still cannot be served (see
  * java_pool_state.pending_reserves for why). Caller holds pending_lock and
  * a JNIEnv; resolved entries move to out_resolved.
+ *
+ * Serving only helps if capacity freed or the head changed. Capacity only
+ * frees on a release, which passes always_serve; trim frees nothing a
+ * waiting reservation can use. Otherwise serve only if the prune dropped
+ * an entry: the head was already retried by the last release's drain, so
+ * retrying it again would be a JNI call that cannot succeed.
  */
-static void s_drain_pending_locked(struct java_pool_state *ps, JNIEnv *env, struct aws_linked_list *out_resolved) {
-    s_prune_done_locked(ps, out_resolved);
+static void s_drain_pending_locked(
+    struct java_pool_state *ps,
+    JNIEnv *env,
+    bool always_serve,
+    struct aws_linked_list *out_resolved) {
+
+    if (!s_prune_done_locked(ps, out_resolved) && !always_serve) {
+        return;
+    }
 
     while (!aws_linked_list_empty(&ps->pending_reserves)) {
         struct java_pending_reserve *head =
@@ -285,10 +300,9 @@ void aws_s3_java_buffer_pool_drain(struct aws_s3_buffer_pool *pool) {
     struct aws_linked_list resolved;
     aws_linked_list_init(&resolved);
 
-    /* Fast path. A finish frees no capacity (ticket releases already drain),
-     * so serving can only help if this pass drops a cancelled entry. Prune
-     * without a JNIEnv; in the common case nothing is dropped and no JNI
-     * call is made. */
+    /* Fast path: serving can only help if this pass drops a cancelled entry
+     * (see s_drain_pending_locked). Prune without a JNIEnv; in the common
+     * case nothing is dropped and no JNI call is made. */
     aws_mutex_lock(&ps->pending_lock);
     bool pruned = s_prune_done_locked(ps, &resolved);
     aws_mutex_unlock(&ps->pending_lock);
@@ -296,13 +310,14 @@ void aws_s3_java_buffer_pool_drain(struct aws_s3_buffer_pool *pool) {
     if (pruned) {
         /* Re-locking is safe: draining is idempotent, so a reserve or
          * release in between does no harm. The JNIEnv is acquired before
-         * pending_lock, as everywhere else. */
+         * pending_lock, as everywhere else. always_serve: the first pass
+         * dropped an entry, so the head may have changed. */
         /******** JNI ENV ACQUIRE ********/
         struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
         JNIEnv *env = jvm_env_context.env;
         if (env != NULL) { /* NULL: JVM shutting down; nothing to serve. */
             aws_mutex_lock(&ps->pending_lock);
-            s_drain_pending_locked(ps, env, &resolved);
+            s_drain_pending_locked(ps, env, true /*always_serve*/, &resolved);
             aws_mutex_unlock(&ps->pending_lock);
             aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
         }
@@ -354,7 +369,7 @@ static void s_java_ticket_destroy(void *user_data) {
                 "S3DirectBufferPool: release threw an exception (defensive not-leased check); "
                 "the buffer may leak from Java-side tracking");
         }
-        s_drain_pending_locked(ps, env, &resolved);
+        s_drain_pending_locked(ps, env, true /*always_serve*/, &resolved);
         aws_mutex_unlock(&ps->pending_lock);
         aws_jni_release_thread_env(ps->jvm, &jvm_env_context);
     }
@@ -465,9 +480,9 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     aws_linked_list_init(&resolved);
 
     aws_mutex_lock(&ps->pending_lock);
-    /* Serve waiting entries that now fit first; then strict FIFO: never
-     * jump reservations that are still waiting. */
-    s_drain_pending_locked(ps, env, &resolved);
+    /* Drop cancelled entries (serving the rest only if one was dropped);
+     * then strict FIFO: never jump reservations that are still waiting. */
+    s_drain_pending_locked(ps, env, false /*always_serve*/, &resolved);
     int result =
         aws_linked_list_empty(&ps->pending_reserves) ? s_try_acquire_locked(ps, env, meta.size, &ticket) : s_exhausted;
     if (result == s_exhausted && !meta.can_block) {

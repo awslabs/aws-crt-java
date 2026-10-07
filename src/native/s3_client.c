@@ -552,7 +552,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
         } else {
             client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
             client_config.buffer_pool_user_data = &factory_data;
-            AWS_LOGF_INFO(AWS_LS_S3_CLIENT, "S3DirectBufferPool attached to client");
         }
     }
 

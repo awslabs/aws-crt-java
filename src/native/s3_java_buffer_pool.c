@@ -243,11 +243,14 @@ static bool s_prune_done_locked(struct java_pool_state *ps, struct aws_linked_li
  * java_pool_state.pending_reserves for why). Caller holds pending_lock and
  * a JNIEnv; resolved entries move to out_resolved.
  *
- * Serving only helps if capacity freed or the head changed. Capacity only
- * frees on a release, which passes always_serve; trim frees nothing a
- * waiting reservation can use. Otherwise serve only if the prune dropped
- * an entry: the head was already retried by the last release's drain, so
- * retrying it again would be a JNI call that cannot succeed.
+ * Serving only helps if room appeared or the head changed. Growth up to the
+ * ceiling already happens inside tryAcquire (including freeing idle blocks
+ * that are in the way), so EXHAUSTED means the pool cannot grow either, and
+ * room under the ceiling only appears on a release, which passes
+ * always_serve; trim frees nothing a waiting reservation can use. Otherwise
+ * serve only if the prune dropped an entry: the head was already retried by
+ * the last release's drain, so retrying it again would be a JNI call that
+ * cannot succeed.
  */
 static void s_drain_pending_locked(
     struct java_pool_state *ps,

@@ -568,11 +568,23 @@ final class S3DirectBufferPool {
                 }
             }
         }
+        // Only the last block can be shorter than BLOCK_SLOTS. If it is
+        // allocated, unused and too short for this run, its bytes may be all
+        // that keeps a new block from fitting; free it only when that makes
+        // one fit (like acquireDedicatedLocked's reclaim), so EXHAUSTED means
+        // growth is impossible, not just blocked by an idle block.
+        int last = numBlocks - 1;
+        long shortIdleBytes = synced.blocks[last] != null && synced.usedMask[last] == 0 && blockSlots(last) < count
+            ? synced.blocks[last].capacity() : 0;
         for (int b = 0; b < numBlocks; b++) {
             if (synced.blocks[b] == null && blockSlots(b) >= count) {
                 long bytes = (long) blockSlots(b) * partSize;
                 if (synced.committedBytes + bytes > ceilingBytes) {
-                    continue;   // dedicated buffers hold the budget; a smaller (last) block may still fit
+                    if (synced.committedBytes - shortIdleBytes + bytes > ceilingBytes) {
+                        continue;   // dedicated buffers hold the budget; a smaller (last) block may still fit
+                    }
+                    unbackBlockLocked(last);
+                    shortIdleBytes = 0;
                 }
                 backBlockLocked(b);
                 return leaseRunLocked(b, 0, count);

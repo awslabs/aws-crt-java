@@ -19,7 +19,6 @@
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
 #include <aws/s3/s3.h>
-#include <aws/s3/s3_buffer_pool.h>
 #include <aws/s3/s3_client.h>
 #include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
@@ -859,7 +858,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
     /* STEP 3: Construct the S3BorrowedBuffer Java object. From this point
      * on the Java object owns the extra ref via its ticketPtr field. If
      * NewObject fails, we release our extra ref before returning; if it
-     * succeeds, the Java object's close()/Cleaner is responsible for
+     * succeeds, the Java object's close()/GC is responsible for
      * releasing. */
     jobject borrowed = (*env)->NewObject(
         env,
@@ -879,7 +878,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
     }
 
     /* STEP 4: Dispatch to Java. The customer's handler MAY close synchronously
-     * inside the callback (which drops our extra ref immediately) or MAY
+     * inside the callback (which drops that ref immediately) or MAY
      * stash the buffer for later async processing (the extra ref persists
      * until the customer calls close(), or until the phantom-reference
      * cleaner fires as a GC fallback). */
@@ -1868,8 +1867,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        /* Exactly one of body_callback / body_callback_ex is set; they
-         * are mutually exclusive at aws-c-s3 (dispatch table above). */
         .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
         .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
@@ -2149,15 +2146,9 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
 }
 
 /*
- * Delegates to aws_s3_default_memory_limit_for_throughput, the same
- * public helper aws_s3_client_new uses internally to size its default
- * buffer pool. Exposed via S3Client (rather than S3DirectBufferPool)
- * because the underlying semantic is "what pool size would aws-c-s3
- * default to?", not specific to the Java buffer pool.
- *
- * throughput_target_gbps == 0 defers to aws-c-s3's auto-detect (reads
- * EC2 platform info and applies the < 10 Gbps right-sizing threshold
- * internally). Any positive value maps directly to the tier table.
+ * Returns aws-c-s3's default memory limit for this throughput target
+ * (0 = EC2 auto-detect, applied only below 10 Gbps), the same value
+ * aws_s3_client_new would use.
  */
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemoryLimitForThroughput(
     JNIEnv *env,
@@ -2166,9 +2157,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemor
     (void)env;
     (void)cls;
     size_t limit = aws_s3_default_memory_limit_for_throughput((double)throughput_target_gbps);
-    /* size_t on 64-bit platforms fits jlong; on 32-bit platforms the tier
-     * table returns at most 2 GiB (constrained by SIZE_MAX branch in
-     * s_get_default_mem_limit_from_throughput). Safe to cast unconditionally. */
+    /* The tier table tops out at 24 GiB, so the value always fits in a jlong. */
     return (jlong)limit;
 }
 

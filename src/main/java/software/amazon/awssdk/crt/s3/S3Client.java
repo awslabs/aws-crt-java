@@ -327,7 +327,7 @@ public class S3Client extends CrtResource {
     private static final long MAX_UPLOAD_PARTS = 10_000;
     /** S3's minimum multipart upload part size. */
     private static final long MIN_UPLOAD_PART_SIZE = 5 * SizeUnits.MIB;
-    /** S3's maximum upload part size (the native client's upper bound). */
+    /** S3's maximum upload part size. */
     private static final long MAX_UPLOAD_PART_SIZE = 5 * SizeUnits.GIB;
 
     /**

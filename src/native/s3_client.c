@@ -1013,10 +1013,11 @@ static void s_on_s3_meta_request_finish_callback(
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
 
-    /* A cancelled or paused request's pending reservations were failed
-     * without the pool being told; drain now so a reservation queued behind
-     * one of them is served instead of waiting for an unrelated reserve or
-     * release. aws-c-s3 holds no meta request lock here. */
+    /* If this request was cancelled or paused, aws-c-s3 failed its pending
+     * reservations without telling the pool. Drain so a reservation queued
+     * behind one of them is served now instead of waiting for an unrelated
+     * reserve or release. When nothing was cancelled, the drain only prunes
+     * and makes no JNI call. aws-c-s3 holds no meta request lock here. */
     if (callback_data->java_buffer_pool != NULL) {
         aws_s3_java_buffer_pool_drain(callback_data->java_buffer_pool);
     }

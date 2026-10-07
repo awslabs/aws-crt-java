@@ -12,7 +12,7 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
     /**
-     * True iff the client has a direct buffer pool AND the handler overrides
+     * True if the client has a direct buffer pool AND the handler overrides
      * onResponseBody(S3BorrowedBuffer, long, long).
      */
     private final boolean supportsBorrowedBufferOverload;

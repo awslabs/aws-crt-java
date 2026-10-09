@@ -6,10 +6,9 @@
 package software.amazon.awssdk.crt.test;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -145,13 +144,16 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         }
     }
 
-    private HttpConnectionTestResponse testConnectionWithJavaTrustStore(URI uri, KeyStore trustStore) throws Exception {
+    private HttpConnectionTestResponse testConnectionWithJavaTrustStore(URI uri, String trustStorePath,
+            String trustStorePassword) throws Exception {
+        Map<String, String> previous = TlsContextOptionsTest.setTrustStoreProperties(trustStorePath,
+                trustStorePassword, null);
         try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
                 HostResolver resolver = new HostResolver(eventLoopGroup);
                 ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
                 SocketOptions socketOptions = new SocketOptions();
                 TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()
-                        .withCertificateAuthorityFromJavaKeystore(trustStore);
+                        .withCertificateAuthorityFromJavaSystemProperties();
                 TlsContext tlsCtx = new TlsContext(tlsOpts)) {
             socketOptions.connectTimeoutMs = 10000;
             HttpConnectionTestResponse resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
@@ -159,6 +161,8 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 resp.shutdownComplete.get(20, TimeUnit.SECONDS);
             }
             return resp;
+        } finally {
+            TlsContextOptionsTest.restoreTrustStoreProperties(previous);
         }
     }
 
@@ -175,21 +179,18 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
         }
         Assume.assumeTrue("JDK cacerts trust store not found", cacerts.exists());
 
-        KeyStore jdkTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        try (InputStream in = new FileInputStream(cacerts)) {
-            jdkTrustStore.load(in, null);
-        }
-
         URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
-        HttpConnectionTestResponse resp = testConnectionWithJavaTrustStore(uri, jdkTrustStore);
+        HttpConnectionTestResponse resp = testConnectionWithJavaTrustStore(uri, cacerts.getPath(), null);
         if (resp.exceptionThrown) {
             throw resp.exception;
         }
         Assert.assertTrue(resp.actuallyConnected);
 
         // A trust store holding only an unrelated self-signed cert must reject the server
-        KeyStore unrelatedTrustStore = TlsContextOptionsTest.createTrustStore(TlsContextOptionsTest.TEST_CERT);
-        resp = testConnectionWithJavaTrustStore(uri, unrelatedTrustStore);
+        File unrelatedTrustStore = TlsContextOptionsTest.writeTrustStore(KeyStore.getDefaultType(),
+                TlsContextOptionsTest.TEST_CERT);
+        resp = testConnectionWithJavaTrustStore(uri, unrelatedTrustStore.getPath(),
+                TlsContextOptionsTest.TRUST_STORE_PASSWORD);
         Assert.assertFalse(resp.actuallyConnected);
         Assert.assertTrue(resp.exceptionThrown);
     }

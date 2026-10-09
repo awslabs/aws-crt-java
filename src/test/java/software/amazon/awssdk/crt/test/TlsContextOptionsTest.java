@@ -3,11 +3,19 @@ package software.amazon.awssdk.crt.test;
 import static software.amazon.awssdk.crt.io.TlsContextOptions.TlsVersions;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.security.KeyStore;
-import java.security.cert.CertificateFactory;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.CertificateFactory;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -252,9 +260,17 @@ public class TlsContextOptionsTest extends CrtTestFixture {
         }
     }
 
-    // Uses the platform default keystore type (JKS/PKCS12 on desktop JVMs, BKS on Android, which has no JKS)
-    static KeyStore createTrustStore(String... pems) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    static final String TRUST_STORE_PASSWORD = "changeit";
+    static final String[] TRUST_STORE_PROPERTIES = {
+        "javax.net.ssl.trustStore",
+        "javax.net.ssl.trustStorePassword",
+        "javax.net.ssl.trustStoreType",
+        "javax.net.ssl.trustStoreProvider",
+    };
+
+    // Writes the certs to a temp keystore file of the given type, protected by TRUST_STORE_PASSWORD
+    static File writeTrustStore(String type, String... pems) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(type);
         keyStore.load(null, null);
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         int index = 0;
@@ -262,44 +278,133 @@ public class TlsContextOptionsTest extends CrtTestFixture {
             keyStore.setCertificateEntry("cert" + index++,
                     factory.generateCertificate(new ByteArrayInputStream(pem.getBytes(StandardCharsets.UTF_8))));
         }
-        return keyStore;
+        File file = File.createTempFile("truststore", "." + type.toLowerCase());
+        file.deleteOnExit();
+        try (OutputStream out = new FileOutputStream(file)) {
+            keyStore.store(out, TRUST_STORE_PASSWORD.toCharArray());
+        }
+        return file;
+    }
+
+    // Sets (or clears, for null values) the trust store system properties, returning the previous values
+    static Map<String, String> setTrustStoreProperties(String path, String password, String type) {
+        Map<String, String> previous = new HashMap<>();
+        for (String property : TRUST_STORE_PROPERTIES) {
+            previous.put(property, System.getProperty(property));
+            System.clearProperty(property);
+        }
+        if (path != null) {
+            System.setProperty("javax.net.ssl.trustStore", path);
+        }
+        if (password != null) {
+            System.setProperty("javax.net.ssl.trustStorePassword", password);
+        }
+        if (type != null) {
+            System.setProperty("javax.net.ssl.trustStoreType", type);
+        }
+        return previous;
+    }
+
+    static void restoreTrustStoreProperties(Map<String, String> previous) {
+        for (Map.Entry<String, String> entry : previous.entrySet()) {
+            if (entry.getValue() == null) {
+                System.clearProperty(entry.getKey());
+            } else {
+                System.setProperty(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     @Test
-    public void testOverridingTrustStoreFromJavaKeystore() throws Exception {
-        KeyStore trustStore = createTrustStore(ROOT_CA1, TEST_CERT);
+    public void testTrustStoreFromJavaSystemProperties() throws Exception {
+        File trustStore = writeTrustStore(KeyStore.getDefaultType(), ROOT_CA1, TEST_CERT);
+        Map<String, String> previous = setTrustStoreProperties(trustStore.getPath(), TRUST_STORE_PASSWORD, null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()
-                .withCertificateAuthorityFromJavaKeystore(trustStore);
+                .withCertificateAuthorityFromJavaSystemProperties();
                 TlsContext tls = new TlsContext(options)) {
             assertNotNull(tls);
-        }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testOverridingTrustStoreFromEmptyJavaKeystore() throws Exception {
-        KeyStore trustStore = createTrustStore();
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
-        }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testOverridingTrustStoreFromJavaKeystoreAfterPath() throws Exception {
-        KeyStore trustStore = createTrustStore(ROOT_CA1);
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.overrideDefaultTrustStoreFromPath(null, "/path/to/ca.pem");
-            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
+        } finally {
+            restoreTrustStoreProperties(previous);
         }
     }
 
     @Test
-    public void testOverridingTrustStoreFromUnloadedJavaKeystore() throws Exception {
-        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    public void testJksTrustStoreFromJavaSystemProperties() throws Exception {
+        skipIfAndroid(); // Android has no JKS keystore type
+        File trustStore = writeTrustStore("JKS", ROOT_CA1, TEST_CERT);
+        Map<String, String> previous = setTrustStoreProperties(trustStore.getPath(), TRUST_STORE_PASSWORD, "JKS");
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()
+                .withCertificateAuthorityFromJavaSystemProperties();
+                TlsContext tls = new TlsContext(options)) {
+            assertNotNull(tls);
+        } finally {
+            restoreTrustStoreProperties(previous);
+        }
+    }
+
+    @Test
+    public void testTrustStoreFromJavaSystemPropertiesUnset() throws Exception {
+        Map<String, String> previous = setTrustStoreProperties(null, null, null);
         try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
+            options.overrideDefaultTrustStoreFromJavaSystemProperties();
+            // No CA was set from the properties, so setting one via path must still be allowed
+            options.overrideDefaultTrustStoreFromPath(null, "/path/to/ca.pem");
+        } finally {
+            restoreTrustStoreProperties(previous);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEmptyTrustStoreFromJavaSystemProperties() throws Exception {
+        File trustStore = writeTrustStore(KeyStore.getDefaultType());
+        Map<String, String> previous = setTrustStoreProperties(trustStore.getPath(), TRUST_STORE_PASSWORD, null);
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromJavaSystemProperties();
+        } finally {
+            restoreTrustStoreProperties(previous);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTrustStoreFromJavaSystemPropertiesAfterPath() throws Exception {
+        File trustStore = writeTrustStore(KeyStore.getDefaultType(), ROOT_CA1);
+        Map<String, String> previous = setTrustStoreProperties(trustStore.getPath(), TRUST_STORE_PASSWORD, null);
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromPath(null, "/path/to/ca.pem");
+            options.overrideDefaultTrustStoreFromJavaSystemProperties();
+        } finally {
+            restoreTrustStoreProperties(previous);
+        }
+    }
+
+    private void assertTrustStoreLoadFails(String path, String password, String type,
+            Class<? extends Exception> expectedCause) {
+        Map<String, String> previous = setTrustStoreProperties(path, password, type);
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromJavaSystemProperties();
             fail("Expected CrtRuntimeException");
         } catch (CrtRuntimeException ex) {
-            assertTrue(ex.getCause() instanceof java.security.KeyStoreException);
+            assertTrue(expectedCause.isInstance(ex.getCause()));
+        } finally {
+            restoreTrustStoreProperties(previous);
         }
+    }
+
+    @Test
+    public void testTrustStoreFromJavaSystemPropertiesWrongPassword() throws Exception {
+        File trustStore = writeTrustStore(KeyStore.getDefaultType(), ROOT_CA1);
+        assertTrustStoreLoadFails(trustStore.getPath(), "wrong-password", null, IOException.class);
+    }
+
+    @Test
+    public void testTrustStoreFromJavaSystemPropertiesMissingFile() throws Exception {
+        assertTrustStoreLoadFails("/path/does/not/exist.jks", null, null, FileNotFoundException.class);
+    }
+
+    @Test
+    public void testTrustStoreFromJavaSystemPropertiesBadType() throws Exception {
+        File trustStore = writeTrustStore(KeyStore.getDefaultType(), ROOT_CA1);
+        assertTrustStoreLoadFails(trustStore.getPath(), TRUST_STORE_PASSWORD, "NOT-A-KEYSTORE-TYPE",
+                KeyStoreException.class);
     }
 }

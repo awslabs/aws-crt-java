@@ -750,6 +750,12 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
             Assert.fail(ex.getMessage());
         }
 
+        // eventual consistency if this is an op
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {
+        }
+
         if (version == MqttVersion.Mqtt5) {
             PublishPacket publishPacket = helper.createMqtt5PublishPacket();
             this.context.mqtt5Client.publish(publishPacket);

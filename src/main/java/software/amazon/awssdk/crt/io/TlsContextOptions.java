@@ -290,6 +290,111 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Opts in to using the Java trust store configured via the standard JSSE system properties as the
+     * TlsContext-local trust store:
+     * <ul>
+     * <li>javax.net.ssl.trustStore - path to the trust store file</li>
+     * <li>javax.net.ssl.trustStorePassword - optional password for the trust store</li>
+     * <li>javax.net.ssl.trustStoreType - optional keystore type, defaults to KeyStore.getDefaultType()</li>
+     * <li>javax.net.ssl.trustStoreProvider - optional security provider for the keystore type</li>
+     * </ul>
+     *
+     * If javax.net.ssl.trustStore is not set, this is a no-op and the default trust store is used.
+     * Unlike JSSE, a trust store file that does not exist or cannot be read is an error rather than
+     * falling back to the default trust store.
+     * The properties are read when this function is called; later changes to them have no effect.
+     *
+     * All trusted certificate entries are used, as well as the leaf certificate of any key entries,
+     * matching the trust anchors JSSE derives from a trust store.
+     *
+     * Non-file-based trust stores (javax.net.ssl.trustStore=NONE) are not supported.
+     *
+     * @throws IllegalArgumentException if javax.net.ssl.trustStore is NONE, the trust store contains no X.509
+     *         certificates or more than 1024 certificates, or a certificate authority is already specified via path(s)
+     * @throws CrtRuntimeException if the trust store cannot be loaded or read
+     */
+    public void overrideDefaultTrustStoreFromJavaSystemProperties() throws IllegalArgumentException {
+        String trustStorePath = System.getProperty("javax.net.ssl.trustStore");
+        if (trustStorePath == null || trustStorePath.isEmpty()) {
+            return;
+        }
+        // JSSE treats "NONE" as a non-file-based trust store (e.g. PKCS#11), which is not supported here
+        if ("NONE".equals(trustStorePath)) {
+            throw new IllegalArgumentException("javax.net.ssl.trustStore=NONE is not supported");
+        }
+        if (this.caFile != null || this.caDir != null) {
+            throw new IllegalArgumentException("Certificate authority is already specified via path(s)");
+        }
+
+        String trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
+        if (trustStoreType == null || trustStoreType.isEmpty()) {
+            trustStoreType = java.security.KeyStore.getDefaultType();
+        }
+        String trustStoreProvider = System.getProperty("javax.net.ssl.trustStoreProvider");
+        String trustStorePassword = System.getProperty("javax.net.ssl.trustStorePassword");
+
+        java.security.KeyStore trustStore;
+        try {
+            if (trustStoreProvider == null || trustStoreProvider.isEmpty()) {
+                trustStore = java.security.KeyStore.getInstance(trustStoreType);
+            } else {
+                trustStore = java.security.KeyStore.getInstance(trustStoreType, trustStoreProvider);
+            }
+            try (java.io.InputStream in = new java.io.FileInputStream(trustStorePath)) {
+                trustStore.load(in, trustStorePassword == null || trustStorePassword.isEmpty()
+                        ? null : trustStorePassword.toCharArray());
+            }
+        } catch (java.security.GeneralSecurityException | java.io.IOException ex) {
+            CrtRuntimeException crtEx = new CrtRuntimeException("Failed to load Java trust store from " + trustStorePath);
+            crtEx.initCause(ex);
+            throw crtEx;
+        }
+
+        overrideDefaultTrustStore(javaKeystoreToPem(trustStore));
+    }
+
+    /**
+     * Converts the trust anchors of a Java keystore into a PEM armored certificate chain.
+     */
+    private static String javaKeystoreToPem(java.security.KeyStore trustStore) {
+        StringBuilder caRootBuilder = new StringBuilder();
+        try {
+            java.util.Enumeration<String> aliases = trustStore.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                java.security.cert.Certificate certificate = null;
+                if (trustStore.isCertificateEntry(alias)) {
+                    certificate = trustStore.getCertificate(alias);
+                } else if (trustStore.isKeyEntry(alias)) {
+                    java.security.cert.Certificate[] chain = trustStore.getCertificateChain(alias);
+                    if (chain != null && chain.length > 0) {
+                        certificate = chain[0];
+                    }
+                }
+
+                if (!(certificate instanceof java.security.cert.X509Certificate)) {
+                    continue;
+                }
+
+                String certificateString = new String(StringUtils.base64Encode(certificate.getEncoded()),
+                        java.nio.charset.StandardCharsets.US_ASCII);
+                caRootBuilder.append("-----BEGIN CERTIFICATE-----\n")
+                        .append(certificateString)
+                        .append("\n-----END CERTIFICATE-----\n");
+            }
+        } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
+            CrtRuntimeException crtEx = new CrtRuntimeException("Failed to read certificates from Java keystore");
+            crtEx.initCause(ex);
+            throw crtEx;
+        }
+
+        if (caRootBuilder.length() == 0) {
+            throw new IllegalArgumentException("Java keystore does not contain any X.509 certificates");
+        }
+        return caRootBuilder.toString();
+    }
+
+    /**
      * Helper which creates a default set of TLS options for the current platform
      * @return A default configured set of options for a TLS client connection
      */
@@ -509,6 +614,17 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withCertificateAuthority(String caRoot) {
         this.overrideDefaultTrustStore(caRoot);
+        return this;
+    }
+
+    /**
+     * Opts in to using the Java trust store configured via the javax.net.ssl.trustStore system properties.
+     * If javax.net.ssl.trustStore is not set, the OS CA repository will be used.
+     * See {@link #overrideDefaultTrustStoreFromJavaSystemProperties()}.
+     * @return this
+     */
+    public TlsContextOptions withCertificateAuthorityFromJavaSystemProperties() {
+        this.overrideDefaultTrustStoreFromJavaSystemProperties();
         return this;
     }
 

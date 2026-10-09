@@ -64,7 +64,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
 
             // subscribe eventual consistency
-            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            TestUtils.sleepForAtLeastMilliseconds(500);
 
             MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE,
                     false);
@@ -142,7 +142,7 @@ public class SelfPubSubTest extends MqttClientConnectionFixture {
             assertNotSame(0, packetId);
 
             // subscribe eventual consistency
-            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            TestUtils.sleepForAtLeastMilliseconds(500);
 
             MqttMessage message = new MqttMessage(TEST_TOPIC, TEST_PAYLOAD.getBytes(), QualityOfService.AT_LEAST_ONCE);
             CompletableFuture<Integer> published = connection.publish(message);

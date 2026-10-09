@@ -53,7 +53,7 @@ public class IotServiceTest extends MqttClientConnectionFixture {
             assertEquals("Single subscription", 1, subsAcked);
 
             // subscribe eventual consistency
-            Thread.sleep(500);
+            TestUtils.sleepForAtLeastMilliseconds(500);
 
             CompletableFuture<Integer> unsubscribed = connection.unsubscribe(TEST_TOPIC);
             unsubscribed.thenApply(packetId -> subsAcked--);

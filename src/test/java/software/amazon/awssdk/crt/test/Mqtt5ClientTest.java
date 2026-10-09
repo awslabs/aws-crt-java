@@ -1875,7 +1875,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1884,7 +1884,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publishEvents.publishPacket = null;
                 client.unsubscribe(unsubscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // unsubscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertEquals(
@@ -2002,7 +2002,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2152,8 +2152,6 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 subscriberOneClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 subscriberTwoClient.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
-                // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
 
                 TestUtils.sleepForAtLeastMilliseconds(4000);
 
@@ -2214,7 +2212,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 client.subscribe(subscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2223,7 +2221,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publishEvents.publishPacket = null;
                 client.unsubscribe(unsubscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // unsubscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
                 client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertEquals(
@@ -2300,7 +2298,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Subscribe to the topic first
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish the message with all fields
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2610,7 +2608,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
@@ -2691,7 +2689,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2785,7 +2783,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message with a unique UUID payload
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2870,7 +2868,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message with a unique UUID payload
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2957,7 +2955,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -3019,7 +3017,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -3088,7 +3086,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish at QoS 0, there is no PUBACK involved
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_MOST_ONCE, payload);
@@ -3180,7 +3178,7 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 try {
                     successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                     // eventual consistency
-                    Thread.sleep(500);
+                    TestUtils.sleepForAtLeastMilliseconds(500);
 
                 } catch (Exception ex) {
                     // Clear the retained message

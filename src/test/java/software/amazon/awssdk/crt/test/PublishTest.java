@@ -61,7 +61,7 @@ public class PublishTest extends MqttClientConnectionFixture {
             subscribed.get();
 
             // subscribe eventual consistency
-            Thread.sleep(500);
+            TestUtils.sleepForAtLeastMilliseconds(500);
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

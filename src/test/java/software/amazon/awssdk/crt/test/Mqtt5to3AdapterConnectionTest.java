@@ -705,7 +705,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                 subscribed.thenApply(unused -> subsAcked++);
                 int packetId = subscribed.get();
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 assertNotSame(0, packetId);
                 assertEquals("Single subscription", 1, subsAcked);
@@ -1007,7 +1007,7 @@ public class Mqtt5to3AdapterConnectionTest extends Mqtt5ClientTestFixture {
                         subscriberMessageHandler2);
                 packetId = subscribed.get();
                 // subscribe eventual consistency
-                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+                TestUtils.sleepForAtLeastMilliseconds(500);
                 assertNotSame(0, packetId);
 
                 MqttMessage message1 = new MqttMessage(testTopic1, testPayload.getBytes(),

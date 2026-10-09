@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
+import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.utils.PemUtils;
 import software.amazon.awssdk.crt.utils.StringUtils;
 
@@ -299,19 +300,33 @@ public final class TlsContextOptions extends CrtResource {
      * <li>javax.net.ssl.trustStoreProvider - optional security provider for the keystore type</li>
      * </ul>
      *
-     * If javax.net.ssl.trustStore is not set, this is a no-op and the default trust store is used.
+     * If javax.net.ssl.trustStore is not set, or the file it points to does not exist or is not readable,
+     * this is a no-op and the default trust store is used (a warning is logged for the inaccessible file case).
      * The properties are read when this function is called; later changes to them have no effect.
      *
      * All trusted certificate entries are used, as well as the leaf certificate of any key entries,
      * matching the trust anchors JSSE derives from a trust store.
      *
-     * @throws IllegalArgumentException if the trust store contains no X.509 certificates or more than 1024
-     *         certificates, or if a certificate authority is already specified via path(s)
+     * Non-file-based trust stores (javax.net.ssl.trustStore=NONE) are not supported.
+     *
+     * @throws IllegalArgumentException if javax.net.ssl.trustStore is NONE, the trust store contains no X.509
+     *         certificates or more than 1024 certificates, or a certificate authority is already specified via path(s)
      * @throws CrtRuntimeException if the trust store cannot be loaded or read
      */
     public void overrideDefaultTrustStoreFromJavaSystemProperties() throws IllegalArgumentException {
         String trustStorePath = System.getProperty("javax.net.ssl.trustStore");
         if (trustStorePath == null || trustStorePath.isEmpty()) {
+            return;
+        }
+        // JSSE treats "NONE" as a non-file-based trust store (e.g. PKCS#11), which is not supported here
+        if ("NONE".equals(trustStorePath)) {
+            throw new IllegalArgumentException("javax.net.ssl.trustStore=NONE is not supported");
+        }
+        // Match JSSE, which falls back to its default trust store when the configured one is inaccessible
+        java.io.File trustStoreFile = new java.io.File(trustStorePath);
+        if (!trustStoreFile.isFile() || !trustStoreFile.canRead()) {
+            Log.log(Log.LogLevel.Warn, Log.LogSubject.IoTls,
+                    "Java trust store " + trustStorePath + " is inaccessible, using the default trust store");
             return;
         }
         if (this.caFile != null || this.caDir != null) {
@@ -332,7 +347,7 @@ public final class TlsContextOptions extends CrtResource {
             } else {
                 trustStore = java.security.KeyStore.getInstance(trustStoreType, trustStoreProvider);
             }
-            try (java.io.InputStream in = new java.io.FileInputStream(trustStorePath)) {
+            try (java.io.InputStream in = new java.io.FileInputStream(trustStoreFile)) {
                 trustStore.load(in, trustStorePassword == null || trustStorePassword.isEmpty()
                         ? null : trustStorePassword.toCharArray());
             }

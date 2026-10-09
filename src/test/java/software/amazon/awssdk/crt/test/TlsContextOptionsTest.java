@@ -4,6 +4,7 @@ import static software.amazon.awssdk.crt.io.TlsContextOptions.TlsVersions;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -397,14 +398,7 @@ public class TlsContextOptionsTest extends CrtTestFixture {
 
     @Test
     public void testTrustStoreFromJavaSystemPropertiesMissingFile() throws Exception {
-        Map<String, String> previous = setTrustStoreProperties("/path/does/not/exist.jks", null, null);
-        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
-            options.overrideDefaultTrustStoreFromJavaSystemProperties();
-            // Falls back to the default trust store, so setting a CA via path must still be allowed
-            options.overrideDefaultTrustStoreFromPath(null, "/path/to/ca.pem");
-        } finally {
-            restoreTrustStoreProperties(previous);
-        }
+        assertTrustStoreLoadFails("/path/does/not/exist.jks", null, null, FileNotFoundException.class);
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -2,7 +2,11 @@ package software.amazon.awssdk.crt.test;
 
 import static software.amazon.awssdk.crt.io.TlsContextOptions.TlsVersions;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
 import java.nio.file.Paths;
 
 import org.junit.Assert;
@@ -245,6 +249,57 @@ public class TlsContextOptionsTest extends CrtTestFixture {
             options.overrideDefaultTrustStore(ROOT_CA1);
         } catch (Exception ex) {
             fail(ex.toString());
+        }
+    }
+
+    // Uses the platform default keystore type (JKS/PKCS12 on desktop JVMs, BKS on Android, which has no JKS)
+    static KeyStore createTrustStore(String... pems) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, null);
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        int index = 0;
+        for (String pem : pems) {
+            keyStore.setCertificateEntry("cert" + index++,
+                    factory.generateCertificate(new ByteArrayInputStream(pem.getBytes(StandardCharsets.UTF_8))));
+        }
+        return keyStore;
+    }
+
+    @Test
+    public void testOverridingTrustStoreFromJavaKeystore() throws Exception {
+        KeyStore trustStore = createTrustStore(ROOT_CA1, TEST_CERT);
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()
+                .withCertificateAuthorityFromJavaKeystore(trustStore);
+                TlsContext tls = new TlsContext(options)) {
+            assertNotNull(tls);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOverridingTrustStoreFromEmptyJavaKeystore() throws Exception {
+        KeyStore trustStore = createTrustStore();
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOverridingTrustStoreFromJavaKeystoreAfterPath() throws Exception {
+        KeyStore trustStore = createTrustStore(ROOT_CA1);
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromPath(null, "/path/to/ca.pem");
+            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
+        }
+    }
+
+    @Test
+    public void testOverridingTrustStoreFromUnloadedJavaKeystore() throws Exception {
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        try (TlsContextOptions options = TlsContextOptions.createDefaultClient()) {
+            options.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
+            fail("Expected CrtRuntimeException");
+        } catch (CrtRuntimeException ex) {
+            assertTrue(ex.getCause() instanceof java.security.KeyStoreException);
         }
     }
 }

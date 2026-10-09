@@ -290,6 +290,67 @@ public final class TlsContextOptions extends CrtResource {
     }
 
     /**
+     * Helper function to provide a TlsContext-local trust store from a Java keystore, such as the JKS
+     * file typically referenced by the javax.net.ssl.trustStore system property.
+     *
+     * All trusted certificate entries are used, as well as the leaf certificate of any key entries,
+     * matching the trust anchors JSSE derives from a trust store.
+     *
+     * Note: function assumes the passed keystore has already been loaded from a file by calling "keystore.load()" or similar.
+     *
+     * @param trustStore The Java keystore containing the certificates to trust
+     * @throws IllegalArgumentException if the keystore is null, contains no X.509 certificates or more than 1024
+     *         certificates, or if a certificate authority is already specified via path(s)
+     * @throws CrtRuntimeException if the keystore cannot be read
+     */
+    public void overrideDefaultTrustStoreFromJavaKeystore(java.security.KeyStore trustStore)
+            throws IllegalArgumentException {
+        if (trustStore == null) {
+            throw new IllegalArgumentException("Trust store must not be null");
+        }
+        if (this.caFile != null || this.caDir != null) {
+            throw new IllegalArgumentException("Certificate authority is already specified via path(s)");
+        }
+
+        StringBuilder caRootBuilder = new StringBuilder();
+        try {
+            java.util.Enumeration<String> aliases = trustStore.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                java.security.cert.Certificate certificate = null;
+                if (trustStore.isCertificateEntry(alias)) {
+                    certificate = trustStore.getCertificate(alias);
+                } else if (trustStore.isKeyEntry(alias)) {
+                    java.security.cert.Certificate[] chain = trustStore.getCertificateChain(alias);
+                    if (chain != null && chain.length > 0) {
+                        certificate = chain[0];
+                    }
+                }
+
+                if (!(certificate instanceof java.security.cert.X509Certificate)) {
+                    continue;
+                }
+
+                String certificateString = new String(StringUtils.base64Encode(certificate.getEncoded()),
+                        java.nio.charset.StandardCharsets.US_ASCII);
+                caRootBuilder.append("-----BEGIN CERTIFICATE-----\n")
+                        .append(certificateString)
+                        .append("\n-----END CERTIFICATE-----\n");
+            }
+        } catch (java.security.KeyStoreException | java.security.cert.CertificateEncodingException ex) {
+            CrtRuntimeException crtEx = new CrtRuntimeException("Failed to read certificates from Java keystore");
+            crtEx.initCause(ex);
+            throw crtEx;
+        }
+
+        if (caRootBuilder.length() == 0) {
+            throw new IllegalArgumentException("Java keystore does not contain any X.509 certificates");
+        }
+
+        overrideDefaultTrustStore(caRootBuilder.toString());
+    }
+
+    /**
      * Helper which creates a default set of TLS options for the current platform
      * @return A default configured set of options for a TLS client connection
      */
@@ -509,6 +570,17 @@ public final class TlsContextOptions extends CrtResource {
      */
     public TlsContextOptions withCertificateAuthority(String caRoot) {
         this.overrideDefaultTrustStore(caRoot);
+        return this;
+    }
+
+    /**
+     * Specifies the certificate authorities to use, loaded from a Java keystore (e.g. a JKS trust store).
+     * By default, the OS CA repository will be used.
+     * @param trustStore Java keystore containing the certificates to trust. Assumed to be already loaded.
+     * @return this
+     */
+    public TlsContextOptions withCertificateAuthorityFromJavaKeystore(java.security.KeyStore trustStore) {
+        this.overrideDefaultTrustStoreFromJavaKeystore(trustStore);
         return this;
     }
 

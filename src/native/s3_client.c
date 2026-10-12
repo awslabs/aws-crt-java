@@ -799,7 +799,7 @@ static struct aws_s3_buffer_ticket *s_owned_body_copy_new(
 /*
  * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
  * direct buffer pool is attached AND the handler overrides
- * onResponseBody(S3BorrowedBuffer, long, long).
+ * onResponseBodyBorrowed(S3BorrowedBuffer, long, long).
  *
  * Hands the Java S3BorrowedBuffer one ticket ref, released via
  * close()/GC-cleaner (nativeReleaseTicket below). With a pool ticket that is
@@ -894,7 +894,7 @@ static int s_on_s3_meta_request_body_callback_borrowed(
     if (aws_jni_get_and_clear_exception(env, &(callback_data->java_exception))) {
         AWS_LOGF_ERROR(
             AWS_LS_S3_META_REQUEST,
-            "id=%p: Received exception from S3MetaRequest.onResponseBody (S3BorrowedBuffer path) callback",
+            "id=%p: Received exception from S3MetaRequest.onResponseBodyBorrowed callback",
             (void *)meta_request);
         /* Extra ref is still held by the S3BorrowedBuffer object; the
          * cleaner will release it when the object becomes phantom-reachable.
@@ -1722,7 +1722,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jdouble disk_throughput_gbps,
     jboolean direct_io,
     jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
-    jboolean jni_uses_borrowed_overload /* handler overrides the S3BorrowedBuffer overload */) {
+    jboolean jni_uses_borrowed_delivery /* handler overrides onResponseBodyBorrowed */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1848,7 +1848,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     /* Body callback selection:
-     *   - Pool attached AND handler opted into the borrowed-buffer overload
+     *   - Pool attached AND handler overrides onResponseBodyBorrowed
      *     -> body_callback_ex (lifetime-controlled zero-copy)
      *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
      *     copy source is Java pool memory instead of the default native pool, but
@@ -1857,7 +1857,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
      *
      * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
      * we set exactly one below. */
-    bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_overload;
+    bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_delivery;
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,

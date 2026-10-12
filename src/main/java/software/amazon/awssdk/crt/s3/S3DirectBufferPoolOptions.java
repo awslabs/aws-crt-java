@@ -86,11 +86,11 @@ import java.nio.ByteBuffer;
  *
  * <h2>Delivery</h2>
  * Handlers that override
- * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}
+ * {@link S3MetaRequestResponseHandler#onResponseBodyBorrowed(S3BorrowedBuffer, long, long)}
  * receive each chunk straight from pool memory, with no copy into a heap
- * {@code byte[]}. The client calls exactly one {@code onResponseBody}
- * overload per request, and calls the borrowed-buffer one only when the
- * pool is enabled. A GetObject that sets a part number is the exception:
+ * {@code byte[]}. The client calls one of the two body methods per
+ * request, and calls {@code onResponseBodyBorrowed} only when the pool is
+ * enabled. A GetObject that sets a part number is the exception:
  * its body is copied once into separate memory outside the pool (see
  * {@link S3BorrowedBuffer}).
  *

@@ -23,7 +23,7 @@ import software.amazon.awssdk.crt.Log;
  * One chunk of an S3 response body, read directly from the client's direct
  * buffer pool memory (see {@link S3DirectBufferPoolOptions}) with no copy.
  * Delivered to handlers that override
- * {@link S3MetaRequestResponseHandler#onResponseBody(S3BorrowedBuffer, long, long)}.
+ * {@link S3MetaRequestResponseHandler#onResponseBodyBorrowed(S3BorrowedBuffer, long, long)}.
  * The chunk starts at that callback's {@code objectRangeStart}; its length
  * is {@code asByteBuffer().remaining()}.
  *
@@ -40,7 +40,7 @@ import software.amazon.awssdk.crt.Log;
  * pool runs out, every request on the client waits. Holding a buffer open
  * is not flow control; to pause a download, enable
  * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
- * return 0 (or a small increment) from {@code onResponseBody}, and call
+ * return 0 (or a small increment) from {@code onResponseBodyBorrowed}, and call
  * {@link S3MetaRequest#incrementReadWindow} when ready for more. Once a
  * buffer is closed, the
  * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read. Keep a
@@ -72,7 +72,7 @@ import software.amazon.awssdk.crt.Log;
  * before the callback returns, so nothing from it (the buffer or its
  * {@link ByteBuffer} view) may be kept and used afterwards.</p>
  * <pre>{@code
- * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+ * public int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
  *     try (S3BorrowedBuffer b = buffer) {  // closes the buffer when the block exits, even on an exception
  *         ByteBuffer data = b.asByteBuffer();
  *         // Read the chunk from data here, for example by writing it to a
@@ -88,7 +88,7 @@ import software.amazon.awssdk.crt.Log;
  * reads it later, and have that code close it. If the hand-off fails, the
  * callback still owns the buffer and must close it.</p>
  * <pre>{@code
- * public int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+ * public int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
  *     try {
  *         // The task now owns the buffer and closes it when done.
  *         executor.execute(() -> {

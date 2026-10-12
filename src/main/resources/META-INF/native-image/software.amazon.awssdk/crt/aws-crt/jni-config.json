@@ -2505,7 +2505,7 @@
         ]
       },
       {
-        "name": "onResponseBody",
+        "name": "onResponseBodyBorrowed",
         "parameterTypes": [
           "software.amazon.awssdk.crt.s3.S3BorrowedBuffer",
           "long",

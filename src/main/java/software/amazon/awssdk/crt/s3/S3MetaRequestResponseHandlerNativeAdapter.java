@@ -13,9 +13,9 @@ class S3MetaRequestResponseHandlerNativeAdapter {
 
     /**
      * True if the client has a direct buffer pool AND the handler overrides
-     * onResponseBody(S3BorrowedBuffer, long, long).
+     * onResponseBodyBorrowed(S3BorrowedBuffer, long, long).
      */
-    private final boolean supportsBorrowedBufferOverload;
+    private final boolean usesBorrowedDelivery;
 
     /**
      * @param responseHandler      the customer's handler
@@ -25,15 +25,15 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler,
                                               boolean clientHasBufferPool) {
         this.responseHandler = responseHandler;
-        this.supportsBorrowedBufferOverload =
-            clientHasBufferPool && detectBorrowedBufferOverload(responseHandler);
+        this.usesBorrowedDelivery =
+            clientHasBufferPool && overridesOnResponseBodyBorrowed(responseHandler);
     }
 
-    /** Reflection probe: declaringClass != interface means the handler overrode the overload. */
-    private static boolean detectBorrowedBufferOverload(S3MetaRequestResponseHandler handler) {
+    /** Reflection probe: declaringClass != interface means the handler overrode the method. */
+    private static boolean overridesOnResponseBodyBorrowed(S3MetaRequestResponseHandler handler) {
         try {
             java.lang.reflect.Method m = handler.getClass().getMethod(
-                "onResponseBody", S3BorrowedBuffer.class, long.class, long.class);
+                "onResponseBodyBorrowed", S3BorrowedBuffer.class, long.class, long.class);
             return m.getDeclaringClass() != S3MetaRequestResponseHandler.class;
         } catch (NoSuchMethodException e) {
             // The default is defined on S3MetaRequestResponseHandler so this
@@ -47,8 +47,8 @@ class S3MetaRequestResponseHandlerNativeAdapter {
      * Passed to native with each meta request, to select body_callback_ex
      * (borrowed-buffer path) or body_callback (byte[] copy).
      */
-    boolean getSupportsBorrowedBufferOverload() {
-        return supportsBorrowedBufferOverload;
+    boolean usesBorrowedDelivery() {
+        return usesBorrowedDelivery;
     }
 
     int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
@@ -56,8 +56,8 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     }
 
     /** Borrowed-buffer (zero-copy) delivery; called from native. */
-    int onResponseBody(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
-        return this.responseHandler.onResponseBody(buffer, objectRangeStart, objectRangeEnd);
+    int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+        return this.responseHandler.onResponseBodyBorrowed(buffer, objectRangeStart, objectRangeEnd);
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, String errorOperationName, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {

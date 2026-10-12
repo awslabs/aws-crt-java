@@ -335,7 +335,7 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onProgress;
     jmethodID onTelemetry;
     jmethodID onErrorResumeToken;
-    jmethodID onResponseBodyBorrowed; /* S3BorrowedBuffer overload */
+    jmethodID onResponseBodyBorrowed;
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;

@@ -751,8 +751,10 @@ public class MqttRequestResponseClientTests extends CrtTestFixture {
         }
 
         // eventual consistency if this is an op
-        TestUtils.sleepForAtLeastMilliseconds(500);
-        
+        try {
+            TestUtils.sleepForAtLeastMilliseconds(500);
+        } catch (InterruptedException ignored) {
+        }
 
         if (version == MqttVersion.Mqtt5) {
             PublishPacket publishPacket = helper.createMqtt5PublishPacket();

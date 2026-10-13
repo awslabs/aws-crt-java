@@ -41,15 +41,6 @@ public class S3Client extends CrtResource {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
 
-        // TODO - THIS SHOULD BE REMOVED ONCE BENCHMARKING IS DONE
-        // Benchmark-only: auto-attach DBZ pool when -Daws.crt.s3.use_dbz=true is set
-        // AND the caller didn't attach a pool. Lets the SDK's S3CrtAsyncClient path
-        // (which doesn't yet expose DBZ APIs) participate in DBZ benchmarks.
-        if (options.getDirectBufferPoolOptions() == null
-                && "true".equalsIgnoreCase(System.getProperty("aws.crt.s3.use_dbz"))) {
-            options.withDirectBufferPoolOptions(S3DirectBufferPoolOptions.auto());
-        }
-
         int proxyConnectionType = 0;
         String proxyHost = null;
         int proxyPort = 0;

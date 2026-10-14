@@ -26,7 +26,7 @@ public interface S3MetaRequestResponseHandler {
     /**
      * Invoked to provide the response body as it is received.
      * Not invoked for a request when the client has a direct buffer pool and
-     * this handler overrides {@link #onResponseBodyBorrowed}; that method
+     * this handler also implements {@link S3BorrowedBufferDelivery}, which
      * receives the body instead.
      * <p>
      * Note that if the client was created with {@link S3ClientOptions#withReadBackpressureEnabled} set true,
@@ -48,6 +48,7 @@ public interface S3MetaRequestResponseHandler {
      * This value is ignored if backpressure is disabled.
      *
      * @see S3ClientOptions#withReadBackpressureEnabled
+     * @see S3BorrowedBufferDelivery
      */
     default int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return 0;
@@ -102,44 +103,5 @@ public interface S3MetaRequestResponseHandler {
      *        resumable state was captured
      */
     default void onErrorResumeToken(final int errorCode, final ResumeToken resumeToken) {
-    }
-
-    /**
-     * Optional zero-copy delivery: invoked instead of
-     * {@link #onResponseBody(ByteBuffer, long, long)} when the handler
-     * overrides this method AND a
-     * {@link S3ClientOptions#withDirectBufferPoolOptions direct buffer pool}
-     * is enabled on the client.
-     *
-     * <p>The buffer keeps its pool memory until it is closed, so it can be
-     * held past this callback (for example, handed to another thread). Close
-     * it on every path, including when this method throws; see
-     * {@link S3BorrowedBuffer} for lifetime, leak and flow-control rules. A
-     * throw from this method also fails the meta request.</p>
-     *
-     * <p>Non-overriding handlers keep receiving heap {@code byte[]}-backed
-     * buffers via {@link #onResponseBody(ByteBuffer, long, long)}, with no
-     * behavior change even when a pool is enabled. Zero-copy delivery is
-     * only available by overriding this method.</p>
-     *
-     * @param buffer  a borrowed direct-buffer view into pool memory; MUST
-     *                always be closed (directly, or via
-     *                {@link S3BorrowedBuffer#toByteArray()}, which copies
-     *                then closes)
-     * @param objectRangeStart the byte index of the object that this refers
-     *                         to (same as {@link #onResponseBody(ByteBuffer, long, long)})
-     * @param objectRangeEnd   {@code objectRangeStart + buffer.asByteBuffer().remaining()}
-     * @return the number of bytes to increment the read window by (same as
-     *         {@link #onResponseBody(ByteBuffer, long, long)})
-     * @see S3BorrowedBuffer
-     * @see S3ClientOptions#withDirectBufferPoolOptions
-     */
-    default int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
-        // Unreachable via normal client dispatch (native only routes here
-        // when the handler overrides this method), but kept safe for direct
-        // invocation: copy to heap so onResponseBody(ByteBuffer, ...)'s
-        // safe-to-retain contract holds unconditionally.
-        // toByteArray() copies and closes the buffer.
-        return onResponseBody(ByteBuffer.wrap(buffer.toByteArray()), objectRangeStart, objectRangeEnd);
     }
 }

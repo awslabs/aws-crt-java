@@ -798,8 +798,8 @@ static struct aws_s3_buffer_ticket *s_owned_body_copy_new(
 
 /*
  * Opt-in zero-copy delivery callback (body_callback_ex). Fires only when a
- * direct buffer pool is attached AND the handler overrides
- * onResponseBodyBorrowed(S3BorrowedBuffer, long, long).
+ * direct buffer pool is attached AND the handler implements
+ * S3BorrowedBufferDelivery.
  *
  * Hands the Java S3BorrowedBuffer one ticket ref, released via
  * close()/GC-cleaner (nativeReleaseTicket below). With a pool ticket that is
@@ -1722,7 +1722,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jdouble disk_throughput_gbps,
     jboolean direct_io,
     jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
-    jboolean jni_uses_borrowed_delivery /* handler overrides onResponseBodyBorrowed */) {
+    jboolean jni_uses_borrowed_delivery /* handler implements S3BorrowedBufferDelivery */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1848,7 +1848,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     /* Body callback selection:
-     *   - Pool attached AND handler overrides onResponseBodyBorrowed
+     *   - Pool attached AND handler implements S3BorrowedBufferDelivery
      *     -> body_callback_ex (lifetime-controlled zero-copy)
      *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
      *     copy source is Java pool memory instead of the default native pool, but

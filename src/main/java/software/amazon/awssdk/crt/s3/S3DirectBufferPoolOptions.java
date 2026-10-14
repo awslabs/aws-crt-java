@@ -85,14 +85,13 @@ import java.nio.ByteBuffer;
  * so creating the client always throws.</p>
  *
  * <h2>Delivery</h2>
- * Handlers that override
- * {@link S3MetaRequestResponseHandler#onResponseBodyBorrowed(S3BorrowedBuffer, long, long)}
- * receive each chunk straight from pool memory, with no copy into a heap
- * {@code byte[]}. The client calls one of the two body methods per
- * request, and calls {@code onResponseBodyBorrowed} only when the pool is
- * enabled. A GetObject that sets a part number is the exception:
- * its body is copied once into separate memory outside the pool (see
- * {@link S3BorrowedBuffer}).
+ * A handler that implements {@link S3BorrowedBufferDelivery} receives each
+ * chunk straight from pool memory, with no copy into a heap {@code byte[]};
+ * any other handler keeps receiving
+ * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}.
+ * Exactly one of the two is called per request. A GetObject that sets a part
+ * number is the exception: its body is copied once into separate memory
+ * outside the pool (see {@link S3BorrowedBuffer}).
  *
  * <h2>Uploads</h2>
  * Multipart uploads hold each part in this pool until the part completes,

@@ -22,10 +22,9 @@ import software.amazon.awssdk.crt.Log;
 /**
  * One chunk of an S3 response body, read directly from the client's direct
  * buffer pool memory (see {@link S3DirectBufferPoolOptions}) with no copy.
- * Delivered to handlers that override
- * {@link S3MetaRequestResponseHandler#onResponseBodyBorrowed(S3BorrowedBuffer, long, long)}.
- * The chunk starts at that callback's {@code objectRangeStart}; its length
- * is {@code asByteBuffer().remaining()}.
+ * Delivered to handlers that implement {@link S3BorrowedBufferDelivery}. The
+ * chunk starts at the callback's {@code objectRangeStart}; its length is
+ * {@code asByteBuffer().remaining()}.
  *
  * <p>Exception: for a GetObject that sets a part number, the native client
  * reads the body into its own temporary memory rather than the pool. Its

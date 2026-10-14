@@ -12,35 +12,24 @@ class S3MetaRequestResponseHandlerNativeAdapter {
     private S3MetaRequestResponseHandler responseHandler;
 
     /**
-     * True if the client has a direct buffer pool AND the handler overrides
-     * onResponseBodyBorrowed(S3BorrowedBuffer, long, long).
+     * The handler's zero-copy delivery, or null when this request uses byte[]
+     * delivery because the handler did not opt in or the client has no pool to
+     * borrow from. Resolved once here rather than per chunk.
      */
-    private final boolean usesBorrowedDelivery;
+    private final S3BorrowedBufferDelivery borrowedDelivery;
 
     /**
      * @param responseHandler      the customer's handler
      * @param clientHasBufferPool  whether the client has a direct buffer pool;
-     *                             when false the reflection probe is skipped
+     *                             without one there is nothing to borrow, so
+     *                             the handler's opt-in is ignored
      */
     S3MetaRequestResponseHandlerNativeAdapter(S3MetaRequestResponseHandler responseHandler,
                                               boolean clientHasBufferPool) {
         this.responseHandler = responseHandler;
-        this.usesBorrowedDelivery =
-            clientHasBufferPool && overridesOnResponseBodyBorrowed(responseHandler);
-    }
-
-    /** Reflection probe: declaringClass != interface means the handler overrode the method. */
-    private static boolean overridesOnResponseBodyBorrowed(S3MetaRequestResponseHandler handler) {
-        try {
-            java.lang.reflect.Method m = handler.getClass().getMethod(
-                "onResponseBodyBorrowed", S3BorrowedBuffer.class, long.class, long.class);
-            return m.getDeclaringClass() != S3MetaRequestResponseHandler.class;
-        } catch (NoSuchMethodException e) {
-            // The default is defined on S3MetaRequestResponseHandler so this
-            // should never happen for a well-formed handler. Treat as "not
-            // opted in" and fall back to the byte[] delivery path.
-            return false;
-        }
+        this.borrowedDelivery = clientHasBufferPool && responseHandler instanceof S3BorrowedBufferDelivery
+                ? (S3BorrowedBufferDelivery) responseHandler
+                : null;
     }
 
     /**
@@ -48,16 +37,22 @@ class S3MetaRequestResponseHandlerNativeAdapter {
      * (borrowed-buffer path) or body_callback (byte[] copy).
      */
     boolean usesBorrowedDelivery() {
-        return usesBorrowedDelivery;
+        return borrowedDelivery != null;
     }
 
     int onResponseBody(byte[] bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return this.responseHandler.onResponseBody(ByteBuffer.wrap(bodyBytesIn), objectRangeStart, objectRangeEnd);
     }
 
-    /** Borrowed-buffer (zero-copy) delivery; called from native. */
+    /**
+     * Borrowed-buffer (zero-copy) delivery; called from native, and only for a
+     * request whose usesBorrowedDelivery() was true. A null here would mean
+     * native selected body_callback_ex for a request that did not ask for it,
+     * so the NPE is the correct outcome: it fails that meta request loudly
+     * rather than quietly copying and hiding the dispatch bug.
+     */
     int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
-        return this.responseHandler.onResponseBodyBorrowed(buffer, objectRangeStart, objectRangeEnd);
+        return this.borrowedDelivery.onResponseBodyBorrowed(buffer, objectRangeStart, objectRangeEnd);
     }
 
     void onFinished(int errorCode, int responseStatus, byte[] errorPayload, String errorOperationName, int checksumAlgorithm, boolean didValidateChecksum, Throwable cause, final ByteBuffer headersBlob) {

@@ -47,12 +47,13 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Split by what each test needs, because that decides where it runs:</p>
  * <ul>
- *   <li><b>Configuration and buffer-contract tests</b> need neither credentials
- *       nor network, so they run in every CI job on every platform we support.
- *       They cover the validation and lifetime rules that a pool configured for
- *       the happy path never exercises.</li>
- *   <li><b>Delivery tests</b> need real S3, so they gate on credentials the same
- *       way {@code S3ClientTest} does, and skip without them.</li>
+ *   <li><b>Configuration, buffer-contract and routing tests</b> need neither
+ *       credentials nor network, so they run in every CI job on every platform
+ *       we support. They cover the validation, lifetime and delivery-path rules
+ *       that a pool configured for the happy path never exercises.</li>
+ *   <li><b>End-to-end delivery tests</b> need real S3, so they gate on
+ *       credentials the same way {@code S3ClientTest} does, and skip without
+ *       them. They confirm native honours the routing decision.</li>
  * </ul>
  */
 public class S3DirectBufferPoolTest extends CrtTestFixture {
@@ -271,32 +272,30 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
     }
 
     /*
-     * A handler that only implements the heap callback must still receive the
-     * body when the borrowed callback is invoked, otherwise overriding neither
-     * method would silently drop data. This is the fallback path in the
-     * interface's default onResponseBodyBorrowed.
+     * Borrowed delivery requires BOTH a pool on the client and a handler that
+     * implements S3BorrowedBufferDelivery; all four combinations are asserted
+     * here, on the adapter that makes the decision.
+     *
+     * This asserts the decision rather than the delivered bytes, which is the
+     * only way to see it: both paths deliver identical bytes by design, so a
+     * routing regression makes the feature silently inert rather than broken.
+     * It needs no credentials and no network, so unlike the end-to-end tests
+     * below it runs in every CI job on every platform we support -- which is
+     * where a platform-specific routing bug would show up.
      */
     @Test
-    public void testDefaultBorrowedCallbackFallsBackToHeapCallback() {
-        byte[] body = {5, 6, 7, 8};
-        List<byte[]> heapDeliveries = new ArrayList<>();
+    public void testBorrowedDeliveryRequiresBothPoolAndHandlerOptIn() {
+        S3MetaRequestResponseHandler heapOnly = new HeapOnlyRecordingHandler();
+        S3MetaRequestResponseHandler borrowed = new RecordingHandler();
 
-        S3MetaRequestResponseHandler heapOnlyHandler = new S3MetaRequestResponseHandler() {
-            @Override
-            public int onResponseBody(ByteBuffer bodyBytesIn, long rangeStart, long rangeEnd) {
-                byte[] copy = new byte[bodyBytesIn.remaining()];
-                bodyBytesIn.get(copy);
-                heapDeliveries.add(copy);
-                return copy.length;
-            }
-        };
-
-        S3BorrowedBuffer buffer = newDetachedBuffer(body);
-        int credited = heapOnlyHandler.onResponseBodyBorrowed(buffer, 0, body.length);
-
-        assertEquals("fallback should deliver exactly once", 1, heapDeliveries.size());
-        assertArrayEquals(body, heapDeliveries.get(0));
-        assertEquals("window credit should pass through unchanged", body.length, credited);
+        assertTrue("pool + opted-in handler must borrow",
+                new S3MetaRequestResponseHandlerNativeAdapter(borrowed, true).usesBorrowedDelivery());
+        assertFalse("a handler that did not opt in must not borrow",
+                new S3MetaRequestResponseHandlerNativeAdapter(heapOnly, true).usesBorrowedDelivery());
+        assertFalse("without a pool there is nothing to borrow",
+                new S3MetaRequestResponseHandlerNativeAdapter(borrowed, false).usesBorrowedDelivery());
+        assertFalse("neither condition met",
+                new S3MetaRequestResponseHandlerNativeAdapter(heapOnly, false).usesBorrowedDelivery());
     }
 
     /* ==================================================================== */
@@ -304,10 +303,9 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
     /* ==================================================================== */
 
     /*
-     * The borrowed path is only taken when the client has a pool AND the handler
-     * overrides onResponseBodyBorrowed. A regression in that routing makes the
-     * whole feature silently inert rather than broken, which is why all three
-     * combinations are asserted.
+     * End-to-end confirmation that native honours the routing decision the
+     * adapter made: the borrowed path is only taken when the client has a pool
+     * AND the handler implements S3BorrowedBufferDelivery.
      */
     @Test
     public void testPoolAndBorrowedHandlerTakeBorrowedPath() throws Exception {
@@ -346,7 +344,7 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         downloadPreExisting10MB(null /* no pool */, handler);
 
         assertEquals("without a pool there is nothing to borrow", 0, handler.borrowedCallbacks.get());
-        assertTrue("expected the heap fallback to deliver", handler.heapCallbacks.get() > 0);
+        assertTrue("expected heap deliveries instead", handler.heapCallbacks.get() > 0);
         assertEquals(PRE_EXIST_10MB_SIZE, handler.bytesReceived.get());
     }
 
@@ -609,7 +607,8 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
      * checks that ranges arrive contiguously from zero. Overrides both body
      * methods so the client's routing decision is observable rather than assumed.
      */
-    private static final class RecordingHandler implements S3MetaRequestResponseHandler {
+    private static final class RecordingHandler
+            implements S3MetaRequestResponseHandler, S3BorrowedBufferDelivery {
         final AtomicInteger borrowedCallbacks = new AtomicInteger();
         final AtomicInteger heapCallbacks = new AtomicInteger();
         final AtomicLong bytesReceived = new AtomicLong();

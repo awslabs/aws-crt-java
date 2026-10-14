@@ -550,6 +550,10 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         HttpRequest request = new HttpRequest("GET", PRE_EXIST_10MB_PATH, headers, null);
         return new S3MetaRequestOptions()
                 .withMetaRequestType(type)
+                // Required for MetaRequestType.DEFAULT: aws-c-s3 rejects a default
+                // meta request with no operation name before it sends anything.
+                // Ignored by the other types, so it is set unconditionally.
+                .withOperationName("GetObject")
                 .withHttpRequest(request)
                 .withResponseHandler(handler);
     }

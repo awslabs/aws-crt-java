@@ -68,6 +68,65 @@ public class S3ClientTest extends CrtTestFixture {
     static final String PRE_EXIST_10MB_PATH = "/pre-existing-10MB";
     static final String UPLOAD_DIR = "/upload";
 
+    /*
+     * Test-only opt-in that runs this whole suite against a direct buffer pool,
+     * so the pool is exercised by the existing S3 coverage instead of a parallel
+     * set of pool-specific tests. The dedicated CI job sets it; normal CI runs
+     * leave it unset and behave exactly as before.
+     *
+     * The value is the pool's ceiling in bytes, so the job can be retuned
+     * without touching this file. Deliberately read here rather than in
+     * S3Client: production code must not change behaviour based on a test flag.
+     */
+    private static final String DBZ_POOL_BYTES_PROP = "aws.crt.s3.test.direct_buffer_pool_bytes";
+
+    private static final long DBZ_POOL_BYTES = Long.getLong(DBZ_POOL_BYTES_PROP, 0L);
+
+    /**
+     * Attaches a direct buffer pool when the suite is running in
+     * direct-buffer-pool mode, unless the test configured its own pool.
+     *
+     * <p>Uses {@code elastic} rather than {@code fixed}: a fixed pool rejects
+     * upload parts above four slots up front, which would fail the tests that
+     * upload objects needing more than 10,000 parts, while an elastic pool
+     * serves those from per-request dedicated buffers. A floor of zero keeps
+     * CI runners from committing direct memory that most tests never use.</p>
+     *
+     * <p>Not applied when the pool is disabled, so {@code getDirectBufferPoolOptions}
+     * stays null and the client takes the heap-delivery path.</p>
+     */
+    private static S3ClientOptions withTestPoolIfEnabled(S3ClientOptions options) {
+        if (DBZ_POOL_BYTES > 0 && options.getDirectBufferPoolOptions() == null) {
+            options.withDirectBufferPoolOptions(S3DirectBufferPoolOptions.elastic(0, DBZ_POOL_BYTES));
+        }
+        return options;
+    }
+
+    /*
+     * Guards against the direct-buffer-pool job silently degrading into a second
+     * plain S3 run. The pool is opted into through a system property, which has to
+     * survive the Maven property, the surefire systemPropertyVariables entry, and
+     * the fork. If any of those breaks, every test here still passes and the job
+     * reports green while covering nothing. The CI job sets this environment
+     * variable, which reaches the forked JVM directly, so the two disagreeing is
+     * a wiring failure.
+     */
+    @Test
+    public void testDirectBufferPoolOptInIsWired() {
+        if (System.getenv("AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL") == null) {
+            return; // not the direct-buffer-pool job; nothing to check
+        }
+        assertTrue(
+                "AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL is set, but the system property "
+                        + DBZ_POOL_BYTES_PROP + " did not reach the test JVM, so these tests ran "
+                        + "without a pool. Check crt.test.direct_buffer_pool_bytes in pom.xml.",
+                DBZ_POOL_BYTES > 0);
+
+        S3ClientOptions options = new S3ClientOptions();
+        withTestPoolIfEnabled(options);
+        assertNotNull("expected a pool to be attached", options.getDirectBufferPoolOptions());
+    }
+
     public S3ClientTest() {
     }
 
@@ -93,7 +152,7 @@ public class S3ClientTest extends CrtTestFixture {
                             credentialsProvider);) {
                 Assert.assertNotNull(credentialsProvider);
                 options.withClientBootstrap(clientBootstrap).withSigningConfig(signingConfig);
-                return new S3Client(options);
+                return new S3Client(withTestPoolIfEnabled(options));
             }
         } catch (NullPointerException ex) {
             ex.printStackTrace();
@@ -155,7 +214,7 @@ public class S3ClientTest extends CrtTestFixture {
                         .withClientBootstrap(clientBootstrap).build();) {
             S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
                     .withClientBootstrap(clientBootstrap).withCredentialsProvider(credentialsProvider);
-            try (S3Client client = new S3Client(clientOptions)) {
+            try (S3Client client = new S3Client(withTestPoolIfEnabled(clientOptions))) {
                 assertNotNull(client);
             }
         }
@@ -170,7 +229,7 @@ public class S3ClientTest extends CrtTestFixture {
                 ClientBootstrap clientBootstrap = new ClientBootstrap(elg, hostResolver);) {
             S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION)
                     .withClientBootstrap(clientBootstrap);
-            try (S3Client client = new S3Client(clientOptions)) {
+            try (S3Client client = new S3Client(withTestPoolIfEnabled(clientOptions))) {
 
             }
         }

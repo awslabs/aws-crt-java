@@ -203,7 +203,8 @@ public class S3ClientOptions {
      * {@link #withInitialReadWindowSize} determines the starting size of each S3MetaRequest's window, in bytes.
      * Data stops downloading data whenever the window reaches zero.
      * Increment the window to keep data flowing by calling {@link S3MetaRequest#incrementReadWindow},
-     * or by returning a size from {@link S3MetaRequestResponseHandler#onResponseBody}.
+     * or by returning a size from {@link S3MetaRequestResponseHandler#onResponseBody}
+     * (or {@link S3BorrowedBufferDelivery#onResponseBodyBorrowed}, if that receives the body).
      * Maintain a larger window to keep up a high download throughput,
      * parts cannot download in parallel unless the window is large enough to hold multiple parts.
      * Maintain a smaller window to limit the amount of data buffered in memory.
@@ -422,14 +423,15 @@ public class S3ClientOptions {
      * buffers (download response bodies and multipart upload parts), in
      * place of the default native buffer pool. The client creates the pool
      * from these options at construction, sized to its own part size; the
-     * client closes it when its shutdown completes. For when the pool frees
-     * its memory, see the Lifetime section of
+     * client closes it when its shutdown completes. For how long borrowed
+     * buffers keep their memory, see the Lifetime section of
      * {@link S3DirectBufferPoolOptions}.
      *
      * <p>Enabling the pool does NOT change the delivery contract of
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
      * It still receives a heap {@code byte[]}-backed buffer that is safe
-     * to retain.</p>
+     * to retain. Zero-copy delivery is available only to a handler that also
+     * implements {@link S3BorrowedBufferDelivery}.</p>
      *
      * @param poolOptions pool sizing (for example {@link S3DirectBufferPoolOptions#auto()}),
      *                    or {@code null} to use the default native pool

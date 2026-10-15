@@ -215,7 +215,8 @@ public class S3Client extends CrtResource {
 
     private void onShutdownComplete() {
         // No meta request can reserve pool memory after shutdown. Frees all
-        // unused pool memory now; memory still leased is freed on release.
+        // unused pool memory now; memory held by unclosed S3BorrowedBuffers
+        // is freed as each one closes.
         if (directBufferPool != null) {
             directBufferPool.close();
         }
@@ -263,7 +264,7 @@ public class S3Client extends CrtResource {
 
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
-                options.getResponseHandler());
+                options.getResponseHandler(), directBufferPool != null);
 
         byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
         byte[] requestFilePath = null;
@@ -314,7 +315,8 @@ public class S3Client extends CrtResource {
                 shouldStream,
                 diskThroughputGbps,
                 directIo,
-                directBufferPool != null ? directBufferPool.nativePoolState() : 0L);
+                directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
+                responseHandlerNativeAdapter.usesBorrowedDelivery());
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -542,7 +544,8 @@ public class S3Client extends CrtResource {
             boolean shouldStream,
             double diskThroughputGbps,
             boolean directIo,
-            long directBufferPoolState);
+            long directBufferPoolState,
+            boolean usesBorrowedDelivery);
 
     /**
      * Returns the default native buffer pool's memory limit (bytes) for the

@@ -77,8 +77,9 @@ import software.amazon.awssdk.crt.Log;
  * thread, while holding both locks, so other reserves and releases wait
  * for it.</p>
  *
- * <p>Lifetime: a lease outlives both the client and {@link #close()}; its
- * memory is freed when the lease is released.</p>
+ * <p>Lifetime: leases held by unclosed {@link S3BorrowedBuffer}s outlive
+ * both the client and {@link #close()}; their memory is freed when the last
+ * lease on it is released (or recovered by the buffer's GC fallback).</p>
  */
 final class S3DirectBufferPool {
 
@@ -453,8 +454,8 @@ final class S3DirectBufferPool {
     /**
      * Marks the pool closed and immediately frees every unused block.
      * Called by {@link S3Client} when its shutdown completes (and on
-     * client-construction failure). Memory still leased is freed when the
-     * lease is released. Idempotent.
+     * client-construction failure). Memory still leased by unclosed
+     * {@link S3BorrowedBuffer}s is freed when released. Idempotent.
      */
     void close() {
         synchronized (synced) {

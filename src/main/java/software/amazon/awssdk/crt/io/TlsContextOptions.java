@@ -318,7 +318,7 @@ public final class TlsContextOptions extends CrtResource {
         if (trustStorePath == null || trustStorePath.isEmpty()) {
             return;
         }
-        // JSSE treats "NONE" as a non-file-based trust store (e.g. PKCS#11), which is not supported here
+        // JSSE treats "NONE" as a non-file-based trust store (e.g. PKCS#11), which is not supported
         if ("NONE".equals(trustStorePath)) {
             throw new IllegalArgumentException("javax.net.ssl.trustStore=NONE is not supported");
         }

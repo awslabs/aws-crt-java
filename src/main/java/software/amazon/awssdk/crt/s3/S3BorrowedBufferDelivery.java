@@ -13,21 +13,21 @@ package software.amazon.awssdk.crt.s3;
  *
  * <pre>{@code
  * class MyHandler implements S3MetaRequestResponseHandler, S3BorrowedBufferDelivery {
- *     public int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long rangeStart, long rangeEnd) {
+ *     public int onResponseBodyBorrowed(S3BorrowedBuffer buffer,
+ *                                       long objectRangeStart, long objectRangeEnd) {
  *         try (S3BorrowedBuffer b = buffer) {   // MUST be closed on every path
  *             // read b.asByteBuffer() here
  *         }
- *         return (int) (rangeEnd - rangeStart);
+ *         return (int) (objectRangeEnd - objectRangeStart);
  *     }
  * }
  * }</pre>
  *
- * <p>A pool on the client and this interface on the handler are both required.
+ * <p>A direct buffer pool on the client and this interface on the handler are both required.
  * With only one of the two, chunks keep arriving via
  * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
- * The opt-in is an interface rather than a method so that the compiler checks
- * it: a wrong name or signature fails the build instead of silently falling
- * back to heap delivery.</p>
+ * Because the opt-in is an interface, a wrong method name or signature fails
+ * the build rather than quietly reverting to heap delivery.</p>
  *
  * @see S3BorrowedBuffer
  * @see S3ClientOptions#withDirectBufferPoolOptions

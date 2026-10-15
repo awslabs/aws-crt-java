@@ -59,9 +59,8 @@ import software.amazon.awssdk.crt.Log;
  * All mutable block and dedicated-buffer state lives in the {@link Synced}
  * holder ({@code synced}), and every read or write of it happens inside
  * {@code synchronized (synced)}; helpers that require that are suffixed
- * {@code Locked}. The immutable configuration fields,
- * {@link #setNativePoolState}, and the volatile {@code closed} fast-path
- * checks do not need it. Native callers (reserve, ticket release, trim,
+ * {@code Locked}. The immutable configuration fields and
+ * {@link #setNativePoolState} do not need it. Native callers (reserve, ticket release, trim,
  * request finish) additionally hold the native pool state's
  * {@code pending_lock} around their JNI calls, so acquires and releases are
  * serialized and pending reservations cannot be stranded. Lock order:
@@ -177,10 +176,10 @@ final class S3DirectBufferPool {
 
     /**
      * Set by {@link #close()} while holding {@code synced}: acquires throw;
-     * released memory is freed instead of kept. Volatile so the fast-path
-     * reads outside the lock see it.
+     * released memory is freed instead of kept. Read only under that same
+     * monitor, so it needs no other publication.
      */
-    private volatile boolean closed;
+    private boolean closed;
 
     /**
      * Private: {@link S3Client} builds pools via {@link #fromOptions}.
@@ -421,6 +420,23 @@ final class S3DirectBufferPool {
 
     /** @return the byte budget shared by blocks and dedicated buffers */
     long ceilingBytes()  { return ceilingBytes; }
+
+    /**
+     * Bytes actually backed right now: every allocated block plus every
+     * leased dedicated buffer. Never exceeds {@link #ceilingBytes()}.
+     *
+     * <p>No production caller. It exists because it is the pool's only
+     * observation point for growth, {@link #trim()} and {@link #close()},
+     * all three of which are otherwise only reachable through a live
+     * transfer; the tests assert on it directly instead.</p>
+     *
+     * @return currently committed bytes
+     */
+    long committedBytes() {
+        synchronized (synced) {
+            return synced.committedBytes;
+        }
+    }
 
     /** @return the largest reservation served from blocks, without a dedicated buffer */
     long maxGroupBytes() { return (long) maxGroupSlots * partSize; }

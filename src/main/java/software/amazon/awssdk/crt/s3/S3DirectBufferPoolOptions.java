@@ -60,6 +60,34 @@ import java.nio.ByteBuffer;
  * the floor and the ceiling, the pool grows as needed and gives memory
  * back when idle.
  *
+ * <p><b>Choosing the ceiling.</b> What the ceiling needs to cover depends
+ * on how many requests run at once, not on how large the objects are:</p>
+ * <ul>
+ *   <li><b>With backpressure enabled</b>
+ *       ({@link S3ClientOptions#withReadBackpressureEnabled}), each request
+ *       holds up to its read window plus one part:
+ *       <br>{@code ceiling >= concurrent requests x (read window + part size)}
+ *       <br>The extra part is because a part starts downloading as soon as
+ *       the window covers any of its bytes, so a request can hold one part
+ *       beyond its window. {@link S3ClientOptions#withInitialReadWindowSize}
+ *       is only a client-wide starting value:
+ *       {@link S3MetaRequest#incrementReadWindow} raises one request's
+ *       window with no upper bound, so if you use it, size the ceiling for
+ *       the sum of the windows you grant rather than the starting value.</li>
+ *   <li><b>For objects smaller than one part:</b>
+ *       <br>{@code ceiling >= concurrent requests x part size}
+ *       <br>Memory is reserved a whole part at a time, so an object smaller
+ *       than a part still holds a full part while it is in flight. Sizing
+ *       from the bytes actually in flight under-sizes the pool: at the
+ *       default 8 MiB part size, 100 concurrent 256 KiB downloads need
+ *       800 MiB, not 25 MiB. Reduce {@link S3ClientOptions#withPartSize} if
+ *       that is too much for a small-object workload.</li>
+ * </ul>
+ * Without backpressure there is no window, so the ceiling itself is what
+ * bounds how much downloads buffer. In either case a ceiling below these
+ * figures still completes every request; requests wait for memory instead,
+ * which shows up as lower throughput rather than an error.
+ *
  * <p>How {@link S3ClientOptions#withMemoryLimitInBytes} works with the
  * pool depends on the factory:</p>
  * <ul>
@@ -89,9 +117,8 @@ import java.nio.ByteBuffer;
  * chunk straight from pool memory, with no copy into a heap {@code byte[]};
  * any other handler keeps receiving
  * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}.
- * Exactly one of the two is called per request. A GetObject that sets a part
- * number is the exception: its body is copied once into separate memory
- * outside the pool (see {@link S3BorrowedBuffer}).
+ * Exactly one of the two is called per request. See {@link S3BorrowedBuffer}
+ * for the details, including the part-number GetObject exception.
  *
  * <h2>Uploads</h2>
  * Multipart uploads hold each part in this pool until the part completes,
@@ -117,14 +144,14 @@ import java.nio.ByteBuffer;
  *       explicitly, it is never raised: an upload that would need larger
  *       parts is rejected when the request is made, with the part size to
  *       use.</li>
- *   <li>An upload part can be at most half the ceiling, and never more
- *       than 5 GiB; an upload that needs larger parts is rejected when the
- *       request is made.</li>
- *   <li>{@link S3ClientOptions#withPartSize partSize} must be smaller than
- *       128 MiB (128 MiB itself is rejected), or creating the client
- *       fails. Pools whose ceiling is under 16 parts allow somewhat larger
- *       parts; the error message gives the exact limit.</li>
+ *   <li>An upload part is bounded by the ceiling and by S3's own maximum;
+ *       an upload needing larger parts is rejected when the request is
+ *       made.</li>
+ *   <li>{@link S3ClientOptions#withPartSize partSize} has an upper bound, or
+ *       creating the client fails.</li>
  * </ul>
+ * Both errors state the exact limit and the value to use, so the numbers
+ * live in one place rather than here as well.
  * {@link #fixed(long)} pools have a further limit on very large uploads;
  * see that method.
  * A request that can never fit in the pool fails, with the reason logged.
@@ -218,18 +245,13 @@ public final class S3DirectBufferPoolOptions {
      * Pool with a floor and ceiling you choose, in bytes. Use it to size the
      * pool yourself while still letting it grow and shrink with demand.
      *
-     * <ul>
-     *   <li><b>Floor:</b> memory allocated when the client is created and
-     *       kept while idle. The pool allocates 16 parts at a time, so this
-     *       is {@code minBytes} rounded down to a multiple of 16 parts (or
-     *       the whole pool, if {@code minBytes} reaches the ceiling); it is
-     *       never more than you asked for.</li>
-     *   <li><b>Ceiling:</b> {@code maxBytes}, rounded down to whole parts; the
-     *       pool never uses more than that.</li>
-     *   <li><b>In between:</b> the pool grows on demand 16 parts at a time,
-     *       and gives memory above the floor back once the client goes
-     *       idle.</li>
-     * </ul>
+     * <p>Floor and ceiling mean what the class doc's Sizing section says; this
+     * factory only decides their values. The pool works in 16-part groups, so
+     * the floor is {@code minBytes} rounded down to a multiple of 16 parts (or
+     * the whole pool if {@code minBytes} reaches the ceiling) and never more
+     * than you asked for, the ceiling is {@code maxBytes}, and in between the
+     * pool grows 16 parts at a time and releases everything above the floor
+     * once the client goes idle.</p>
      *
      * <p><b>Note: growth cost.</b> Each time the pool grows it allocates and
      * zero-fills 16 parts of memory (128 MiB with 8 MiB parts), which takes

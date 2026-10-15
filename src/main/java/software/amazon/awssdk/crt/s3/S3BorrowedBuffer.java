@@ -32,20 +32,23 @@ import software.amazon.awssdk.crt.Log;
  * that buffer works the same way but is not pool memory, so it does not
  * count toward the pool's ceiling or the JVM direct memory limit.</p>
  *
- * <p>The buffer holds its memory until {@link #close()}, so you can keep it
- * after the callback returns, pass it to another thread, or hold it past
- * client shutdown. Every buffer MUST be closed, on every path including
- * exceptions: until it is closed its memory can't be reused, and once the
- * pool runs out, every request on the client waits. Holding a buffer open
- * is not flow control; to pause a download, enable
+ * <p><b>Lifetime.</b> The buffer holds its memory until {@link #close()}, so
+ * you can keep it after the callback returns, pass it to another thread, or
+ * hold it past client shutdown. Every buffer MUST be closed, on every path
+ * including exceptions: until it is closed its memory can't be reused, and
+ * once the pool runs out, every request on the client waits.</p>
+ *
+ * <p><b>This is not flow control.</b> Holding a buffer open does not slow the
+ * download. To pause one, enable
  * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
- * return 0 (or a small increment) from {@code onResponseBodyBorrowed}, and call
- * {@link S3MetaRequest#incrementReadWindow} when ready for more. Once a
- * buffer is closed, the
- * {@link ByteBuffer} from {@link #asByteBuffer()} must NOT be read. Keep a
- * reference to the {@code S3BorrowedBuffer} itself for as long as you use
- * that view: a buffer that is no longer referenced can be recovered by
- * garbage collection, which frees the memory under the view.</p>
+ * return 0 (or a small increment) from {@code onResponseBodyBorrowed}, and
+ * call {@link S3MetaRequest#incrementReadWindow} when ready for more.</p>
+ *
+ * <p><b>Keep a reference while you read.</b> A buffer that is no longer
+ * referenced can be recovered by garbage collection, which frees the memory
+ * under the {@link ByteBuffer} that {@link #asByteBuffer()} returned, so hold
+ * the {@code S3BorrowedBuffer} itself for as long as you use that view. See
+ * {@link #asByteBuffer()} for what happens to the view after close.</p>
  *
  * <p>{@link #close()} can be called any number of times.
  * {@link #toByteArray()} copies the data to a heap {@code byte[]} and

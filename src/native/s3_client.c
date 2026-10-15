@@ -879,9 +879,13 @@ static int s_on_s3_meta_request_body_callback_borrowed(
 
     /* STEP 4: Dispatch to Java. The customer's handler MAY close synchronously
      * inside the callback (which drops that ref immediately) or MAY
-     * stash the buffer for later async processing (the extra ref persists
-     * until the customer calls close(), or until the phantom-reference
-     * cleaner fires as a GC fallback). */
+     * stash the buffer for later async processing (the ref the S3BorrowedBuffer
+     * owns persists until the customer calls close(), or until the
+     * phantom-reference cleaner fires as a GC fallback).
+     *
+     * The adapter is never NULL here, unlike in the byte[] callback which must
+     * check: borrowed delivery is installed only when a non-NULL handler
+     * implements S3BorrowedBufferDelivery. */
     uint64_t range_end = info.range_start + body->len;
     jint window_increment = (*env)->CallIntMethod(
         env,
@@ -896,9 +900,14 @@ static int s_on_s3_meta_request_body_callback_borrowed(
             AWS_LS_S3_META_REQUEST,
             "id=%p: Received exception from S3MetaRequest.onResponseBodyBorrowed callback",
             (void *)meta_request);
-        /* Extra ref is still held by the S3BorrowedBuffer object; the
+        /* The ref is still held by the S3BorrowedBuffer object; the
          * cleaner will release it when the object becomes phantom-reachable.
-         * We do NOT release here; that would double-release. */
+         * We do NOT release here; that would double-release.
+         *
+         * This path uses get_and_clear so a handler's exception reaches the
+         * finish callback, matching the byte[] path. The construction failures
+         * above use check_and_clear instead: those are our JNI failures, not
+         * the customer's, and they surface as AWS_ERROR_INVALID_STATE. */
         (*env)->DeleteLocalRef(env, borrowed);
         (*env)->DeleteLocalRef(env, sliced_dbb);
         aws_jni_release_thread_env(callback_data->jvm, &jvm_env_context);

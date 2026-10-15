@@ -301,8 +301,9 @@ jobs:
     - name: Run S3 tests with a direct buffer pool
       # 256 MiB ceiling: large enough for the suite's part sizes, and well inside
       # 80% of the JVM's default direct-memory limit (which equals the max heap),
-      # so no -XX:MaxDirectMemorySize is needed. surefire's argLine is hardcoded
-      # in pom.xml, so the opt-in travels as a Maven property instead.
+      # so no -XX:MaxDirectMemorySize is needed. The opt-in travels as a Maven
+      # property because pom.xml sets forkCount=0: tests run in the Maven JVM,
+      # so surefire's argLine is never applied.
       # AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL makes the job fail rather than
       # quietly run without a pool if that wiring ever breaks.
       env:

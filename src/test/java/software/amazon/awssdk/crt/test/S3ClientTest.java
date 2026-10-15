@@ -105,11 +105,15 @@ public class S3ClientTest extends CrtTestFixture {
     /*
      * Guards against the direct-buffer-pool job silently degrading into a second
      * plain S3 run. The pool is opted into through a system property, which has to
-     * survive the Maven property, the surefire systemPropertyVariables entry, and
-     * the fork. If any of those breaks, every test here still passes and the job
-     * reports green while covering nothing. The CI job sets this environment
-     * variable, which reaches the forked JVM directly, so the two disagreeing is
-     * a wiring failure.
+     * survive the Maven property and the surefire systemPropertyVariables entry.
+     * If either breaks, every test here still passes and the job reports green
+     * while covering nothing. The CI job also sets this environment variable,
+     * which the test JVM inherits directly, so the two disagreeing is a wiring
+     * failure.
+     *
+     * The property cannot travel via surefire's argLine: pom.xml sets
+     * forkCount=0, so tests run in the Maven JVM and argLine -- which only ever
+     * builds a forked JVM's command line -- is ignored outright.
      */
     @Test
     public void testDirectBufferPoolOptInIsWired() {

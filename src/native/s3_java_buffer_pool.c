@@ -515,14 +515,18 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
         return future;
     }
     if (result == s_exhausted) {
-        /* Exhausted + can_block: deferring risks deadlock; see "DESIGN
-         * NOTE: can_block" in the preamble. Fail loudly. */
+        /* can_block and the reservation cannot be served right now: deferring
+         * risks deadlock; see "DESIGN NOTE: can_block" in the preamble. Fail
+         * loudly. Note s_exhausted covers two cases -- no capacity at all, and
+         * capacity that exists but sits behind an earlier in-order waiter -- so
+         * the message must not claim the pool is necessarily full. */
         AWS_LOGF_ERROR(
             AWS_LS_S3_CLIENT,
-            "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) requested while the "
-            "pool is exhausted. S3DirectBufferPool does not grant over-limit forced buffers and cannot safely "
-            "defer blocking reservations (deadlock risk). Failing the reservation. Use the default native "
-            "buffer pool for async-write uploads, or size the pool for the expected concurrency.");
+            "S3DirectBufferPool: blocking reservation (can_block=true, async-write path) could not be served "
+            "immediately (pool exhausted, or earlier reservations still pending). S3DirectBufferPool does not "
+            "grant over-limit forced buffers and cannot safely defer blocking reservations (deadlock risk). "
+            "Failing the reservation. Use the default native buffer pool for async-write uploads, or size the "
+            "pool for the expected concurrency.");
         aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_S3_BUFFER_ALLOCATION_FAILED);
         return future;
     }

@@ -5,8 +5,9 @@
 
 /*
  * Deliberately in software.amazon.awssdk.crt.s3 rather than the usual
- * ...crt.test package: the pool's accessors (ceilingBytes, partSize,
- * ceilingClamped) and S3BorrowedBuffer's constructor are package-private, and
+ * ...crt.test package: the pool's accessors and allocation surface
+ * (ceilingBytes, committedBytes, partSize, ceilingClamped, tryAcquire,
+ * release, trim) and S3BorrowedBuffer's constructor are package-private, and
  * reaching them here avoids either widening production visibility or writing
  * reflection into the tests. CrtTestFixture is public with protected helpers,
  * so extending it across packages still works.
@@ -35,6 +36,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -47,10 +50,11 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Split by what each test needs, because that decides where it runs:</p>
  * <ul>
- *   <li><b>Configuration, buffer-contract and routing tests</b> need neither
- *       credentials nor network, so they run in every CI job on every platform
- *       we support. They cover the validation, lifetime and delivery-path rules
- *       that a pool configured for the happy path never exercises.</li>
+ *   <li><b>Configuration, allocation, buffer-contract and routing tests</b>
+ *       need neither credentials nor network, so they run in every CI job on
+ *       every platform we support. They cover the validation, growth, trim,
+ *       lifetime and delivery-path rules that a pool configured for the happy
+ *       path never exercises.</li>
  *   <li><b>End-to-end delivery tests</b> need real S3, so they gate on
  *       credentials the same way {@code S3ClientTest} does, and skip without
  *       them. They confirm native honours the routing decision.</li>
@@ -203,13 +207,23 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
     /*
      * An explicit -XX:MaxDirectMemorySize=0 allows no direct memory at all, so a
-     * pool cannot be created. Only meaningful in a JVM started with that flag,
-     * so it skips elsewhere rather than silently passing.
+     * pool cannot be created.
+     *
+     * The gate detects that JVM rather than trusting a property somebody has to
+     * remember to set: a one-byte direct allocation fails if and only if the flag
+     * is in force. The previous property-based gate named a property no job or
+     * profile ever set, so this test always skipped while appearing to cover the
+     * path.
+     *
+     * NOTE: it still cannot run in this project today. pom.xml sets forkCount=0,
+     * so tests share the Maven JVM, and Maven's own launcher needs direct buffers
+     * to start -- MAVEN_OPTS=-XX:MaxDirectMemorySize=0 kills Maven before any test
+     * runs. Covering this path requires a forked test JVM.
      */
     @Test
     public void testZeroDirectMemoryLimitIsRejected() {
         Assume.assumeTrue("needs a JVM started with -XX:MaxDirectMemorySize=0",
-                "0".equals(System.getProperty("aws.crt.test.expect_zero_direct_memory")));
+                directMemoryIsForbidden());
 
         S3ClientOptions options = baseOptions()
                 .withDirectBufferPoolOptions(S3DirectBufferPoolOptions.auto());
@@ -218,6 +232,144 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
                         options.getDirectBufferPoolOptions(), options));
         assertTrue("error should explain that no direct memory is allowed, was: " + ex.getMessage(),
                 ex.getMessage().contains("MaxDirectMemorySize"));
+    }
+
+    /* ==================================================================== */
+    /* Group A2: allocation, growth and trim. No credentials, no network.   */
+    /*                                                                     */
+    /* tryAcquire/release/trim/close are the pool's whole allocation        */
+    /* surface and are called only from native, so a transfer is the only   */
+    /* other way to reach them -- which makes their coverage credential-    */
+    /* gated and indirect. Driving them here asserts the ceiling, growth    */
+    /* and trim rules directly. A small part size keeps each block at       */
+    /* BLOCK_BYTES so these run anywhere, whatever the JVM's direct memory  */
+    /* limit.                                                               */
+    /* ==================================================================== */
+
+    /** 64 KiB: well under a real part, so the whole test pool is a few MiB. */
+    private static final int SMALL_PART = 64 * 1024;
+    /** One block of SMALL_PART slots -- the granularity the pool allocates in. */
+    private static final long BLOCK_BYTES = (long) S3DirectBufferPool.BLOCK_SLOTS * SMALL_PART;
+
+    /*
+     * Growth is per block, not per part, and stops dead at the ceiling. The
+     * per-block jump matters to a customer sizing a pool: committing one part
+     * commits a whole block's worth of memory.
+     */
+    @Test
+    public void testElasticPoolGrowsBlockByBlockToTheCeilingThenRefuses() {
+        S3DirectBufferPool pool = elasticPool(0, 2 * BLOCK_BYTES);
+        try {
+            assertEquals(2 * BLOCK_BYTES, pool.ceilingBytes());
+            assertEquals("a pool with no floor commits nothing until something is acquired",
+                    0, pool.committedBytes());
+
+            List<Long> leases = new ArrayList<>();
+            leases.add(acquireOnePart(pool));
+            assertEquals("the first acquire backs a whole block, not one part",
+                    BLOCK_BYTES, pool.committedBytes());
+
+            // Fill the rest of block 0. Still one block: growth is driven by
+            // running out of slots, not by the number of leases.
+            while (leases.size() < S3DirectBufferPool.BLOCK_SLOTS) {
+                leases.add(acquireOnePart(pool));
+            }
+            assertEquals(BLOCK_BYTES, pool.committedBytes());
+
+            // Block 0 is full, so this one has to grow the pool.
+            leases.add(acquireOnePart(pool));
+            assertEquals("a full block must grow the pool, not fail",
+                    2 * BLOCK_BYTES, pool.committedBytes());
+
+            while (leases.size() < 2 * S3DirectBufferPool.BLOCK_SLOTS) {
+                leases.add(acquireOnePart(pool));
+            }
+            assertEquals(2 * BLOCK_BYTES, pool.committedBytes());
+
+            // At the ceiling: refuse rather than exceed it. Native pends its
+            // future on EXHAUSTED and retries when memory frees.
+            assertEquals("acquiring past the ceiling must report EXHAUSTED",
+                    S3DirectBufferPool.EXHAUSTED, pool.tryAcquire(SMALL_PART));
+            assertEquals("a refused acquire must not commit anything",
+                    2 * BLOCK_BYTES, pool.committedBytes());
+
+            // A release makes room without changing what is committed: the
+            // block stays backed and its slot is reused.
+            pool.release(leases.remove(leases.size() - 1));
+            leases.add(acquireOnePart(pool));
+            assertEquals(2 * BLOCK_BYTES, pool.committedBytes());
+
+            for (long lease : leases) {
+                pool.release(lease);
+            }
+        } finally {
+            pool.close();
+        }
+        // close() frees every unbacked block, including the ones growth added.
+        assertEquals("close must give all pool memory back", 0, pool.committedBytes());
+    }
+
+    /*
+     * trim() is what gives idle memory back, and it has two bounds that are
+     * easy to get wrong in opposite directions: it must not free a block that
+     * still has a lease (use-after-free), and it must not free below the floor
+     * (the floor is the memory the customer asked to keep allocated).
+     */
+    @Test
+    public void testTrimFreesAboveTheFloorButNotLeasedBlocksOrTheFloor() {
+        S3DirectBufferPool pool = elasticPool(BLOCK_BYTES, 2 * BLOCK_BYTES);
+        try {
+            assertEquals("the floor is allocated when the pool is created",
+                    BLOCK_BYTES, pool.committedBytes());
+
+            List<Long> floorLeases = new ArrayList<>();
+            while (floorLeases.size() < S3DirectBufferPool.BLOCK_SLOTS) {
+                floorLeases.add(acquireOnePart(pool));
+            }
+            long aboveFloor = acquireOnePart(pool); // grows past the floor
+            assertEquals(2 * BLOCK_BYTES, pool.committedBytes());
+
+            pool.trim();
+            assertEquals("trim must not free a block with a lease outstanding",
+                    2 * BLOCK_BYTES, pool.committedBytes());
+
+            pool.release(aboveFloor);
+            pool.trim();
+            assertEquals("trim must free an unused block above the floor",
+                    BLOCK_BYTES, pool.committedBytes());
+
+            // Completely idle now, so this is the case where trim could wrongly
+            // free the floor as well.
+            for (long lease : floorLeases) {
+                pool.release(lease);
+            }
+            pool.trim();
+            assertEquals("the floor is kept even when the pool is completely idle",
+                    BLOCK_BYTES, pool.committedBytes());
+        } finally {
+            pool.close();
+        }
+        // Only shutdown releases the floor.
+        assertEquals("close must free the floor too", 0, pool.committedBytes());
+    }
+
+    /**
+     * An elastic pool over {@link #SMALL_PART} slots, built without a client
+     * so no credentials or native client are involved.
+     */
+    private static S3DirectBufferPool elasticPool(long floorBytes, long ceilingBytes) {
+        S3ClientOptions options = new S3ClientOptions()
+                .withRegion(REGION)
+                .withPartSize(SMALL_PART)
+                .withDirectBufferPoolOptions(S3DirectBufferPoolOptions.elastic(floorBytes, ceilingBytes));
+        return S3DirectBufferPool.fromOptions(options.getDirectBufferPoolOptions(), options);
+    }
+
+    /** One part, asserting it was actually leased (handles are {@code >= 0}). */
+    private static long acquireOnePart(S3DirectBufferPool pool) {
+        long handle = pool.tryAcquire(SMALL_PART);
+        assertTrue("expected a lease handle, got " + handle, handle >= 0);
+        return handle;
     }
 
     /* ==================================================================== */
@@ -241,8 +393,10 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         S3BorrowedBuffer buffer = newDetachedBuffer(expected);
 
         assertArrayEquals(expected, buffer.toByteArray());
-        // toByteArray releases as it copies, so a second call has nothing to
-        // read. Unlike close(), it is not idempotent.
+        // toByteArray hands the buffer back as it copies, so a second call has
+        // nothing to read. Unlike close(), it is not idempotent. (This buffer has
+        // no pool ticket, so only the Java state machine is under test here; the
+        // pool-release half of toByteArray needs a real pooled buffer.)
         assertThrows(IllegalStateException.class, buffer::toByteArray);
     }
 
@@ -350,8 +504,14 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
     /*
      * The bytes a borrowed buffer exposes must match the object exactly, and
-     * arrive in order with no gaps or overlaps. A lifetime bug in the pool shows
-     * up here as corrupted or duplicated ranges rather than as an error.
+     * arrive in order with no gaps or overlaps.
+     *
+     * The content assertion compares a digest of the borrowed delivery against a
+     * digest of the same object fetched over the heap path, rather than against a
+     * hardcoded pattern: it needs no knowledge of what the fixture contains, and
+     * it fails on exactly the bug a buffer pool makes possible -- a slot handed
+     * back while it still holds another request's bytes. Length and offset checks
+     * cannot see that, because corruption preserves both.
      */
     @Test
     public void testBorrowedBytesMatchObjectAndArriveInOrder() throws Exception {
@@ -365,6 +525,12 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
         assertEquals(PRE_EXIST_10MB_SIZE, handler.bytesReceived.get());
         assertEquals("ranges must be contiguous from zero", null, handler.rangeError);
+        assertTrue("must have been delivered over the borrowed path",
+                handler.borrowedCallbacks.get() > 0);
+        assertEquals("the borrowed path must not fall back to heap delivery",
+                0, handler.heapCallbacks.get());
+        assertEquals("borrowed bytes must equal the heap path's bytes",
+                heapBaselineDigest(), handler.contentDigest());
     }
 
     /*
@@ -385,6 +551,14 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
         assertEquals(PRE_EXIST_10MB_SIZE, handler.bytesReceived.get());
         assertEquals("owned-copy path must deliver contiguous bytes", null, handler.rangeError);
+        // Without these two, a regression that routed DEFAULT through the heap
+        // path would still pass: the handler counts bytes on both callbacks.
+        assertTrue("owned-copy delivery must still use the borrowed callback",
+                handler.borrowedCallbacks.get() > 0);
+        assertEquals("owned-copy path must not fall back to heap delivery",
+                0, handler.heapCallbacks.get());
+        assertEquals("the owned copy must carry the object's bytes unchanged",
+                heapBaselineDigest(), handler.contentDigest());
     }
 
     /*
@@ -528,6 +702,60 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         return S3DirectBufferPoolOptions.fixed(ceilingBytes);
     }
 
+    /**
+     * Hex SHA-256 of the 10 MiB fixture as delivered over the HEAP path with no
+     * pool attached -- the trusted baseline for content comparisons.
+     *
+     * Cached for the class: the fixture is immutable, so one extra download
+     * serves every test that needs it.
+     */
+    private static volatile String heapBaseline = null;
+
+    private String heapBaselineDigest() throws Exception {
+        String cached = heapBaseline;
+        if (cached != null) {
+            return cached;
+        }
+        HeapOnlyRecordingHandler baseline = new HeapOnlyRecordingHandler();
+        downloadPreExisting10MB(null /* no pool: plain heap delivery */, baseline);
+        assertEquals("baseline download must be complete before it is trusted",
+                PRE_EXIST_10MB_SIZE, baseline.bytesReceived.get());
+        cached = baseline.contentDigest();
+        heapBaseline = cached;
+        return cached;
+    }
+
+    /**
+     * True only in a JVM that allows no direct memory at all, which is what
+     * -XX:MaxDirectMemorySize=0 produces. Probing beats trusting a property:
+     * the answer cannot drift out of sync with how the JVM was launched.
+     */
+    private static boolean directMemoryIsForbidden() {
+        try {
+            ByteBuffer probe = ByteBuffer.allocateDirect(1);
+            return probe.capacity() != 1;
+        } catch (OutOfMemoryError expectedWhenForbidden) {
+            return true;
+        }
+    }
+
+    private static MessageDigest newSha256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            // Every JRE ships SHA-256; a missing one is an environment fault.
+            throw new AssertionError("SHA-256 unavailable", e);
+        }
+    }
+
+    private static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            sb.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
+        }
+        return sb.toString();
+    }
+
     /** A buffer over plain direct memory with no pool ticket behind it. */
     private static S3BorrowedBuffer newDetachedBuffer(int size) {
         return new S3BorrowedBuffer(0L, ByteBuffer.allocateDirect(size));
@@ -618,19 +846,23 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         volatile boolean verifyContiguousRanges = false;
         volatile String rangeError = null;
         private long nextExpectedOffset = 0;
+        private final MessageDigest digest = newSha256();
 
         @Override
         public int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long rangeStart, long rangeEnd) {
             borrowedCallbacks.incrementAndGet();
             int length = (int) (rangeEnd - rangeStart);
             try {
-                // Read through the view so a released or recycled buffer shows
-                // up as wrong bytes rather than going unnoticed.
+                // Every byte goes through the digest. Length and offset checks alone
+                // cannot see a pool slot handed back while it still holds another
+                // request's bytes, which is the failure mode a buffer pool makes
+                // possible; comparing the digest to the heap path's can.
                 ByteBuffer view = buffer.asByteBuffer();
                 if (view.remaining() != length) {
                     recordRangeError("view length " + view.remaining() + " != range length " + length);
                 }
                 checkRange(rangeStart, rangeEnd);
+                updateDigest(view);
                 bytesReceived.addAndGet(length);
             } finally {
                 buffer.close();
@@ -643,8 +875,20 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
             heapCallbacks.incrementAndGet();
             int length = bodyBytesIn.remaining();
             checkRange(rangeStart, rangeEnd);
+            updateDigest(bodyBytesIn);
             bytesReceived.addAndGet(length);
             return length;
+        }
+
+        /** Hex SHA-256 of every delivered byte, in delivery order. */
+        String contentDigest() {
+            synchronized (this) {
+                return toHex(digest.digest());
+            }
+        }
+
+        private synchronized void updateDigest(ByteBuffer src) {
+            digest.update(src.duplicate());
         }
 
         @Override
@@ -670,19 +914,34 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         }
     }
 
-    /** Overrides only the heap callback, so the client must not borrow for it. */
+    /**
+     * Overrides only the heap callback, so the client must not borrow for it.
+     * Also digests its bytes, which makes it the trusted baseline the borrowed
+     * path is compared against.
+     */
     private static final class HeapOnlyRecordingHandler implements S3MetaRequestResponseHandler {
         final AtomicInteger heapCallbacks = new AtomicInteger();
         final AtomicLong bytesReceived = new AtomicLong();
         final AtomicInteger errorCode = new AtomicInteger();
         final CompletableFuture<Void> finished = new CompletableFuture<>();
+        private final MessageDigest digest = newSha256();
 
         @Override
         public int onResponseBody(ByteBuffer bodyBytesIn, long rangeStart, long rangeEnd) {
             heapCallbacks.incrementAndGet();
             int length = bodyBytesIn.remaining();
+            synchronized (this) {
+                digest.update(bodyBytesIn.duplicate());
+            }
             bytesReceived.addAndGet(length);
             return length;
+        }
+
+        /** Hex SHA-256 of every delivered byte, in delivery order. */
+        String contentDigest() {
+            synchronized (this) {
+                return toHex(digest.digest());
+            }
         }
 
         @Override

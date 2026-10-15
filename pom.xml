@@ -44,6 +44,10 @@
         <cmake.osx_arch>-DOSX_ARCH_DUMMY=1</cmake.osx_arch>
         <cmake.min_osx_version>-DOSX_DEPLOYMENT_TARGET_DUMMY=1</cmake.min_osx_version>
         <cmake.crt_fips>OFF</cmake.crt_fips>
+        <!-- Ceiling in bytes for the test-only S3 direct buffer pool. 0 disables it,
+             so normal builds behave exactly as before. The s3-direct-buffer-pool CI
+             job overrides it to run the S3 suite against a pool. -->
+        <crt.test.direct_buffer_pool_bytes>0</crt.test.direct_buffer_pool_bytes>
         <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
@@ -488,6 +492,7 @@
                         <endpoint>${crt.test.endpoint}</endpoint>
                         <rootca>${crt.test.rootca}</rootca>
                         <privatekey_p8>${crt.test.privatekey_p8}</privatekey_p8>
+                        <aws.crt.s3.test.direct_buffer_pool_bytes>${crt.test.direct_buffer_pool_bytes}</aws.crt.s3.test.direct_buffer_pool_bytes>
                     </systemPropertyVariables>
                     <properties>
                         <property>

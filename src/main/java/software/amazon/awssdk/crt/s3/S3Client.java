@@ -318,4 +318,11 @@ public class S3Client extends CrtResource {
             boolean shouldStream,
             double diskThroughputGbps,
             boolean directIo);
+
+    /**
+     * Returns the default native buffer pool's memory limit (bytes) for the
+     * given throughput target ({@code 0} = EC2 auto-detect). Package-private,
+     * used by {@code S3DirectBufferPool} automatic sizing.
+     */
+    static native long defaultMemoryLimitForThroughput(double throughputTargetGbps);
 }

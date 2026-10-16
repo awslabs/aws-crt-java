@@ -50,9 +50,12 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
     /* ==================================================================== */
 
     /*
-     * A ceiling this large cannot fit within 80% of any plausible
-     * -XX:MaxDirectMemorySize, so the test doesn't need to know the actual
-     * limit to know the check must reject it.
+     * A ceiling this large cannot fit within 80% of any plausible direct
+     * memory limit, so the test doesn't need to know the actual limit to
+     * know the check must reject it. Which limit applies is platform
+     * dependent: -XX:MaxDirectMemorySize on a normal JVM, and the app's
+     * heap growth limit on Android, where allocateDirect allocates on the
+     * Java heap.
      */
     @Test
     public void testFixedCeilingBeyondDirectMemoryIsRejected() {
@@ -62,10 +65,15 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         IllegalStateException ex =
                 assertThrows(IllegalStateException.class, () -> S3DirectBufferPool.fromOptions(
                         options.getDirectBufferPoolOptions(), options));
-        // The message has to tell the customer which flag to raise, or they
-        // cannot act on it.
-        assertTrue("error should name MaxDirectMemorySize, was: " + ex.getMessage(),
-                ex.getMessage().contains("MaxDirectMemorySize"));
+        // The message has to name the limit it checked and a lever the
+        // customer can actually change, or they cannot act on it. Android
+        // has no -XX:MaxDirectMemorySize, so the pool's own ceiling is the
+        // only lever there.
+        assertTrue("error should name the limit it checked, was: " + ex.getMessage(),
+                ex.getMessage().contains("MaxDirectMemorySize")
+                        || ex.getMessage().contains("heap growth limit"));
+        assertTrue("error should name a lever the customer can change, was: " + ex.getMessage(),
+                ex.getMessage().contains("withMemoryLimitInBytes"));
     }
 
     /*

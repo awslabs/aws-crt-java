@@ -1874,6 +1874,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -1881,6 +1883,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publishEvents.publishReceivedFuture = new CompletableFuture<>();
                 publishEvents.publishPacket = null;
                 client.unsubscribe(unsubscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // unsubscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertEquals(
@@ -1944,6 +1948,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 eventsTwo.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 clientTwo.subscribe(subscribeOptions.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
+
                 clientOne.stop();
 
                 // Did we get a publish message?
@@ -1997,6 +2004,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2205,6 +2214,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 events.connectedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 client.subscribe(subscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
                 publishEvents.publishReceivedFuture.get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2212,6 +2223,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 publishEvents.publishReceivedFuture = new CompletableFuture<>();
                 publishEvents.publishPacket = null;
                 client.unsubscribe(unsubscribePacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // unsubscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
                 client.publish(publishPacket).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
 
                 assertEquals(
@@ -2287,6 +2300,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 // Subscribe to the topic first
                 client.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish the message with all fields
                 client.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2595,6 +2610,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 SubscribePacketBuilder subscribePacketBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 subscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishPacketBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, "Hello World".getBytes());
 
@@ -2674,6 +2691,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Subscribe to the topic with QoS 1
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2766,6 +2785,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Subscribe to the topic with QoS 1
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message with a unique UUID payload
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2849,6 +2870,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Subscribe to the topic with QoS 1
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish a QoS 1 message with a unique UUID payload
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
@@ -2934,6 +2957,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -2994,6 +3019,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
 
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_LEAST_ONCE, payload);
                 client.publish(publishBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
@@ -3061,6 +3088,8 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 // Subscribe with QoS 1 so the broker delivers at QoS 0 (publish at QoS 0)
                 SubscribePacketBuilder subscribeBuilder = new SubscribePacketBuilder(testTopic, QOS.AT_LEAST_ONCE);
                 client.subscribe(subscribeBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                // subscribe eventual consistency
+                TestUtils.sleepForAtLeastMilliseconds(500);
 
                 // Publish at QoS 0, there is no PUBACK involved
                 PublishPacketBuilder publishBuilder = new PublishPacketBuilder(testTopic, QOS.AT_MOST_ONCE, payload);
@@ -3151,6 +3180,9 @@ public class Mqtt5ClientTest extends Mqtt5ClientTestFixture {
                 subscribePacketBuilder.withSubscription(testTopic, QOS.AT_LEAST_ONCE, false, true, RetainHandlingType.SEND_ON_SUBSCRIBE);
                 try {
                     successSubscriber.subscribe(subscribePacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);
+                    // eventual consistency
+                    TestUtils.sleepForAtLeastMilliseconds(500);
+
                 } catch (Exception ex) {
                     // Clear the retained message
                     publisher.publish(publishPacketBuilder.build()).get(OPERATION_TIMEOUT_TIME, TimeUnit.SECONDS);

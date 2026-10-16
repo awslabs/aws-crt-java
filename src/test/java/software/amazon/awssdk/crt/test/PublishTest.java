@@ -59,6 +59,9 @@ public class PublishTest extends MqttClientConnectionFixture {
                     this::onPublishHandler);
 
             subscribed.get();
+
+            // subscribe eventual consistency
+            TestUtils.sleepForAtLeastMilliseconds(500);
         } catch (Exception ex) {
             fail(ex.getMessage());
         }

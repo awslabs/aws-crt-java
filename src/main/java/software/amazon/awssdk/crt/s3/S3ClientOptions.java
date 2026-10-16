@@ -159,6 +159,9 @@ public class S3ClientOptions {
      * Notes: For PUT_OBJECT requests, the client will automatically adjust the part size to meet service limits:
      *   - Maximum number of parts per upload is 10,000
      *   - Minimum upload part size is 5 MiB
+     * With a direct buffer pool ({@link #withDirectBufferPoolOptions}), a part size set here is never
+     * raised: an upload that needs larger parts is rejected when the request is made. See
+     * {@link S3DirectBufferPoolOptions}.
      *
      * @param partSize size in bytes of parts for downloads and uploads
      * @return this

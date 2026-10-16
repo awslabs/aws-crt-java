@@ -8,6 +8,7 @@
 #include "http_request_utils.h"
 #include "java_class_ids.h"
 #include "retry_utils.h"
+#include "s3_java_buffer_pool.h"
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
 #include <aws/http/proxy.h>
@@ -51,6 +52,10 @@ struct s3_client_make_meta_request_callback_data {
     struct aws_input_stream *input_stream;
     struct aws_signing_config_data signing_config_data;
     jthrowable java_exception;
+    /* Set when the client has a Java direct buffer pool: a pool ref, dropped
+     * in s_s3_meta_request_callback_cleanup. The finish callback drains the
+     * pool's wait queue (see aws_s3_java_buffer_pool_drain). */
+    struct aws_s3_buffer_pool *java_buffer_pool;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -354,7 +359,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jobject jni_buffer_pool /* optional S3DirectBufferPool, may be NULL */) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -523,10 +529,61 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientNew(
 
     client_config.proxy_ev_settings = &proxy_ev_settings;
 
-    struct aws_s3_client *client = aws_s3_client_new(allocator, &client_config);
+    /* Attach the Java buffer pool factory if S3Client created a pool. */
+    bool buffer_pool_wiring_failed = false;
+    struct aws_s3_java_buffer_pool_factory_data factory_data = {0};
+    if (jni_buffer_pool != NULL) {
+        factory_data.java_pool_global = (*env)->NewGlobalRef(env, jni_buffer_pool);
+        /* Package JVM for the factory. Stack allocation is safe because
+         * aws_s3_client_new invokes the factory synchronously. */
+        if (factory_data.java_pool_global == NULL || (*env)->GetJavaVM(env, &factory_data.jvm) != 0) {
+            /* Explicit opt-in must not silently degrade to the default
+             * pool; fail client creation instead. Clear any pending
+             * Java exception (NewGlobalRef OOM) so we can throw our own
+             * below. A partially-created global ref is released by the
+             * !client cleanup path. */
+            aws_jni_check_and_clear_exception(env);
+            AWS_LOGF_ERROR(
+                AWS_LS_S3_CLIENT,
+                "S3DirectBufferPool: failed to wire the pool (NewGlobalRef/GetJavaVM); "
+                "failing client creation");
+            buffer_pool_wiring_failed = true;
+        } else {
+            client_config.buffer_pool_factory_fn = aws_s3_java_buffer_pool_factory;
+            client_config.buffer_pool_user_data = &factory_data;
+        }
+    }
+
+    struct aws_s3_client *client = NULL;
+    if (buffer_pool_wiring_failed) {
+        aws_jni_throw_runtime_exception(
+            env, "S3Client.s3ClientNew: failed to wire the S3DirectBufferPool; failing client creation");
+    } else {
+        client = aws_s3_client_new(allocator, &client_config);
+        if (!client) {
+            aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
+        } else if (factory_data.out_pool != NULL) {
+            /* Publish the native pool so S3Client passes it on each meta
+             * request. The client's ref keeps it alive while meta requests
+             * can be made; each meta request then takes its own ref. */
+            (*env)->CallVoidMethod(
+                env,
+                jni_buffer_pool,
+                s3_direct_buffer_pool_properties.setNativePoolState,
+                (jlong)(intptr_t)factory_data.out_pool);
+            /* A trivial setter; never expected to throw. */
+            aws_jni_check_and_clear_exception(env);
+        }
+    }
     if (!client) {
-        aws_jni_throw_runtime_exception(env, "S3Client.aws_s3_client_new: creating aws_s3_client failed");
-        /* Clean up stuff */
+        /* Clean up stuff. If the factory took ownership of the global
+         * ref (in either its success or failure path), it will have
+         * NULLed factory_data.java_pool_global. Only release here if
+         * the factory never ran (e.g. aws_s3_client_new failed
+         * validation before reaching the buffer-pool factory call). */
+        if (factory_data.java_pool_global != NULL) {
+            (*env)->DeleteGlobalRef(env, factory_data.java_pool_global);
+        }
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(allocator, callback_data);
     }
@@ -779,10 +836,17 @@ static void s_on_s3_meta_request_finish_callback(
     const struct aws_s3_meta_request_result *meta_request_result,
     void *user_data) {
 
-    (void)meta_request;
-
     struct s3_client_make_meta_request_callback_data *callback_data =
         (struct s3_client_make_meta_request_callback_data *)user_data;
+
+    /* If this request was cancelled or paused, aws-c-s3 failed its pending
+     * reservations without telling the pool. Drain so a reservation queued
+     * behind one of them is served now instead of waiting for an unrelated
+     * reserve or release. When nothing was cancelled, the drain only prunes
+     * and makes no JNI call. aws-c-s3 holds no meta request lock here. */
+    if (callback_data->java_buffer_pool != NULL) {
+        aws_s3_java_buffer_pool_drain(callback_data->java_buffer_pool);
+    }
 
     /********** JNI ENV ACQUIRE **********/
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(callback_data->jvm);
@@ -1242,6 +1306,9 @@ static void s_s3_meta_request_callback_cleanup(
     JNIEnv *env,
     struct s3_client_make_meta_request_callback_data *callback_data) {
     if (callback_data) {
+        if (callback_data->java_buffer_pool != NULL) {
+            aws_s3_buffer_pool_release(callback_data->java_buffer_pool);
+        }
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         (*env)->DeleteGlobalRef(env, callback_data->java_exception);
@@ -1479,7 +1546,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean fio_options_set,
     jboolean should_stream,
     jdouble disk_throughput_gbps,
-    jboolean direct_io) {
+    jboolean direct_io,
+    jlong jni_buffer_pool_state) /* native Java-pool state when the client has a direct buffer pool, else 0 */ {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1604,6 +1672,10 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .direct_io = direct_io,
     };
 
+    /* With a pool attached the body copy's source is Java pool memory
+     * instead of the default native pool, but the handler-facing contract
+     * (heap byte[], safe to retain) is identical to the no-pool path. */
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .operation_name = operation_name,
@@ -1629,6 +1701,14 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         /* If fio options not set, let native code to decide the default instead */
         .fio_opts = fio_options_set ? &fio_opts : NULL,
     };
+
+    /* Set before creation: the finish callback may run on another thread as
+     * soon as the meta request exists. Released in cleanup, including when
+     * creation fails below. */
+    if (jni_buffer_pool_state != 0) {
+        callback_data->java_buffer_pool =
+            aws_s3_buffer_pool_acquire((struct aws_s3_buffer_pool *)(uintptr_t)jni_buffer_pool_state);
+    }
 
     meta_request = aws_s3_client_make_meta_request(client, &meta_request_options);
     if (!meta_request) {

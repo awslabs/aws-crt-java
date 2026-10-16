@@ -752,6 +752,24 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken =
         (*env)->GetMethodID(env, cls, "onErrorResumeToken", "(ILsoftware/amazon/awssdk/crt/s3/ResumeToken;)V");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onErrorResumeToken);
+
+    /* Zero-copy delivery */
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed = (*env)->GetMethodID(
+        env, cls, "onResponseBodyBorrowed", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
+}
+
+struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
+
+static void s_cache_s3_borrowed_buffer(JNIEnv *env) {
+    jclass cls = (*env)->FindClass(env, "software/amazon/awssdk/crt/s3/S3BorrowedBuffer");
+    AWS_FATAL_ASSERT(cls);
+    /* Global ref: NewObject constructs instances from event-loop threads. */
+    s3_borrowed_buffer_properties.s3_borrowed_buffer_class = (*env)->NewGlobalRef(env, cls);
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.s3_borrowed_buffer_class);
+
+    s3_borrowed_buffer_properties.constructor = (*env)->GetMethodID(env, cls, "<init>", "(JLjava/nio/ByteBuffer;)V");
+    AWS_FATAL_ASSERT(s3_borrowed_buffer_properties.constructor);
 }
 
 struct java_s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
@@ -2819,6 +2837,7 @@ static void s_cache_java_class_ids(void *user_data) {
     s_cache_s3_meta_request_properties(env);
     s_cache_s3_meta_request_response_handler_native_adapter_properties(env);
     s_cache_s3_direct_buffer_pool(env);
+    s_cache_s3_borrowed_buffer(env);
     s_cache_completable_future(env);
     s_cache_crt_runtime_exception(env);
     s_cache_ecc_key_pair(env);

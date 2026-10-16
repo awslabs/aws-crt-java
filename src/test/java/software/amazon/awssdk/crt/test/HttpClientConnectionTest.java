@@ -5,7 +5,10 @@
 
 package software.amazon.awssdk.crt.test;
 
+import java.io.File;
+import java.security.KeyStore;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -139,6 +142,57 @@ public class HttpClientConnectionTest extends HttpClientTestFixture {
                 }
             }
         }
+    }
+
+    private HttpConnectionTestResponse testConnectionWithJavaTrustStore(URI uri, String trustStorePath,
+            String trustStorePassword) throws Exception {
+        Map<String, String> previous = TlsContextOptionsTest.setTrustStoreProperties(trustStorePath,
+                trustStorePassword, null);
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions socketOptions = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient()
+                        .withCertificateAuthorityFromJavaSystemProperties();
+                TlsContext tlsCtx = new TlsContext(tlsOpts)) {
+            socketOptions.connectTimeoutMs = 10000;
+            HttpConnectionTestResponse resp = testConnection(uri, bootstrap, socketOptions, tlsCtx);
+            if (resp.shutdownComplete != null) {
+                resp.shutdownComplete.get(20, TimeUnit.SECONDS);
+            }
+            return resp;
+        } finally {
+            TlsContextOptionsTest.restoreTrustStoreProperties(previous);
+        }
+    }
+
+    @Test
+    public void testConnectionWithJavaTrustStore() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        // The trust store override replaces any CA the environment requires (e.g. a TLS-intercepting proxy)
+        Assume.assumeTrue(getContext().trustStore == null);
+
+        File cacerts = new File(System.getProperty("java.home"), "lib/security/cacerts");
+        if (!cacerts.exists()) {
+            cacerts = new File(System.getProperty("java.home"), "jre/lib/security/cacerts");
+        }
+        Assume.assumeTrue("JDK cacerts trust store not found", cacerts.exists());
+
+        URI uri = new URI("https://aws-crt-test-stuff.s3.amazonaws.com");
+        HttpConnectionTestResponse resp = testConnectionWithJavaTrustStore(uri, cacerts.getPath(), null);
+        if (resp.exceptionThrown) {
+            throw resp.exception;
+        }
+        Assert.assertTrue(resp.actuallyConnected);
+
+        // A trust store holding only an unrelated self-signed cert must reject the server
+        File unrelatedTrustStore = TlsContextOptionsTest.writeTrustStore(KeyStore.getDefaultType(),
+                TlsContextOptionsTest.TEST_CERT);
+        resp = testConnectionWithJavaTrustStore(uri, unrelatedTrustStore.getPath(),
+                TlsContextOptionsTest.TRUST_STORE_PASSWORD);
+        Assert.assertFalse(resp.actuallyConnected);
+        Assert.assertTrue(resp.exceptionThrown);
     }
 
     @Test

@@ -25,6 +25,9 @@ public interface S3MetaRequestResponseHandler {
 
     /**
      * Invoked to provide the response body as it is received.
+     * Not invoked for a request when the client has a direct buffer pool and
+     * this handler also implements {@link S3BorrowedBufferDelivery}, which
+     * receives the body instead.
      * <p>
      * Note that if the client was created with {@link S3ClientOptions#withReadBackpressureEnabled} set true,
      * you must maintain the flow-control window.
@@ -45,6 +48,7 @@ public interface S3MetaRequestResponseHandler {
      * This value is ignored if backpressure is disabled.
      *
      * @see S3ClientOptions#withReadBackpressureEnabled
+     * @see S3BorrowedBufferDelivery
      */
     default int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
         return 0;
@@ -90,7 +94,7 @@ public interface S3MetaRequestResponseHandler {
      * <p>
      * WARNING: for a file download with
      * {@link S3MetaRequestOptions#withResponseFileDeleteOnFailure} set true, the deletion
-     * is respected — the partial file is deleted on error, leaving nothing to resume on,
+     * is respected. The partial file is deleted on error, leaving nothing to resume on,
      * and this callback fires with a null token. Do not set responseFileDeleteOnFailure
      * if you intend to resume from this callback's token.
      *

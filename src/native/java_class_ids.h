@@ -339,6 +339,17 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
 
+/* S3DirectBufferPool */
+struct java_s3_direct_buffer_pool_properties {
+    jmethodID tryAcquire;         /* long tryAcquire(long size) */
+    jmethodID leaseAddress;       /* long leaseAddress(long handle) */
+    jmethodID release;            /* void release(long handle) */
+    jmethodID trim;               /* void trim() */
+    jmethodID partSize;           /* int partSize() */
+    jmethodID setNativePoolState; /* void setNativePoolState(long state) */
+};
+extern struct java_s3_direct_buffer_pool_properties s3_direct_buffer_pool_properties;
+
 /* CompletableFuture */
 struct java_completable_future_properties {
     jclass completable_future_class;

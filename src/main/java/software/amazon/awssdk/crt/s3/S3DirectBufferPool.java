@@ -709,17 +709,21 @@ final class S3DirectBufferPool {
     /* ==================================================================== */
 
     /**
-     * Fail-fast check: verify that the JVM's {@code MaxDirectMemorySize}
-     * can accommodate the pool's maximum capacity. A ceiling above 80%
+     * Fail-fast check: verify that the direct memory limit can accommodate
+     * the pool's maximum capacity. A ceiling above 80%
      * would OOM unpredictably mid-transfer; failing at construction gives
      * an actionable error. The 20% headroom is for other direct-buffer
      * users (NIO channels, networking libraries, SDK internals).
      *
+     * <p>The limit is {@code MaxDirectMemorySize} on a normal JVM and the
+     * app's heap growth limit on Android, where {@code allocateDirect}
+     * allocates on the Java heap.</p>
+     *
      * @param poolCapacityBytes the pool's maximum byte capacity
      *                          ({@code maxSlots x partSize})
-     * @throws IllegalStateException if the ceiling exceeds 80% of
-     *                               {@code MaxDirectMemorySize}, including
-     *                               an explicit {@code MaxDirectMemorySize=0}
+     * @throws IllegalStateException if the ceiling exceeds 80% of that
+     *                               limit, including an explicit
+     *                               {@code MaxDirectMemorySize=0}
      */
     private static void validateDirectMemoryCapacity(long poolCapacityBytes) {
         long maxDirectMemory = DirectMemoryLimit.BYTES;
@@ -740,18 +744,10 @@ final class S3DirectBufferPool {
         }
         if (maxDirectMemory < 0) {
             long poolMiB = mibRoundedUp(poolCapacityBytes);
-            if (isAndroid()) {
-                // Android has no MaxDirectMemorySize: direct buffers come from
-                // native memory, bounded only by the device and the app's
-                // memory limits, so there is nothing to check against.
-                Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
-                    "S3DirectBufferPool: Android has no JVM direct memory limit, so the pool's " + poolMiB
-                  + " MiB ceiling is not checked; it comes from native memory. Size the pool for the device "
-                  + "(S3DirectBufferPoolOptions.fixed or elastic, or S3ClientOptions.withMemoryLimitInBytes).");
-                return;
-            }
             // Unable to determine the limit (non-HotSpot JVM or reflective
             // access denied). Log a warning but don't block construction.
+            // Android does not reach here: its probe reports the heap growth
+            // limit, so the ceiling check below applies there too.
             Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
                 "S3DirectBufferPool: unable to determine MaxDirectMemorySize. "
               + "Pool requires " + poolMiB + " MiB of direct memory. "
@@ -759,17 +755,29 @@ final class S3DirectBufferPool {
             return;
         }
 
-        // Reserve 20% of MaxDirectMemorySize for other direct buffer users.
+        // Reserve 20% of the limit for other direct buffer users.
         long availableForPool = (long) (maxDirectMemory * DIRECT_MEMORY_FRACTION);
 
         if (poolCapacityBytes > availableForPool) {
             long poolMiB = mibRoundedUp(poolCapacityBytes);
             long maxMiB = maxDirectMemory / SizeUnits.MIB;
+            long usableMiB = availableForPool / SizeUnits.MIB;
+            // The pool's ceiling is the only lever on Android: there is no
+            // -XX:MaxDirectMemorySize, and the heap growth limit is set by
+            // the device and the app's manifest, not by a JVM flag.
+            if (isAndroid()) {
+                throw new IllegalStateException(
+                    "S3DirectBufferPool requires " + poolMiB + " MiB of direct memory, but this app's heap "
+                  + "growth limit is " + maxMiB + " MiB (80% usable = " + usableMiB + " MiB). On Android, "
+                  + "direct buffers are allocated on the Java heap, so that limit applies. Lower the pool's "
+                  + "ceiling: S3ClientOptions.withMemoryLimitInBytes with auto(), or a smaller size passed "
+                  + "to fixed() or elastic().");
+            }
             long recommendedMiB = recommendedMaxDirectMemoryMiB(poolCapacityBytes);
             throw new IllegalStateException(
                 "S3DirectBufferPool requires " + poolMiB + " MiB of direct memory, "
               + "but MaxDirectMemorySize is " + maxMiB + " MiB "
-              + "(80% usable = " + (availableForPool / SizeUnits.MIB) + " MiB). "
+              + "(80% usable = " + usableMiB + " MiB). "
               + "Either set -XX:MaxDirectMemorySize=" + recommendedMiB + "m, "
               + "or lower the pool's ceiling: S3ClientOptions.withMemoryLimitInBytes with auto(), "
               + "or a smaller size passed to fixed() or elastic().");
@@ -819,7 +827,8 @@ final class S3DirectBufferPool {
         /**
          * The limit in bytes, or -1 if it cannot be determined. 0 means an
          * explicit {@code -XX:MaxDirectMemorySize=0} (no direct memory), not
-         * "unset".
+         * "unset". On Android this is the app's heap growth limit, which is
+         * what bounds {@code allocateDirect} there.
          */
         static final long BYTES = probe();
         /** Which probe answered (plus any HotSpot fallback note), for the DEBUG log. */
@@ -833,8 +842,14 @@ final class S3DirectBufferPool {
          */
         private static long probe() {
             if (isAndroid()) {
-                source = "Android, which has no JVM limit";
-                return -1;  // none of the probes exist there
+                // Android has no MaxDirectMemorySize, but allocateDirect is
+                // not unbounded there either: it allocates a non-movable
+                // array on the Java heap (VMRuntime.newNonMovableArray), so
+                // the app's heap growth limit is the real ceiling and an
+                // oversized pool fails with a heap OutOfMemoryError.
+                // Runtime.maxMemory() reports that limit.
+                source = "Android heap growth limit (Runtime.maxMemory)";
+                return Runtime.getRuntime().maxMemory();
             }
             // Java 8: sun.misc.VM. Java 9+, only with --add-exports:
             // jdk.internal.misc.VM. Both are exact, as enforced by allocateDirect.

@@ -529,6 +529,7 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
         RecordingHandler handler = new RecordingHandler();
         handler.verifyContiguousRanges = true;
+        handler.verifyContentDigest = true;
         downloadPreExisting10MB(poolOptions(256 * MIB), handler);
 
         assertEquals(PRE_EXIST_10MB_SIZE, handler.bytesReceived.get());
@@ -554,6 +555,7 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
 
         RecordingHandler handler = new RecordingHandler();
         handler.verifyContiguousRanges = true;
+        handler.verifyContentDigest = true;
         downloadPreExisting10MB(poolOptions(256 * MIB), handler,
                 S3MetaRequestOptions.MetaRequestType.DEFAULT);
 
@@ -852,6 +854,17 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
         final CompletableFuture<Void> finished = new CompletableFuture<>();
 
         volatile boolean verifyContiguousRanges = false;
+        /*
+         * Digesting every delivered byte is what catches a pool slot handed back
+         * while it still holds another request's bytes; length and offset checks
+         * cannot see that, because corruption preserves both. It is also by far
+         * the most expensive thing this handler does, and the slot stays leased
+         * for the whole callback, so it is off unless a test reads
+         * contentDigest(). Leaving it on for the pool-contended tests starved
+         * them on emulated CI, where SHA-256 over an 8 MiB part took minutes and
+         * held both slots of a deliberately two-slot pool.
+         */
+        volatile boolean verifyContentDigest = false;
         volatile String rangeError = null;
         private long nextExpectedOffset = 0;
         private final MessageDigest digest = newSha256();
@@ -861,10 +874,6 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
             borrowedCallbacks.incrementAndGet();
             int length = (int) (rangeEnd - rangeStart);
             try {
-                // Every byte goes through the digest. Length and offset checks alone
-                // cannot see a pool slot handed back while it still holds another
-                // request's bytes, which is the failure mode a buffer pool makes
-                // possible; comparing the digest to the heap path's can.
                 ByteBuffer view = buffer.asByteBuffer();
                 if (view.remaining() != length) {
                     recordRangeError("view length " + view.remaining() + " != range length " + length);
@@ -888,14 +897,24 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
             return length;
         }
 
-        /** Hex SHA-256 of every delivered byte, in delivery order. */
+        /**
+         * Hex SHA-256 of every delivered byte, in delivery order. Requires
+         * {@link #verifyContentDigest}, which is off by default.
+         */
         String contentDigest() {
+            if (!verifyContentDigest) {
+                throw new IllegalStateException(
+                        "set verifyContentDigest before reading contentDigest()");
+            }
             synchronized (this) {
                 return toHex(digest.digest());
             }
         }
 
         private synchronized void updateDigest(ByteBuffer src) {
+            if (!verifyContentDigest) {
+                return;
+            }
             digest.update(src.duplicate());
         }
 

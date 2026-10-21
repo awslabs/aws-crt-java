@@ -40,6 +40,17 @@ public interface S3BorrowedBufferDelivery {
      * {@link S3MetaRequestResponseHandler#onResponseBody(java.nio.ByteBuffer, long, long)}.
      * Throwing from here fails the meta request.
      *
+     * <p><b>Return promptly.</b> The pool slot backing {@code buffer} stays
+     * leased for as long as this method runs, and then until
+     * {@link S3BorrowedBuffer#close()}. Time spent here is pool capacity
+     * withheld from every other request: a ceiling of N parts allows only N
+     * deliveries at once, so a handler that hashes, compresses, or writes to
+     * slow storage inline can stall unrelated requests, and the sizing
+     * guidance on {@link S3ClientOptions#withDirectBufferPoolOptions} assumes
+     * it does not. Do that work after the buffer is closed, or on a copy taken
+     * with {@link S3BorrowedBuffer#toByteArray()}, which is safe to hand to
+     * another thread.</p>
+     *
      * @param buffer a borrowed view into pool memory, which MUST always be
      *               closed. See {@link S3BorrowedBuffer} for the lifetime,
      *               leak-detection and flow-control rules.

@@ -19,7 +19,7 @@ import software.amazon.awssdk.crt.Log;
  * A DirectByteBuffer's off-heap memory is only released when GC
  * runs its cleaner. This class forces the release synchronously.
  * We handle Java 9+ and Java 8. If we detect a JVM that doesn't
- * expose manual release, we fall back on GC collection.
+ * expose manual release, or refuses it, we fall back on GC collection.
  * Until released, the memory still counts against
  * {@code -XX:MaxDirectMemorySize} (a regrow after trim can fail with
  * {@code OutOfMemoryError: Direct buffer memory}) and RSS does not drop.
@@ -58,6 +58,11 @@ final class DirectBufferCleaner {
             theUnsafe.setAccessible(true);
             unsafeInstance = theUnsafe.get(null);
             invokeCleaner = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+            // Prove the call works. With --sun-misc-unsafe-memory-access=deny
+            // the method is still there and the lookup above succeeds, but
+            // every invocation throws.
+            ByteBuffer probe = ByteBuffer.allocateDirect(1);
+            invokeCleaner.invoke(unsafeInstance, probe);
             mode = Mode.INVOKE_CLEANER;
         } catch (Throwable t) {
             unsafeInstance = null;

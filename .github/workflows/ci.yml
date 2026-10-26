@@ -278,6 +278,39 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
         python3 codebuild/macos_compatibility_check.py
 
+  # Runs the existing S3 suite against a direct buffer pool (DBZ), so the pool is
+  # covered by real S3 traffic without doubling S3 testing in every other job.
+  # S3ClientTest reads aws.crt.s3.test.direct_buffer_pool_bytes and attaches an
+  # elastic pool with that ceiling; unset elsewhere, so other jobs are unchanged.
+  s3-direct-buffer-pool:
+    runs-on: ubuntu-24.04 # latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Checkout Sources
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: corretto
+        java-version: 17
+    - name: Run S3 tests with a direct buffer pool
+      # 256 MiB ceiling: large enough for the suite's part sizes, and well inside
+      # 80% of the JVM's default direct-memory limit (which equals the max heap),
+      # so no -XX:MaxDirectMemorySize is needed. The opt-in travels as a Maven
+      # property because pom.xml sets forkCount=0: tests run in the Maven JVM,
+      # so surefire's argLine is never applied.
+      # AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL makes the job fail rather than
+      # quietly run without a pool if that wiring ever breaks.
+      env:
+        AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL: 1
+      run: |
+        mvn -B test -Dtest=S3ClientTest -Dcrt.test.direct_buffer_pool_bytes=268435456
+
   # check that docs can still build
   check-docs:
     runs-on: ubuntu-22.04 # use same version as docs.yml

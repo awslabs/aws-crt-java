@@ -233,9 +233,7 @@ public class Http2ClientConnection extends HttpClientConnection {
         return stream;
     }
 
-    /**
-     * @TODO: bindings for getters of local/remote setting and goaway.
-     */
+    // TODO: bindings for getters of local/remote setting and goaway.
     /*******************************************************************************
      * Native methods
      ******************************************************************************/

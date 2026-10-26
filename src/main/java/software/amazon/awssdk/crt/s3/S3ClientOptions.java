@@ -204,7 +204,7 @@ public class S3ClientOptions {
      * <p>
      * WARNING: This feature is experimental.
      * Currently, backpressure is only applied to GetObject requests which are split into multiple parts,
-     * You will not receive any data after the window reaches zero until the window incremented.
+     * and you may still receive some data after the window reaches zero.
      *
      * @param enable whether to enable or disable backpressure
      * @return this
@@ -235,9 +235,11 @@ public class S3ClientOptions {
         return this.initialReadWindowSize;
     }
 
-    /*
+    /**
      * @deprecated does not have any effect. Use endpoint option or add Host
      * header to meta request in order to specify endpoint.
+     * @param endpoint ignored
+     * @return this
      */
     @Deprecated
     public S3ClientOptions withEndpoint(String endpoint) {

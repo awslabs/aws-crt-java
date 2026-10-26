@@ -42,7 +42,7 @@ public class CrtRuntimeException extends RuntimeException {
     }
 
     /**
-     * @deprecated use CrtRuntimeException(int errorCode)
+     * @deprecated use {@link #CrtRuntimeException(int)}
      * @param errorCode native error code detailing the reason for the exception
      * @param errorName name of native error code
      */

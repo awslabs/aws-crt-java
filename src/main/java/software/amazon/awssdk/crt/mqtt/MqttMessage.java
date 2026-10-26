@@ -69,7 +69,7 @@ public final class MqttMessage {
     }
 
     /**
-     * @deprecated Use alternate constructor.
+     * @deprecated Use {@link #MqttMessage(String, byte[], QualityOfService)}.
      * @param topic   Message topic.
      * @param payload Message payload.
      */

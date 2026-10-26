@@ -46,7 +46,7 @@ public final class EventLoopGroup extends CrtResource {
     protected boolean canReleaseReferencesImmediately() { return false; }
 
     /**
-     * Stops the event loop group's tasks and frees all resources associated with the the group. This should be called
+     * Stops the event loop group's tasks and frees all resources associated with the group. This should be called
      * after all other clients/connections and other resources are cleaned up, or else they will not clean up completely.
      */
     @Override

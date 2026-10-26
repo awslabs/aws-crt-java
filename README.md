@@ -16,7 +16,7 @@ This library is licensed under the Apache 2.0 License.
 * [Java CRT Documentation](https://awslabs.github.io/aws-crt-java/)
 * [Installing](#installing)
 * [Platform-Specific JARs](#platform-specific-jars)
-* [FIPS Compliance](#fips-compliance)
+* [FIPS Cryptography](#fips-cryptography)
 * [GraalVM support](#graalvm-support)
 * [System Properties](#system-properties)
 * [TLS Behavior](#tls-behavior)
@@ -148,7 +148,7 @@ a classifier-based jar, you must specify the classifier name yourself.
             <version>0.20.5</version>
             <classifier>${os.detected.classifier}</classifier>
         </dependency>
-  <dependencies>
+  </dependencies>
 ```
 
 ## FIPS Cryptography

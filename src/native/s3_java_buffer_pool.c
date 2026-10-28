@@ -771,11 +771,10 @@ JNIEXPORT jlong JNICALL
  * are stated once. A malformed variable fails client creation in aws-c-s3,
  * so throw rather than returning 0: silently ignoring it would size the pool
  * from the tier table and report an unrelated cause. */
-JNIEXPORT jlong JNICALL
-    Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeResolveConfiguredMemoryLimit(
-        JNIEnv *env,
-        jclass cls,
-        jlong configured_limit) {
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeResolveConfiguredMemoryLimit(
+    JNIEnv *env,
+    jclass cls,
+    jlong configured_limit) {
     (void)cls;
     uint64_t resolved = 0;
     if (aws_s3_resolve_configured_memory_limit(aws_jni_get_allocator(), (uint64_t)configured_limit, &resolved)) {

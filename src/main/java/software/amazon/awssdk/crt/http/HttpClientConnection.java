@@ -6,8 +6,6 @@
 package software.amazon.awssdk.crt.http;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.Map;
-import java.util.HashMap;
 
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
@@ -15,7 +13,6 @@ import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.http.HttpStreamResponseHandler;
 import software.amazon.awssdk.crt.http.HttpStream;
 
-import static software.amazon.awssdk.crt.CRT.awsLastError;
 
 /**
  * This class wraps aws-c-http to provide the basic HTTP request/response functionality via the AWS Common Runtime.

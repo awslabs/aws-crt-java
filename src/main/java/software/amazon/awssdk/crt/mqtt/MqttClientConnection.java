@@ -8,7 +8,6 @@ package software.amazon.awssdk.crt.mqtt;
 import software.amazon.awssdk.crt.AsyncCallback;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
-import software.amazon.awssdk.crt.http.HttpHeader;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.http.HttpRequest;
 import software.amazon.awssdk.crt.io.SocketOptions;
@@ -16,7 +15,6 @@ import software.amazon.awssdk.crt.io.TlsContext;
 import software.amazon.awssdk.crt.mqtt.MqttConnectionConfig;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5ClientOptions;
-import software.amazon.awssdk.crt.mqtt5.packets.ConnectPacket;
 import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
 
 import java.util.concurrent.CompletableFuture;
@@ -442,6 +440,16 @@ public class MqttClientConnection extends CrtResource {
         }
     }
 
+    /**
+     * Publishes an MQTT message, overriding its QoS and retain settings.
+     *
+     * @deprecated Use {@link #publish(MqttMessage)} and set QoS and retain on the {@link MqttMessage}.
+     * @param message The message to publish.
+     * @param qos     The QoS to publish with.
+     * @param retain  Whether the message should be retained.
+     * @return Future value is the packet/message id associated with the publish
+     *         operation
+     */
     @Deprecated
     public CompletableFuture<Integer> publish(MqttMessage message, QualityOfService qos, boolean retain) {
         return publish(new MqttMessage(message.getTopic(), message.getPayload(), qos, retain));

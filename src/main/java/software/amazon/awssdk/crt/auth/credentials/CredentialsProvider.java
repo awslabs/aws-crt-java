@@ -40,6 +40,7 @@ public class CredentialsProvider extends CrtResource {
      * Completion callback for credentials fetching.  Alternatively the future could have been completed
      * at the JNI layer.
      * @param future the future that the credentials should be applied to
+     * @param errorCode native error code; non-zero if the fetch failed
      * @param credentials the fetched credentials, if successful
      */
     private void onGetCredentialsComplete(CompletableFuture<Credentials> future, int errorCode, Credentials credentials) {

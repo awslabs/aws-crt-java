@@ -290,7 +290,7 @@ public class HttpClientConnectionManagerOptions {
     }
 
     /**
-     * @return Return the connection acquisition timeout in miliseconds
+     * @return Return the connection acquisition timeout in milliseconds
      */
     public long getConnectionAcquisitionTimeoutInMilliseconds() {
 		return connectionAcquisitionTimeoutInMilliseconds;

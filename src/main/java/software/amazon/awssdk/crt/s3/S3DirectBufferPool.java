@@ -478,9 +478,14 @@ final class S3DirectBufferPool {
      */
 
     /**
-     * Non-blocking acquire of {@code size} bytes. MUST NOT block (runs on
-     * native event-loop threads); on {@link #EXHAUSTED} native pends its
-     * future.
+     * Acquire of {@code size} bytes that never waits for another lease to be
+     * released: it returns {@link #EXHAUSTED} instead and native pends its
+     * future. Keep it that way; this runs on native event-loop threads.
+     *
+     * <p>Not wait-free, though: growth allocates a block here, and
+     * {@code allocateDirect} blocks near the direct memory limit, where
+     * {@code java.nio.Bits} runs a GC and sleeps up to ~0.5s before failing.
+     * The 80% ceiling is what keeps us clear of it.</p>
      *
      * @return a lease handle, {@link #EXHAUSTED}, or {@link #IMPOSSIBLE}
      * @throws IllegalStateException if the pool is closed

@@ -285,15 +285,12 @@ final class S3DirectBufferPool {
             case AUTO:
             default: {
                 // Sized like the default native buffer pool. Floor: one block.
-                // Ceiling: the client's memory limit, resolved in the native
-                // client's order (see S3DirectBufferPoolOptions#auto()).
-                long memoryLimitBytes = clientOptions.getMemoryLimitInBytes();
-                if (memoryLimitBytes <= 0) {
-                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_MB", SizeUnits.MIB);
-                }
-                if (memoryLimitBytes <= 0) {
-                    memoryLimitBytes = parsePositiveEnvScaled("AWS_CRT_S3_MEMORY_LIMIT_IN_GIB", SizeUnits.GIB);
-                }
+                // Ceiling: the client's memory limit, resolved by the native
+                // client (see S3DirectBufferPoolOptions#auto()). 0 means the
+                // customer set none, programmatically or by environment
+                // variable, so the ceiling is derived below.
+                long memoryLimitBytes =
+                    nativeResolveConfiguredMemoryLimit(clientOptions.getMemoryLimitInBytes());
                 if (memoryLimitBytes <= 0) {
                     // Derived, not set by the customer: shrink it to fit the
                     // JVM's direct memory limit instead of failing. Explicit
@@ -977,28 +974,21 @@ final class S3DirectBufferPool {
         }
     }
 
-    /**
-     * Parses the named environment variable as a positive integer and
-     * returns {@code value * unitBytes}, or {@code 0} when unset,
-     * empty, non-numeric, or non-positive.
-     */
-    private static long parsePositiveEnvScaled(String envVarName, long unitBytes) {
-        String raw = System.getenv(envVarName);
-        if (raw == null || raw.isEmpty()) return 0;
-        try {
-            long units = Long.parseLong(raw.trim());
-            // multiplyExact: silent overflow would wrap to a bogus limit (the
-            // native client checks for overflow for the same reason).
-            if (units > 0) return Math.multiplyExact(units, unitBytes);
-        } catch (NumberFormatException | ArithmeticException ignored) {
-            // fall through
-        }
-        return 0;
-    }
-
     // Implemented in src/native/s3_java_buffer_pool.c via JNI.
     private static native long nativeGetDirectBufferAddress(ByteBuffer dbb);
 
     /** The part size the native client resolves to when its part size is unset. */
     private static native long nativeDefaultPartSize();
+
+    /**
+     * The memory limit the native client takes from configuration:
+     * {@code configuredLimit} when set, otherwise the
+     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_MB} or
+     * {@code AWS_CRT_S3_MEMORY_LIMIT_IN_GIB} environment variable.
+     *
+     * @return the resolved limit, or {@code 0} when none is configured
+     * @throws IllegalArgumentException if an environment variable is set but
+     *         not a positive integer, or overflows when scaled to bytes
+     */
+    private static native long nativeResolveConfiguredMemoryLimit(long configuredLimit);
 }

@@ -757,3 +757,34 @@ JNIEXPORT jlong JNICALL
     (void)cls;
     return (jlong)aws_s3_default_part_size();
 }
+
+/* ------------------------------------------------------------------ */
+/* JNI helper: nativeResolveConfiguredMemoryLimit                     */
+/* ------------------------------------------------------------------ */
+
+/* The memory limit the client takes from configuration, resolved by aws-c-s3
+ * in its own order: the configured value, then AWS_CRT_S3_MEMORY_LIMIT_IN_MB,
+ * then AWS_CRT_S3_MEMORY_LIMIT_IN_GIB. Returns 0 when none is set, which
+ * means the caller should size from the throughput tier table instead.
+ *
+ * Read from native so the variable names, their precedence and their units
+ * are stated once. A malformed variable fails client creation in aws-c-s3,
+ * so throw rather than returning 0: silently ignoring it would size the pool
+ * from the tier table and report an unrelated cause. */
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeResolveConfiguredMemoryLimit(
+        JNIEnv *env,
+        jclass cls,
+        jlong configured_limit) {
+    (void)cls;
+    uint64_t resolved = 0;
+    if (aws_s3_resolve_configured_memory_limit(aws_jni_get_allocator(), (uint64_t)configured_limit, &resolved)) {
+        aws_jni_throw_illegal_argument_exception(
+            env,
+            "S3DirectBufferPool: could not resolve the client memory limit (%s) Check "
+            "AWS_CRT_S3_MEMORY_LIMIT_IN_MB / AWS_CRT_S3_MEMORY_LIMIT_IN_GIB; only positive integers are supported.",
+            aws_error_str(aws_last_error()));
+        return 0;
+    }
+    return (jlong)resolved;
+}

@@ -55,8 +55,8 @@ import java.nio.ByteBuffer;
  *   <li><b>Ceiling:</b> the most memory the pool will ever use. When it is
  *       reached, new requests wait until memory is freed.</li>
  * </ul>
- * Memory is counted in parts ({@link S3ClientOptions#withPartSize}, 8 MiB
- * by default), so byte sizes you pass are rounded to whole parts. Between
+ * Memory is counted in parts ({@link S3ClientOptions#withPartSize}), so
+ * byte sizes you pass are rounded to whole parts. Between
  * the floor and the ceiling, the pool grows as needed and gives memory
  * back when idle.
  *
@@ -78,8 +78,8 @@ import java.nio.ByteBuffer;
  *       <br>{@code ceiling >= concurrent requests x part size}
  *       <br>Memory is reserved a whole part at a time, so an object smaller
  *       than a part still holds a full part while it is in flight. Sizing
- *       from the bytes actually in flight under-sizes the pool: at the
- *       default 8 MiB part size, 100 concurrent 256 KiB downloads need
+ *       from the bytes actually in flight under-sizes the pool: with an
+ *       8 MiB part size, 100 concurrent 256 KiB downloads need
  *       800 MiB, not 25 MiB. Reduce {@link S3ClientOptions#withPartSize} if
  *       that is too much for a small-object workload.</li>
  * </ul>
@@ -191,7 +191,7 @@ public final class S3DirectBufferPoolOptions {
      *       {@code -XX:MaxDirectMemorySize} to use the full default.</li>
      * </ol>
      *
-     * <p>The floor is 16 parts (128 MiB with the default part size), or the
+     * <p>The floor is 16 parts (128 MiB with an 8 MiB part size), or the
      * whole pool if the ceiling is smaller. Above that, the pool grows on
      * demand and shrinks when idle. Each time it grows it briefly delays
      * other requests on the client; see {@link #elastic(long, long)} for
@@ -210,13 +210,12 @@ public final class S3DirectBufferPoolOptions {
      *
      * <ul>
      *   <li><b>Size:</b> {@code memoryLimitBytes}, rounded down to whole
-     *       parts ({@link S3ClientOptions#withPartSize}, 8 MiB by
-     *       default).</li>
+     *       parts ({@link S3ClientOptions#withPartSize}).</li>
      *   <li><b>When full:</b> new requests wait until memory frees up.</li>
      *   <li><b>Very large uploads:</b> each upload part must fit in 4 parts'
      *       worth of memory. Only uploads big enough that S3's 10,000-part
      *       limit forces a larger part size are affected (over about 312 GiB
-     *       with the default 8 MiB part size); they are rejected when the
+     *       with an 8 MiB part size); they are rejected when the
      *       request is made, with the reason. Downloads are not affected.</li>
      *   <li><b>No allocation pauses:</b> memory is never allocated or freed
      *       after the client is created.</li>

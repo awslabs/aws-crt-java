@@ -86,6 +86,7 @@
 #include <aws/common/mutex.h>
 #include <aws/common/ref_count.h>
 #include <aws/io/future.h>
+#include <aws/s3/s3.h> /* aws_s3_default_part_size */
 
 /* ------------------------------------------------------------------ */
 /* Internal state structs.                                            */
@@ -740,4 +741,19 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_na
         return 0;
     }
     return (jlong)(intptr_t)(*env)->GetDirectBufferAddress(env, dbb);
+}
+
+/* ------------------------------------------------------------------ */
+/* JNI helper: nativeDefaultPartSize                                  */
+/* ------------------------------------------------------------------ */
+
+/* The part size the client resolves to when aws_s3_client_config.part_size is
+ * left at 0. Read from aws-c-s3 at run time rather than restated in Java, so
+ * the pool's slot size cannot drift from the part size the client will
+ * resolve to. The pool factory requires the two to be equal. */
+JNIEXPORT jlong JNICALL
+    Java_software_amazon_awssdk_crt_s3_S3DirectBufferPool_nativeDefaultPartSize(JNIEnv *env, jclass cls) {
+    (void)env;
+    (void)cls;
+    return (jlong)aws_s3_default_part_size();
 }

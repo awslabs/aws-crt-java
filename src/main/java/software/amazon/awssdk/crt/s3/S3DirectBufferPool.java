@@ -82,14 +82,6 @@ import software.amazon.awssdk.crt.Log;
  */
 final class S3DirectBufferPool {
 
-    /**
-     * Part size used when {@link S3ClientOptions#withPartSize} is unset. Must
-     * equal the native client's default ({@code g_default_part_size_fallback},
-     * 8 MiB, in aws-c-s3); the native factory fails client creation if the
-     * two ever differ.
-     */
-    static final int DEFAULT_PART_SIZE = (int) (8 * SizeUnits.MIB);
-
     /** Slots per block (the default native buffer pool uses 16 chunks per block). */
     static final int BLOCK_SLOTS = 16;
 
@@ -387,11 +379,12 @@ final class S3DirectBufferPool {
     }
 
     /**
-     * The client's part size, or {@link #DEFAULT_PART_SIZE} when unset (0).
-     * Must match the native client's resolution; the native factory fails
-     * client creation if it does not. A negative value would
-     * read as unset here but reach the native client as a huge unsigned part
-     * size, so it is rejected with the actual cause instead.
+     * The client's part size, or the native client's default when unset (0).
+     * The default is read from aws-c-s3 rather than restated here, so the two
+     * cannot drift; the native factory fails client creation if the pool's
+     * slot size and the client's resolved part size differ. A negative value
+     * would read as unset here but reach the native client as a huge unsigned
+     * part size, so it is rejected with the actual cause instead.
      */
     private static int resolvePartSize(S3ClientOptions clientOptions) {
         long partSize = clientOptions.getPartSize();
@@ -401,7 +394,7 @@ final class S3DirectBufferPool {
               + "when a direct buffer pool is enabled");
         }
         if (partSize == 0) {
-            return DEFAULT_PART_SIZE;
+            partSize = nativeDefaultPartSize();
         }
         if (partSize > Integer.MAX_VALUE) {
             throw new IllegalArgumentException(
@@ -1000,4 +993,7 @@ final class S3DirectBufferPool {
 
     // Implemented in src/native/s3_java_buffer_pool.c via JNI.
     private static native long nativeGetDirectBufferAddress(ByteBuffer dbb);
+
+    /** The part size the native client resolves to when its part size is unset. */
+    private static native long nativeDefaultPartSize();
 }

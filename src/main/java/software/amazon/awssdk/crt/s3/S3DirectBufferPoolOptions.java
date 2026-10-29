@@ -138,6 +138,9 @@ import java.nio.ByteBuffer;
  *       explicitly, it is never raised: an upload that would need larger
  *       parts is rejected when the request is made, with the part size to
  *       use.</li>
+ *   <li>A resumed upload uses the part size recorded in its resume token
+ *       rather than the client's, and is rejected the same way if the pool
+ *       cannot hold it.</li>
  *   <li>An upload part is bounded by the ceiling and by S3's own maximum;
  *       an upload needing larger parts is rejected when the request is
  *       made.</li>
@@ -213,9 +216,10 @@ public final class S3DirectBufferPoolOptions {
      *       parts ({@link S3ClientOptions#withPartSize}).</li>
      *   <li><b>When full:</b> new requests wait until memory frees up.</li>
      *   <li><b>Very large uploads:</b> each upload part must fit in 4 parts'
-     *       worth of memory. Only uploads big enough that S3's 10,000-part
-     *       limit forces a larger part size are affected (over about 312 GiB
-     *       with an 8 MiB part size); they are rejected when the
+     *       worth of memory. Affected are uploads big enough that S3's
+     *       10,000-part limit forces a larger part size (over about 312 GiB
+     *       with an 8 MiB part size), and resumed uploads whose token
+     *       specifies a larger part size; they are rejected when the
      *       request is made, with the reason. Downloads are not affected.</li>
      *   <li><b>No allocation pauses:</b> memory is never allocated or freed
      *       after the client is created.</li>

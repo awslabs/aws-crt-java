@@ -95,19 +95,12 @@ public class S3Client extends CrtResource {
             monitoringThroughputThresholdInBytesPerSecond = monitoringOptions.getMinThroughputBytesPerSecond();
             monitoringFailureIntervalInSeconds = monitoringOptions.getAllowableThroughputFailureIntervalSeconds();
         }
-        AwsSigningConfig signingConfig = options.getSigningConfig();
-        boolean didCreateSigningConfig = false;
-        if(signingConfig == null && options.getCredentialsProvider()!= null) {
-            /* Create the signing config from credentials provider */
-            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
-            didCreateSigningConfig = true;
-        }
-
         // A pool switches the memory source from the native
         // default_buffer_pool to a JVM-owned pool. The client creates and
         // owns it: closed in onShutdownComplete, or in the catch below if
-        // native client creation fails. Nothing between here and the try
-        // can throw, so the pool cannot be orphaned.
+        // anything between here and the native client's creation fails.
+        // Nothing between here and the try can throw, so the pool cannot be
+        // orphaned.
         S3DirectBufferPoolOptions poolOptions = options.getDirectBufferPoolOptions();
         directBufferPool = poolOptions != null ? S3DirectBufferPool.fromOptions(poolOptions, options) : null;
         if (directBufferPool != null) {
@@ -150,7 +143,20 @@ public class S3Client extends CrtResource {
             }
         }
 
+        // Created inside the try so a throw from here or from s3ClientNew
+        // reaches the finally: this config holds a reference on the
+        // credentials provider, so failing to close it would keep the
+        // customer's provider alive for the life of the process.
+        AwsSigningConfig signingConfig = options.getSigningConfig();
+        boolean didCreateSigningConfig = false;
+
         try {
+            if (signingConfig == null && options.getCredentialsProvider() != null) {
+                /* Create the signing config from credentials provider */
+                signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region,
+                        options.getCredentialsProvider());
+                didCreateSigningConfig = true;
+            }
             acquireNativeHandle(s3ClientNew(this,
                     region.getBytes(UTF8),
                     options.getClientBootstrap().getNativeHandle(),
@@ -191,17 +197,20 @@ public class S3Client extends CrtResource {
                     directBufferPool));
         } catch (RuntimeException | Error e) {
             // No native client means no shutdown callback: free the pool here.
+            // close() is idempotent, so this is safe even if the native client
+            // was created and its shutdown callback also frees the pool.
             if (directBufferPool != null) {
                 directBufferPool.close();
             }
             throw e;
+        } finally {
+            if (didCreateSigningConfig) {
+                /* The native code will keep the needed resource around */
+                signingConfig.close();
+            }
         }
 
         addReferenceTo(options.getClientBootstrap());
-        if(didCreateSigningConfig) {
-            /* The native code will keep the needed resource around */
-            signingConfig.close();
-        }
     }
 
     private void onShutdownComplete() {

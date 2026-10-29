@@ -51,7 +51,8 @@ public final class CRT {
                 if (graalVMImageCode != null && graalVMImageCode == "runtime") {
                     throw new CrtRuntimeException(
                             "Failed to load '" + System.mapLibraryName(CRT_LIB_NAME) +
-                            "'. Make sure this file is in the same directory as the GraalVM native image. ");
+                            "'. Make sure this file is in the same directory as the GraalVM native image " +
+                            "and dependent libraries are available. ");
                 } else {
                     // otherwise, load from the jar this class is in
                     loadLibraryFromJar();

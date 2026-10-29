@@ -37,6 +37,9 @@ public class S3Client extends CrtResource {
     private final boolean partSizeExplicit;
     private final long clientMultipartUploadThreshold;
 
+    /** The client's file I/O options, or null when unset; a request's own take precedence. */
+    private final FileIoOptions clientFileIoOptions;
+
     public S3Client(S3ClientOptions options) throws CrtRuntimeException {
         TlsContext tlsCtx = options.getTlsContext();
         region = options.getRegion();
@@ -115,6 +118,7 @@ public class S3Client extends CrtResource {
 
         partSizeExplicit = options.getPartSize() > 0;
         clientMultipartUploadThreshold = options.getMultiPartUploadThreshold();
+        clientFileIoOptions = options.getFileIoOptions();
 
         // With a pool, hand native the part size and memory limit the pool
         // was sized from:
@@ -345,6 +349,12 @@ public class S3Client extends CrtResource {
         if (contentLength < 0) {
             return;
         }
+        if (couldStreamFromFile(options)) {
+            // A streamed body's buffer is capped well below the part size, so
+            // a part the pool cannot hold costs it nothing. Native exempts
+            // the same case before its own part-size check.
+            return;
+        }
         long partSize = directBufferPool.partSize();
         long threshold = clientMultipartUploadThreshold > 0
                 ? clientMultipartUploadThreshold
@@ -381,6 +391,26 @@ public class S3Client extends CrtResource {
                 + directBufferPool.ceilingBytes() + "-byte ceiling, capped at " + MAX_UPLOAD_PART_SIZE
                 + "); raise the pool's memory limit.");
         }
+    }
+
+    /**
+     * Whether native may stream this upload's body from a file. Streaming caps
+     * each request's buffer well below the part size, so those uploads are
+     * exempt from {@link #checkUploadPartSizeForBufferPool}.
+     *
+     * <p>Native cannot stream without a file path. Past that, a request's file
+     * I/O options override the client's, and unset leaves the choice to native,
+     * which makes it by object size. Unset reports {@code true}: native repeats
+     * this part-size check, so deferring costs only an earlier error, whereas
+     * reporting {@code false} could reject an upload native accepts.</p>
+     */
+    private boolean couldStreamFromFile(S3MetaRequestOptions options) {
+        if (options.getRequestFilePath() == null) {
+            return false;
+        }
+        FileIoOptions fileIoOptions =
+            options.getFileIoOptions() != null ? options.getFileIoOptions() : clientFileIoOptions;
+        return fileIoOptions == null || fileIoOptions.getShouldStream();
     }
 
     /** Content length of an upload from its file or Content-Length header, or -1 if unknown. */

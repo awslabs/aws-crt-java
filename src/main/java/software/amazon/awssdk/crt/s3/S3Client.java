@@ -337,16 +337,13 @@ public class S3Client extends CrtResource {
      *   <li>the pool can grow and the part exceeds half its ceiling, or
      *       5 GiB (the native client's own limit).</li>
      * </ul>
-     * Skipped when the content length is unknown or a resume token is used
-     * (the token's part size is honored).
+     * A resume token supplies the part size itself, so that value is checked
+     * against the pool instead of one derived from the content length.
+     * Skipped when the body may stream from a file, or when the content length
+     * is unknown and no resume token supplies a part size.
      */
     private void checkUploadPartSizeForBufferPool(S3MetaRequestOptions options) {
-        if (options.getMetaRequestType() != S3MetaRequestOptions.MetaRequestType.PUT_OBJECT
-                || options.getResumeToken() != null) {
-            return;
-        }
-        long contentLength = uploadContentLength(options);
-        if (contentLength < 0) {
+        if (options.getMetaRequestType() != S3MetaRequestOptions.MetaRequestType.PUT_OBJECT) {
             return;
         }
         if (couldStreamFromFile(options)) {
@@ -356,21 +353,39 @@ public class S3Client extends CrtResource {
             return;
         }
         long partSize = directBufferPool.partSize();
-        long threshold = clientMultipartUploadThreshold > 0
-                ? clientMultipartUploadThreshold
-                : Math.max(partSize, MIN_UPLOAD_PART_SIZE);
-        if (contentLength <= threshold) {
-            return;     // single PUT; part size does not apply
-        }
-        long required = Math.max(MIN_UPLOAD_PART_SIZE,
-                (contentLength + MAX_UPLOAD_PARTS - 1) / MAX_UPLOAD_PARTS);
-        if (required <= partSize) {
-            return;
-        }
-        String need = "Uploading " + contentLength + " bytes needs a part size of at least " + required
+        ResumeToken resumeToken = options.getResumeToken();
+        long required;
+        String need;
+        if (resumeToken != null) {
+            // Native takes the resumed upload's part size from the token, not
+            // from the client, so check that value rather than deriving one.
+            required = resumeToken.getPartSize();
+            if (required <= partSize) {
+                return;
+            }
+            need = "Resuming this upload needs a part size of " + required
+                + " bytes (from the resume token), but the part size is " + partSize + " bytes. ";
+        } else {
+            long contentLength = uploadContentLength(options);
+            if (contentLength < 0) {
+                return;
+            }
+            long threshold = clientMultipartUploadThreshold > 0
+                    ? clientMultipartUploadThreshold
+                    : Math.max(partSize, MIN_UPLOAD_PART_SIZE);
+            if (contentLength <= threshold) {
+                return;     // single PUT; part size does not apply
+            }
+            required = Math.max(MIN_UPLOAD_PART_SIZE,
+                    (contentLength + MAX_UPLOAD_PARTS - 1) / MAX_UPLOAD_PARTS);
+            if (required <= partSize) {
+                return;
+            }
+            need = "Uploading " + contentLength + " bytes needs a part size of at least " + required
                 + " bytes (S3 allows at most " + MAX_UPLOAD_PARTS + " parts of at least "
                 + MIN_UPLOAD_PART_SIZE + " bytes), but the part size is " + partSize + " bytes. ";
-        if (partSizeExplicit) {
+        }
+        if (partSizeExplicit && resumeToken == null) {
             throw new IllegalArgumentException(need
                 + "With a direct buffer pool the explicitly configured partSize is never raised "
                 + "automatically; set S3ClientOptions.withPartSize to at least " + required + ".");

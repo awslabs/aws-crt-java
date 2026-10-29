@@ -42,7 +42,10 @@ import software.amazon.awssdk.crt.Log;
  * download. To pause one, enable
  * {@link S3ClientOptions#withReadBackpressureEnabled read backpressure},
  * return 0 (or a small increment) from {@code onResponseBodyBorrowed}, and
- * call {@link S3MetaRequest#incrementReadWindow} when ready for more.</p>
+ * call {@link S3MetaRequest#incrementReadWindow} when ready for more. The
+ * pause applies at part boundaries: the client stops requesting new parts,
+ * and parts already requested arrive whole rather than trimmed to the
+ * window, so delivery can exceed it by up to one part.</p>
  *
  * <p><b>Keep a reference while you read.</b> A buffer that is no longer
  * referenced can be recovered by garbage collection, which frees the memory

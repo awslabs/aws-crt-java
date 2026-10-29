@@ -211,17 +211,22 @@ public final class S3BorrowedBuffer implements AutoCloseable {
      */
     public byte[] toByteArray() {
         // Win the close CAS first so a concurrent close() cannot release the
-        // pool memory mid-copy. The loser no-ops. GC fallback cannot fire mid-copy
-        // because this call keeps `this` reachable until performRelease().
+        // pool memory mid-copy. The loser no-ops.
         if (!CLOSED_UPDATER.compareAndSet(this, 0, 1)) {
             throw new IllegalStateException("S3BorrowedBuffer has been closed");
         }
         try {
-            // duplicate() so we do not mutate the shared view's position
-            ByteBuffer dup = directView.duplicate();
-            byte[] copy = new byte[dup.remaining()];
-            dup.get(copy);
-            return copy;
+            // Copy under `this`'s monitor. The CAS above does not stop the GC
+            // fallback. The cleaner never reads `closed`. So without this
+            // `this` could go unreachable mid-copy and the memory be freed
+            // under us (JLS 12.6.1).
+            synchronized (this) {
+                // duplicate() so we do not mutate the shared view's position
+                ByteBuffer dup = directView.duplicate();
+                byte[] copy = new byte[dup.remaining()];
+                dup.get(copy);
+                return copy;
+            }
         } finally {
             // this call won the Compare and Set, so it owns the release
             performRelease();
@@ -363,8 +368,11 @@ public final class S3BorrowedBuffer implements AutoCloseable {
                     reportLeak(ra);
                 }
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
+                // Not `return`: the thread is started once, so exiting would
+                // disable the fallback process-wide. The flag is dropped rather
+                // than restored, which would spin on the next remove().
+                Log.log(Log.LogLevel.Warn, Log.LogSubject.JavaCrtS3,
+                    "S3BorrowedBuffer cleaner thread interrupted; continuing.");
             } catch (Throwable t) {
                 // Never let the cleaner thread die; log and continue.
                 Log.log(Log.LogLevel.Error, Log.LogSubject.JavaCrtS3,

@@ -301,15 +301,21 @@ jobs:
     - name: Run S3 tests with a direct buffer pool
       # 256 MiB ceiling: large enough for the suite's part sizes, and well inside
       # 80% of the JVM's default direct-memory limit (which equals the max heap),
-      # so no -XX:MaxDirectMemorySize is needed. The opt-in travels as a Maven
+      # so no -XX:MaxDirectMemorySize is needed. Every opt-in travels as a Maven
       # property because pom.xml sets forkCount=0: tests run in the Maven JVM,
       # so surefire's argLine is never applied.
+      # memory.tracing and debugnative arm the leak checks in
+      # CrtTestFixture.tearDown: without the first, CRT.nativeMemory() reports 0
+      # and nativeMemoryLeakCheck can never fail; without the second,
+      # CrtResource.waitForNoResources returns without counting. The builder
+      # jobs pass both on the mvn command line, so match them here.
       # AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL makes the job fail rather than
       # quietly run without a pool if that wiring ever breaks.
       env:
         AWS_CRT_TEST_EXPECT_DIRECT_BUFFER_POOL: 1
       run: |
-        mvn -B test -Dtest=S3ClientTest -Dcrt.test.direct_buffer_pool_bytes=268435456
+        mvn -B test -Dtest=S3ClientTest -Dcrt.test.direct_buffer_pool_bytes=268435456 \
+          -Daws.crt.memory.tracing=2 -Daws.crt.debugnative=true
 
   # check that docs can still build
   check-docs:

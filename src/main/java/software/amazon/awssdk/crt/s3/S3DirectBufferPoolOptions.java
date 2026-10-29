@@ -222,12 +222,15 @@ public final class S3DirectBufferPoolOptions {
      *       specifies a larger part size; they are rejected when the
      *       request is made, with the reason. Downloads are not affected.</li>
      *   <li><b>No allocation pauses:</b> memory is never allocated or freed
-     *       after the client is created.</li>
+     *       after the client is created. The cost moves to client creation
+     *       instead, which allocates and zero-fills the whole pool: expect
+     *       a few hundred milliseconds per GiB.</li>
      * </ul>
      *
-     * @param memoryLimitBytes total off-heap budget for the pool; must be
-     *                         at least one part, checked when the client
-     *                         is created
+     * @param memoryLimitBytes total direct-memory budget for the pool,
+     *                         counted against {@code -XX:MaxDirectMemorySize};
+     *                         must be at least one part, checked when the
+     *                         client is created
      * @return options for a fixed pool
      * @throws IllegalArgumentException if {@code memoryLimitBytes <= 0}
      */
@@ -248,7 +251,9 @@ public final class S3DirectBufferPoolOptions {
      * the whole pool if {@code minBytes} reaches the ceiling) and never more
      * than you asked for, the ceiling is {@code maxBytes}, and in between the
      * pool grows 16 parts at a time and releases everything above the floor
-     * once the client goes idle.</p>
+     * once the client goes idle. {@code maxBytes} need not be a multiple of
+     * 16 parts: it rounds down to whole parts, and the last group holds
+     * whatever is left.</p>
      *
      * <p><b>Note: growth cost.</b> Each time the pool grows it allocates and
      * zero-fills 16 parts of memory (128 MiB with 8 MiB parts), which takes
@@ -282,6 +287,8 @@ public final class S3DirectBufferPoolOptions {
         return new S3DirectBufferPoolOptions(Mode.ELASTIC, 0, minBytes, maxBytes);
     }
 
+    /* Each factory sets only the sizes its mode uses, so the rest read 0.
+     * Read them by mode; 0 means "not set by this mode", not a 0-byte size. */
     Mode getMode()               { return mode; }
     long getMemoryLimitBytes()   { return memoryLimitBytes; }
     long getMinBytes()           { return minBytes; }

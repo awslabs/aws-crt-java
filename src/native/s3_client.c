@@ -17,6 +17,7 @@
 #include <aws/io/stream.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/io/uri.h>
+#include <aws/s3/s3.h>
 #include <aws/s3/s3_client.h>
 #include <aws/s3/s3express_credentials_provider.h>
 #include <http_proxy_options.h>
@@ -1879,6 +1880,22 @@ JNIEXPORT void JNICALL Java_software_amazon_awssdk_crt_s3_S3MetaRequest_s3MetaRe
     }
 
     aws_s3_meta_request_increment_read_window(meta_request, (uint64_t)increment);
+}
+
+/*
+ * Returns aws-c-s3's default memory limit for this throughput target
+ * (0 = EC2 auto-detect, applied only below 10 Gbps), the same value
+ * aws_s3_client_new would use.
+ */
+JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_defaultMemoryLimitForThroughput(
+    JNIEnv *env,
+    jclass cls,
+    jdouble throughput_target_gbps) {
+    (void)env;
+    (void)cls;
+    size_t limit = aws_s3_default_memory_limit_for_throughput((double)throughput_target_gbps);
+    /* The tier table tops out at 24 GiB, so the value always fits in a jlong. */
+    return (jlong)limit;
 }
 
 #if UINTPTR_MAX == 0xffffffff

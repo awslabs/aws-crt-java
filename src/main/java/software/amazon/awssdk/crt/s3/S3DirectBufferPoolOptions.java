@@ -113,21 +113,27 @@ import java.nio.ByteBuffer;
  * so creating the client always throws.</p>
  *
  * <h2>Delivery</h2>
- * Enabling the pool does not change how response bodies are delivered:
- * handlers keep receiving
- * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}
- * with a heap {@code byte[]}-backed buffer that is safe to retain.
+ * A handler that implements {@link S3BorrowedBufferDelivery} receives each
+ * chunk straight from pool memory, with no copy into a heap {@code byte[]};
+ * any other handler keeps receiving
+ * {@link S3MetaRequestResponseHandler#onResponseBody(ByteBuffer, long, long)}.
+ * Exactly one of the two is called per request. See {@link S3BorrowedBuffer}
+ * for the details, including the part-number GetObject exception.
  *
  * <h2>Uploads</h2>
  * Multipart uploads hold each part in this pool until the part completes,
  * including retries; single-part uploads don't use it. Uploads and
  * downloads share the same ceiling, so a large upload can make downloads
- * wait, and the other way round. Limits on upload part size are listed
- * under Large parts.
+ * wait, and the other way round. Uploads get the same memory visibility
+ * and limit, but no copy is avoided: {@link S3BorrowedBuffer} is for
+ * downloads only. Limits on upload part size are listed under Large
+ * parts.
  *
  * <h2>Lifetime</h2>
  * The client creates the pool and owns it; each client has its own. When
  * the client shuts down, the pool frees its unused memory immediately.
+ * Borrowed buffers keep their memory until they are closed, even after
+ * shutdown; see {@link S3BorrowedBuffer}.
  *
  * <h2>Large parts</h2>
  * Usually there is nothing to do: the client uses larger parts on its own

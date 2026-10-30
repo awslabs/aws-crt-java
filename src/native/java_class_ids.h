@@ -335,9 +335,17 @@ struct java_s3_meta_request_response_handler_native_adapter_properties {
     jmethodID onProgress;
     jmethodID onTelemetry;
     jmethodID onErrorResumeToken;
+    jmethodID onResponseBodyBorrowed;
 };
 extern struct java_s3_meta_request_response_handler_native_adapter_properties
     s3_meta_request_response_handler_native_adapter_properties;
+
+/* S3BorrowedBuffer */
+struct java_s3_borrowed_buffer_properties {
+    jclass s3_borrowed_buffer_class; /* global ref */
+    jmethodID constructor;           /* S3BorrowedBuffer(long ticketPtr, ByteBuffer view) */
+};
+extern struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;
 
 /* S3DirectBufferPool */
 struct java_s3_direct_buffer_pool_properties {

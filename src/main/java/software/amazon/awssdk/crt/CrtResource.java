@@ -276,6 +276,11 @@ public abstract class CrtResource implements AutoCloseable {
      * @return true if a reference was taken, false if the resource is already closed.
      */
     protected boolean tryAddRef() {
+        // Some resources acquire their native handle after construction.
+        if (isNull()) {
+            return false;
+        }
+
         int refs;
         do {
             refs = refCount.get();
@@ -284,11 +289,6 @@ public abstract class CrtResource implements AutoCloseable {
             }
         } while (!refCount.compareAndSet(refs, refs + 1));
 
-        // Some resources acquire their native handle after construction.
-        if (isNull()) {
-            decRef(false);
-            return false;
-        }
         return true;
     }
 

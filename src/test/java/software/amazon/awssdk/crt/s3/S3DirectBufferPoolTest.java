@@ -700,6 +700,173 @@ public class S3DirectBufferPoolTest extends CrtTestFixture {
     }
 
     /* ==================================================================== */
+    /* Caller-owned buffers (withResponseBuffer / withRequestBuffer) with   */
+    /* the pool attached: the pool serves those requests from the caller's  */
+    /* memory (add_preallocated_buffer) instead of its slots. aws-c-s3      */
+    /* checks every ticket points at the right spot in the caller's buffer  */
+    /* and fails the request otherwise, so a wrong pool answer can't pass.  */
+    /* ==================================================================== */
+
+    /* Body callbacks must not fire for a buffer request, borrowed or heap; the count arrives via onResponseBufferFilled. */
+    private static final class BufferRequestHandler implements S3MetaRequestResponseHandler, S3BorrowedBufferDelivery {
+        final AtomicInteger bodyCallbacks = new AtomicInteger();
+        final AtomicLong bytesFilled = new AtomicLong(-1);
+        final CompletableFuture<Integer> finished = new CompletableFuture<>();
+
+        @Override
+        public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+            bodyCallbacks.incrementAndGet();
+            return 0;
+        }
+
+        @Override
+        public int onResponseBodyBorrowed(S3BorrowedBuffer buffer, long objectRangeStart, long objectRangeEnd) {
+            buffer.close();
+            bodyCallbacks.incrementAndGet();
+            return 0;
+        }
+
+        @Override
+        public void onResponseBufferFilled(long bytesReceived) {
+            bytesFilled.set(bytesReceived);
+        }
+
+        @Override
+        public void onFinished(S3FinishedResponseContext context) {
+            finished.complete(context.getErrorCode());
+        }
+    }
+
+    private static int runBufferRequest(S3Client client, S3MetaRequestOptions options, BufferRequestHandler handler)
+            throws Exception {
+        try (S3MetaRequest request = client.makeMetaRequest(options.withResponseHandler(handler))) {
+            int errorCode = handler.finished.get(5, TimeUnit.MINUTES);
+            assertEquals("body callbacks must not fire for a buffer request", 0, handler.bodyCallbacks.get());
+            return errorCode;
+        }
+    }
+
+    private interface ClientTask {
+        void run(S3Client client) throws Exception;
+    }
+
+    private static void withPoolClient(S3DirectBufferPoolOptions pool, ClientTask task) throws Exception {
+        try (EventLoopGroup elg = new EventLoopGroup(0, 1);
+                HostResolver hostResolver = new HostResolver(elg);
+                ClientBootstrap bootstrap = new ClientBootstrap(elg, hostResolver);
+                DefaultChainCredentialsProvider credentials =
+                        new DefaultChainCredentialsProvider.DefaultChainCredentialsProviderBuilder()
+                                .withClientBootstrap(bootstrap).build();
+                AwsSigningConfig signingConfig =
+                        AwsSigningConfig.getDefaultS3SigningConfig(REGION, credentials)) {
+            S3ClientOptions options = new S3ClientOptions()
+                    .withRegion(REGION)
+                    .withPartSize(PART_SIZE)
+                    .withClientBootstrap(bootstrap)
+                    .withSigningConfig(signingConfig)
+                    .withDirectBufferPoolOptions(pool);
+            try (S3Client client = new S3Client(options)) {
+                task.run(client);
+            }
+        }
+    }
+
+    private static String sha256Hex(ByteBuffer buffer) {
+        MessageDigest digest = newSha256();
+        digest.update(buffer.duplicate());
+        return toHex(digest.digest());
+    }
+
+    /*
+     * A download into a caller's direct buffer on a client with the pool: it succeeds, writes exactly the object's
+     * bytes (compared with the heap path), and leaves the rest of the buffer alone. The pool holds a single part,
+     * smaller than the object. aws-c-s3 checks that every ticket points at the right spot in the caller's buffer, so
+     * the download only succeeds if the pool serves it from there rather than from its own slot.
+     */
+    @Test
+    public void testResponseBufferWithPool() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        String expectedDigest = heapBaselineDigest();
+
+        withPoolClient(poolOptions(PART_SIZE), client -> {
+            ByteBuffer destination = ByteBuffer.allocateDirect((int) PRE_EXIST_10MB_SIZE + 100);
+            for (int i = 0; i < destination.capacity(); ++i) {
+                destination.put(i, (byte) 0x5A);
+            }
+            BufferRequestHandler handler = new BufferRequestHandler();
+            HttpRequest request = new HttpRequest("GET", PRE_EXIST_10MB_PATH,
+                    new HttpHeader[] {new HttpHeader("Host", ENDPOINT)}, null);
+            int errorCode = runBufferRequest(client, new S3MetaRequestOptions()
+                    .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(request)
+                    .withResponseBuffer(destination), handler);
+
+            assertEquals("download failed: " + CRT.awsErrorName(errorCode), 0, errorCode);
+            assertEquals(PRE_EXIST_10MB_SIZE, handler.bytesFilled.get());
+            ByteBuffer data = destination.duplicate();
+            data.limit((int) PRE_EXIST_10MB_SIZE);
+            assertEquals(expectedDigest, sha256Hex(data));
+            for (int i = (int) PRE_EXIST_10MB_SIZE; i < destination.capacity(); ++i) {
+                assertEquals((byte) 0x5A, destination.get(i));
+            }
+        });
+    }
+
+    /*
+     * An upload from a caller's direct buffer (multipart: 20 MiB at 8 MiB parts) and a download of it back into
+     * another, both on a client with the pool. The test object is deleted afterwards.
+     */
+    @Test
+    public void testRequestBufferRoundTripWithPool() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+
+        withPoolClient(poolOptions(256 * MIB), client -> {
+            String path = "/upload/crt-java-zero-copy-pool-test/" + java.util.UUID.randomUUID();
+            HttpHeader[] headers = {new HttpHeader("Host", ENDPOINT)};
+            int size = 20 * (int) MIB;
+            ByteBuffer body = ByteBuffer.allocateDirect(size);
+            for (int i = 0; i < size; ++i) {
+                body.put(i, (byte) (i * 31 + 7));
+            }
+            try {
+                int putError = runBufferRequest(client, new S3MetaRequestOptions()
+                        .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.PUT_OBJECT)
+                        .withHttpRequest(new HttpRequest("PUT", path, headers, null))
+                        .withRequestBuffer(body), new BufferRequestHandler());
+                assertEquals("upload failed: " + CRT.awsErrorName(putError), 0, putError);
+
+                ByteBuffer downloaded = ByteBuffer.allocateDirect(size);
+                BufferRequestHandler getHandler = new BufferRequestHandler();
+                int getError = runBufferRequest(client, new S3MetaRequestOptions()
+                        .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.GET_OBJECT)
+                        .withHttpRequest(new HttpRequest("GET", path, headers, null))
+                        .withResponseBuffer(downloaded), getHandler);
+                assertEquals("download failed: " + CRT.awsErrorName(getError), 0, getError);
+                assertEquals(size, getHandler.bytesFilled.get());
+                assertEquals(body, downloaded);
+            } finally {
+                CompletableFuture<Integer> deleted = new CompletableFuture<>();
+                try (S3MetaRequest delete = client.makeMetaRequest(new S3MetaRequestOptions()
+                        .withMetaRequestType(S3MetaRequestOptions.MetaRequestType.DEFAULT)
+                        .withOperationName("DeleteObject")
+                        .withHttpRequest(new HttpRequest("DELETE", path, headers, null))
+                        .withResponseHandler(new S3MetaRequestResponseHandler() {
+                            @Override
+                            public void onFinished(S3FinishedResponseContext context) {
+                                deleted.complete(context.getErrorCode());
+                            }
+                        }))) {
+                    deleted.get(5, TimeUnit.MINUTES);
+                }
+            }
+        });
+    }
+
+    /* ==================================================================== */
     /* Helpers                                                              */
     /* ==================================================================== */
 

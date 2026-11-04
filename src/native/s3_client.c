@@ -56,6 +56,14 @@ struct s3_client_make_meta_request_callback_data {
      * in s_s3_meta_request_callback_cleanup. The finish callback drains the
      * pool's wait queue (see aws_s3_java_buffer_pool_drain). */
     struct aws_s3_buffer_pool *java_buffer_pool;
+    /* For a download into a response buffer: a global ref that keeps the direct ByteBuffer (and so its memory)
+     * alive until shutdown, and the aws_byte_buf recv_buffer points at, viewing its region. aws-c-s3 sets its
+     * len at finish. */
+    jobject java_response_buffer;
+    struct aws_byte_buf recv_buffer;
+    /* For an upload from a request buffer: a global ref that keeps the direct ByteBuffer alive until shutdown.
+     * aws-c-s3 copies the cursor to its region. */
+    jobject java_request_buffer;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -1089,6 +1097,22 @@ static void s_on_s3_meta_request_finish_callback(
             }
         }
 
+        /* For a response buffer download that succeeded, report the bytes written (aws-c-s3 sets len just before
+         * this callback) before onFinished. */
+        if (callback_data->java_response_buffer != NULL && meta_request_result->error_code == AWS_ERROR_SUCCESS) {
+            (*env)->CallVoidMethod(
+                env,
+                callback_data->java_s3_meta_request_response_handler_native_adapter,
+                s3_meta_request_response_handler_native_adapter_properties.onResponseBufferFilled,
+                (jlong)callback_data->recv_buffer.len);
+            if (aws_jni_check_and_clear_exception(env)) {
+                AWS_LOGF_ERROR(
+                    AWS_LS_S3_META_REQUEST,
+                    "id=%p: Ignored Exception from S3MetaRequest.onResponseBufferFilled callback",
+                    (void *)meta_request);
+            }
+        }
+
         (*env)->CallVoidMethod(
             env,
             callback_data->java_s3_meta_request_response_handler_native_adapter,
@@ -1495,6 +1519,8 @@ static void s_s3_meta_request_callback_cleanup(
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         (*env)->DeleteGlobalRef(env, callback_data->java_exception);
+        (*env)->DeleteGlobalRef(env, callback_data->java_response_buffer);
+        (*env)->DeleteGlobalRef(env, callback_data->java_request_buffer);
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
     }
@@ -1702,6 +1728,25 @@ static void s_on_s3_meta_request_error_resume_token_callback(
     /********** JNI ENV RELEASE **********/
 }
 
+/* Views [offset, offset + length) of a direct ByteBuffer (S3Client.java checked that it's direct; offset and
+ * length are its position and remaining()). Throws IllegalArgumentException and fails otherwise. */
+static int s_direct_buffer_region(
+    JNIEnv *env,
+    jobject buffer,
+    jlong offset,
+    jlong length,
+    struct aws_byte_cursor *out_region) {
+    uint8_t *address = (*env)->GetDirectBufferAddress(env, buffer);
+    jlong capacity = (*env)->GetDirectBufferCapacity(env, buffer);
+    if (address == NULL || capacity < 0 || offset < 0 || length < 0 || offset > capacity - length) {
+        aws_jni_throw_illegal_argument_exception(
+            env, "Buffer must be a direct ByteBuffer, and its region must be within its capacity");
+        return AWS_OP_ERR;
+    }
+    *out_region = aws_byte_cursor_from_array(address + offset, (size_t)length);
+    return AWS_OP_SUCCESS;
+}
+
 JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMakeMetaRequest(
     JNIEnv *env,
     jclass jni_class,
@@ -1731,7 +1776,13 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jdouble disk_throughput_gbps,
     jboolean direct_io,
     jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
-    jboolean jni_uses_borrowed_delivery /* handler implements S3BorrowedBufferDelivery */) {
+    jboolean jni_uses_borrowed_delivery /* handler implements S3BorrowedBufferDelivery */,
+    jobject jni_response_buffer,
+    jlong jni_response_buffer_offset,
+    jlong jni_response_buffer_length,
+    jobject jni_request_buffer,
+    jlong jni_request_buffer_offset,
+    jlong jni_request_buffer_length) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1868,6 +1919,28 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
      * we set exactly one below. */
     bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_delivery;
 
+    if (jni_response_buffer != NULL) {
+        struct aws_byte_cursor region;
+        if (s_direct_buffer_region(
+                env, jni_response_buffer, jni_response_buffer_offset, jni_response_buffer_length, &region)) {
+            goto done;
+        }
+        callback_data->recv_buffer = aws_byte_buf_from_empty_array(region.ptr, region.len);
+        callback_data->java_response_buffer = (*env)->NewGlobalRef(env, jni_response_buffer);
+        AWS_FATAL_ASSERT(callback_data->java_response_buffer != NULL);
+    }
+
+    struct aws_byte_cursor request_body;
+    AWS_ZERO_STRUCT(request_body);
+    if (jni_request_buffer != NULL) {
+        if (s_direct_buffer_region(
+                env, jni_request_buffer, jni_request_buffer_offset, jni_request_buffer_length, &request_body)) {
+            goto done;
+        }
+        callback_data->java_request_buffer = (*env)->NewGlobalRef(env, jni_request_buffer);
+        AWS_FATAL_ASSERT(callback_data->java_request_buffer != NULL);
+    }
+
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
         .operation_name = operation_name,
@@ -1877,8 +1950,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
-        .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
+        /* With a response buffer aws-c-s3 delivers the body into it itself, and rejects either body callback
+         * combined with it, so neither is set. */
+        .body_callback = (supports_borrowed || jni_response_buffer != NULL) ? NULL : s_on_s3_meta_request_body_callback,
+        .body_callback_ex =
+            (supports_borrowed && jni_response_buffer == NULL) ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .telemetry_callback = s_on_s3_meta_request_telemetry_callback,
@@ -1891,6 +1967,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .recv_file_option = jni_response_file_option,
         .recv_file_position = jni_response_file_position,
         .recv_file_delete_on_failure = jni_response_file_delete_on_failure,
+        .recv_buffer = jni_response_buffer != NULL ? &callback_data->recv_buffer : NULL,
+        .request_body = request_body,
         /* If fio options not set, let native code to decide the default instead */
         .fio_opts = fio_options_set ? &fio_opts : NULL,
     };

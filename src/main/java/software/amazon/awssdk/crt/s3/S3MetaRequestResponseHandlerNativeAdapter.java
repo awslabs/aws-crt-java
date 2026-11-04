@@ -61,6 +61,10 @@ class S3MetaRequestResponseHandlerNativeAdapter {
         this.responseHandler.onFinished(context);
     }
 
+    void onResponseBufferFilled(long bytesReceived) {
+        responseHandler.onResponseBufferFilled(bytesReceived);
+    }
+
     void onResponseHeaders(final int statusCode, final ByteBuffer headersBlob) {
         responseHandler.onResponseHeaders(statusCode, HttpHeader.loadHeadersFromMarshalledHeadersBlob(headersBlob));
     }

@@ -55,6 +55,15 @@ public interface S3MetaRequestResponseHandler {
     }
 
     /**
+     * Invoked only for a download with {@link S3MetaRequestOptions#withResponseBuffer}, once it has succeeded,
+     * just before {@link #onFinished}. The response buffer's region, starting at its position, holds
+     * {@code bytesReceived} bytes; the rest of the region is untouched.
+     * @param bytesReceived the number of bytes written into the response buffer
+     */
+    default void onResponseBufferFilled(long bytesReceived) {
+    }
+
+    /**
      * Invoked when the entire meta request execution is complete.
      * @param context a wrapper object containing the following fields
      */

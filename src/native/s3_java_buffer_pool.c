@@ -83,10 +83,13 @@
 #include "crt.h"            /* aws_jni_acquire_thread_env, aws_jni_check_and_clear_exception */
 #include "java_class_ids.h" /* s3_direct_buffer_pool_properties */
 
+#include <aws/common/hash_table.h>
 #include <aws/common/mutex.h>
 #include <aws/common/ref_count.h>
 #include <aws/io/future.h>
 #include <aws/s3/s3.h> /* aws_s3_default_part_size */
+
+#include <inttypes.h>
 
 /* ------------------------------------------------------------------ */
 /* Internal state structs.                                            */
@@ -132,6 +135,18 @@ struct java_pool_state {
      */
     struct aws_linked_list pending_reserves;
     struct aws_mutex pending_lock;
+
+    /*
+     * Caller-owned buffers registered through aws_s3_buffer_pool_add_preallocated_buffer (for example a
+     * meta request's recv_buffer), keyed by meta request; each value is a struct java_preallocated_entry.
+     * Reservations for those meta requests are served from that memory, not the Java pool (see
+     * "PRE-ALLOCATED BUFFERS" below).
+     *
+     * GUARDED BY preallocated_lock, which is only held for the table operation itself: never across a JNI
+     * call, and never together with pending_lock.
+     */
+    struct aws_hash_table preallocated_buffers;
+    struct aws_mutex preallocated_lock;
 
     /* The polymorphic header that aws-c-s3 dispatches against.
      * MUST be embedded so &state->pool gives a valid
@@ -196,10 +211,20 @@ static int s_try_acquire_locked(
     size_t size,
     struct aws_s3_buffer_ticket **out_ticket);
 
+static int s_java_pool_add_preallocated_buffer(
+    struct aws_s3_buffer_pool *pool,
+    struct aws_s3_meta_request *meta_request,
+    struct aws_byte_buf *buffer);
+static void s_java_pool_remove_preallocated_buffer(
+    struct aws_s3_buffer_pool *pool,
+    struct aws_s3_meta_request *meta_request);
+
 static struct aws_s3_buffer_pool_vtable s_java_pool_vtable = {
     .reserve = s_java_pool_reserve,
     .trim = s_java_pool_trim,
     .derive_aligned_buffer_size = s_java_pool_derive_aligned_buffer_size,
+    .add_preallocated_buffer = s_java_pool_add_preallocated_buffer,
+    .remove_preallocated_buffer = s_java_pool_remove_preallocated_buffer,
     /* acquire/release left NULL: default ref_count behavior. add_special_size /
      * release_special_size left NULL: contiguous slot runs serve sizes up to
      * a few parts, and larger ones get a dedicated buffer per reservation. */
@@ -454,6 +479,140 @@ static int s_try_acquire_locked(
     return AWS_OP_SUCCESS;
 }
 
+/* ------------------------------------------------------------------ */
+/* PRE-ALLOCATED BUFFERS (aws_s3_buffer_pool_add_preallocated_buffer). */
+/* ------------------------------------------------------------------ */
+
+/*
+ * A meta request can register caller-owned memory (for example aws_s3_meta_request_options.recv_buffer, or
+ * request_body on a multipart PUT_OBJECT). Its reservations then get a ticket that views that memory at the
+ * reservation's local_offset, instead of a Java pool lease. The memory is the caller's, so it never leases a slot,
+ * never counts against the pool's ceiling, never waits on pending_reserves, and releasing the ticket only frees the
+ * ticket's bookkeeping: no JNI call and no drain. This mirrors aws-c-s3's default pool. The meta request pointer is
+ * only a map key; the pool never looks inside it.
+ */
+
+/* A registered buffer. The pool keeps its own copy of the address and capacity: aws-c-s3 only guarantees the
+ * struct passed to add_preallocated_buffer for that call, while the memory it describes stays valid until
+ * remove_preallocated_buffer. */
+struct java_preallocated_entry {
+    struct aws_allocator *allocator;
+    struct aws_byte_buf buffer;
+};
+
+struct java_preallocated_ticket_state {
+    struct aws_allocator *allocator;
+    uint8_t *base; /* registered buffer + local_offset */
+    size_t size;
+    struct aws_s3_buffer_ticket ticket;
+};
+
+static struct aws_byte_buf s_preallocated_ticket_claim(struct aws_s3_buffer_ticket *t) {
+    struct java_preallocated_ticket_state *ts = t->impl;
+    /* .allocator == NULL: the memory is the caller's (preamble invariant #3 applies here too). */
+    return aws_byte_buf_from_empty_array(ts->base, ts->size);
+}
+
+static void s_preallocated_ticket_destroy(void *user_data) {
+    struct java_preallocated_ticket_state *ts = user_data;
+    aws_mem_release(ts->allocator, ts);
+}
+
+static struct aws_s3_buffer_ticket_vtable s_preallocated_ticket_vtable = {
+    .claim = s_preallocated_ticket_claim,
+};
+
+static void s_preallocated_entry_destroy(void *value) {
+    struct java_preallocated_entry *entry = value;
+    aws_mem_release(entry->allocator, entry);
+}
+
+static int s_java_pool_add_preallocated_buffer(
+    struct aws_s3_buffer_pool *pool,
+    struct aws_s3_meta_request *meta_request,
+    struct aws_byte_buf *buffer) {
+
+    struct java_pool_state *ps = pool->impl;
+    struct java_preallocated_entry *entry = aws_mem_calloc(ps->allocator, 1, sizeof(struct java_preallocated_entry));
+    entry->allocator = ps->allocator;
+    entry->buffer = aws_byte_buf_from_empty_array(buffer->buffer, buffer->capacity);
+
+    aws_mutex_lock(&ps->preallocated_lock);
+    int result = aws_hash_table_put(&ps->preallocated_buffers, meta_request, entry, NULL);
+    aws_mutex_unlock(&ps->preallocated_lock);
+    if (result != AWS_OP_SUCCESS) {
+        s_preallocated_entry_destroy(entry);
+    }
+    return result;
+}
+
+static void s_java_pool_remove_preallocated_buffer(
+    struct aws_s3_buffer_pool *pool,
+    struct aws_s3_meta_request *meta_request) {
+
+    struct java_pool_state *ps = pool->impl;
+    aws_mutex_lock(&ps->preallocated_lock);
+    aws_hash_table_remove(&ps->preallocated_buffers, meta_request, NULL, NULL);
+    aws_mutex_unlock(&ps->preallocated_lock);
+}
+
+/* Copies out the buffer registered for `meta_request`. Returns false if there is none. The copy is taken under
+ * the lock, so a concurrent remove can't free the entry while it's in use. */
+static bool s_find_preallocated_buffer(
+    struct java_pool_state *ps,
+    struct aws_s3_meta_request *meta_request,
+    struct aws_byte_buf *out_buffer) {
+
+    if (meta_request == NULL) {
+        return false;
+    }
+    bool found = false;
+    aws_mutex_lock(&ps->preallocated_lock);
+    struct aws_hash_element *elem = NULL;
+    aws_hash_table_find(&ps->preallocated_buffers, meta_request, &elem);
+    if (elem != NULL) {
+        *out_buffer = ((struct java_preallocated_entry *)elem->value)->buffer;
+        found = true;
+    }
+    aws_mutex_unlock(&ps->preallocated_lock);
+    return found;
+}
+
+static struct aws_future_s3_buffer_ticket *s_reserve_from_preallocated_buffer(
+    struct java_pool_state *ps,
+    const struct aws_byte_buf *buffer,
+    struct aws_s3_buffer_pool_reserve_meta meta) {
+
+    struct aws_future_s3_buffer_ticket *future = aws_future_s3_buffer_ticket_new(ps->allocator);
+
+    /* Never hand out a view past the end of the caller's buffer. */
+    if (meta.local_offset > buffer->capacity || meta.size > buffer->capacity - meta.local_offset) {
+        AWS_LOGF_ERROR(
+            AWS_LS_S3_CLIENT,
+            "id=%p S3DirectBufferPool: pre-allocated buffer can't hold a reservation of %zu bytes at offset %" PRIu64
+            " (capacity %zu).",
+            (void *)meta.meta_request,
+            meta.size,
+            meta.local_offset,
+            buffer->capacity);
+        aws_future_s3_buffer_ticket_set_error(future, AWS_ERROR_SHORT_BUFFER);
+        return future;
+    }
+
+    struct java_preallocated_ticket_state *ts =
+        aws_mem_calloc(ps->allocator, 1, sizeof(struct java_preallocated_ticket_state));
+    ts->allocator = ps->allocator;
+    ts->base = buffer->buffer + meta.local_offset;
+    ts->size = meta.size;
+    ts->ticket.vtable = &s_preallocated_ticket_vtable;
+    ts->ticket.impl = ts;
+    aws_ref_count_init(&ts->ticket.ref_count, ts, s_preallocated_ticket_destroy);
+
+    struct aws_s3_buffer_ticket *ticket = &ts->ticket;
+    aws_future_s3_buffer_ticket_set_result_by_move(future, &ticket);
+    return future;
+}
+
 /*
  * Reserve a buffer ticket. NON-BLOCKING (preamble invariant #4). Outcomes:
  *   (a) served now: resolve the future synchronously;
@@ -468,6 +627,13 @@ static struct aws_future_s3_buffer_ticket *s_java_pool_reserve(
     struct aws_s3_buffer_pool_reserve_meta meta) {
 
     struct java_pool_state *ps = pool->impl;
+
+    /* A meta request with a pre-allocated buffer is served from it, not from the Java pool. */
+    struct aws_byte_buf preallocated;
+    if (s_find_preallocated_buffer(ps, meta.meta_request, &preallocated)) {
+        return s_reserve_from_preallocated_buffer(ps, &preallocated, meta);
+    }
+
     struct aws_future_s3_buffer_ticket *future = aws_future_s3_buffer_ticket_new(ps->allocator);
 
     /******** JNI ENV ACQUIRE ********/
@@ -605,6 +771,10 @@ static void s_java_pool_destroy(void *user_data) {
     }
     s_resolve_pending_list(ps, &resolved);
     aws_mutex_clean_up(&ps->pending_lock);
+    /* Normally empty: aws-c-s3 removes each meta request's buffer once the meta request is done with it, and the
+     * pool outlives every meta request. Frees any leftover entries. */
+    aws_hash_table_clean_up(&ps->preallocated_buffers);
+    aws_mutex_clean_up(&ps->preallocated_lock);
 
     /******** JNI ENV ACQUIRE ********/
     struct aws_jvm_env_context jvm_env_context = aws_jni_acquire_thread_env(ps->jvm);
@@ -665,6 +835,26 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
         aws_mem_release(allocator, ps);
         goto error_release_global_ref;
     }
+    if (aws_mutex_init(&ps->preallocated_lock) != AWS_OP_SUCCESS) {
+        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT, "S3DirectBufferPool factory: failed to init preallocated_lock");
+        aws_mutex_clean_up(&ps->pending_lock);
+        aws_mem_release(allocator, ps);
+        goto error_release_global_ref;
+    }
+    if (aws_hash_table_init(
+            &ps->preallocated_buffers,
+            allocator,
+            0 /*initial size*/,
+            aws_hash_ptr,
+            aws_ptr_eq,
+            NULL /*destroy key: the meta request is only a key*/,
+            s_preallocated_entry_destroy)) {
+        AWS_LOGF_ERROR(AWS_LS_S3_CLIENT, "S3DirectBufferPool factory: failed to init the pre-allocated buffer table");
+        aws_mutex_clean_up(&ps->preallocated_lock);
+        aws_mutex_clean_up(&ps->pending_lock);
+        aws_mem_release(allocator, ps);
+        goto error_release_global_ref;
+    }
 
     /* Validate slot size against this client (fail-fast at client
      * creation). Tickets report capacity = config.part_size (the client's
@@ -710,6 +900,8 @@ struct aws_s3_buffer_pool *aws_s3_java_buffer_pool_factory(
 
 error_clean_ps:
     aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
+    aws_hash_table_clean_up(&ps->preallocated_buffers);
+    aws_mutex_clean_up(&ps->preallocated_lock);
     aws_mutex_clean_up(&ps->pending_lock);
     aws_mem_release(allocator, ps);
 

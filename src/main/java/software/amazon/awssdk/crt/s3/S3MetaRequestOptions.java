@@ -10,6 +10,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,6 +90,8 @@ public class S3MetaRequestOptions {
     private ResponseFileOption responseFileOption = ResponseFileOption.CREATE_OR_REPLACE;
     private long responseFilePosition = 0;
     private boolean responseFileDeleteOnFailure = false;
+    private ByteBuffer responseBuffer;
+    private ByteBuffer requestBuffer;
     private S3MetaRequestResponseHandler responseHandler;
     private CredentialsProvider credentialsProvider;
     private AwsSigningConfig signingConfig;
@@ -392,6 +395,75 @@ public class S3MetaRequestOptions {
 
     public Path getResponseFilePath() {
         return responseFilePath;
+    }
+
+    /**
+     * If set, the response body is downloaded straight into this buffer, with no copy,
+     * and {@link S3MetaRequestResponseHandler#onResponseBody} is not invoked.
+     * Only for {@link MetaRequestType#GET_OBJECT}, and not together with {@link withResponseFilePath}.
+     *
+     * The buffer's remaining region, from {@code position()} to {@code limit()} when
+     * {@link S3Client#makeMetaRequest} is called, receives the requested range: its first byte
+     * lands at {@code position()}. The buffer's position and limit are never changed. On success,
+     * {@link S3MetaRequestResponseHandler#onResponseBufferFilled} reports the number of bytes written,
+     * just before {@link S3MetaRequestResponseHandler#onFinished}. On failure, the region's contents
+     * are undefined.
+     *
+     * Requirements:
+     * - The buffer must be direct ({@link ByteBuffer#allocateDirect} or a {@link java.nio.MappedByteBuffer})
+     *   and not read-only. Otherwise {@link S3Client#makeMetaRequest} throws IllegalArgumentException.
+     * - Otherwise invalid options (another request type, or a response file as well) make
+     *   {@link S3Client#makeMetaRequest} fail.
+     * - The region must hold the whole requested range. Otherwise the request fails with
+     *   AWS_ERROR_SHORT_BUFFER.
+     * - Don't set {@link withObjectSizeHint}; if set, it must equal the region's size.
+     * - Don't read or write the region until {@link S3MetaRequestResponseHandler#onFinished} is invoked,
+     *   and don't give the same or overlapping memory to two requests in flight at once.
+     *
+     * The client keeps a reference to the buffer until the meta request shuts down, so its memory
+     * stays valid even if the caller drops every reference to it.
+     *
+     * @param responseBuffer direct buffer to download the response body into.
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseBuffer(ByteBuffer responseBuffer) {
+        this.responseBuffer = responseBuffer;
+        return this;
+    }
+
+    public ByteBuffer getResponseBuffer() {
+        return responseBuffer;
+    }
+
+    /**
+     * If set, the request body is sent straight from this buffer, with no copy.
+     * Only for {@link MetaRequestType#PUT_OBJECT} and {@link MetaRequestType#DEFAULT}, and not together with
+     * {@link withRequestFilePath} or a body stream on the {@link HttpRequest}. Above the multipart
+     * threshold, parts are sent from the buffer in parallel.
+     *
+     * The body is the buffer's remaining region, from {@code position()} to {@code limit()} when
+     * {@link S3Client#makeMetaRequest} is called. The buffer's position and limit are never changed.
+     * The request doesn't need a Content-Length header: the client takes the length from the region,
+     * and fails the request if a header doesn't match it.
+     *
+     * Requirements:
+     * - The buffer must be direct ({@link ByteBuffer#allocateDirect} or a {@link java.nio.MappedByteBuffer});
+     *   read-only is fine. Otherwise {@link S3Client#makeMetaRequest} throws IllegalArgumentException.
+     * - Don't change the region until {@link S3MetaRequestResponseHandler#onFinished} is invoked.
+     *
+     * The client keeps a reference to the buffer until the meta request shuts down, so its memory
+     * stays valid even if the caller drops every reference to it.
+     *
+     * @param requestBuffer direct buffer to upload the request body from.
+     * @return this
+     */
+    public S3MetaRequestOptions withRequestBuffer(ByteBuffer requestBuffer) {
+        this.requestBuffer = requestBuffer;
+        return this;
+    }
+
+    public ByteBuffer getRequestBuffer() {
+        return requestBuffer;
     }
 
     /**

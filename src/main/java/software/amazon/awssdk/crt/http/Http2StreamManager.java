@@ -233,10 +233,15 @@ public class Http2StreamManager extends CrtResource {
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {
-        if (isNull()) {
+        // Hold a reference so a concurrent close() cannot free the native manager mid-call.
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
         }
-        return http2StreamManagerFetchMetrics(getNativeHandle());
+        try {
+            return http2StreamManagerFetchMetrics(getNativeHandle());
+        } finally {
+            decRef();
+        }
     }
 
     /**

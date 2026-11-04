@@ -487,6 +487,314 @@ public class S3ClientTest extends CrtTestFixture {
         }
     }
 
+    /* GETs an object (or range) through onResponseBody and returns the bytes, to compare a response buffer against. */
+    private byte[] getObjectBytes(S3Client client, String path, String range) throws Exception {
+        java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+        CompletableFuture<S3FinishedResponseContext> finished = new CompletableFuture<>();
+        S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            @Override
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                byte[] bytes = new byte[bodyBytesIn.remaining()];
+                bodyBytesIn.get(bytes);
+                body.write(bytes, 0, bytes.length);
+                return 0;
+            }
+
+            @Override
+            public void onFinished(S3FinishedResponseContext context) {
+                finished.complete(context);
+            }
+        };
+        S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(makeGetRequest(path, range))
+                .withResponseHandler(responseHandler);
+        try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+            S3FinishedResponseContext context = finished.get();
+            if (context.getErrorCode() != 0) {
+                throw makeExceptionFromFinishedResponseContext(context);
+            }
+        }
+        return body.toByteArray();
+    }
+
+    private HttpRequest makeGetRequest(String path, String range) {
+        List<HttpHeader> headers = new ArrayList<>();
+        headers.add(new HttpHeader("Host", ENDPOINT));
+        if (range != null) {
+            headers.add(new HttpHeader("Range", range));
+        }
+        return new HttpRequest("GET", path, headers.toArray(new HttpHeader[0]), null);
+    }
+
+    /* The finished context of a request, and the count from onResponseBufferFilled (null if it wasn't invoked). */
+    private static class BufferRequestResult {
+        S3FinishedResponseContext context;
+        Long bytesReceived;
+    }
+
+    /* Runs the request to completion and returns its result, whatever the outcome. onResponseBody must not be invoked. */
+    private BufferRequestResult runBufferRequest(S3Client client, S3MetaRequestOptions options) throws Exception {
+        BufferRequestResult result = new BufferRequestResult();
+        CompletableFuture<S3FinishedResponseContext> finished = new CompletableFuture<>();
+        AtomicInteger bodyCallbacks = new AtomicInteger();
+        options.withResponseHandler(new S3MetaRequestResponseHandler() {
+            @Override
+            public int onResponseBody(ByteBuffer bodyBytesIn, long objectRangeStart, long objectRangeEnd) {
+                bodyCallbacks.incrementAndGet();
+                return 0;
+            }
+
+            @Override
+            public void onResponseBufferFilled(long bytesReceived) {
+                result.bytesReceived = bytesReceived;
+            }
+
+            @Override
+            public void onFinished(S3FinishedResponseContext context) {
+                finished.complete(context);
+            }
+        });
+        try (S3MetaRequest metaRequest = client.makeMetaRequest(options)) {
+            result.context = finished.get();
+            Assert.assertEquals("onResponseBody must not be invoked for a response buffer", 0, bodyCallbacks.get());
+            return result;
+        }
+    }
+
+    /* GETs an object (or range) into responseBuffer. */
+    private BufferRequestResult getIntoResponseBuffer(S3Client client, String path, String range,
+            ByteBuffer responseBuffer) throws Exception {
+        return runBufferRequest(client, new S3MetaRequestOptions()
+                .withMetaRequestType(MetaRequestType.GET_OBJECT).withHttpRequest(makeGetRequest(path, range))
+                .withResponseBuffer(responseBuffer));
+    }
+
+    private static byte[] bytesAt(ByteBuffer buffer, int offset, int length) {
+        byte[] bytes = new byte[length];
+        ByteBuffer view = buffer.duplicate();
+        view.clear();
+        view.position(offset);
+        view.get(bytes);
+        return bytes;
+    }
+
+    private void assertSucceeded(BufferRequestResult result) {
+        if (result.context.getErrorCode() != 0) {
+            throw makeExceptionFromFinishedResponseContext(result.context);
+        }
+    }
+
+    @Test
+    public void testS3GetWithResponseBuffer() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            byte[] expected = getObjectBytes(client, PRE_EXIST_10MB_PATH, null);
+
+            /* Larger than the object: only the object's bytes are written, and the rest is untouched. */
+            ByteBuffer responseBuffer = ByteBuffer.allocateDirect(expected.length + 100);
+            for (int i = 0; i < responseBuffer.capacity(); ++i) {
+                responseBuffer.put(i, (byte) 0x5A);
+            }
+            BufferRequestResult result = getIntoResponseBuffer(client, PRE_EXIST_10MB_PATH, null, responseBuffer);
+            assertSucceeded(result);
+            Assert.assertEquals(Long.valueOf(expected.length), result.bytesReceived);
+            Assert.assertArrayEquals(expected, bytesAt(responseBuffer, 0, expected.length));
+            for (int i = expected.length; i < responseBuffer.capacity(); ++i) {
+                Assert.assertEquals((byte) 0x5A, responseBuffer.get(i));
+            }
+            Assert.assertEquals(0, responseBuffer.position());
+            Assert.assertEquals(responseBuffer.capacity(), responseBuffer.limit());
+        }
+    }
+
+    @Test
+    public void testS3GetRangeWithResponseBuffer() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            /* Crosses part boundaries, and lands at a non-zero position. */
+            String range = "bytes=1000-9000999";
+            byte[] expected = getObjectBytes(client, PRE_EXIST_10MB_PATH, range);
+            Assert.assertEquals(9000000, expected.length);
+
+            int position = 7;
+            ByteBuffer responseBuffer = ByteBuffer.allocateDirect(position + expected.length + 3);
+            responseBuffer.position(position).limit(position + expected.length);
+            BufferRequestResult result = getIntoResponseBuffer(client, PRE_EXIST_10MB_PATH, range, responseBuffer);
+            assertSucceeded(result);
+            Assert.assertEquals(Long.valueOf(expected.length), result.bytesReceived);
+            Assert.assertArrayEquals(expected, bytesAt(responseBuffer, position, expected.length));
+            Assert.assertArrayEquals(new byte[position], bytesAt(responseBuffer, 0, position));
+            Assert.assertArrayEquals(new byte[3], bytesAt(responseBuffer, position + expected.length, 3));
+            Assert.assertEquals(position, responseBuffer.position());
+            Assert.assertEquals(position + expected.length, responseBuffer.limit());
+        }
+    }
+
+    @Test
+    public void testS3GetWithResponseBufferTooSmall() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            BufferRequestResult result = getIntoResponseBuffer(client, PRE_EXIST_10MB_PATH, null,
+                    ByteBuffer.allocateDirect(1024 * 1024));
+            Assert.assertEquals("AWS_ERROR_SHORT_BUFFER", CRT.awsErrorName(result.context.getErrorCode()));
+            /* onResponseBufferFilled is only invoked on success. */
+            Assert.assertNull(result.bytesReceived);
+        }
+    }
+
+    @Test
+    public void testS3GetWithResponseBufferKeptAlive() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            byte[] expected = getObjectBytes(client, PRE_EXIST_10MB_PATH, null);
+            ByteBuffer responseBuffer = ByteBuffer.allocateDirect(expected.length);
+            java.lang.ref.WeakReference<ByteBuffer> weakBuffer = new java.lang.ref.WeakReference<>(responseBuffer);
+
+            CompletableFuture<S3FinishedResponseContext> finished = new CompletableFuture<>();
+            AtomicLong bytesReceived = new AtomicLong(-1);
+            /* Taken in onFinished, while the client still holds the buffer; null if it was collected. */
+            AtomicReference<ByteBuffer> bufferAtFinish = new AtomicReference<>();
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+                @Override
+                public void onResponseBufferFilled(long bytes) {
+                    bytesReceived.set(bytes);
+                }
+
+                @Override
+                public void onFinished(S3FinishedResponseContext context) {
+                    bufferAtFinish.set(weakBuffer.get());
+                    finished.complete(context);
+                }
+            };
+            S3MetaRequestOptions metaRequestOptions = new S3MetaRequestOptions()
+                    .withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(makeGetRequest(PRE_EXIST_10MB_PATH, null))
+                    .withResponseBuffer(responseBuffer)
+                    .withResponseHandler(responseHandler);
+            try (S3MetaRequest metaRequest = client.makeMetaRequest(metaRequestOptions)) {
+                /* Drop every Java reference to the buffer, so only the client's reference keeps it alive. */
+                responseBuffer = null;
+                metaRequestOptions.withResponseBuffer(null);
+                for (int i = 0; i < 5 && !finished.isDone(); ++i) {
+                    System.gc();
+                    Thread.sleep(10);
+                }
+                S3FinishedResponseContext context = finished.get();
+                if (context.getErrorCode() != 0) {
+                    throw makeExceptionFromFinishedResponseContext(context);
+                }
+                ByteBuffer data = bufferAtFinish.get();
+                Assert.assertNotNull(data);
+                Assert.assertEquals(expected.length, bytesReceived.get());
+                Assert.assertArrayEquals(expected, bytesAt(data, 0, expected.length));
+            }
+        }
+    }
+
+    @Test
+    public void testS3PutWithRequestBuffer() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            String path = UPLOAD_DIR + "/crt-java-zero-copy-test/" + java.util.UUID.randomUUID();
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            try {
+                /* No Content-Length header: the client takes it from the buffer. Multipart (20 MiB), then a single
+                 * PUT (1000 bytes) from a read-only buffer. */
+                for (int size : new int[] { 20 * 1024 * 1024, 1000 }) {
+                    ByteBuffer body = ByteBuffer.allocateDirect(size);
+                    for (int i = 0; i < size; ++i) {
+                        body.put(i, (byte) (i * 31 + 7));
+                    }
+                    ByteBuffer requestBuffer = size == 1000 ? body.asReadOnlyBuffer() : body;
+                    BufferRequestResult put = runBufferRequest(client, new S3MetaRequestOptions()
+                            .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                            .withHttpRequest(new HttpRequest("PUT", path, headers, null))
+                            .withRequestBuffer(requestBuffer));
+                    assertSucceeded(put);
+                    Assert.assertNull(put.bytesReceived);
+                    Assert.assertEquals(0, requestBuffer.position());
+                    Assert.assertEquals(size, requestBuffer.limit());
+
+                    ByteBuffer downloaded = ByteBuffer.allocateDirect(size);
+                    BufferRequestResult get = getIntoResponseBuffer(client, path, null, downloaded);
+                    assertSucceeded(get);
+                    Assert.assertEquals(Long.valueOf(size), get.bytesReceived);
+                    Assert.assertEquals(body, downloaded);
+                }
+            } finally {
+                CompletableFuture<S3FinishedResponseContext> deleted = new CompletableFuture<>();
+                try (S3MetaRequest delete = client.makeMetaRequest(new S3MetaRequestOptions()
+                        .withMetaRequestType(MetaRequestType.DEFAULT).withOperationName("DeleteObject")
+                        .withHttpRequest(new HttpRequest("DELETE", path, headers, null))
+                        .withResponseHandler(new S3MetaRequestResponseHandler() {
+                            @Override
+                            public void onFinished(S3FinishedResponseContext context) {
+                                deleted.complete(context);
+                            }
+                        }))) {
+                    deleted.get();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testS3BufferInvalidOptions() {
+        skipIfAndroid();
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        try (S3Client client = createS3Client(clientOptions)) {
+            S3MetaRequestResponseHandler responseHandler = new S3MetaRequestResponseHandler() {
+            };
+            HttpRequest getRequest = makeGetRequest(PRE_EXIST_1MB_PATH, null);
+            HttpRequest putRequest = new HttpRequest("PUT", "/key", new HttpHeader[] { new HttpHeader("Host", ENDPOINT) }, null);
+            ByteBuffer direct = ByteBuffer.allocateDirect(1024);
+
+            /* Checked by the binding, since aws-c-s3 only gets an address: a heap buffer (the GC can move it), and a
+             * read-only buffer to download into. */
+            List<S3MetaRequestOptions> rejectedByBinding = new ArrayList<>();
+            rejectedByBinding.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(getRequest).withResponseBuffer(ByteBuffer.allocate(1024)));
+            rejectedByBinding.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(getRequest).withResponseBuffer(direct.asReadOnlyBuffer()));
+            rejectedByBinding.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(putRequest).withRequestBuffer(ByteBuffer.allocate(1024)));
+            for (S3MetaRequestOptions options : rejectedByBinding) {
+                options.withResponseHandler(responseHandler);
+                assertThrows(IllegalArgumentException.class, () -> client.makeMetaRequest(options));
+            }
+
+            /* Rejected by aws-c-s3 (which error it reports is up to aws-c-s3): a response buffer on a PUT or with a
+             * response file, and a request buffer on a GET. */
+            List<S3MetaRequestOptions> rejectedByCrt = new ArrayList<>();
+            rejectedByCrt.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                    .withHttpRequest(putRequest).withResponseBuffer(direct));
+            rejectedByCrt.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(getRequest).withResponseBuffer(direct)
+                    .withResponseFilePath(Paths.get("response-buffer-test.out")));
+            rejectedByCrt.add(new S3MetaRequestOptions().withMetaRequestType(MetaRequestType.GET_OBJECT)
+                    .withHttpRequest(getRequest).withRequestBuffer(direct));
+            for (S3MetaRequestOptions options : rejectedByCrt) {
+                options.withResponseHandler(responseHandler);
+                assertThrows(RuntimeException.class, () -> client.makeMetaRequest(options));
+            }
+        }
+    }
+
     @Test
     public void testS3GetWithSizeHint() {
         skipIfAndroid();

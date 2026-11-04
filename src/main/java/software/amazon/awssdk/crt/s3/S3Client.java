@@ -5,6 +5,7 @@
  */
 package software.amazon.awssdk.crt.s3;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
@@ -262,6 +263,31 @@ public class S3Client extends CrtResource {
             checkUploadPartSizeForBufferPool(options);
         }
 
+        /*
+         * Only what aws-c-s3 can't see is checked here: whether a buffer is direct (it only gets an address) and,
+         * for a download, writable. aws-c-s3 rejects the other invalid combinations (wrong request type, another
+         * body source or destination) itself.
+         */
+        ByteBuffer responseBuffer = options.getResponseBuffer();
+        String bufferError = null;
+        if (responseBuffer != null && (!responseBuffer.isDirect() || responseBuffer.isReadOnly())) {
+            bufferError = "Response buffer must be a direct, writable ByteBuffer.";
+        }
+        ByteBuffer requestBuffer = options.getRequestBuffer();
+        if (requestBuffer != null && !requestBuffer.isDirect()) {
+            bufferError = "Request buffer must be a direct ByteBuffer.";
+        }
+        if (bufferError != null) {
+            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                    "S3Client.makeMetaRequest has invalid options; " + bufferError);
+            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; " + bufferError);
+        }
+        /* Each buffer's region from position to limit, captured now; the buffers' own position and limit are never changed. */
+        int responseBufferOffset = responseBuffer == null ? 0 : responseBuffer.position();
+        int responseBufferLength = responseBuffer == null ? 0 : responseBuffer.remaining();
+        int requestBufferOffset = requestBuffer == null ? 0 : requestBuffer.position();
+        int requestBufferLength = requestBuffer == null ? 0 : requestBuffer.remaining();
+
         S3MetaRequest metaRequest = new S3MetaRequest();
         S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
                 options.getResponseHandler(), directBufferPool != null);
@@ -316,7 +342,9 @@ public class S3Client extends CrtResource {
                 diskThroughputGbps,
                 directIo,
                 directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
-                responseHandlerNativeAdapter.usesBorrowedDelivery());
+                responseHandlerNativeAdapter.usesBorrowedDelivery(),
+                responseBuffer, responseBufferOffset, responseBufferLength,
+                requestBuffer, requestBufferOffset, requestBufferLength);
 
         metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
 
@@ -545,7 +573,9 @@ public class S3Client extends CrtResource {
             double diskThroughputGbps,
             boolean directIo,
             long directBufferPoolState,
-            boolean usesBorrowedDelivery);
+            boolean usesBorrowedDelivery,
+            ByteBuffer responseBuffer, long responseBufferOffset, long responseBufferLength,
+            ByteBuffer requestBuffer, long requestBufferOffset, long requestBufferLength);
 
     /**
      * Returns the default native buffer pool's memory limit (bytes) for the

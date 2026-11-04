@@ -757,6 +757,10 @@ static void s_cache_s3_meta_request_response_handler_native_adapter_properties(J
     s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed = (*env)->GetMethodID(
         env, cls, "onResponseBodyBorrowed", "(Lsoftware/amazon/awssdk/crt/s3/S3BorrowedBuffer;JJ)I");
     AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBodyBorrowed);
+
+    s3_meta_request_response_handler_native_adapter_properties.onResponseBufferFilled =
+        (*env)->GetMethodID(env, cls, "onResponseBufferFilled", "(J)V");
+    AWS_FATAL_ASSERT(s3_meta_request_response_handler_native_adapter_properties.onResponseBufferFilled);
 }
 
 struct java_s3_borrowed_buffer_properties s3_borrowed_buffer_properties;

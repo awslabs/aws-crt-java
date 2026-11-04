@@ -269,7 +269,7 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
-     * Increments the reference count only if this resource has not already been released.
+     * Increments the reference count only if this resource has a native handle and has not been released.
      * A successful call keeps the native handle alive until the matching {@link #decRef(boolean) decRef(false)},
      * so a native call made in between cannot race with {@link #close()} on another thread.
      * Neither call logs the reference change.
@@ -284,6 +284,11 @@ public abstract class CrtResource implements AutoCloseable {
             }
         } while (!refCount.compareAndSet(refs, refs + 1));
 
+        // Some resources acquire their native handle after construction.
+        if (isNull()) {
+            decRef(false);
+            return false;
+        }
         return true;
     }
 

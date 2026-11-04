@@ -227,104 +227,107 @@ public class S3Client extends CrtResource {
 
     public S3MetaRequest makeMetaRequest(S3MetaRequestOptions options) {
 
-        if(isNull()) {
+        if (!tryAddRef()) {
             Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
                     "S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
             throw new IllegalStateException("S3Client.makeMetaRequest has invalid client. The client can not be used after it is closed.");
         }
+        try {
+            if (options.getHttpRequest() == null) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                        "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+                throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+            }
 
-        if (options.getHttpRequest() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
-                    "S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
-            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Http Request cannot be null.");
+            if (options.getResponseHandler() == null) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                        "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
+                throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
+            }
+
+            String operationName = options.getOperationName();
+            if (options.getMetaRequestType() == S3MetaRequestOptions.MetaRequestType.DEFAULT && operationName == null) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                        "S3Client.makeMetaRequest has invalid options; Operation name must be set for MetaRequestType.DEFAULT.");
+                throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Operation name must be set for MetaRequestType.DEFAULT.");
+            }
+
+            if (options.getChecksumConfig() != null && options.getChecksumAlgorithm() == ChecksumAlgorithm.MD5) {
+                Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
+                        "S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
+                throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
+            }
+
+            if (directBufferPool != null) {
+                checkUploadPartSizeForBufferPool(options);
+            }
+
+            S3MetaRequest metaRequest = new S3MetaRequest();
+            S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
+                    options.getResponseHandler(), directBufferPool != null);
+
+            byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
+            byte[] requestFilePath = null;
+            if (options.getRequestFilePath() != null) {
+                requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
+            }
+            byte[] responseFilePath = null;
+            if (options.getResponseFilePath() != null) {
+                responseFilePath = options.getResponseFilePath().toString().getBytes(UTF8);
+            }
+
+            AwsSigningConfig signingConfig = options.getSigningConfig();
+            boolean didCreateSigningConfig = false;
+            if(signingConfig == null && options.getCredentialsProvider()!= null) {
+                signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+                didCreateSigningConfig = true;
+            }
+            URI endpoint = options.getEndpoint();
+
+            ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
+                    : new ChecksumConfig();
+            // Handle FileIoOptions from S3MetaRequestOptions
+            boolean fioOptionsSet = false;
+            boolean shouldStream = false;
+            double diskThroughputGbps = 0.0;
+            boolean directIo = false;
+
+            FileIoOptions fileIoOptions = options.getFileIoOptions();
+            if (fileIoOptions != null) {
+                fioOptionsSet = true;
+                shouldStream = fileIoOptions.getShouldStream();
+                diskThroughputGbps = fileIoOptions.getDiskThroughputGbps();
+                directIo = fileIoOptions.getDirectIo();
+            }
+
+            long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
+                    options.getMetaRequestType().getNativeValue(),
+                    operationName == null ? null : operationName.getBytes(UTF8),
+                    checksumConfig.getChecksumLocation().getNativeValue(),
+                    checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                    ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                    httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
+                    responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                    options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
+                    options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
+                    options.getResponseFileDeleteOnFailure(),
+                    fioOptionsSet,
+                    shouldStream,
+                    diskThroughputGbps,
+                    directIo,
+                    directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
+                    responseHandlerNativeAdapter.usesBorrowedDelivery());
+
+            metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
+
+            if(didCreateSigningConfig) {
+                /* The native code will keep the needed resource around */
+                signingConfig.close();
+            }
+            return metaRequest;
+        } finally {
+            decRef(false);
         }
-
-        if (options.getResponseHandler() == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
-                    "S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
-            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Response Handler cannot be null.");
-        }
-
-        String operationName = options.getOperationName();
-        if (options.getMetaRequestType() == S3MetaRequestOptions.MetaRequestType.DEFAULT && operationName == null) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
-                    "S3Client.makeMetaRequest has invalid options; Operation name must be set for MetaRequestType.DEFAULT.");
-            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; Operation name must be set for MetaRequestType.DEFAULT.");
-        }
-
-        if (options.getChecksumConfig() != null && options.getChecksumAlgorithm() == ChecksumAlgorithm.MD5) {
-            Log.log(Log.LogLevel.Error, Log.LogSubject.S3Client,
-                    "S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
-            throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
-        }
-
-        if (directBufferPool != null) {
-            checkUploadPartSizeForBufferPool(options);
-        }
-
-        S3MetaRequest metaRequest = new S3MetaRequest();
-        S3MetaRequestResponseHandlerNativeAdapter responseHandlerNativeAdapter = new S3MetaRequestResponseHandlerNativeAdapter(
-                options.getResponseHandler(), directBufferPool != null);
-
-        byte[] httpRequestBytes = options.getHttpRequest().marshalForJni();
-        byte[] requestFilePath = null;
-        if (options.getRequestFilePath() != null) {
-            requestFilePath = options.getRequestFilePath().toString().getBytes(UTF8);
-        }
-        byte[] responseFilePath = null;
-        if (options.getResponseFilePath() != null) {
-            responseFilePath = options.getResponseFilePath().toString().getBytes(UTF8);
-        }
-
-        AwsSigningConfig signingConfig = options.getSigningConfig();
-        boolean didCreateSigningConfig = false;
-        if(signingConfig == null && options.getCredentialsProvider()!= null) {
-            signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
-            didCreateSigningConfig = true;
-        }
-        URI endpoint = options.getEndpoint();
-
-        ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
-                : new ChecksumConfig();
-        // Handle FileIoOptions from S3MetaRequestOptions
-        boolean fioOptionsSet = false;
-        boolean shouldStream = false;
-        double diskThroughputGbps = 0.0;
-        boolean directIo = false;
-
-        FileIoOptions fileIoOptions = options.getFileIoOptions();
-        if (fileIoOptions != null) {
-            fioOptionsSet = true;
-            shouldStream = fileIoOptions.getShouldStream();
-            diskThroughputGbps = fileIoOptions.getDiskThroughputGbps();
-            directIo = fileIoOptions.getDirectIo();
-        }
-
-        long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                options.getMetaRequestType().getNativeValue(),
-                operationName == null ? null : operationName.getBytes(UTF8),
-                checksumConfig.getChecksumLocation().getNativeValue(),
-                checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
-                ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
-                responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
-                options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
-                options.getResponseFileDeleteOnFailure(),
-                fioOptionsSet,
-                shouldStream,
-                diskThroughputGbps,
-                directIo,
-                directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
-                responseHandlerNativeAdapter.usesBorrowedDelivery());
-
-        metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-
-        if(didCreateSigningConfig) {
-            /* The native code will keep the needed resource around */
-            signingConfig.close();
-        }
-        return metaRequest;
     }
 
     /** S3's maximum number of parts per multipart upload. */

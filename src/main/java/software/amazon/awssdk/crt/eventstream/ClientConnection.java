@@ -30,20 +30,28 @@ public class ClientConnection extends CrtResource {
      * @param shutdownErrorCode aws-c-* error code to shutdown with. Specify 0 for success.
      */
     public void closeConnection(int shutdownErrorCode) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
-        closeClientConnection(getNativeHandle(), shutdownErrorCode);
+        try {
+            closeClientConnection(getNativeHandle(), shutdownErrorCode);
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
      * @return true if the connection is open, false otherwise.
      */
     public boolean isOpen() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             return false;
         }
-        return isClientConnectionOpen(getNativeHandle());
+        try {
+            return isClientConnectionOpen(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -86,17 +94,20 @@ public class ClientConnection extends CrtResource {
      */
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messageType, int messageFlags, MessageFlushCallback callback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
+        try {
+            byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
+            int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
-        int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
-
-        if (result != 0) {
-            int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode);
+            if (result != 0) {
+                int errorCode = CRT.awsLastError();
+                throw new CrtRuntimeException(errorCode);
+            }
+        } finally {
+            decRef(false);
         }
     }
 
@@ -106,21 +117,24 @@ public class ClientConnection extends CrtResource {
      * @return The new continuation object.
      */
     public ClientConnectionContinuation newStream(final ClientConnectionContinuationHandler continuationHandler) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
+        try {
+            long continuationHandle = newClientStream(getNativeHandle(), continuationHandler);
 
-        long continuationHandle = newClientStream(getNativeHandle(), continuationHandler);
+            if (continuationHandle == 0) {
+                int lastError = CRT.awsLastError();
+                throw new CrtRuntimeException(lastError);
+            }
 
-        if (continuationHandle == 0) {
-            int lastError = CRT.awsLastError();
-            throw new CrtRuntimeException(lastError);
+            ClientConnectionContinuation connectionContinuation = new ClientConnectionContinuation(continuationHandle);
+            continuationHandler.continuation = connectionContinuation;
+
+            return connectionContinuation;
+        } finally {
+            decRef(false);
         }
-
-        ClientConnectionContinuation connectionContinuation = new ClientConnectionContinuation(continuationHandle);
-        continuationHandler.continuation = connectionContinuation;
-
-        return connectionContinuation;
     }
 
     /**

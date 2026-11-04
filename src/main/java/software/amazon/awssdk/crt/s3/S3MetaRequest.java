@@ -75,10 +75,14 @@ public class S3MetaRequest extends CrtResource {
     public CompletableFuture<Void> getShutdownCompleteFuture() { return shutdownComplete; }
 
     public void cancel() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        s3MetaRequestCancel(getNativeHandle());
+        try {
+            s3MetaRequestCancel(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -88,10 +92,14 @@ public class S3MetaRequest extends CrtResource {
      * @return token to resume request. might be null if request has not started executing yet
      */
     public ResumeToken pause() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        return s3MetaRequestPause(getNativeHandle());
+        try {
+            return s3MetaRequestPause(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -114,16 +122,20 @@ public class S3MetaRequest extends CrtResource {
      *         the pause failed.
      */
     public CompletableFuture<ResumeToken> pauseAsync() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        CompletableFuture<ResumeToken> future = new CompletableFuture<>();
         try {
-            s3MetaRequestPauseAsync(getNativeHandle(), future);
-        } catch (Exception e) {
-            future.completeExceptionally(e);
+            CompletableFuture<ResumeToken> future = new CompletableFuture<>();
+            try {
+                s3MetaRequestPauseAsync(getNativeHandle(), future);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+            return future;
+        } finally {
+            decRef(false);
         }
-        return future;
     }
 
     /**
@@ -150,10 +162,14 @@ public class S3MetaRequest extends CrtResource {
      * @see S3ClientOptions#withReadBackpressureEnabled
      */
     public void incrementReadWindow(long bytes) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("S3MetaRequest has been closed.");
         }
-        s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
+        try {
+            s3MetaRequestIncrementReadWindow(getNativeHandle(), bytes);
+        } finally {
+            decRef(false);
+        }
     }
 
     /*******************************************************************************

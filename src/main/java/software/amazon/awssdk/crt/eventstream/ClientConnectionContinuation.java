@@ -33,18 +33,21 @@ public class ClientConnectionContinuation extends CrtResource {
                          final List<Header> headers, final byte[] payload,
                          final MessageType messageType, int messageFlags,
                          MessageFlushCallback callback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
+        try {
+            byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
+            int result = activateContinuation(getNativeHandle(), this, operationName.getBytes(StandardCharsets.UTF_8),
+                    headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
-        int result = activateContinuation(getNativeHandle(), this, operationName.getBytes(StandardCharsets.UTF_8),
-                headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
-
-        if (result != 0) {
-            int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode);
+            if (result != 0) {
+                int errorCode = CRT.awsLastError();
+                throw new CrtRuntimeException(errorCode);
+            }
+        } finally {
+            decRef(false);
         }
     }
 
@@ -90,18 +93,21 @@ public class ClientConnectionContinuation extends CrtResource {
     public void sendMessage(final List<Header> headers, final byte[] payload,
                          final MessageType messageType, int messageFlags,
                          MessageFlushCallback callback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
+        try {
+            byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
+            int result = sendContinuationMessage(getNativeHandle(),
+                    headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
-        int result = sendContinuationMessage(getNativeHandle(),
-                headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
-
-        if (result != 0) {
-            int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode);
+            if (result != 0) {
+                int errorCode = CRT.awsLastError();
+                throw new CrtRuntimeException(errorCode);
+            }
+        } finally {
+            decRef(false);
         }
     }
 

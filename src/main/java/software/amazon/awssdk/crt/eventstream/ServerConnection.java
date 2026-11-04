@@ -27,10 +27,14 @@ public class ServerConnection extends CrtResource {
      * @return true if the connection is open. False otherwise.
      */
     public boolean isConnectionOpen() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             return false;
         }
-        return isOpen(getNativeHandle());
+        try {
+            return isOpen(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -39,10 +43,14 @@ public class ServerConnection extends CrtResource {
      *                      shutting down cleanly, use 0.
      */
     public void closeConnection(int shutdownError) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
-        closeConnection(getNativeHandle(), shutdownError);
+        try {
+            closeConnection(getNativeHandle(), shutdownError);
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -86,16 +94,20 @@ public class ServerConnection extends CrtResource {
      */
     public void sendProtocolMessage(final List<Header> headers, final byte[] payload,
                                     final MessageType messageType, int messageFlags, MessageFlushCallback callback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("close() has already been called on this object.");
         }
-        byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
+        try {
+            byte[] headersBuf = headers != null ? Header.marshallHeadersForJNI(headers) : null;
 
-        int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
+            int result = sendProtocolMessage(getNativeHandle(), headersBuf, payload, messageType.getEnumValue(), messageFlags, callback);
 
-        if (result != 0) {
-            int errorCode = CRT.awsLastError();
-            throw new CrtRuntimeException(errorCode);
+            if (result != 0) {
+                int errorCode = CRT.awsLastError();
+                throw new CrtRuntimeException(errorCode);
+            }
+        } finally {
+            decRef(false);
         }
     }
 

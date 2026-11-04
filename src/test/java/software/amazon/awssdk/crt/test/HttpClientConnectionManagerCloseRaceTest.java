@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import software.amazon.awssdk.crt.http.HttpClientConnection;
 import software.amazon.awssdk.crt.http.HttpClientConnectionManager;
@@ -44,6 +45,8 @@ public class HttpClientConnectionManagerCloseRaceTest extends CrtTestFixture {
     @Test
     public void testCloseDuringAcquireDoesNotAbortProcess() throws Exception {
         skipIfAndroid(); // needs to spawn a JVM
+        // GraalVM native image has no java.home to spawn a child JVM from.
+        Assume.assumeTrue(System.getProperty("org.graalvm.nativeimage.imagecode") == null);
 
         List<String> command = new ArrayList<>();
         command.add(Paths.get(System.getProperty("java.home"), "bin", "java").toString());

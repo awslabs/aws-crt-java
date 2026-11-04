@@ -336,13 +336,17 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Void> disconnect() {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             future.complete(null);
             return future;
         }
-        AsyncCallback disconnectAck = AsyncCallback.wrapFuture(future, null);
-        mqttClientConnectionDisconnect(getNativeHandle(), disconnectAck);
-        return future;
+        try {
+            AsyncCallback disconnectAck = AsyncCallback.wrapFuture(future, null);
+            mqttClientConnectionDisconnect(getNativeHandle(), disconnectAck);
+            return future;
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -357,20 +361,23 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Integer> subscribe(String topic, QualityOfService qos, Consumer<MqttMessage> handler) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             future.completeExceptionally(new MqttException("Invalid connection during subscribe"));
             return future;
         }
-
-        AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
         try {
-            int packetId = mqttClientConnectionSubscribe(getNativeHandle(), topic, qos.getValue(),
-                    handler != null ? new MessageHandler(handler) : null, subAck);
-            // When the future completes, complete the returned future with the packetId
-            return future.thenApply(unused -> packetId);
-        } catch (CrtRuntimeException ex) {
-            future.completeExceptionally(ex);
-            return future;
+            AsyncCallback subAck = AsyncCallback.wrapFuture(future, 0);
+            try {
+                int packetId = mqttClientConnectionSubscribe(getNativeHandle(), topic, qos.getValue(),
+                        handler != null ? new MessageHandler(handler) : null, subAck);
+                // When the future completes, complete the returned future with the packetId
+                return future.thenApply(unused -> packetId);
+            } catch (CrtRuntimeException ex) {
+                future.completeExceptionally(ex);
+                return future;
+            }
+        } finally {
+            decRef(false);
         }
     }
 
@@ -405,15 +412,18 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Integer> unsubscribe(String topic) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             future.completeExceptionally(new MqttException("Invalid connection during unsubscribe"));
             return future;
         }
-
-        AsyncCallback unsubAck = AsyncCallback.wrapFuture(future, 0);
-        int packetId = mqttClientConnectionUnsubscribe(getNativeHandle(), topic, unsubAck);
-        // When the future completes, complete the returned future with the packetId
-        return future.thenApply(unused -> packetId);
+        try {
+            AsyncCallback unsubAck = AsyncCallback.wrapFuture(future, 0);
+            int packetId = mqttClientConnectionUnsubscribe(getNativeHandle(), topic, unsubAck);
+            // When the future completes, complete the returned future with the packetId
+            return future.thenApply(unused -> packetId);
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -426,19 +436,23 @@ public class MqttClientConnection extends CrtResource {
      */
     public CompletableFuture<Integer> publish(MqttMessage message) {
         CompletableFuture<Integer> future = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             future.completeExceptionally(new MqttException("Invalid connection during publish"));
-        }
-
-        AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
-        try {
-            int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(),
-                    message.getQos().getValue(), message.getRetain(), message.getPayload(), pubAck);
-            // When the future completes, complete the returned future with the packetId
-            return future.thenApply(unused -> packetId);
-        } catch (CrtRuntimeException ex) {
-            future.completeExceptionally(ex);
             return future;
+        }
+        try {
+            AsyncCallback pubAck = AsyncCallback.wrapFuture(future, 0);
+            try {
+                int packetId = mqttClientConnectionPublish(getNativeHandle(), message.getTopic(),
+                        message.getQos().getValue(), message.getRetain(), message.getPayload(), pubAck);
+                // When the future completes, complete the returned future with the packetId
+                return future.thenApply(unused -> packetId);
+            } catch (CrtRuntimeException ex) {
+                future.completeExceptionally(ex);
+                return future;
+            }
+        } finally {
+            decRef(false);
         }
     }
 

@@ -175,13 +175,18 @@ public class HttpClientConnectionManager extends CrtResource {
      * @return A Future for a HttpClientConnection that will be completed when a connection is acquired.
      */
     public CompletableFuture<HttpClientConnection> acquireConnection() {
-        if (isNull()) {
+        // Hold a reference across the native call: native requires the manager to be alive and
+        // not shutting down, and a concurrent close() would otherwise abort() the process.
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't acquire new connections");
         }
-
-        CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
-        httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
-        return returnedFuture;
+        try {
+            CompletableFuture<HttpClientConnection> returnedFuture = new CompletableFuture<>();
+            httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
+            return returnedFuture;
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -240,10 +245,15 @@ public class HttpClientConnectionManager extends CrtResource {
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {
-        if (isNull()) {
+        // Hold a reference so a concurrent close() cannot free the native manager mid-call.
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
         }
-        return httpConnectionManagerFetchMetrics(getNativeHandle());
+        try {
+            return httpConnectionManagerFetchMetrics(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**

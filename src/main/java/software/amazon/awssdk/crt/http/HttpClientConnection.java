@@ -71,24 +71,28 @@ public class HttpClientConnection extends CrtResource {
      */
     public HttpStream makeRequest(HttpRequest request, HttpStreamResponseHandler streamHandler,
             boolean useManualDataWrites) throws CrtRuntimeException, IllegalStateException {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        if (getVersion() == HttpVersion.HTTP_2) {
-            throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
-        }
-        if (useManualDataWrites && request.getBodyStream() != null) {
-            throw new IllegalStateException(
-                "Cannot use manual data writes with a body stream on an HTTP/1.1 request. "
-                + "Either remove the body stream or set useManualDataWrites to false.");
-        }
-        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                request.marshalForJni(),
-                request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler),
-                useManualDataWrites);
+        try {
+            if (getVersion() == HttpVersion.HTTP_2) {
+                throw new IllegalArgumentException("HTTP/1 only method called on an HTTP/2 connection.");
+            }
+            if (useManualDataWrites && request.getBodyStream() != null) {
+                throw new IllegalStateException(
+                    "Cannot use manual data writes with a body stream on an HTTP/1.1 request. "
+                    + "Either remove the body stream or set useManualDataWrites to false.");
+            }
+            HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                    request.marshalForJni(),
+                    request.getBodyStream(),
+                    new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                    useManualDataWrites);
 
-        return (HttpStream)stream;
+            return (HttpStream)stream;
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -117,16 +121,20 @@ public class HttpClientConnection extends CrtResource {
      */
     public HttpStreamBase makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler,
             boolean useManualDataWrites) throws CrtRuntimeException {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnection has been closed, can't make requests on it.");
         }
-        HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
-                request.marshalForJni(),
-                request.getBodyStream(),
-                new HttpStreamResponseHandlerNativeAdapter(streamHandler),
-                useManualDataWrites);
+        try {
+            HttpStreamBase stream = httpClientConnectionMakeRequest(getNativeHandle(),
+                    request.marshalForJni(),
+                    request.getBodyStream(),
+                    new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                    useManualDataWrites);
 
-        return stream;
+            return stream;
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -151,10 +159,14 @@ public class HttpClientConnection extends CrtResource {
      * the connection as well in order to release the native resources.
      */
     public void shutdown() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnection has been closed and released back to the pool, cannot shutdown the connection.");
         }
-        httpClientConnectionShutdown(getNativeHandle());
+        try {
+            httpClientConnectionShutdown(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**
@@ -163,18 +175,26 @@ public class HttpClientConnection extends CrtResource {
      * @return true unless the underlying http connection is shutting down, or has been shutdown.
      */
     public boolean isOpen() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnection has been closed.");
         }
-        return httpClientConnectionIsOpen(getNativeHandle());
+        try {
+            return httpClientConnectionIsOpen(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     public HttpVersion getVersion() {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnection has been closed.");
         }
-        short version = httpClientConnectionGetVersion(getNativeHandle());
-        return HttpVersion.getEnumValueFromInteger((int) version);
+        try {
+            short version = httpClientConnectionGetVersion(getNativeHandle());
+            return HttpVersion.getEnumValueFromInteger((int) version);
+        } finally {
+            decRef(false);
+        }
     };
 
     /** Called from Native when a new connection is acquired **/

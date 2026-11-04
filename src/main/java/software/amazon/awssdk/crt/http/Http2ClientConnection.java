@@ -59,19 +59,23 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public CompletableFuture<Void> updateSettings(final List<Http2ConnectionSetting> settings) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             future.completeExceptionally(
                     new IllegalStateException("Http2ClientConnection has been closed, can't change settings on it."));
             return future;
         }
-        AsyncCallback updateSettingsCompleted = AsyncCallback.wrapFuture(future, null);
         try {
-            http2ClientConnectionUpdateSettings(getNativeHandle(), updateSettingsCompleted,
-                    Http2ConnectionSetting.marshallSettingsForJNI(settings));
-        } catch (CrtRuntimeException ex) {
-            future.completeExceptionally(ex);
+            AsyncCallback updateSettingsCompleted = AsyncCallback.wrapFuture(future, null);
+            try {
+                http2ClientConnectionUpdateSettings(getNativeHandle(), updateSettingsCompleted,
+                        Http2ConnectionSetting.marshallSettingsForJNI(settings));
+            } catch (CrtRuntimeException ex) {
+                future.completeExceptionally(ex);
+            }
+            return future;
+        } finally {
+            decRef(false);
         }
-        return future;
     }
 
     /**
@@ -87,18 +91,22 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public CompletableFuture<Long> sendPing(final byte[] pingData) {
         CompletableFuture<Long> completionFuture = new CompletableFuture<>();
-        if (isNull()) {
+        if (!tryAddRef()) {
             completionFuture.completeExceptionally(
                     new IllegalStateException("Http2ClientConnection has been closed, can't send ping on it."));
             return completionFuture;
         }
-        AsyncCallback pingCompleted = AsyncCallback.wrapFuture(completionFuture, 0L);
         try {
-            http2ClientConnectionSendPing(getNativeHandle(), pingCompleted, pingData);
-        } catch (CrtRuntimeException ex) {
-            completionFuture.completeExceptionally(ex);
+            AsyncCallback pingCompleted = AsyncCallback.wrapFuture(completionFuture, 0L);
+            try {
+                http2ClientConnectionSendPing(getNativeHandle(), pingCompleted, pingData);
+            } catch (CrtRuntimeException ex) {
+                completionFuture.completeExceptionally(ex);
+            }
+            return completionFuture;
+        } finally {
+            decRef(false);
         }
-        return completionFuture;
     }
 
     public CompletableFuture<Long> sendPing() {
@@ -130,11 +138,15 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams,
             final byte[] debugData) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("Http2ClientConnection has been closed.");
         }
-        http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
-                debugData);
+        try {
+            http2ClientConnectionSendGoAway(getNativeHandle(), (long) Http2ErrorCode.getValue(), allowMoreStreams,
+                    debugData);
+        } finally {
+            decRef(false);
+        }
     }
 
     public void sendGoAway(final Http2ErrorCode Http2ErrorCode, final boolean allowMoreStreams) {
@@ -223,14 +235,17 @@ public class Http2ClientConnection extends HttpClientConnection {
      */
     public Http2Stream makeRequest(HttpRequestBase request, HttpStreamBaseResponseHandler streamHandler,
             boolean useManualDataWrites) throws CrtRuntimeException {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("Http2ClientConnection has been closed, can't make requests on it.");
         }
-
-        Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
-                request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler),
-                useManualDataWrites);
-        return stream;
+        try {
+            Http2Stream stream = http2ClientConnectionMakeRequest(getNativeHandle(), request.marshalForJni(),
+                    request.getBodyStream(), new HttpStreamResponseHandlerNativeAdapter(streamHandler),
+                    useManualDataWrites);
+            return stream;
+        } finally {
+            decRef(false);
+        }
     }
 
     /**

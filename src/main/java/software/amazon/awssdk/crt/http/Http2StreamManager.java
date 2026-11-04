@@ -200,7 +200,9 @@ public class Http2StreamManager extends CrtResource {
         HttpStreamBaseResponseHandler streamHandler, boolean useManualDataWrites) {
         CompletableFuture<Http2Stream> completionFuture = new CompletableFuture<>();
         AsyncCallback acquireStreamCompleted = AsyncCallback.wrapFuture(completionFuture, null);
-        if (isNull()) {
+        // Hold a reference across the native call: native requires the manager to be alive and
+        // not destroying, and a concurrent close() would otherwise abort() the process.
+        if (!tryAddRef()) {
             completionFuture.completeExceptionally(new IllegalStateException(
                     "Http2StreamManager has been closed, can't acquire new streams"));
             return completionFuture;
@@ -214,6 +216,8 @@ public class Http2StreamManager extends CrtResource {
                     useManualDataWrites);
         } catch (CrtRuntimeException ex) {
             completionFuture.completeExceptionally(ex);
+        } finally {
+            decRef(false);
         }
         return completionFuture;
     }
@@ -229,10 +233,15 @@ public class Http2StreamManager extends CrtResource {
      * @return concurrency metrics for the current manager
      */
     public HttpManagerMetrics getManagerMetrics() {
-        if (isNull()) {
+        // Hold a reference so a concurrent close() cannot free the native manager mid-call.
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpClientConnectionManager has been closed, can't fetch metrics");
         }
-        return http2StreamManagerFetchMetrics(getNativeHandle());
+        try {
+            return http2StreamManagerFetchMetrics(getNativeHandle());
+        } finally {
+            decRef(false);
+        }
     }
 
     /**

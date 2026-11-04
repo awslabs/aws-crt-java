@@ -74,8 +74,12 @@ public class HttpStreamBase extends CrtResource {
         if (windowSize < 0) {
             throw new IllegalArgumentException("windowSize must be >= 0. Actual value: " + windowSize);
         }
-        if (!isNull()) {
-            httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
+        if (tryAddRef()) {
+            try {
+                httpStreamBaseIncrementWindow(getNativeHandle(), windowSize);
+            } finally {
+                decRef(false);
+            }
         }
     }
 
@@ -83,8 +87,12 @@ public class HttpStreamBase extends CrtResource {
      * Activates the client stream.
      */
     public void activate() {
-        if (!isNull()) {
-            httpStreamBaseActivate(getNativeHandle(), this);
+        if (tryAddRef()) {
+            try {
+                httpStreamBaseActivate(getNativeHandle(), this);
+            } finally {
+                decRef(false);
+            }
         }
     }
 
@@ -94,8 +102,12 @@ public class HttpStreamBase extends CrtResource {
      * @return The Http Response Status Code
      */
     public int getResponseStatusCode() {
-        if (!isNull()) {
-            return httpStreamBaseGetResponseStatusCode(getNativeHandle());
+        if (tryAddRef()) {
+            try {
+                return httpStreamBaseGetResponseStatusCode(getNativeHandle());
+            } finally {
+                decRef(false);
+            }
         }
         throw new IllegalStateException("Can't get Status Code on Closed Stream");
     }
@@ -111,8 +123,12 @@ public class HttpStreamBase extends CrtResource {
      * in which case this call will have no effect.
      */
     public void cancel() {
-        if (!isNull()) {
-            httpStreamBaseCancelDefaultError(getNativeHandle());
+        if (tryAddRef()) {
+            try {
+                httpStreamBaseCancelDefaultError(getNativeHandle());
+            } finally {
+                decRef(false);
+            }
         }
     }
 
@@ -135,17 +151,21 @@ public class HttpStreamBase extends CrtResource {
      */
     public void writeData(final byte[] data, boolean endStream,
             final HttpStreamWriteDataCompletionCallback completionCallback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpStream has been closed.");
         }
-        if (completionCallback == null) {
-            throw new IllegalArgumentException("You must supply a completionCallback");
-        }
+        try {
+            if (completionCallback == null) {
+                throw new IllegalArgumentException("You must supply a completionCallback");
+            }
 
-        int error = httpStreamBaseWriteData(getNativeHandle(), data, endStream, completionCallback);
-        if (error != 0) {
-            int lastError = CRT.awsLastError();
-            throw new CrtRuntimeException(lastError);
+            int error = httpStreamBaseWriteData(getNativeHandle(), data, endStream, completionCallback);
+            if (error != 0) {
+                int lastError = CRT.awsLastError();
+                throw new CrtRuntimeException(lastError);
+            }
+        } finally {
+            decRef(false);
         }
     }
 

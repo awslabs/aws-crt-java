@@ -46,23 +46,26 @@ public class HttpStream extends HttpStreamBase {
     @Deprecated
     public void writeChunk(final byte[] chunkData, boolean isFinalChunk,
             final HttpStreamWriteChunkCompletionCallback chunkCompletionCallback) {
-        if (isNull()) {
+        if (!tryAddRef()) {
             throw new IllegalStateException("HttpStream has been closed.");
         }
+        try {
+            if (chunkCompletionCallback == null) {
+                throw new IllegalArgumentException("You must supply a chunkCompletionCallback");
+            }
 
-        if (chunkCompletionCallback == null) {
-            throw new IllegalArgumentException("You must supply a chunkCompletionCallback");
-        }
+            if (chunkData == null) {
+                throw new IllegalArgumentException("You must provide a non-null chunkData");
+            }
 
-        if (chunkData == null) {
-            throw new IllegalArgumentException("You must provide a non-null chunkData");
-        }
+            int error = httpStreamWriteChunk(getNativeHandle(), chunkData, isFinalChunk, chunkCompletionCallback);
 
-        int error = httpStreamWriteChunk(getNativeHandle(), chunkData, isFinalChunk, chunkCompletionCallback);
-
-        if (error != 0) {
-            int lastError = CRT.awsLastError();
-            throw new CrtRuntimeException(lastError);
+            if (error != 0) {
+                int lastError = CRT.awsLastError();
+                throw new CrtRuntimeException(lastError);
+            }
+        } finally {
+            decRef(false);
         }
     }
 

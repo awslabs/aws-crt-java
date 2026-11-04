@@ -269,6 +269,29 @@ public abstract class CrtResource implements AutoCloseable {
     }
 
     /**
+     * Increments the reference count only if this resource has not already been released.
+     * A successful call keeps the native handle alive until the matching {@link #decRef()},
+     * so a native call made in between cannot race with {@link #close()} on another thread.
+     * @return true if a reference was taken, false if the resource is already closed.
+     */
+    protected boolean tryAddRef() {
+        int refs;
+        do {
+            refs = refCount.get();
+            if (refs <= 0) {
+                return false;
+            }
+        } while (!refCount.compareAndSet(refs, refs + 1));
+
+        if (debugNativeObjects) {
+            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource,
+                String.format("%s(%d) is adding a reference. refCount is now %d",
+                this.getClass().getCanonicalName(), id, refs + 1));
+        }
+        return true;
+    }
+
+    /**
      * Required override method that must begin the release process of the acquired native handle
      */
     protected abstract void releaseNativeHandle();

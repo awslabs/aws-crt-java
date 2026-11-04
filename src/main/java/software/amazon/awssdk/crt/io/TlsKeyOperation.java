@@ -133,7 +133,7 @@ public final class TlsKeyOperation {
      * exception or you cannot complete the operation. This will mark the operation as complete with an
      * exception so it can be reacted to accordingly.
      *
-     * @param ex The exeception to complete with
+     * @param ex The exception to complete with
      */
     public synchronized void completeExceptionally(Throwable ex) {
         if (nativeResource.isNull()) {
@@ -167,14 +167,14 @@ public final class TlsKeyOperation {
         try {
             handler.performOperation(operation);
         } catch (Exception ex) {
-            /**
+            /*
              * printStackTrace gives a nice, full picture of the exception
              * but to use it, we have to use a StringWriter and a PrintWriter
              */
             StringWriter stringWriter = new StringWriter();
             ex.printStackTrace(new PrintWriter(stringWriter));
             Log.log(LogLevel.Error, LogSubject.CommonGeneral,
-                "Exception occured!\n" + stringWriter.toString());
+                "Exception occurred!\n" + stringWriter.toString());
 
             operation.completeExceptionally(ex);
         }

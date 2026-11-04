@@ -237,6 +237,7 @@ public class PemUtils {
      * statements, and that END's come after BEGIN's.
      *
      * @param pem           The input PEM formatted String
+     * @param expectedPemTypeSubString Substring expected in each PEM object's type
      * @param maxChainDepth The max number of PEM Formatted Objects in the String.
      * @return The number of PEM encoded objects found by Regex
      */

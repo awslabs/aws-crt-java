@@ -284,8 +284,8 @@ public class AwsSigningConfig extends CrtResource {
     public void setAlgorithm(AwsSigningAlgorithm algorithm) { this.algorithm = algorithm.getNativeValue(); }
 
     /**
-     * Gets what version of the AWS signing procecss will be used
-     * @return what version of the AWS signing procecss will be used
+     * Gets what version of the AWS signing process will be used
+     * @return what version of the AWS signing process will be used
      */
     public AwsSigningAlgorithm getAlgorithm() {
         return AwsSigningAlgorithm.getEnumValueFromInteger(algorithm);

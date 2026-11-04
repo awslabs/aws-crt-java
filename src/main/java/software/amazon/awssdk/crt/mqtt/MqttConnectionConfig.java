@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.http.HttpProxyOptions;
 import software.amazon.awssdk.crt.iot.AWSIoTMetrics;
-import software.amazon.awssdk.crt.io.ClientTlsContext;
 import software.amazon.awssdk.crt.io.SocketOptions;
 import software.amazon.awssdk.crt.mqtt5.Mqtt5Client;
 import software.amazon.awssdk.crt.io.TlsContext;
@@ -183,8 +182,10 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * @deprecated Configures MQTT keep-alive via PING messages. Note that this is not TCP
-     * keepalive. Please use setKeepAliveSecs instead.
+     * Configures MQTT keep-alive via PING messages. Note that this is not TCP
+     * keepalive.
+     *
+     * @deprecated Use {@link #setKeepAliveSecs} instead.
      *
      * @param keepAliveMs How often in milliseconds to send an MQTT PING message to the
      *                   service to keep a connection alive
@@ -196,8 +197,9 @@ public final class MqttConnectionConfig extends CrtResource {
     }
 
     /**
-     * @deprecated Queries the MQTT keep-alive via PING messages. Please use
-     * getKeepAliveSecs instead.
+     * Queries the MQTT keep-alive via PING messages.
+     *
+     * @deprecated Use {@link #getKeepAliveSecs} instead.
      *
      * @return How often in milliseconds to send an MQTT PING message to the
      *                   service to keep a connection alive

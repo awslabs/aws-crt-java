@@ -5,7 +5,6 @@
 package software.amazon.awssdk.crt.io;
 
 import software.amazon.awssdk.crt.CrtResource;
-import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 
 /**

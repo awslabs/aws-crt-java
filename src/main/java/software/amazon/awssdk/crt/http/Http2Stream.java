@@ -5,9 +5,7 @@
 
 package software.amazon.awssdk.crt.http;
 
-import software.amazon.awssdk.crt.CrtRuntimeException;
 
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An HttpStream represents a single HTTP/2 specific Http Request/Response.

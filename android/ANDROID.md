@@ -13,7 +13,7 @@ This SDK is built on the AWS Common Runtime, a collection of libraries
 [aws-c-http](https://github.com/awslabs/aws-c-http),
 [aws-c-cal](https://github.com/awslabs/aws-c-cal),
 [aws-c-auth](https://github.com/awslabs/aws-c-auth),
-[s2n](https://github.com/awslabs/s2n)...) written in C to be
+[s2n-tls](https://github.com/aws/s2n-tls)...) written in C to be
 cross-platform, high-performance, secure, and reliable.
 
 *__Jump To:__*

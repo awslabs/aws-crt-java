@@ -217,7 +217,7 @@ public class Http2StreamManager extends CrtResource {
         } catch (CrtRuntimeException ex) {
             completionFuture.completeExceptionally(ex);
         } finally {
-            decRef();
+            decRef(false);
         }
         return completionFuture;
     }
@@ -240,7 +240,7 @@ public class Http2StreamManager extends CrtResource {
         try {
             return http2StreamManagerFetchMetrics(getNativeHandle());
         } finally {
-            decRef();
+            decRef(false);
         }
     }
 

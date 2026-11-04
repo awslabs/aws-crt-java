@@ -270,8 +270,9 @@ public abstract class CrtResource implements AutoCloseable {
 
     /**
      * Increments the reference count only if this resource has not already been released.
-     * A successful call keeps the native handle alive until the matching {@link #decRef()},
+     * A successful call keeps the native handle alive until the matching {@link #decRef(boolean) decRef(false)},
      * so a native call made in between cannot race with {@link #close()} on another thread.
+     * Neither call logs the reference change.
      * @return true if a reference was taken, false if the resource is already closed.
      */
     protected boolean tryAddRef() {
@@ -283,11 +284,6 @@ public abstract class CrtResource implements AutoCloseable {
             }
         } while (!refCount.compareAndSet(refs, refs + 1));
 
-        if (debugNativeObjects) {
-            Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource,
-                String.format("%s(%d) is adding a reference. refCount is now %d",
-                this.getClass().getCanonicalName(), id, refs + 1));
-        }
         return true;
     }
 
@@ -362,9 +358,22 @@ public abstract class CrtResource implements AutoCloseable {
      * @param desc Descrption string of why the reference is being decremented.
      */
     public void decRef(String desc) {
+        decRef(desc, true);
+    }
+
+    /**
+     * Decrements the reference count, optionally without logging the decrement.
+     * Use with shouldLog = false to release a reference taken by {@link #tryAddRef()}.
+     * @param shouldLog whether to log the decrement when native object debugging is enabled
+     */
+    protected void decRef(boolean shouldLog) {
+        decRef(null, shouldLog);
+    }
+
+    private void decRef(String desc, boolean shouldLog) {
         int remainingRefs = refCount.decrementAndGet();
 
-        if (debugNativeObjects) {
+        if (shouldLog && debugNativeObjects) {
             if (desc != null) {
                 Log.log(ResourceLogLevel, Log.LogSubject.JavaCrtResource, 
                     String.format("DecRef on %s(%d) for: (%s). %d remaining refs", 

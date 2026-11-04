@@ -185,7 +185,7 @@ public class HttpClientConnectionManager extends CrtResource {
             httpClientConnectionManagerAcquireConnection(this.getNativeHandle(), returnedFuture);
             return returnedFuture;
         } finally {
-            decRef();
+            decRef(false);
         }
     }
 
@@ -252,7 +252,7 @@ public class HttpClientConnectionManager extends CrtResource {
         try {
             return httpConnectionManagerFetchMetrics(getNativeHandle());
         } finally {
-            decRef();
+            decRef(false);
         }
     }
 

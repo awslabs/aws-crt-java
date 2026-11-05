@@ -19,6 +19,7 @@ public class Http2StreamManagerOptions {
     private boolean connectionManualWindowManagement = false;
     private int maxConcurrentStreamsPerConnection = DEFAULT_MAX;
     private int maxConcurrentStreams = 0;
+    private long maxPendingStreamAcquisitions = 0;
 
     private boolean priorKnowledge = false;
     private boolean closeConnectionOnServerError = false;
@@ -130,6 +131,32 @@ public class Http2StreamManagerOptions {
     }
 
     /**
+     * The max number of stream acquisitions waiting for capacity once no more
+     * connections can be acquired or the max concurrent streams is reached. 0 means
+     * no limit (default). Beyond it, {@link Http2StreamManager#acquireStream} fails
+     * with AWS_ERROR_HTTP_STREAM_MANAGER_MAX_PENDING_ACQUISITIONS_EXCEEDED.
+     *
+     * Acquisitions expected to fit on connections still being acquired, up to the
+     * max concurrent streams per connection each, are not counted as waiting. The
+     * limit is checked only on new acquisitions. If the server allows fewer
+     * concurrent streams than expected, more than this many can end up waiting.
+     *
+     * @param maxPendingStreamAcquisitions The max number of waiting stream acquisitions
+     * @return this
+     */
+    public Http2StreamManagerOptions withMaxPendingStreamAcquisitions(long maxPendingStreamAcquisitions) {
+        this.maxPendingStreamAcquisitions = maxPendingStreamAcquisitions;
+        return this;
+    }
+
+    /**
+     * @return The max number of waiting stream acquisitions. 0 means no limit (default).
+     */
+    public long getMaxPendingStreamAcquisitions() {
+        return maxPendingStreamAcquisitions;
+    }
+
+    /**
      * @return The connection level manual flow control enabled or not.
      */
     public boolean isConnectionManualWindowManagement() {
@@ -170,6 +197,10 @@ public class Http2StreamManagerOptions {
      * flow-control window size for HTTP/2 stream
      * is controlled by the initial settings.
      * 2. The expectedHttpVersion will also be ignored.
+     * 3. The maxPendingConnectionAcquisitions will also be ignored. Use
+     * withMaxPendingStreamAcquisitions to limit waiting stream acquisitions.
+     * 4. The responseFirstByteTimeoutInMilliseconds is passed to the connections,
+     * but it is not supported for HTTP/2 yet.
      *
      * @param connectionManagerOptions The connection manager options for the
      *                                 underlying connection manager
@@ -289,6 +320,9 @@ public class Http2StreamManagerOptions {
                 || idealConcurrentStreamsPerConnection > maxConcurrentStreamsPerConnection) {
             throw new IllegalArgumentException(
                     "Ideal Concurrent Streams Per Connection must be greater than zero and smaller than max.");
+        }
+        if (maxPendingStreamAcquisitions < 0) {
+            throw new IllegalArgumentException("Max Pending Stream Acquisitions must not be negative.");
         }
     }
 }

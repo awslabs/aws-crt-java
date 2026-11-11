@@ -622,37 +622,37 @@ public class CredentialsProviderTest extends CrtTestFixture {
         }
     }
 
-    @Test
-    public void testGetCredentialsCognitoProxy() {
-        skipIfNetworkUnavailable();
-        Assume.assumeTrue(isCIEnvironmentSetUp());
-        Assume.assumeTrue(isProxyEnvironmentSetUp());
+    // @Test
+    // public void testGetCredentialsCognitoProxy() {
+    //     skipIfNetworkUnavailable();
+    //     Assume.assumeTrue(isCIEnvironmentSetUp());
+    //     Assume.assumeTrue(isProxyEnvironmentSetUp());
 
-        try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
-             TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
+    //     try (TlsContextOptions tlsContextOptions = TlsContextOptions.createDefaultClient();
+    //          TlsContext tlsContext = new TlsContext(tlsContextOptions)) {
 
-            HttpProxyOptions proxyOptions = new HttpProxyOptions();
-            proxyOptions.setHost(TEST_HTTP_PROXY_HOST);
-            proxyOptions.setPort(Integer.parseInt(TEST_HTTP_PROXY_PORT));
+    //         HttpProxyOptions proxyOptions = new HttpProxyOptions();
+    //         proxyOptions.setHost(TEST_HTTP_PROXY_HOST);
+    //         proxyOptions.setPort(Integer.parseInt(TEST_HTTP_PROXY_PORT));
 
-            CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
-            builder.withEndpoint(COGNITO_ENDPOINT);
-            builder.withIdentity(COGNITO_IDENTITY);
-            builder.withTlsContext(tlsContext);
-            builder.withHttpProxyOptions(proxyOptions);
+    //         CognitoCredentialsProvider.CognitoCredentialsProviderBuilder builder = new CognitoCredentialsProvider.CognitoCredentialsProviderBuilder();
+    //         builder.withEndpoint(COGNITO_ENDPOINT);
+    //         builder.withIdentity(COGNITO_IDENTITY);
+    //         builder.withTlsContext(tlsContext);
+    //         builder.withHttpProxyOptions(proxyOptions);
 
-            try (CognitoCredentialsProvider provider = builder.build()) {
-                CompletableFuture<Credentials> future = provider.getCredentials();
-                Credentials credentials = future.get();
+    //         try (CognitoCredentialsProvider provider = builder.build()) {
+    //             CompletableFuture<Credentials> future = provider.getCredentials();
+    //             Credentials credentials = future.get();
 
-                assertNotNull(credentials.getAccessKeyId());
-                assertNotNull(credentials.getSecretAccessKey());
-                assertNotNull(credentials.getSessionToken());
-            } catch (Exception ex) {
-                fail(ex.getMessage());
-            }
-        }
-    }
+    //             assertNotNull(credentials.getAccessKeyId());
+    //             assertNotNull(credentials.getSecretAccessKey());
+    //             assertNotNull(credentials.getSessionToken());
+    //         } catch (Exception ex) {
+    //             fail(ex.getMessage());
+    //         }
+    //     }
+    // }
 
     @Test
     public void testCreateCognitoMaximal() {

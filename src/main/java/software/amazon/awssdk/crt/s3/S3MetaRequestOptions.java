@@ -10,6 +10,7 @@ import software.amazon.awssdk.crt.auth.credentials.CredentialsProvider;
 import software.amazon.awssdk.crt.auth.signing.AwsSigningConfig;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,6 +87,7 @@ public class S3MetaRequestOptions {
     private HttpRequest httpRequest;
     private Path requestFilePath;
     private Path responseFilePath;
+    private ByteBuffer responseBuffer;
     private ResponseFileOption responseFileOption = ResponseFileOption.CREATE_OR_REPLACE;
     private long responseFilePosition = 0;
     private boolean responseFileDeleteOnFailure = false;
@@ -232,6 +234,43 @@ public class S3MetaRequestOptions {
 
     public Path getRequestFilePath() {
         return requestFilePath;
+    }
+
+    /**
+     * Download a GET_OBJECT response into caller-owned, CPU-accessible memory instead of
+     * invoking body callbacks. The buffer must be direct, writable, and have remaining bytes.
+     * Its remaining region is snapshotted by {@link S3Client#makeMetaRequest}; neither its
+     * position nor its limit is changed. A null buffer restores normal response delivery.
+     *
+     * <p>The region must hold the entire requested range. The first requested byte is written
+     * at the snapshotted position. A larger region is allowed; unused bytes remain untouched.
+     * A range extending past the object ends at EOF. On success,
+     * {@link S3FinishedResponseContext#getResponseBufferLength()} reports the received length.
+     * On failure it reports zero and the region's contents are undefined.
+     *
+     * <p>Cannot be combined with a response file, a client direct buffer pool, or a
+     * {@link S3BorrowedBufferDelivery} handler. An object size hint, if set, must equal the
+     * region's capacity. GET requests with partNumber are not supported.
+     *
+     * <p>The buffer is retained until request shutdown. If it views an externally managed
+     * allocation, the caller must keep that allocation alive until
+     * {@link S3MetaRequest#getShutdownCompleteFuture()} completes, including after cancellation
+     * or failure. Do not modify the region, free its memory, or submit overlapping regions
+     * while a request is in flight. Device-only memory is not supported.
+     *
+     * @param responseBuffer destination buffer, or null for normal response delivery
+     * @return this
+     */
+    public S3MetaRequestOptions withResponseBuffer(ByteBuffer responseBuffer) {
+        this.responseBuffer = responseBuffer;
+        return this;
+    }
+
+    /**
+     * @return the caller's destination buffer, or null for normal response delivery
+     */
+    public ByteBuffer getResponseBuffer() {
+        return responseBuffer;
     }
 
     public S3MetaRequestOptions withResponseHandler(S3MetaRequestResponseHandler responseHandler) {

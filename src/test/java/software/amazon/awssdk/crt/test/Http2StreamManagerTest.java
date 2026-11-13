@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import software.amazon.awssdk.crt.CRT;
 import software.amazon.awssdk.crt.CrtResource;
+import software.amazon.awssdk.crt.CrtRuntimeException;
 import software.amazon.awssdk.crt.Log;
 import software.amazon.awssdk.crt.http.*;
 import software.amazon.awssdk.crt.io.*;
@@ -330,6 +331,102 @@ public class Http2StreamManagerTest extends HttpClientTestFixture {
 
         CrtResource.logNativeResources();
         CrtResource.waitForNoResources();
+    }
+
+    /**
+     * Acquires numRequests streams at once and returns the error names of the acquisitions that failed. Streams that
+     * are acquired are closed as soon as their response completes.
+     */
+    private List<String> acquireStreamsAndCollectFailures(Http2StreamManagerOptions options, int numRequests)
+            throws Exception {
+        URI uri = new URI(endpoint);
+        List<String> failures = new CopyOnWriteArrayList<>();
+        try (EventLoopGroup eventLoopGroup = new EventLoopGroup(1);
+                HostResolver resolver = new HostResolver(eventLoopGroup);
+                ClientBootstrap bootstrap = new ClientBootstrap(eventLoopGroup, resolver);
+                SocketOptions sockOpts = new SocketOptions();
+                TlsContextOptions tlsOpts = TlsContextOptions.createDefaultClient().withAlpnList("h2");
+                TlsContext tlsContext = createHttpClientTlsContext(tlsOpts)) {
+
+            HttpClientConnectionManagerOptions connectionManagerOptions = options.getConnectionManagerOptions();
+            connectionManagerOptions.withClientBootstrap(bootstrap)
+                    .withSocketOptions(sockOpts)
+                    .withTlsContext(tlsContext)
+                    .withUri(uri)
+                    .withMaxConnections(1);
+
+            Http2StreamManager streamManager = Http2StreamManager.create(options);
+            try {
+                Http2Request request = createHttp2Request("GET", endpoint, path, EMPTY_BODY);
+                CountDownLatch allDone = new CountDownLatch(numRequests);
+                for (int i = 0; i < numRequests; i++) {
+                    streamManager.acquireStream(request, new HttpStreamBaseResponseHandler() {
+                        @Override
+                        public void onResponseHeaders(HttpStreamBase stream, int responseStatusCode, int blockType,
+                                HttpHeader[] nextHeaders) {
+                        }
+
+                        @Override
+                        public void onResponseComplete(HttpStreamBase stream, int errorCode) {
+                            stream.close();
+                            allDone.countDown();
+                        }
+                    }).whenComplete((stream, throwable) -> {
+                        if (throwable != null) {
+                            Throwable cause = throwable instanceof CompletionException ? throwable.getCause()
+                                    : throwable;
+                            failures.add(CRT.awsErrorName(((CrtRuntimeException) cause).errorCode));
+                            allDone.countDown();
+                        }
+                    });
+                }
+                Assert.assertTrue("Requests did not finish within timeout", allDone.await(60, TimeUnit.SECONDS));
+            } finally {
+                streamManager.close();
+                streamManager.getShutdownCompleteFuture().get(60, TimeUnit.SECONDS);
+            }
+        }
+
+        CrtResource.logNativeResources();
+        CrtResource.waitForNoResources();
+        return failures;
+    }
+
+    @Test
+    public void testMaxPendingStreamAcquisitions() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        Http2StreamManagerOptions options = new Http2StreamManagerOptions()
+                .withMaxConcurrentStreams(1)
+                .withConnectionManagerOptions(
+                        new HttpClientConnectionManagerOptions().withMaxPendingConnectionAcquisitions(1));
+
+        List<String> failures = acquireStreamsAndCollectFailures(options, 20);
+
+        /* 1 stream can be active and 1 can wait, so the rest fail right away */
+        Assert.assertTrue("Expected acquisitions over the limit to fail", failures.size() >= 1);
+        for (String name : failures) {
+            Assert.assertEquals("AWS_ERROR_HTTP_STREAM_MANAGER_MAX_PENDING_ACQUISITIONS_EXCEEDED", name);
+        }
+    }
+
+    @Test
+    public void testStreamAcquisitionTimeout() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+
+        /* No connection can be made in 1ms, so every acquisition times out while waiting for one */
+        Http2StreamManagerOptions options = new Http2StreamManagerOptions()
+                .withStreamAcquisitionTimeoutInMilliseconds(1)
+                .withConnectionManagerOptions(new HttpClientConnectionManagerOptions());
+
+        List<String> failures = acquireStreamsAndCollectFailures(options, 5);
+
+        Assert.assertEquals(5, failures.size());
+        for (String name : failures) {
+            Assert.assertEquals("AWS_ERROR_HTTP_STREAM_MANAGER_ACQUISITION_TIMEOUT", name);
+        }
     }
 
     @Test

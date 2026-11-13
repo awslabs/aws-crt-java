@@ -117,7 +117,12 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
     jboolean jni_prior_knowledge,
     jboolean jni_close_connection_on_server_error,
     jint jni_connection_ping_period_ms,
-    jint jni_connection_ping_timeout_ms) {
+    jint jni_connection_ping_timeout_ms,
+    jlong jni_max_connection_idle_in_milliseconds,
+    jlong jni_connection_acquisition_timeout_ms,
+    jlong jni_max_pending_stream_acquisitions,
+    jlong jni_response_first_byte_timeout_ms,
+    jlong jni_stream_acquisition_timeout_ms) {
 
     (void)jni_class;
     aws_cache_jni_ids(env);
@@ -209,6 +214,11 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_http_Http2StreamManager_
         .max_concurrent_streams_per_connection = (size_t)jni_max_concurrent_streams_per_connection,
         .max_connections = (size_t)jni_max_conns,
         .max_concurrent_streams = (size_t)jni_max_concurrent_streams,
+        .max_connection_idle_in_milliseconds = (uint64_t)jni_max_connection_idle_in_milliseconds,
+        .connection_acquisition_timeout_ms = (uint64_t)jni_connection_acquisition_timeout_ms,
+        .max_pending_stream_acquisitions = (size_t)jni_max_pending_stream_acquisitions,
+        .response_first_byte_timeout_ms = (uint64_t)jni_response_first_byte_timeout_ms,
+        .stream_acquisition_timeout_ms = (uint64_t)jni_stream_acquisition_timeout_ms,
     };
 
     struct aws_http_connection_monitoring_options monitoring_options;

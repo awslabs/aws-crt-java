@@ -404,7 +404,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-24.04]
+        os: [macos-latest, windows-latest, ubuntu-latest]
         java-version: ['22', '21', '17']
     steps:
     - uses: aws-actions/configure-aws-credentials@v4

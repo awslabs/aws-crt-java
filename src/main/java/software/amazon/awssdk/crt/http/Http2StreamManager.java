@@ -127,7 +127,12 @@ public class Http2StreamManager extends CrtResource {
                 options.hasPriorKnowledge(),
                 options.shouldCloseConnectionOnServerError(),
                 options.getConnectionPingPeriodMs(),
-                options.getConnectionPingTimeoutMs()));
+                options.getConnectionPingTimeoutMs(),
+                connectionManagerOptions.getMaxConnectionIdleInMilliseconds(),
+                connectionManagerOptions.getConnectionAcquisitionTimeoutInMilliseconds(),
+                connectionManagerOptions.getMaxPendingConnectionAcquisitions(),
+                connectionManagerOptions.getResponseFirstByteTimeoutInMilliseconds(),
+                options.getStreamAcquisitionTimeoutInMilliseconds()));
 
         /*
          * we don't need to add a reference to socketOptions since it's copied during
@@ -316,7 +321,12 @@ public class Http2StreamManager extends CrtResource {
             boolean priorKnowledge,
             boolean closeConnectionOnServerError,
             int connectionPingPeriodMs,
-            int connectionPingTimeoutMs) throws CrtRuntimeException;
+            int connectionPingTimeoutMs,
+            long maxConnectionIdleInMilliseconds,
+            long connectionAcquisitionTimeoutInMilliseconds,
+            long maxPendingStreamAcquisitions,
+            long responseFirstByteTimeoutInMilliseconds,
+            long streamAcquisitionTimeoutInMilliseconds) throws CrtRuntimeException;
 
     private static native void http2StreamManagerRelease(long stream_manager) throws CrtRuntimeException;
 

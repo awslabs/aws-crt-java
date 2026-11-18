@@ -161,6 +161,8 @@ Platforms that were not part of the FIPS testing are also included in this jar, 
 
 Refer to the [NIST Cryptographic Module Validation Program's Modules In Progress List](https://csrc.nist.gov/Projects/cryptographic-module-validation-program/modules-in-process/modules-in-process-list) for the latest status of the static AWS-LC 3.0 Cryptographic Module. A complete list of supported operating environments will be made available in the vendor security policy once the validation certificate has been issued. We will also update our release notes and documentation to reflect any changes in FIPS certification status. Previous versions of AWS-LC have already received FIPS cryptographic module certificates ([NIST Certificate #4816](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4816) & [NIST Certificate #4631](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4631)).
 
+The `aws-lc` submodule tracks the `fips-2024-09-27` branch of AWS-LC. A new commit on that branch is treated as a patch release, so we try to update the submodule to the latest commit on the branch whenever we can.
+
 ## GraalVM support
 
 Since version v0.29.20, GraalVM native image was supported. You can compile your application with AWS CRT in a GraalVM native image project without any additional configuration.

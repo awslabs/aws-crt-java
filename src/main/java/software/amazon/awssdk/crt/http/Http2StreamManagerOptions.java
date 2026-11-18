@@ -24,6 +24,7 @@ public class Http2StreamManagerOptions {
     private boolean closeConnectionOnServerError = false;
     private int connectionPingPeriodMs = 0;
     private int connectionPingTimeoutMs = 0;
+    private long streamAcquisitionTimeoutInMilliseconds = 0;
 
     private List<Http2ConnectionSetting> initialSettingsList = new ArrayList<Http2ConnectionSetting>();
 
@@ -290,5 +291,27 @@ public class Http2StreamManagerOptions {
             throw new IllegalArgumentException(
                     "Ideal Concurrent Streams Per Connection must be greater than zero and smaller than max.");
         }
+    }
+
+    /**
+     * Optional. 0 means no timeout (default). A stream acquisition that has waited this long without getting a
+     * connection fails with AWS_ERROR_HTTP_STREAM_MANAGER_ACQUISITION_TIMEOUT. This covers waiting for a new
+     * connection and waiting for room on connections already held, for example when
+     * `maxConcurrentStreamsPerConnection` is reached.
+     *
+     * @param streamAcquisitionTimeoutInMilliseconds timeout in milliseconds
+     * @return this
+     */
+    public Http2StreamManagerOptions withStreamAcquisitionTimeoutInMilliseconds(
+            long streamAcquisitionTimeoutInMilliseconds) {
+        this.streamAcquisitionTimeoutInMilliseconds = streamAcquisitionTimeoutInMilliseconds;
+        return this;
+    }
+
+    /**
+     * @return The stream acquisition timeout in milliseconds. 0 means no timeout.
+     */
+    public long getStreamAcquisitionTimeoutInMilliseconds() {
+        return streamAcquisitionTimeoutInMilliseconds;
     }
 }

@@ -34,6 +34,7 @@
 [submodule "aws-lc"]
 	path = crt/aws-lc
 	url = https://github.com/awslabs/aws-lc.git
+	branch = fips-2024-09-27
 [submodule "crt/aws-c-sdkutils"]
 	path = crt/aws-c-sdkutils
 	url = https://github.com/awslabs/aws-c-sdkutils.git

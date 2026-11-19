@@ -5,7 +5,7 @@
 package software.amazon.awssdk.crt.s3;
 
 /**
- * WARNING: experimental/unstable, the default behavior is subjected to change in the future.
+ * WARNING: experimental/unstable, the default behavior is subject to change in the future.
  * Controls how client performs file I/O operations. Only applies to file-based workloads.
  */
 public class FileIoOptions {

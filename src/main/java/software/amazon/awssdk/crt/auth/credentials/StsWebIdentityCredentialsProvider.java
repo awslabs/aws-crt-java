@@ -9,7 +9,6 @@ import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.io.ClientBootstrap;
 import software.amazon.awssdk.crt.io.TlsContext;
 
-import java.nio.charset.StandardCharsets;
 
 /**
  * Sts with web identity credentials provider sources a set of temporary security credentials for users who have been

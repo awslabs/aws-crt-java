@@ -9,7 +9,7 @@ package software.amazon.awssdk.crt.http;
  * Interface that Native code knows how to call when handling Http Responses
  *
  * Maps 1-1 to the Native Http API here:
- * https://github.com/awslabs/aws-c-http/blob/master/include/aws/http/request_response.h
+ * https://github.com/awslabs/aws-c-http/blob/main/include/aws/http/request_response.h
  */
 public interface HttpStreamBaseResponseHandler {
 

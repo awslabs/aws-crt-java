@@ -4,9 +4,6 @@
  */
 package software.amazon.awssdk.crt.io;
 
-import software.amazon.awssdk.crt.Log;
-import software.amazon.awssdk.crt.Log.LogLevel;
-import software.amazon.awssdk.crt.Log.LogSubject;
 
 /**
 * Interface for handling private key operations during the TLS handshake.

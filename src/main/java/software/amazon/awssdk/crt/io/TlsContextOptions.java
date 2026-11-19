@@ -5,9 +5,7 @@
 package software.amazon.awssdk.crt.io;
 
 import java.util.ArrayList;
-import java.util.IllegalFormatException;
 import java.util.List;
-import java.util.function.Consumer;
 
 import software.amazon.awssdk.crt.CrtResource;
 import software.amazon.awssdk.crt.CrtRuntimeException;
@@ -631,7 +629,7 @@ public final class TlsContextOptions extends CrtResource {
     /**
      * Specifies the certificate authority to use.
      * @param caDirPath Path to certificate directory, e.g. /etc/ssl/certs
-     * @param caFilePath Path to ceritificate authority, in PEM format
+     * @param caFilePath Path to certificate authority, in PEM format
      * @return this
      */
     public TlsContextOptions withCertificateAuthorityFromPath(String caDirPath, String caFilePath) {

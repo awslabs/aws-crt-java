@@ -1,3 +1,7 @@
+/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
 package software.amazon.awssdk.crt.io;
 
 /**
@@ -6,7 +10,7 @@ package software.amazon.awssdk.crt.io;
  * @deprecated It is currently an EXPERIMENTAL feature meant for internal use only. It may be changed incompatibly
  * or removed in a future version.
  */
-@Deprecated()
+@Deprecated
 public final class DirectoryTraversal {
 
     /**

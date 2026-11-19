@@ -5,7 +5,6 @@
 
 package software.amazon.awssdk.crt;
 
-import static software.amazon.awssdk.crt.CRT.awsErrorString;
 import static software.amazon.awssdk.crt.CRT.awsLastError;
 
 /**
@@ -47,7 +46,7 @@ public class Process {
      *
      * @param maxHandles new soft limit for this process.
      *
-     * @throws CrtRuntimeException if the operation fails due to illegal arguments or the opereration is unsupported on
+     * @throws CrtRuntimeException if the operation fails due to illegal arguments or the operation is unsupported on
      * the current platform.
      */
     public static void setMaxIOHandlesSoftLimit(long maxHandles) {

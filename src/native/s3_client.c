@@ -56,6 +56,9 @@ struct s3_client_make_meta_request_callback_data {
      * in s_s3_meta_request_callback_cleanup. The finish callback drains the
      * pool's wait queue (see aws_s3_java_buffer_pool_drain). */
     struct aws_s3_buffer_pool *java_buffer_pool;
+    /* The view and descriptor must outlive all native use, including failed/cancelled requests. */
+    jobject java_response_buffer;
+    struct aws_byte_buf response_buffer;
 };
 
 static void s_on_s3_client_shutdown_complete_callback(void *user_data);
@@ -1100,7 +1103,8 @@ static void s_on_s3_meta_request_finish_callback(
             meta_request_result->validation_algorithm,
             meta_request_result->did_validate,
             java_exception,
-            java_error_headers_buffer);
+            java_error_headers_buffer,
+            (jlong)(meta_request_result->error_code == AWS_ERROR_SUCCESS ? callback_data->response_buffer.len : 0));
 
         if (aws_jni_check_and_clear_exception(env)) {
             AWS_LOGF_ERROR(
@@ -1495,6 +1499,7 @@ static void s_s3_meta_request_callback_cleanup(
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request);
         (*env)->DeleteGlobalRef(env, callback_data->java_s3_meta_request_response_handler_native_adapter);
         (*env)->DeleteGlobalRef(env, callback_data->java_exception);
+        (*env)->DeleteGlobalRef(env, callback_data->java_response_buffer);
         aws_signing_config_data_clean_up(&callback_data->signing_config_data, env);
         aws_mem_release(aws_jni_get_allocator(), callback_data);
     }
@@ -1730,8 +1735,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     jboolean should_stream,
     jdouble disk_throughput_gbps,
     jboolean direct_io,
-    jlong jni_buffer_pool_state, /* native Java-pool state when the client has a direct buffer pool, else 0 */
-    jboolean jni_uses_borrowed_delivery /* handler implements S3BorrowedBufferDelivery */) {
+    jlong jni_buffer_pool_state,         /* native Java-pool state when the client has a direct buffer pool, else 0 */
+    jboolean jni_uses_borrowed_delivery, /* handler implements S3BorrowedBufferDelivery */
+    jobject jni_response_buffer) {
     (void)jni_class;
     aws_cache_jni_ids(env);
 
@@ -1751,6 +1757,8 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     struct aws_http_message *request_message = NULL;
     struct aws_array_list response_checksum_list;
     AWS_ZERO_STRUCT(response_checksum_list);
+    struct aws_uri endpoint;
+    AWS_ZERO_STRUCT(endpoint);
 
     struct s3_client_make_meta_request_callback_data *callback_data =
         aws_mem_calloc(allocator, 1, sizeof(struct s3_client_make_meta_request_callback_data));
@@ -1814,8 +1822,6 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         }
     }
 
-    struct aws_uri endpoint;
-    AWS_ZERO_STRUCT(endpoint);
     if (jni_endpoint != NULL) {
         struct aws_byte_cursor endpoint_str = aws_jni_byte_cursor_from_jbyteArray_acquire(env, jni_endpoint);
         int uri_parse = aws_uri_init_parse(&endpoint, allocator, &endpoint_str);
@@ -1857,6 +1863,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
     };
 
     /* Body callback selection:
+     *   - Caller-supplied response buffer -> neither body callback
      *   - Pool attached AND handler implements S3BorrowedBufferDelivery
      *     -> body_callback_ex (lifetime-controlled zero-copy)
      *   - Otherwise -> body_callback (byte[] copy). With a pool attached the
@@ -1865,8 +1872,24 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
      *     identical to the no-pool path.
      *
      * body_callback and body_callback_ex are mutually exclusive at aws-c-s3;
-     * we set exactly one below. */
+     * without a response buffer, we set exactly one below. */
     bool supports_borrowed = jni_buffer_pool_state != 0 && jni_uses_borrowed_delivery;
+
+    if (jni_response_buffer != NULL) {
+        void *address = (*env)->GetDirectBufferAddress(env, jni_response_buffer);
+        jlong capacity = (*env)->GetDirectBufferCapacity(env, jni_response_buffer);
+        if (address == NULL || capacity <= 0 || capacity > INT32_MAX ||
+            meta_request_type != AWS_S3_META_REQUEST_TYPE_GET_OBJECT || jni_response_filepath != NULL ||
+            jni_buffer_pool_state != 0 || jni_uses_borrowed_delivery) {
+            aws_jni_throw_illegal_argument_exception(env, "Invalid response buffer or incompatible delivery options");
+            goto done;
+        }
+        callback_data->java_response_buffer = (*env)->NewGlobalRef(env, jni_response_buffer);
+        if (callback_data->java_response_buffer == NULL) {
+            goto done;
+        }
+        callback_data->response_buffer = aws_byte_buf_from_empty_array(address, (size_t)capacity);
+    }
 
     struct aws_s3_meta_request_options meta_request_options = {
         .type = meta_request_type,
@@ -1877,8 +1900,9 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .user_data = callback_data,
         .signing_config = java_signing_config ? &signing_config : NULL,
         .headers_callback = s_on_s3_meta_request_headers_callback,
-        .body_callback = supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
-        .body_callback_ex = supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
+        .body_callback = jni_response_buffer || supports_borrowed ? NULL : s_on_s3_meta_request_body_callback,
+        .body_callback_ex =
+            !jni_response_buffer && supports_borrowed ? s_on_s3_meta_request_body_callback_borrowed : NULL,
         .finish_callback = s_on_s3_meta_request_finish_callback,
         .progress_callback = s_on_s3_meta_request_progress_callback,
         .telemetry_callback = s_on_s3_meta_request_telemetry_callback,
@@ -1888,6 +1912,7 @@ JNIEXPORT jlong JNICALL Java_software_amazon_awssdk_crt_s3_S3Client_s3ClientMake
         .resume_token = resume_token,
         .object_size_hint = jni_object_size_hint != NULL ? &object_size_hint : NULL,
         .recv_filepath = response_filepath,
+        .recv_buffer = jni_response_buffer ? &callback_data->response_buffer : NULL,
         .recv_file_option = jni_response_file_option,
         .recv_file_position = jni_response_file_position,
         .recv_file_delete_on_failure = jni_response_file_delete_on_failure,

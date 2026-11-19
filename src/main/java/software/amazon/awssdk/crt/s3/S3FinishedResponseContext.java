@@ -16,6 +16,7 @@ public class S3FinishedResponseContext {
 
     private final Throwable cause;
     private final HttpHeader[] errorHeaders;
+    private final long responseBufferLength;
 
     /*
      * errorCode The CRT error code
@@ -25,7 +26,7 @@ public class S3FinishedResponseContext {
      * didValidateChecksum which is true if the response was validated.
      * cause of the error such as a Java exception in a callback. Maybe NULL if there was no exception in a callback.
      */
-    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final String errorOperationName, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause, final HttpHeader[] errorHeaders) {
+    S3FinishedResponseContext(final int errorCode, final int responseStatus, final byte[] errorPayload, final String errorOperationName, final ChecksumAlgorithm checksumAlgorithm, final boolean didValidateChecksum, Throwable cause, final HttpHeader[] errorHeaders, final long responseBufferLength) {
         this.errorCode = errorCode;
         this.responseStatus = responseStatus;
         this.errorPayload = errorPayload;
@@ -34,10 +35,19 @@ public class S3FinishedResponseContext {
         this.didValidateChecksum = didValidateChecksum;
         this.cause = cause;
         this.errorHeaders = errorHeaders;
+        this.responseBufferLength = errorCode == 0 ? responseBufferLength : 0;
     }
 
     public int getErrorCode() {
         return this.errorCode;
+    }
+
+    /**
+     * @return bytes successfully received into {@link S3MetaRequestOptions#withResponseBuffer},
+     *         or zero when no response buffer was supplied or the request failed
+     */
+    public long getResponseBufferLength() {
+        return responseBufferLength;
     }
 
     /*

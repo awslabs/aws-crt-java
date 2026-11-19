@@ -5,6 +5,7 @@
  */
 package software.amazon.awssdk.crt.s3;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 import software.amazon.awssdk.crt.CrtResource;
@@ -258,6 +259,25 @@ public class S3Client extends CrtResource {
                 throw new IllegalArgumentException("S3Client.makeMetaRequest has invalid options; MD5 not supported as checksum algorithm.");
             }
 
+            ByteBuffer responseBuffer = options.getResponseBuffer();
+            if (responseBuffer != null) {
+                if (!responseBuffer.isDirect() || responseBuffer.isReadOnly() || !responseBuffer.hasRemaining()) {
+                    throw new IllegalArgumentException("Response buffer must be direct, writable, and nonempty.");
+                }
+                if (options.getMetaRequestType() != S3MetaRequestOptions.MetaRequestType.GET_OBJECT) {
+                    throw new IllegalArgumentException("Response buffer requires GET_OBJECT.");
+                }
+                if (options.getResponseFilePath() != null || directBufferPool != null
+                        || options.getResponseHandler() instanceof S3BorrowedBufferDelivery) {
+                    throw new IllegalArgumentException("Response buffer cannot be combined with file or pool delivery.");
+                }
+                // A private view fixes the address and capacity even if the caller later changes its cursor.
+                responseBuffer = responseBuffer.slice();
+                if (options.getObjectSizeHint() != null && options.getObjectSizeHint() != responseBuffer.remaining()) {
+                    throw new IllegalArgumentException("Object size hint must equal response buffer remaining bytes.");
+                }
+            }
+
             if (directBufferPool != null) {
                 checkUploadPartSizeForBufferPool(options);
             }
@@ -276,12 +296,6 @@ public class S3Client extends CrtResource {
                 responseFilePath = options.getResponseFilePath().toString().getBytes(UTF8);
             }
 
-            AwsSigningConfig signingConfig = options.getSigningConfig();
-            boolean didCreateSigningConfig = false;
-            if(signingConfig == null && options.getCredentialsProvider()!= null) {
-                signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
-                didCreateSigningConfig = true;
-            }
             URI endpoint = options.getEndpoint();
 
             ChecksumConfig checksumConfig = options.getChecksumConfig() != null ? options.getChecksumConfig()
@@ -300,31 +314,39 @@ public class S3Client extends CrtResource {
                 directIo = fileIoOptions.getDirectIo();
             }
 
-            long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
-                    options.getMetaRequestType().getNativeValue(),
-                    operationName == null ? null : operationName.getBytes(UTF8),
-                    checksumConfig.getChecksumLocation().getNativeValue(),
-                    checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
-                    ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
-                    httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
-                    responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
-                    options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
-                    options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
-                    options.getResponseFileDeleteOnFailure(),
-                    fioOptionsSet,
-                    shouldStream,
-                    diskThroughputGbps,
-                    directIo,
-                    directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
-                    responseHandlerNativeAdapter.usesBorrowedDelivery());
+            AwsSigningConfig signingConfig = options.getSigningConfig();
+            boolean didCreateSigningConfig = false;
+            try {
+                if (signingConfig == null && options.getCredentialsProvider() != null) {
+                    signingConfig = AwsSigningConfig.getDefaultS3SigningConfig(region, options.getCredentialsProvider());
+                    didCreateSigningConfig = true;
+                }
+                long metaRequestNativeHandle = s3ClientMakeMetaRequest(getNativeHandle(), metaRequest, region.getBytes(UTF8),
+                        options.getMetaRequestType().getNativeValue(),
+                        operationName == null ? null : operationName.getBytes(UTF8),
+                        checksumConfig.getChecksumLocation().getNativeValue(),
+                        checksumConfig.getChecksumAlgorithm().getNativeValue(), checksumConfig.getValidateChecksum(),
+                        ChecksumAlgorithm.marshallAlgorithmsForJNI(checksumConfig.getValidateChecksumAlgorithmList()),
+                        httpRequestBytes, options.getHttpRequest().getBodyStream(), requestFilePath, signingConfig,
+                        responseHandlerNativeAdapter, endpoint == null ? null : endpoint.toString().getBytes(UTF8),
+                        options.getResumeToken(), options.getObjectSizeHint(), responseFilePath,
+                        options.getResponseFileOption().getNativeValue(), options.getResponseFilePosition(),
+                        options.getResponseFileDeleteOnFailure(),
+                        fioOptionsSet,
+                        shouldStream,
+                        diskThroughputGbps,
+                        directIo,
+                        directBufferPool != null ? directBufferPool.nativePoolState() : 0L,
+                        responseHandlerNativeAdapter.usesBorrowedDelivery(), responseBuffer);
 
-            metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
-
-            if(didCreateSigningConfig) {
-                /* The native code will keep the needed resource around */
-                signingConfig.close();
+                metaRequest.setMetaRequestNativeHandle(metaRequestNativeHandle);
+                return metaRequest;
+            } finally {
+                if (didCreateSigningConfig) {
+                    /* The native code will keep the needed resource around */
+                    signingConfig.close();
+                }
             }
-            return metaRequest;
         } finally {
             decRef(false);
         }
@@ -548,7 +570,7 @@ public class S3Client extends CrtResource {
             double diskThroughputGbps,
             boolean directIo,
             long directBufferPoolState,
-            boolean usesBorrowedDelivery);
+            boolean usesBorrowedDelivery, ByteBuffer responseBuffer);
 
     /**
      * Returns the default native buffer pool's memory limit (bytes) for the

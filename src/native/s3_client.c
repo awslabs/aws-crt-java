@@ -1738,10 +1738,18 @@ static int s_direct_buffer_region(
     struct aws_byte_cursor *out_region) {
     uint8_t *address = (*env)->GetDirectBufferAddress(env, buffer);
     jlong capacity = (*env)->GetDirectBufferCapacity(env, buffer);
-    if (address == NULL || capacity < 0 || offset < 0 || length < 0 || offset > capacity - length) {
+    /* A zero-length buffer (e.g. a mapping of an empty file) may have no address, which is fine for an empty region. */
+    if ((address == NULL && length > 0) || capacity < 0 || offset < 0 || length < 0 || offset > capacity - length) {
         aws_jni_throw_illegal_argument_exception(
             env, "Buffer must be a direct ByteBuffer, and its region must be within its capacity");
         return AWS_OP_ERR;
+    }
+    if (length == 0) {
+        /* aws-c-s3 treats a request_body with a NULL ptr as unset, so an empty region points at a static byte: an
+         * empty request buffer then uploads an empty object, the way an empty file does. */
+        static uint8_t s_empty_region = 0;
+        *out_region = aws_byte_cursor_from_array(&s_empty_region, 0);
+        return AWS_OP_SUCCESS;
     }
     *out_region = aws_byte_cursor_from_array(address + offset, (size_t)length);
     return AWS_OP_SUCCESS;

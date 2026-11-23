@@ -444,7 +444,7 @@ public class S3MetaRequestOptions {
      * The body is the buffer's remaining region, from {@code position()} to {@code limit()} when
      * {@link S3Client#makeMetaRequest} is called. The buffer's position and limit are never changed.
      * The request doesn't need a Content-Length header: the client takes the length from the region,
-     * and fails the request if a header doesn't match it.
+     * and fails the request if a header doesn't match it. An empty region uploads an empty object.
      *
      * Requirements:
      * - The buffer must be direct ({@link ByteBuffer#allocateDirect} or a {@link java.nio.MappedByteBuffer});

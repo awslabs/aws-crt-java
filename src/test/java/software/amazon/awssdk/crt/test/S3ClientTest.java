@@ -737,19 +737,61 @@ public class S3ClientTest extends CrtTestFixture {
                     Assert.assertEquals(body, downloaded);
                 }
             } finally {
-                CompletableFuture<S3FinishedResponseContext> deleted = new CompletableFuture<>();
-                try (S3MetaRequest delete = client.makeMetaRequest(new S3MetaRequestOptions()
-                        .withMetaRequestType(MetaRequestType.DEFAULT).withOperationName("DeleteObject")
-                        .withHttpRequest(new HttpRequest("DELETE", path, headers, null))
-                        .withResponseHandler(new S3MetaRequestResponseHandler() {
-                            @Override
-                            public void onFinished(S3FinishedResponseContext context) {
-                                deleted.complete(context);
-                            }
-                        }))) {
-                    deleted.get();
-                }
+                deleteObject(client, path);
             }
+        }
+    }
+
+    /* An empty request buffer uploads an empty object, including a zero-length mapping of an empty file, which may
+     * have no address. Each is downloaded back into a buffer: success, with 0 bytes written. */
+    @Test
+    public void testS3PutWithEmptyRequestBuffer() throws Exception {
+        skipIfAndroid();
+        skipIfNetworkUnavailable();
+        Assume.assumeTrue(hasAwsCredentials());
+        S3ClientOptions clientOptions = new S3ClientOptions().withRegion(REGION);
+        java.io.File emptyFile = java.io.File.createTempFile("crt-java-empty", ".bin");
+        emptyFile.deleteOnExit();
+        try (S3Client client = createS3Client(clientOptions);
+                java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(emptyFile.toPath(),
+                        java.nio.file.StandardOpenOption.READ)) {
+            ByteBuffer emptyRegion = ByteBuffer.allocateDirect(16);
+            emptyRegion.position(16);
+            ByteBuffer[] emptyBuffers = { ByteBuffer.allocateDirect(0), emptyRegion,
+                    channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, 0) };
+            String path = UPLOAD_DIR + "/crt-java-zero-copy-test/" + java.util.UUID.randomUUID();
+            HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+            try {
+                for (ByteBuffer requestBuffer : emptyBuffers) {
+                    BufferRequestResult put = runBufferRequest(client, new S3MetaRequestOptions()
+                            .withMetaRequestType(MetaRequestType.PUT_OBJECT)
+                            .withHttpRequest(new HttpRequest("PUT", path, headers, null))
+                            .withRequestBuffer(requestBuffer));
+                    assertSucceeded(put);
+
+                    BufferRequestResult get = getIntoResponseBuffer(client, path, null, ByteBuffer.allocateDirect(16));
+                    assertSucceeded(get);
+                    Assert.assertEquals(Long.valueOf(0), get.bytesReceived);
+                }
+            } finally {
+                deleteObject(client, path);
+            }
+        }
+    }
+
+    private void deleteObject(S3Client client, String path) throws Exception {
+        CompletableFuture<S3FinishedResponseContext> deleted = new CompletableFuture<>();
+        HttpHeader[] headers = { new HttpHeader("Host", ENDPOINT) };
+        try (S3MetaRequest delete = client.makeMetaRequest(new S3MetaRequestOptions()
+                .withMetaRequestType(MetaRequestType.DEFAULT).withOperationName("DeleteObject")
+                .withHttpRequest(new HttpRequest("DELETE", path, headers, null))
+                .withResponseHandler(new S3MetaRequestResponseHandler() {
+                    @Override
+                    public void onFinished(S3FinishedResponseContext context) {
+                        deleted.complete(context);
+                    }
+                }))) {
+            deleted.get();
         }
     }
 

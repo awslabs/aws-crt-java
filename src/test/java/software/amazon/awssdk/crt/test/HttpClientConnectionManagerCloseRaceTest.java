@@ -47,6 +47,11 @@ public class HttpClientConnectionManagerCloseRaceTest extends CrtTestFixture {
         skipIfAndroid(); // needs to spawn a JVM
         // GraalVM native image has no java.home to spawn a child JVM from.
         Assume.assumeTrue(System.getProperty("org.graalvm.nativeimage.imagecode") == null);
+        // Jacoco offline-instrumented CRT classes need org.jacoco.agent.rt.* on the child's
+        // classpath too. We could forward it, but the child's coverage data wouldn't merge back
+        // into the parent's run anyway, so skipping is simpler and loses nothing.
+        Assume.assumeFalse("skipped under Jacoco offline instrumentation",
+                isJacocoInstrumented());
 
         List<String> command = new ArrayList<>();
         command.add(Paths.get(System.getProperty("java.home"), "bin", "java").toString());
@@ -79,6 +84,18 @@ public class HttpClientConnectionManagerCloseRaceTest extends CrtTestFixture {
         String tests = Paths.get(Child.class.getProtectionDomain()
                 .getCodeSource().getLocation().toURI()).toString();
         return crt + File.pathSeparator + tests;
+    }
+
+    // True when CRT classes have been offline-instrumented by Jacoco: every such class gets a
+    // synthetic $jacocoInit method injected. Reflective check, so it doesn't require the rt jar
+    // to be loadable.
+    private static boolean isJacocoInstrumented() {
+        for (java.lang.reflect.Method m : HttpClientConnectionManager.class.getDeclaredMethods()) {
+            if (m.getName().equals("$jacocoInit")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static CompletableFuture<String> readAllAsync(InputStream in) {
